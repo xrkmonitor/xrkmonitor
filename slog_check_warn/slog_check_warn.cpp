@@ -614,7 +614,7 @@ void CheckAttrWarn(uint32_t now)
 
 	if(listWarn.size() > 0)
 	{
-		MtReport_Attr_Add(285, listWarn.size());
+		MtReport_Attr_Add(284, listWarn.size());
 		list<TAttrWarnInfo>::iterator it = listWarn.begin();
 		char sSqlBuf[256] = {0};
 		for(; it != listWarn.end(); it++)
