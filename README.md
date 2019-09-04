@@ -59,18 +59,16 @@ web 控制台首页展示：
 5. 日志服务器，用于接收日志，并提供日志查询功能(可在控制台配置，系统自动调度)   
 6. agent 接入服务器，用于控制 agent 接入以及下发配置到 agent(agent 模块为：slog_mtreport_client)   
 
-
 监控系统部署的基本包，包含如下模块(关于模块的说明在各模块源码文件的头部，这里不做说明)   
 1. slog_config    
 2. slog_client    
 3. slog_monitor_client   
 4. tools_sh 目录以及其下的全部脚本文件  
 
-监控系统全部模块，部署时需从源码目录中拷贝如下文件(以下使用 slog_config 模块作为示例说明)   
+监控系统各模块部署时需从模块源码目录中拷贝如下文件(以下使用 slog_config 模块作为示例说明)   
 1. 模块可执行文件 (slog_config)   
 2. 模块配置文件 (slog_config.conf)   
 3. 模块目录下的全部脚本文件 (start.sh,stop.sh等)   
-
 
 分布式部署推荐部署方式：  
 1. mysql 配置服务/web 控制台服务/agent 接入服务, 同机部署, 需要部署如下模块： <font color='red'>(1台)</font>   
