@@ -8,10 +8,16 @@
 (演示账号在登录窗下方查看, 提供两类账号：管理员账号、普通账号做为演示账号)  
 
 
-web 控制台首页展示：
+web 控制台首页展示：  
 ![开源版监控系统首页](http://xrkmonitor.com/monitor/images/open_main.png)
 
-微信告警示例：(支持邮件、短信、微信、PC客户端等告警方式，告警功能无需开发直接可用)
+日志查看界面：  
+![开源版监控系统](http://xrkmonitor.com/monitor/images/open_log.png)
+
+监控点数据图表查看界面：  
+![开源版监控系统](http://xrkmonitor.com/monitor/images/open_chart.png)
+
+微信告警示例：(支持邮件、短信、微信、PC客户端等告警方式，告警功能无需开发直接可用)  
 ![开源版监控系统告警示例](http://xrkmonitor.com/monitor/images/open_wx_2.png)
 
    
