@@ -88,11 +88,11 @@ mod_fastcgi , 模块源码在 lib 目录下，fastcgi 参考配置文件：cgi_f
 	a: 只需部署监控系统 agent 模块：slog_mtreport_client   
 
 ## 联系我们
-QQ 群：(加群密码：xrkmonitor)
-![字符云监控系统QQ群](http://xrkmonitor.com/monitor/main/img/new_qq_group.png)
+QQ 群：(加群密码：xrkmonitor)   
+![字符云监控系统QQ群](http://xrkmonitor.com/monitor/main/img/new_qq_group.png)  
 
-微信公众号：
-![字符云监控系统微信公众号](http://xrkmonitor.com/monitor/main/img/main_wx_qrcode.jpg)
+微信公众号：   
+![字符云监控系统微信公众号](http://xrkmonitor.com/monitor/main/img/main_wx_qrcode.jpg)  
 
 邮箱：1820140912@qq.com / xrkmonitor@163.com
 
