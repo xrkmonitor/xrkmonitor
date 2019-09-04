@@ -22,7 +22,7 @@ web 控制台首页展示：
 ## 编译说明 
 项目目前只支持在 linux 系统中编译，推荐使用 opensuse 或者 ubuntu 系统   
 项目依赖 mysql 开发库 libmysqlclient.so、protobuf、curl、fcgi，其中 protobuf、curl、fcgi 的源  
-码已经集成到项目中，您只需要安装 libmysqlclient.so 开发库即可，安装完成后执行如下操作即可编译：  
+码已经集成到项目中，您只需要安装 libmysqlclient.so 开发库即可，安装完成后执行如下操作即可编译：
 1. 修改 make_env 文件，指定 libmysqlclient 库/头文件的安装路径
 2. 执行脚本 ./install_dev.sh，按提示根据需要完成编译依赖包的安装
 3. 执行 make 命令即可编译整个项目，后续如需编译指定模块在模块目录执行 make 命令即可  
@@ -32,8 +32,7 @@ web 控制台首页展示：
 部署前需要将 memcached 可执行文件放入 slog_memcached 目录下，并重命名为 slog_memcached  
 (memcached 可执行文件通过编译 memcache 源码或者从 rpm 发布包中获取)
 
-部署方式支持集中部署、分布式部署，部署方法如下：   
-
+部署方式支持集中部署、分布式部署，部署方法如下：
 ### 一：集中部署
 全部服务部署在一台服务器上的操作步骤：
 1. 在部署机上安装 mysql, apache 软件
