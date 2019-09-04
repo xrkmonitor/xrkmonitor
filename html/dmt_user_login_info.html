@@ -1,64 +1,66 @@
-<div class="unitBox" style="margin-left:1px;"> 
-	<form id="pagerForm" method="post" action="<?cs var:config.cgipath?>mt_slog_user?action=list_user">
-		<input type="hidden" name="pageNum" value="<?cs var:config.currentPage ?>" />
-		<input type="hidden" name="numPerPage" value="<?cs var:config.numPerPage ?>" />
-		<input type="hidden" name="orderField" value="<?cs var:config.orderField ?>" />
-		<input type="hidden" name="orderDirection" value="<?cs var:config.orderDirection ?>" />
-		<input type="hidden" name="duli_user_name" value="<?cs var:config.duli_user_name?>">
-	</form>
-
-	<div class="pageHeader" style="border:1px #B8D0D6 solid">
-		<form onsubmit="return navTabSearch(this, 'dmt_user_login');" action="<?cs var:config.cgipath?>mt_slog_user?action=login_info" method="post">
-		<div class="searchBar">
-			<table class="searchContent" >
-				<tr>
-					<td>
-						用户名：<input type="text" name="duli_user_name" id="duli_user_name" size="16" value="<?cs var:config.duli_user_name ?>" />
-					</td>
-					<td>
-						<button type="submit" class="sexybutton"><span><span><span class="search">查找</span></span></span></button>
-						<button type="button" class="sexybutton" onclick="return duliClearSearch()"><span><span><span class="erase">重填</span></span></span></button>
-					</td>
-				</tr>
-			</table>
-		</div>
+<div class="pageContent">
+	<div class="unitBox" style="margin-left:1px;"> 
+		<form id="pagerForm" method="post" action="<?cs var:config.cgipath?>mt_slog_user?action=login_info">
+			<input type="hidden" name="pageNum" value="<?cs var:config.currentPage ?>" />
+			<input type="hidden" name="numPerPage" value="<?cs var:config.numPerPage ?>" />
+			<input type="hidden" name="orderField" value="<?cs var:config.orderField ?>" />
+			<input type="hidden" name="orderDirection" value="<?cs var:config.orderDirection ?>" />
+			<input type="hidden" name="duli_user_name" value="<?cs var:config.duli_user_name?>">
 		</form>
-	</div>
-
-	<div class="unitBox" style="border-left:1px #B8D0D6 solid;border-right:1px #B8D0D6 solid">
-		<div>
-			<table class="list" width="100%" layoutH="65">
-				<thead>
-					<tr>
-						<th width="10">序号</th>
-						<th width="40">用户名</th>
-						<th width="40">登录 IP</th>
-						<th width="40">登录时间</th>
-						<th width="40">最后访问时间</th>
-						<th width="40">登录过期时间</th>
-					</tr>
-				</thead>
-				<tbody id="duli_list_user">
-				</tbody>
-			</table>
 	
-			<div class="panelBar" layoutH="0">
-				<div class="pages">
-					<span>每页显示</span>
-					<select class="combox" name="numPerPage" onchange="dialogPageBreak({numPerPage:this.value}, 'dul_search_div')">
-						<option value="10">10</option>
-						<option value="20">20</option>
-						<option value="50">50</option>
-						<option value="100">100</option>
-						<option value="200">200</option>
-					</select>
-					<span>条，共 <?cs var:config.totalCount ?>  条</span>
-				</div>
-				<div class="pagination" rel="dul_search_div" targetType="dialog" totalCount="<?cs var:config.totalCount ?>" numPerPage="<?cs var:config.numPerPage ?>" pageNumShown="<?cs var:config.pageNumShown ?>" currentPage="<?cs var:config.currentPage ?>"></div>
+		<div class="pageHeader" style="border:1px #B8D0D6 solid">
+			<form onsubmit="return navTabSearch(this, 'dmt_user_login');" action="<?cs var:config.cgipath?>mt_slog_user?action=login_info" method="post">
+			<div class="searchBar">
+				<table class="searchContent" >
+					<tr>
+						<td>
+							用户名：<input type="text" name="duli_user_name" id="duli_user_name" size="16" value="<?cs var:config.duli_user_name ?>" />
+						</td>
+						<td>
+							<button type="submit" class="sexybutton"><span><span><span class="search">查找</span></span></span></button>
+							<button type="button" class="sexybutton" onclick="return duliClearSearch()"><span><span><span class="erase">重填</span></span></span></button>
+						</td>
+					</tr>
+				</table>
 			</div>
-		</div> 
-	</div>
-</div> <!-- unitBox -->
+			</form>
+		</div>
+	
+		<div class="pageContent" style="border-left:1px #B8D0D6 solid;border-right:1px #B8D0D6 solid">
+			<div>
+				<table class="list" width="100%" layoutH="65">
+					<thead>
+						<tr>
+							<th width="10">序号</th>
+							<th width="40">用户名</th>
+							<th width="40">登录 IP</th>
+							<th width="40">登录时间</th>
+							<th width="40">最后访问时间</th>
+							<th width="40">登录过期时间</th>
+						</tr>
+					</thead>
+					<tbody id="duli_list_user">
+					</tbody>
+				</table>
+		
+				<div class="panelBar" layoutH="0">
+					<div class="pages">
+						<span>每页显示</span>
+						<select name="numPerPage" onchange="navTabPageBreak({numPerPage:this.value})">
+							<option value="10">10</option>
+							<option value="20">20</option>
+							<option value="50">50</option>
+							<option value="100">100</option>
+							<option value="200">200</option>
+						</select>
+						<span>条，共 <?cs var:config.totalCount ?>  条</span>
+					</div>
+					<div class="pagination" targetType="navTab" totalCount="<?cs var:config.totalCount ?>" numPerPage="<?cs var:config.numPerPage ?>" pageNumShown="<?cs var:config.pageNumShown ?>" currentPage="<?cs var:config.currentPage ?>"></div>
+				</div>
+			</div> 
+		</div>
+	</div> <!-- unitBox -->
+</div>
 
 <script language="javascript" type="text/javascript">
 var duli_userinfo = $.parseJSON('<?cs var:config.user_login_info ?>');
