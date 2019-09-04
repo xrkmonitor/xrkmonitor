@@ -44,7 +44,38 @@
 10. 启动所有服务：进入部署目录，cd tools_sh; ./check_proc_monitor.sh 1，约1分钟后即可查看日志和监控点图表  
 
 ##### 二：分布式部署
+开源版监控系统包含以下服务器类型：
+1. mysql 配置服务器，用于存储监控系统的相关配置(分布式部署时，需要在 slog_config.conf 中配置)  
+2. mysql 监控点服务器，用于存储监控点数据(可在控制台配置，系统自动调度)  
+3. web 控制台服务器，用于部署web 控制台    
+4. 监控点服务器，用于接收监控点数据上报(可在控制台配置，系统自动调度)   
+5. 日志服务器，用于接收日志，并提供日志查询功能(可在控制台配置，系统自动调度)   
+6. agent 接入服务器，用于控制 agent 接入以及下发配置到 agent(agent 模块为：slog_mtreport_client)   
 
 
+监控系统部署的基本包，包含如下模块(关于模块的说明在各模块源码文件的头部，这里不做说明)   
+1. slog_config    
+2. slog_client    
+3. slog_monitor_client   
+4. tools_sh 目录以及其下的全部脚本文件  
 
+监控系统全部模块，部署时需从源码目录中拷贝如下文件(以下使用 slog_config 模块作为示例说明)   
+1. 模块可执行文件 (slog_config)   
+2. 模块配置文件 (slog_config.conf)   
+3. 模块目录下的全部脚本文件 (start.sh,stop.sh等)   
+
+
+分布式部署推荐部署方式：  
+1. mysql 配置服务/web 控制台服务/agent 接入服务, 同机部署, 需要部署如下模块： (1台)   
+	a: 部署基本包(基本包的内容如上文)   
+	b: 部署 slog_mtreport_server 模块   
+2. mysql 监控点服务器/监控点服务器, 部署在一台机器上需要部署如下模块： (1台)    
+	a: 部署基本包(基本包的内容如上文)   
+	b: 部署 slog_monitor_server/slog_check_warn/slog_deal_warn 模块   
+3. 日志服务器 (1台或多台)   
+	a: 部署基本包(基本包的内容如上文)  
+	b: 部署 slog_server/slog_write 模块   
+	c: 部署 apache 服务，部署 cgi 模块：mt_slog，提供日志查询服务   
+4. 被监控机器 (1台或多台)   
+	a: 只需部署监控系统 agent 模块：slog_mtreport_client   
 
