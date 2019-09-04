@@ -66,16 +66,16 @@
 
 
 分布式部署推荐部署方式：  
-1. mysql 配置服务/web 控制台服务/agent 接入服务, 同机部署, 需要部署如下模块： (1台)   
+1. mysql 配置服务/web 控制台服务/agent 接入服务, 同机部署, 需要部署如下模块： <font color=red>(1台)</font>   
 	a: 部署基本包(基本包的内容如上文)   
 	b: 部署 slog_mtreport_server 模块   
-2. mysql 监控点服务器/监控点服务器, 部署在一台机器上需要部署如下模块： (1台)    
+2. mysql 监控点服务器/监控点服务器, 部署在一台机器上需要部署如下模块： <font color=red>(1台)</font>    
 	a: 部署基本包(基本包的内容如上文)   
 	b: 部署 slog_monitor_server/slog_check_warn/slog_deal_warn 模块   
-3. 日志服务器 (1台或多台)   
+3. 日志服务器 <font color=red>(1台或多台)</font>    
 	a: 部署基本包(基本包的内容如上文)  
 	b: 部署 slog_server/slog_write 模块   
 	c: 部署 apache 服务，部署 cgi 模块：mt_slog，提供日志查询服务   
-4. 被监控机器 (1台或多台)   
+4. 被监控机器 <font color=red>(1台或多台)</font>      
 	a: 只需部署监控系统 agent 模块：slog_mtreport_client   
 
