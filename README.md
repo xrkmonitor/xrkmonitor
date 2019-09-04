@@ -3,6 +3,9 @@
 #### 介绍
 集成监控点监控、日志监控、数据可视化以及监控告警为一体的国产开源监控系统，直接部署即可使用。  
 
+web 控制台首页展示：
+![开源版监控系统首页](http://xrkmonitor.com/monitor/images/open_main.png)
+
 项目演示链接：[字符云监控开源版演示 http://open.xrkmonitor.com](http://open.xrkmonitor.com)  
 
 (演示账号在登录窗下方查看, 提供两类账号：管理员账号、普通账号做为演示账号)  
