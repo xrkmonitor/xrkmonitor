@@ -90,7 +90,7 @@ mod_fastcgi , 模块源码在 lib 目录下，fastcgi 参考配置文件：cgi_f
 	a: 部署基本包(基本包的内容如上文)  
 	b: 部署 slog_server/slog_write 模块   
 	c: 部署 apache 服务，部署 cgi 模块：mt_slog，提供日志查询服务   
-4. 被监控机器 <font color=red>(1台或多台)</font>      
+4. 被监控机器 <font color=red>(目前只支持 linux 系统，1台或多台)</font>      
 	a: 只需部署监控系统 agent 模块：slog_mtreport_client   
 
 ## 联系我们
