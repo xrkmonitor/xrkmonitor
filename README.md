@@ -66,7 +66,7 @@
 
 
 分布式部署推荐部署方式：  
-1. mysql 配置服务/web 控制台服务/agent 接入服务, 同机部署, 需要部署如下模块： <font color=red>(1台)</font>   
+1. mysql 配置服务/web 控制台服务/agent 接入服务, 同机部署, 需要部署如下模块： <font color='red'>(1台)</font>   
 	a: 部署基本包(基本包的内容如上文)   
 	b: 部署 slog_mtreport_server 模块   
 2. mysql 监控点服务器/监控点服务器, 部署在一台机器上需要部署如下模块： <font color=red>(1台)</font>    
