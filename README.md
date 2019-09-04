@@ -53,7 +53,7 @@ mod_fastcgi , 模块源码在 lib 目录下，fastcgi 参考配置文件：cgi_f
 9. 启动 apache，使用内置账号：sadmin, 密码：sadmin 访问控制台，将系统服务器配置的IP 全部改为部署机IP  
 10. 启动所有服务：进入部署目录，cd tools_sh; ./check_proc_monitor.sh 1，约1分钟后即可查看日志和监控点图表  
 
-### 二：分布式部署
+### 二：分布式部署说明
 开源版监控系统包含以下服务器类型：
 1. mysql 配置服务器，用于存储监控系统的相关配置(分布式部署时，需要在 slog_config.conf 中配置)  
 2. mysql 监控点服务器，用于存储监控点数据(可在控制台配置，系统自动调度)  
@@ -86,4 +86,13 @@ mod_fastcgi , 模块源码在 lib 目录下，fastcgi 参考配置文件：cgi_f
 	c: 部署 apache 服务，部署 cgi 模块：mt_slog，提供日志查询服务   
 4. 被监控机器 <font color=red>(1台或多台)</font>      
 	a: 只需部署监控系统 agent 模块：slog_mtreport_client   
+
+## 联系我们
+QQ 群：(加群密码：xrkmonitor)
+![字符云监控系统QQ群](http://xrkmonitor.com/monitor/main/img/new_qq_group.png)
+
+微信公众号：
+![字符云监控系统微信公众号](http://xrkmonitor.com/monitor/main/img/main_wx_qrcode.jpg)
+
+邮箱：1820140912@qq.com / xrkmonitor@163.com
 
