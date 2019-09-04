@@ -1,7 +1,12 @@
 # 字符云监控开源版
 
-#### 介绍
-集成监控点监控、日志监控、数据可视化以及监控告警为一体的国产开源监控系统，直接部署即可使用。  
+## 介绍
+集成监控点监控、日志监控、数据可视化以及监控告警为一体的国产开源监控系统，直接部署即可使用。    
+
+项目演示链接：[字符云监控开源版演示 http://open.xrkmonitor.com](http://open.xrkmonitor.com)  
+
+(演示账号在登录窗下方查看, 提供两类账号：管理员账号、普通账号做为演示账号)  
+
 
 web 控制台首页展示：
 ![开源版监控系统首页](http://xrkmonitor.com/monitor/images/open_main.png)
@@ -10,18 +15,11 @@ web 控制台首页展示：
 ![开源版监控系统告警示例](http://xrkmonitor.com/monitor/images/open_wx_2.png)
 
    
-   
-
-项目演示链接：[字符云监控开源版演示 http://open.xrkmonitor.com](http://open.xrkmonitor.com)  
-
-(演示账号在登录窗下方查看, 提供两类账号：管理员账号、普通账号做为演示账号)  
-
-
-#### 软件架构
+## 软件架构
 软件架构说明
 
 
-#### 编译说明 
+## 编译说明 
 项目目前只支持在 linux 系统中编译，推荐使用 opensuse 或者 ubuntu 系统   
 项目依赖 mysql 开发库 libmysqlclient.so、protobuf、curl、fcgi，其中 protobuf、curl、fcgi 的源  
 码已经集成到项目中，您只需要安装 libmysqlclient.so 开发库即可，安装完成后执行如下操作即可编译：  
@@ -29,14 +27,14 @@ web 控制台首页展示：
 2. 执行脚本 ./install_dev.sh，按提示根据需要完成编译依赖包的安装
 3. 执行 make 命令即可编译整个项目，后续如需编译指定模块在模块目录执行 make 命令即可  
 
-#### 部署说明
+## 部署说明
 字符云监控系统部署需要安装  memcached，mysql，apache 软件   
 部署前需要将 memcached 可执行文件放入 slog_memcached 目录下，并重命名为 slog_memcached  
 (memcached 可执行文件通过编译 memcache 源码或者从 rpm 发布包中获取)
 
 部署方式支持集中部署、分布式部署，部署方法如下：   
 
-##### 一：集中部署
+### 一：集中部署
 全部服务部署在一台服务器上的操作步骤：
 1. 在部署机上安装 mysql, apache 软件
 2. 打完整部署包：cd  tools_sh; ./make_all.sh 生成： slog_all.tar.gz 部署包
@@ -53,7 +51,7 @@ web 控制台首页展示：
 9. 启动 apache，使用内置账号：sadmin, 密码：sadmin 访问控制台，将系统服务器配置的IP 全部改为部署机IP  
 10. 启动所有服务：进入部署目录，cd tools_sh; ./check_proc_monitor.sh 1，约1分钟后即可查看日志和监控点图表  
 
-##### 二：分布式部署
+### 二：分布式部署
 开源版监控系统包含以下服务器类型：
 1. mysql 配置服务器，用于存储监控系统的相关配置(分布式部署时，需要在 slog_config.conf 中配置)  
 2. mysql 监控点服务器，用于存储监控点数据(可在控制台配置，系统自动调度)  
