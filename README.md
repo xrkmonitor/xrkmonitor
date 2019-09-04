@@ -21,10 +21,6 @@ web 控制台首页展示：
 ![开源版监控系统告警示例](http://xrkmonitor.com/monitor/images/open_wx_2.png)
 
    
-## 软件架构
-软件架构说明
-
-
 ## 编译说明 
 项目目前只支持在 linux 系统中编译，推荐使用 opensuse 或者 ubuntu 系统   
 项目依赖 mysql 开发库 libmysqlclient.so、protobuf、curl、fcgi，其中 protobuf、curl、fcgi 的源  
