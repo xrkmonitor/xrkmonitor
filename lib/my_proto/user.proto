@@ -1,0 +1,44 @@
+package user;
+
+enum MUSER_FLAG {
+	MFLAG_WARN_SEND_FREQ = 2; // 启用告警频率限制
+	MFLAG_WARN_SEND_ZB_ONLY = 4; // 监控告警只发往值班号
+
+	MFLAG_WARN_SEND_ENABLE_TIME = 8; // 监控告警指定时间段，只在时间段内发送
+	MFLAG_WARN_USE_EMAIL = 16; // 监控告警启用邮件告警
+	MFLAG_WARN_USE_MOBILE = 32; // 告警告警启用短信告警
+	MFLAG_WARN_USE_PC_CLIENT = 64; // PC 告警客户端
+	MFLAG_WARN_USE_WEIXIN = 128; // 微信告警
+};
+
+enum OP_VCODE_TYPE {
+	OP_VCODE_TYPE_EMAIL = 1; // 邮箱
+};
+
+// cgi 用户登录,需要保存到共享内存 sess 的信息
+message UserSessionInfo
+{
+	optional int32 bind_xrkmonitor_uid = 1; // 绑定的云账号 id
+	optional bytes email = 6; // email 地址 - config
+	optional string mobile = 7; // 电话号码 - config
+	optional uint32 register_time = 8; // 注册时间 - config
+
+	// 资料修改相关验证码
+	optional uint32 op_code_set_time = 9; // 验证码设置时间
+	optional string op_code_val = 10; // 验证码
+	optional uint32 op_check_expire_time = 11; // 验证码有效期
+	optional bytes op_new_email = 12; // 要绑定或修改的邮箱地址
+	optional uint32 su_op_user_id = 14; // 管理员重置密码时，被重置密码的用户 id 
+	optional int32 op_code_type = 15; // 验证码类型 -- 邮箱/手机等
+}
+
+// 用户非本机日志信息统计
+message UserRemoteAppLogInfo
+{
+	optional uint32 next_check_log_space_time = 2; // 下次检查磁盘空间的时间 -- run info
+	optional uint64 total_app_log_size = 3; // APP 占用的总磁盘空间 -- run info
+	optional int32 tmp_remain_app_count = 4; // 剩余未统计到磁盘占用的 app 数目 -- run info
+	optional int32 oldest_log_file_app_id = 5; // 最老的日志文件所属的 appid -- run info
+	optional uint32 oldest_log_file_time = 6; // 最老日志文件的起始日志时间  -- run info
+}
+

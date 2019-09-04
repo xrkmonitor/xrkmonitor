@@ -1,0 +1,65 @@
+<script language="javascript" type="text/javascript">
+
+/*
+   * 引用了 dmg_module.html 中的: dm_module_list
+   */ 
+
+$(document).ready(function(){
+	<?cs if:config.action == "save_add_module" ?>
+	var op_app = $('#ddam_op_app');
+	op_app.html('');
+	if(dm_module_list.app_count <= 0) {
+		alertMsg.error("应用数目为 0，请先添加应用！");
+		return ;
+	}
+	var app_list = dm_module_list.applist;
+	for (var i = 0; i < app_list.length; ++i) {
+	    var op = $('<option></option>');
+		op.val(app_list[i].app_id).text(app_list[i].app_name);
+		op_app.append(op);
+	}
+	<?cs /if ?>
+});
+
+</script>
+
+<div class="pageContent">
+	<form method="post" action="<?cs var:config.cgipath?>mt_slog?action=<?cs var:config.action ?>&navTabId=dmt_list_module" class="pageForm required-validate" onsubmit="return validateCallback(this, dialogAjaxDone);">
+		<div class="pageFormContent" layoutH="56">
+
+			<?cs if:config.action == "save_mod_module" ?>
+			<input type="hidden" name="ddam_module_id" value="<?cs var:config.module_id ?>" />
+			<input type="hidden" name="ddam_op_app" value="<?cs var:config.app_id ?>" />
+			<p>
+				<label>所属应用：</label>
+				<input type="text" value="<?cs var:config.app_name ?>" readonly />
+			</p>
+			<?cs else ?>
+			<p>
+				<label>所属应用：</label>
+				<select class="combox" name="ddam_op_app" id="ddam_op_app">
+						<option value="0">全部</option>
+				</select>
+			</p>
+			<?cs /if ?>
+
+			<p>
+				<label>模块名称：</label>
+				<input type="text" size="30" name="ddam_module_name" id="ddam_module_name" minlength="2" maxlength="30" alt="请输入模块名称" class="required" value="<?cs var:config.module_name ?>" />
+			</p>
+			<p>
+				<label>模块描述：</label>
+				<textarea rows="4" cols="28" name="ddam_module_desc" maxlength="128" alt="请输入模块描述"><?cs var:config.module_desc ?></textarea>
+			</p>
+		</div>
+		<div class="formBar">
+			<ul>
+				<li><div class="button"><div class="buttonContent"><button type="submit">&nbsp;&nbsp;保&nbsp;存&nbsp;&nbsp;</button></div></div></li>
+				<li>
+					<div class="button"><div class="buttonContent"><button type="button" class="close">&nbsp;&nbsp;取&nbsp;消&nbsp;&nbsp;</button></div></div>
+				</li>
+			</ul>
+		</div>
+	</form>
+</div>
+

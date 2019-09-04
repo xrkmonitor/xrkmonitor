@@ -1,0 +1,167 @@
+<script language="javascript" type="text/javascript">
+
+function ddwccSubmitCallback(result)
+{
+	if(dmtFirstDealAjaxResponse(result))
+		return;
+
+	var cur_chart_idx = 'attr_' + result.attr_id + '_' + result.warn_type_id;
+	cur_chart_idx += "<?cs var:config.warn_type_show ?>";
+
+	if(typeof g_all_charts[cur_chart_idx] == 'undefined'
+		|| typeof g_all_charts[cur_chart_idx].warnInfo == 'undefined')
+	{
+		alertMsg.error('javascript 脚本错误, 无告警信息:'+cur_chart_idx);
+		return;
+	}
+	var warnInfo = g_all_charts[cur_chart_idx].warnInfo;
+	var cur_chart = g_all_charts[cur_chart_idx];
+
+	var opold = cur_chart.getOption();
+	var subtitles = opold.title[0].subtext;
+	var subtitle = subtitles.split('\n')[0];
+
+	// 重新设置告警配置部分
+	subtitle += "\n 告警配置【 最大值：";
+	var showclass = "<?cs var:config.show_class ?>";
+	if(showclass == "percent")
+		showclass = "%";
+	else
+		showclass = "";
+	warnInfo.show_class = showclass;
+
+	if(result.warn_flag & 1)
+		subtitle += result.warn_max + showclass;
+	else
+		subtitle += "无 ";
+	subtitle += "，最小值：";
+	if(result.warn_flag & 2)
+		subtitle += result.warn_min + showclass;
+	else
+		subtitle += "无 ";
+	subtitle += "，波动值：";
+	if(result.warn_flag & 4)
+		subtitle += result.warn_wave + "% ";
+	else
+		subtitle += "无 ";
+	if(result.warn_flag & 32)
+		subtitle += "，屏蔽状态：已屏蔽";
+	subtitle +=	" 】";
+	var op = {
+		title:{
+			subtext:subtitle,
+		},
+		toolbox: {
+			feature: {
+				myUnMaskWarningData:{
+					show:true
+				},
+				myMaskWarningData:{
+					show:true
+				},
+				mySetWarningData:{
+					show:true
+				}
+			}
+		}
+	};
+
+	if(result.warn_flag & 32)
+	{
+		op.toolbox.feature.mySetWarningData.show = false;
+		op.toolbox.feature.myMaskWarningData.show = false;
+		warnInfo.mask = 0;
+	}
+	else
+	{
+		op.toolbox.feature.myUnMaskWarningData.show = false;
+		if((result.warn_flag&1) || (result.warn_flag&2) || (result.warn_flag&4)) {
+			warnInfo.mask = 1;
+		}
+		else {
+			op.toolbox.feature.myMaskWarningData.show = false;
+			warnInfo.mask = 0;
+		}
+	}
+	warnInfo.warn_cfg_id = result.warn_config_id;
+	cur_chart.setOption(op);
+}
+
+$(document).ready(function(){
+	$("#ddwcc_form_submit").submit(function(){
+		validateCallback(this, ddwccSubmitCallback);
+		$.pdialog.closeCurrent();
+		return false;
+	});
+});
+
+</script>
+
+<style type="text/css">
+.pageFormContent p { width:500px; }
+.pageFormContent p label { width:60px; }
+</style>
+
+<div class="pageContent">
+	<form method="get" action="<?cs var:config.cgipath?>mt_slog_warn" class="pageForm" id="ddwcc_form_submit">
+		<div class="pageFormContent" layoutH="56">
+
+			<input type="hidden" name="ddwc_warn_config_id" value="<?cs var:config.warn_config_id ?>" />
+			<input type="hidden" name="ddwc_warn_type_val" value="<?cs var:config.warn_type_id ?>" />
+			<input type="hidden" name="ddwc_attr_id" value="<?cs var:config.warn_attr_id ?>" />
+			<input type="hidden" name="ddwc_warn_type" value="<?cs var:config.warn_type ?>" />
+			<input type="hidden" name="action" value="save_set_warn_chart" />
+
+			<p>
+				<label>清除告警：</label><input type="checkbox" name="c_warn_clear_not_sel" id="c_warn_clear_not_sel" />
+				<font class='note-text'>
+					<label class='for' style="float:right;width:400px;" for="c_warn_clear_not_sel"> 
+						- 清除以下未勾选的告警类型配置
+					</label>
+				</font>
+			</p>
+
+			<p> 
+				<label>最大值：</label>
+				<input type="text" size="20" class="digits" name="ddwc_warn_max" value="<?cs var:config.warn_max ?>" />
+				<input type="checkbox" name="c_warn_max" id='c_warn_max' />
+				<font class='note-text'>
+					<label class='for' style="float:right;width:240px;" for="c_warn_max">
+						- 设置最大值，并勾选后最大值告警配置生效
+					</label>
+				</font>
+			</p>
+			<p>
+				<label>最小值：</label>
+				<input type="text" size="20" name="ddwc_warn_min" value="<?cs var:config.warn_min ?>" />
+				<input type="checkbox" name="c_warn_min" id="c_warn_min" />
+				<font class='note-text'>
+					<label class='for' style="float:right;width:240px;" for="c_warn_min">
+						- 设置最小值，并勾选后最小值告警配置生效
+					</label>
+				</font>
+			</p>
+			<p>
+				<label>波动值：</label>
+				<input type="text" size="20" name="ddwc_warn_wave" value="<?cs var:config.warn_wave ?>" />
+				<input type="checkbox" name="c_warn_wave"  id="c_warn_wave" />
+				<font class='note-text'>
+					<label class='for' style="float:right;width:240px;" for="c_warn_wave">
+						- 设置波动值，并勾选后波动值告警配置生效
+					</label>
+				</font>
+			</p>
+
+		</div>
+
+		<div class="formBar">
+			<ul>
+				<li><div class="button"><div class="buttonContent"><button type="submit">&nbsp;&nbsp;设&nbsp;置&nbsp;&nbsp;</button></div></div></li>
+				<li>
+					<div class="button"><div class="buttonContent"><button type="button" class="close">&nbsp;&nbsp;关&nbsp;闭&nbsp;&nbsp;</button></div></div>
+				</li>
+			</ul>
+		</div>
+	</form>
+</div>
+

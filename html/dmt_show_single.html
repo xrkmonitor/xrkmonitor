@@ -1,0 +1,544 @@
+<div class="pageContent">
+	<div class="unitBox" style="margin-left:1px;"> 
+		<div class="pageHeader" style="border:1px #B8D0D6 solid">
+			<div class="searchBar"> 
+				<table class="searchContent" >
+					<tr>
+						<td>指定时间：<input type="text" class="date" size="10" readonly="true" id="dss_date_cust" value="<?cs var:config.cust_date ?>" minDate="2014-01-01" maxDate="2088-12-31" onblur="setTimeout(dssOnCustDateChange, 600);" />
+						</td>
+						<td>
+							<label style='width:80px'>曲线图类型：</label>
+							<select name="dss_select_show_type" id="dss_select_show_type" style="width:80px">
+							</select>
+						</td>
+
+						<?cs if:config.show_type == "view" ?>
+						<td >
+							<label style='width:60px'>图表导航：</label>
+							<select name="dss_select_show_chart" id="dss_select_show_chart">
+							</select>
+						</td>
+						<?cs /if ?>
+
+						<td>
+							<font class="note-text">- 通过 “区域缩放” 功能，可实现鼠标框选图表区域进行放大显示</font>
+						</td>
+					</tr>
+				</table>
+			</div>
+		</div>
+
+		<div class="unitBox" style="border-left:1px #B8D0D6 solid;border-right:1px #B8D0D6 solid">
+			<div> 
+				<div layoutH="40" class="unitBox" id="dss_ct_attr_show_single" style="float:left; display:block; overflow:auto; width:825px; border:solid 1px #CCC;line-height:21px; background:#fff"> 
+				</div>
+
+				<div layoutH="50" style="display:block; overflow:auto; border:solid 1px #CCC;">
+					<table class="table" height="200"> 
+						<thead>
+							<tr>
+								<th width="180" align="center">上报时间</th>
+								<th width="120" align="center">上报值</th>
+							</tr>
+						</thead>
+						<tbody id="dss_attr_value_list_tbody">
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+	</div> <!-- unitBox -->
+</div>
+
+<script language="javascript" type="text/javascript">
+
+var g_dssTimeZoneOffset = 8*60*60*1000;
+var dss_cust_date_save = <?cs var:config.cust_date ?>;
+
+function dssOnBrushSelected(p)
+{
+	var op = this.getOption();
+	var sv = Math.floor(p.batch[0].startValue);
+	var ev = Math.floor(p.batch[0].endValue);
+	var start = g_dss_date_time_start_utc*1000+g_dssTimeZoneOffset;
+	var start_idx = Math.ceil((sv-start)/60000);
+	var idx_count = Math.ceil((ev-sv)/60000);
+	if(start_idx < 0)
+	    start_idx = 0;
+	if(g_dss_show_type == 'site')
+	    dssSetSiteAttrValueInfo(op.title[0].text, start_idx, idx_count);
+	else
+	    dssSetAttrValueInfo(op.title[0].text, start_idx, idx_count);
+}
+
+function dssShowAttrInfo(attr_val)
+{
+	$('#dss_ct_attr_show_single').html('');
+	var op = {
+		title:{
+			text:'',
+			x:'center',
+			show:true
+		},
+		useUTC:true,
+		toolbox: {
+			show:true,
+			orient: 'vertical',
+			top: 'center',
+			right:20,
+			feature: {
+				restore: { 
+					show:true,
+					title: '还原图表显示'
+				},
+				dataZoom:{
+					show:true,
+					xAxisIndex:0,
+					yAxisIndex:false
+				},
+				dataView: {
+					show:true,
+					optionToContent: function(opt) {
+						var series = opt.series;
+						var dstr = '<table style="width:200px;height:400px;z-index:-10000;text-align:center">'
+							+ '<tbody><tr>'
+							+ '<td>上报时间</td>'
+							+ '<td>上报数据</td>'
+							+ '</tr>';
+
+						for (var i = 0, c = series[0].data.length; i < c; i++) {
+							dstr += '<tr>'
+								+ '<td>' + dmtGetDateStr(series[0].data[i].value[0]) + '</td>'
+								+ '<td>' + series[0].data[i].value[1] + '</td>'
+								+ '</tr>';
+						}
+						dstr += '</tbody></table>';
+						return dstr;
+					},
+					title: '查看数据'
+				},
+				saveAsImage: { show: true }
+			}
+		},
+	    tooltip: {
+			trigger: 'none',
+			axisPointer: {
+				type: 'line',
+				snap: true
+			}
+		},
+		grid: {
+			tooltip: {
+				show:true,
+				trigger:'axis'
+			},
+			top:35,
+			bottom:50
+		},
+	    xAxis: {
+			type: 'time',
+			axisPointer: {
+				label: {
+					formatter: function (params) {
+						if(attr_val.type != 1)
+							return dmtGetDateStr(params.value);
+						return '上报时间：' + dmtGetDateStr(params.value, true);
+	    			}
+				}
+			}
+		},
+		yAxis: [ 
+			{
+				splitArea: {
+					show: true
+				},
+				type: 'value',
+				axisLabel:{
+					formatter: function (value, index) {
+					   if(value >= 1073741824)
+					   {
+						   var f = value/1073741824;
+						   return f.toFixed(2) + 'G';
+					   }
+					   if(value >= 1048576)
+					   {
+						   var f = value/1048576;
+						   return f.toFixed(2) + 'M';
+					   }
+					   if(value >= 1024)
+					   {
+						   var f = value/1024;
+						   return f.toFixed(2) + 'K';
+					   }
+					   return value;
+		    		}
+				}
+			}
+		],
+		series: [
+			{
+				name:'',
+				showSymbol:false,
+				cursor:'pointer',
+				type:'line',
+				data:[]
+			},
+			{
+				name:'',
+				showSymbol:false,
+				cursor:'pointer',
+				type:'line',
+				data:[]
+			},
+			{
+				name:'',
+				showSymbol:false,
+				cursor:'pointer',
+				type:'line',
+				data:[]
+			}
+		]
+	};
+
+	var dateStart = attr_val.date_time_start_utc*1000 - new Date().getTimezoneOffset()*60*1000;
+	var count_day = 1;
+	if(attr_val.type == 3)
+		count_day = 7;
+	else if(attr_val.type == 4)
+		count_day = 30;
+	var time_info = dmtGetXAxisTimeInfo(dateStart, count_day);
+	var val_idx = 0;
+	if(attr_val.max != 0)
+	{
+		op.series[0].data = dmtGetYAxisData(time_info, attr_val.value_list_str);
+		if(attr_val.type == 1)
+		{
+			op.series[0].name = '今日 [' + attr_val.date_time_cur + ']';
+			op.series[1].name = '昨日 [' + attr_val.date_time_yst + ']';
+			op.series[1].data = dmtGetYAxisData(time_info, attr_val.value_list_yst_str);
+			op.series[2].name = '上周同日 [' + attr_val.date_time_wkd + ']';
+			op.series[2].data = dmtGetYAxisData(time_info, attr_val.value_list_lwk_str);
+			op.legend = {
+				show:true,
+				bottom:10
+			};
+			op.grid.bottom = 80;
+		}
+	}
+	else
+	{
+		op.series[0].data = [];
+	}
+
+	var mach_attr_show_id = "mach_attr_0_" + attr_val.id;
+	if($('#'+mach_attr_show_id).length > 0) {
+	    $('#'+mach_attr_show_id).html("");
+	}
+
+	var mach_attr_show_container = '<div style="width:780px; height:400px;';
+	mach_attr_show_container += ' border:2px solid #335cad; padding-top:5px;';
+	mach_attr_show_container += ' float:left; margin:10px;"';
+	mach_attr_show_container += ' id="' + mach_attr_show_id + '"></div>';
+	$('#dss_ct_attr_show_single').append( $(mach_attr_show_container) );
+
+	if(typeof(g_all_charts[mach_attr_show_id]) != 'undefined')
+		g_all_charts[mach_attr_show_id].dispose();
+	g_all_charts[mach_attr_show_id] = echarts.init(document.getElementById(mach_attr_show_id));
+
+	// 视图--各单机上报情况
+	if(attr_val.show_type == 'view')
+	{
+		op.title.text = "" + val_idx + " - 汇总视图 - " + attr_val.attr_list.list[0].name;
+		g_all_charts[mach_attr_show_id].on('datazoom', dssOnBrushSelected);
+		g_all_charts[mach_attr_show_id].setOption(op);
+
+		var mach_attr_vals = attr_val.each_mach.list;
+		for(var j=0; j < mach_attr_vals.length; j++)
+		{
+			val_idx = j+1;
+			var mach_attr_show_id = "dss_mach_attr_" + mach_attr_vals[j].id + "_" + attr_val.id;
+			if($('#'+mach_attr_show_id).length > 0) {
+				$('#'+mach_attr_show_id).html("");
+			}
+
+			var mach_attr_show_container = '<div style="width:780px; height:400px;';
+			mach_attr_show_container += ' border:2px solid #335cad; padding-top:5px;';
+			mach_attr_show_container += ' float:left; margin:10px;"';
+			mach_attr_show_container += ' id="' + mach_attr_show_id + '"></div>';
+			$('#dss_ct_attr_show_single').append( $(mach_attr_show_container) );
+			if(mach_attr_vals[j].max != 0)
+			{
+				var val_list_str = mach_attr_vals[j].value_list_str.split(',');
+				g_dss_value_list_str.push(val_list_str);
+				op.series[0].data = dmtGetYAxisData(time_info, mach_attr_vals[j].value_list_str);
+			}
+			else
+			{
+				g_dss_value_list_str.push(Array("0"));
+				op.series[0].data = [];
+			}
+			var title = "" + val_idx + " - 服务器【" + mach_attr_vals[j].id + "】 - ";
+			var server_info = mach_attr_vals[j].ip1 + "【" + mach_attr_vals[j].name + "】";
+			title += server_info;
+			title += "上报曲线图";
+			op.title.text = title;
+
+			if(typeof(g_all_charts[mach_attr_show_id]) != 'undefined')
+				g_all_charts[mach_attr_show_id].dispose();
+			g_all_charts[mach_attr_show_id] = echarts.init(document.getElementById(mach_attr_show_id));
+			g_all_charts[mach_attr_show_id].on('datazoom', dssOnBrushSelected);
+			g_all_charts[mach_attr_show_id].setOption(op);
+		}
+	}
+	else
+	{
+		op.title.text = "0 - 服务器曲线图 - " + attr_val.attr_list.list[0].name;
+		g_all_charts[mach_attr_show_id].on('datazoom', dssOnBrushSelected);
+		g_all_charts[mach_attr_show_id].setOption(op);
+	}
+}
+
+function dssValueIdxToTime(idx)
+{
+	var timestr = ' ';
+	var h = Math.floor(idx/60);
+	var h = h % 24;
+	if(h < 10)
+		timestr += '0';
+	timestr += h;
+	timestr += ':';
+
+	if(idx%60 < 10)
+		timestr += '0';
+	timestr += idx%60;
+	return timestr;
+}
+
+function dssSetSiteAttrValueInfo(title, idx, count)
+{
+	var idx_str = title.split('-');
+	var val_idx = parseInt(idx_str[0]);
+
+	var uhtml = "";
+	if(count == 0 || count > 30)
+		count = 30;
+
+	var dss_value_list_str = g_dss_value_list_str[val_idx];
+	var i=0;
+	var j=idx;
+	var max=Number(dss_value_list_str[idx]);
+
+	// find max
+	for(i=0; j < dss_value_list_str.length && i < count; j++)
+	{
+		if(dss_value_list_str[j] == 'null')
+			continue;
+		i++;
+		if(Number(dss_value_list_str[j]) > max)
+			max = dss_value_list_str[j];
+	}
+
+	for(i=0; idx < dss_value_list_str.length && i < count; idx++)
+	{
+		var day_idx = -1;
+		if(dss_value_list_str.length > 1440)
+			day_idx = Math.floor(idx/1440);
+
+		if(dss_value_list_str[idx] == 'null')
+			continue;
+		i++;
+		uhtml += "<tr>";
+		if(day_idx != -1)
+			uhtml += '<td width="120" align="center">' 
+				+ g_dss_multi_days[day_idx] + " " + dssValueIdxToTime(idx) + '</td>';
+		else
+			uhtml += '<td width="120" align="center">' + g_dss_date_info + " " + dssValueIdxToTime(idx) + '</td>';
+
+		if(Number(dss_value_list_str[idx]) == max)
+			uhtml += '<td width="80" align="center"><font color="red">' + dss_value_list_str[idx] + "</font></td>";
+		else
+			uhtml += '<td width="80" align="center">' + dss_value_list_str[idx] + "</td>";
+		uhtml += "</tr>";
+	}
+	$('#dss_attr_value_list_tbody').html(uhtml);
+}
+
+function dssSetAttrValueInfo(title, idx, count)
+{
+	var idx_str = title.split('-');
+	var val_idx = parseInt(idx_str[0]);
+
+	var uhtml = "";
+	if(count == 0 || count > 30)
+		count = 30;
+
+	var dss_value_list_str = g_dss_value_list_str[val_idx];
+	var i=0;
+	var j=idx;
+	var min=Number(dss_value_list_str[idx]);
+	var max=Number(dss_value_list_str[idx]);
+
+	// find max-min
+	for(i=0; j < dss_value_list_str.length && i < count; j++, i++)
+	{
+		if(Number(dss_value_list_str[j]) < min)
+			min = Number(dss_value_list_str[j]);
+		if(Number(dss_value_list_str[j]) > max)
+			max = dss_value_list_str[j];
+	}
+
+	// 周图
+	for(i=0; idx < dss_value_list_str.length && i < count; idx++, i++)
+	{
+		var day_idx = -1;
+		if(dss_value_list_str.length > 1440)
+			day_idx = Math.floor(idx/1440);
+
+		uhtml += "<tr>";
+		if(day_idx != -1)
+			uhtml += '<td width="120" align="center">' 
+				+ g_dss_multi_days[day_idx] + " " + dssValueIdxToTime(idx) + '</td>';
+		else
+			uhtml += '<td width="120" align="center">' + g_dss_date_info + " " + dssValueIdxToTime(idx) + '</td>';
+
+		if(Number(dss_value_list_str[idx]) == min)
+			uhtml += '<td width="80" align="center"><font color="blue">' + dss_value_list_str[idx] + "</font></td>";
+		else if(Number(dss_value_list_str[idx]) == max)
+			uhtml += '<td width="80" align="center"><font color="red">' + dss_value_list_str[idx] + "</font></td>";
+		else
+			uhtml += '<td width="80" align="center">' + dss_value_list_str[idx] + "</td>";
+		uhtml += "</tr>";
+	}
+	$('#dss_attr_value_list_tbody').html(uhtml);
+}
+
+function dssOnCustDateChange()
+{
+	var dt = $("#dss_date_cust").val();
+	if(dt != dss_cust_date_save)
+	{
+		var type = $("#dss_select_show_type option:selected").val();
+		return dssAttrShowSingle(type);
+	}
+}
+
+function dssOnSelectChange()
+{
+	var type = $("#dss_select_show_type option:selected").val();
+	return dssAttrShowSingle(type);
+}
+
+function dssOnSelChart()
+{
+	var chart_id = $('#dss_select_show_chart').val();
+	dmtJumpToAttrPic(chart_id, "#dss_ct_attr_show_single", "click");
+}
+
+function dssAttrShowSingle(type)
+{
+	var requrl = "<?cs var:config.cgipath?>mt_slog_showview";
+	var reqpara = {};
+
+	reqpara.type_id = <?cs var:config.type_id ?>;
+	reqpara.show_type = '<?cs var:config.show_type ?>';
+	reqpara.action = 'show_single_attr_cust';
+	reqpara.show_single_type = type;
+	reqpara.attr_list = <?cs var:config.attr_id ?>;
+
+	var dt = $("#dss_date_cust").val();
+	if(dt != "")
+		reqpara.date = dt;
+	else
+		reqpara.date = 'today';
+	reqpara._r = Math.random();
+
+	ajaxTodoPost(requrl, reqpara, function(json) {
+		if(dmtFirstDealAjaxResponse(json))
+			return;
+
+		if(json.statusCode == DWZ.statusCode.success ||json.statusCode == DWZ.statusCode.ok)
+		{
+			g_dss_value_list_str = [];
+
+			var first_val = json.value_list_str.split(',');
+			g_dss_value_list_str.push(first_val);
+			g_dss_date_time_start_utc = json.date_time_start_utc;
+			if(json.type == 3)
+				g_dss_multi_days = json.date_week_days.split(',');
+			else if(json.type == 4)
+				g_dss_multi_days = json.date_month_days.split(',');
+
+			if(json.show_type == 'view')
+			{
+				var op_sel = $('#dss_select_show_chart');
+				op_sel.html('');
+				var op = $('<option style="text-align:center"></option>');
+				op.val('mach_attr_0_'+json.id).text('汇总视图').attr('selected', true);
+				op_sel.append(op);
+
+				var mach_attr_vals = json.each_mach.list;
+				for(var j=0; j < mach_attr_vals.length; j++)
+				{
+					var op = $('<option></option>');
+					var server_info = mach_attr_vals[j].ip1 + "【" + mach_attr_vals[j].name + "】";
+					var mach_attr_show_id = "dss_mach_attr_" + mach_attr_vals[j].id + "_" + json.id;
+					op.val(mach_attr_show_id).text(server_info);
+					op_sel.append(op);
+				}
+				op_sel.change(dssOnSelChart);
+			}
+
+			g_dss_date_info = json.date_time_cur;
+			g_dss_show_type = json.show_type;
+			if(g_dss_show_type == 'site')
+				dssSetSiteAttrValueInfo("0-total", 0, 0);
+			else
+				dssSetAttrValueInfo("0-total", 0, 0);
+			dssShowAttrInfo(json);
+		}
+		else if(json.msgid && alertMsg)
+		{
+			var msg = DWZ.msg(json.msgid);
+			alertMsg.warn(msg);
+		}
+		else if(json.msg)
+			alertMsg.warn(json.msg);
+	});
+}
+
+var g_dss_value_list_str = new Array();
+var g_dss_date_info = '';
+var g_dss_multi_days = new Array();
+var g_dss_show_type = '';
+
+$(document).ready(function(){
+	dmtSetChartSize();
+	$('#dss_ct_attr_show_single').html('');
+	$('#dss_attr_value_list_tbody').html('');
+	$('#dss_select_show_type').html('');
+
+	var op = $('<option value="2">日图</option>');
+	if(<?cs var:config.show_single_type ?> == 2)
+		op.attr('selected', true);
+	$('#dss_select_show_type').append(op);
+
+	var op = $('<option value="1">日同比图</option>');
+	if(<?cs var:config.show_single_type ?> == 1)
+		op.attr('selected', true);
+	$('#dss_select_show_type').append(op);
+
+	var op = $('<option value="3">周图</option>');
+	if(<?cs var:config.show_single_type ?> == 3)
+		op.attr('selected', true);
+	$('#dss_select_show_type').append(op);
+
+	var op = $('<option value="4">月图</option>');
+	$('#dss_select_show_type').append(op);
+
+	dssAttrShowSingle(<?cs var:config.show_single_type ?>);
+	$('#dss_select_show_type').change(dssOnSelectChange);
+});
+
+</script>
+
+

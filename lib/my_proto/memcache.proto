@@ -1,0 +1,79 @@
+package comm;
+
+message AttrVal
+{
+	optional uint32 idx = 1;
+	optional uint32 val = 2;
+}
+
+message MtMemcacheMachineAttrDayVal
+{
+	repeated AttrVal attr_val = 1; 
+	optional uint32 max_idx = 2 [default=0];
+}
+
+message MonitorMemcache
+{
+	optional MtMemcacheMachineAttrDayVal machine_attr_day_val = 1;
+}
+
+message MemcTimeInfo
+{
+	optional uint32 id = 1;
+	optional uint32 time = 2;
+}
+
+message MemcTimeInfoAll
+{
+	repeated MemcTimeInfo info = 1;
+}
+
+message MemcViewInfo
+{
+	optional string view_name = 1;
+}
+
+message MemcMachineInfo
+{
+	optional uint32 ip1 = 1;
+	optional uint32 ip2 = 2;
+	optional uint32 ip3 = 3;
+	optional uint32 ip4 = 4;
+	optional string name = 5;
+}
+
+message MemcAttrTypeInfo
+{
+	optional string attr_type_name = 1;
+	optional int32 attr_type_id = 2;
+}
+
+enum AttrInfoFlag {
+	ATTR_INFO_FLAG_GLOBAL  = 1;
+	ATTR_INFO_FLAG_MASK = 2;
+}
+
+message MemcAttrInfo
+{
+	optional string attr_name = 1;
+}
+
+message MemcUserAttrInfo
+{
+	optional uint32 attr_info_seq = 1;
+	repeated MemcAttrInfo attr_list = 2;
+}
+
+message MemcUserAttrTypeInfo
+{
+	optional uint32 attr_type_info_seq = 1;
+	repeated MemcAttrTypeInfo attr_type_list = 2;
+}
+
+// 监控点类型树
+message MmapUserAttrTypeTree
+{
+	optional int32 attr_type_id = 1;
+	repeated MmapUserAttrTypeTree sub_type_list = 2;
+}
+

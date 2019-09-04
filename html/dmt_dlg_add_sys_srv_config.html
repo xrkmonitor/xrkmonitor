@@ -1,0 +1,89 @@
+<script language="javascript" type="text/javascript">
+
+var ddassc_set_list = $.parseJSON('<?cs var:config.sysset_list ?>');
+
+function ddasscValidateCallback(fm)
+{
+	<?cs if:config.action == "save_add_syssrv" ?>
+	var itype = $('#ddassc_type').val();
+	if(itype=="0") {
+		alertMsg.warn("请选择服务器类型!");
+		return false;
+	}
+	<?cs /if ?>
+	return validateCallback(fm, dialogAjaxDone);
+}
+
+$(document).ready(function(){
+	var shtml = dmtGetSyssetTypeHtml('ddassc_type');
+	$('#ddassc_sys_srv_type_list').html(shtml);
+
+	<?cs if:config.action != "save_add_syssrv" ?>
+	var ddassc_sel_type = $('#ddassc_type');
+	ddassc_sel_type.children("option").each(function(){
+		if($(this).val() == <?cs var:config.config_type ?>)
+			$(this).attr("selected", true);
+	});
+	ddassc_sel_type.attr("disabled", true);
+	<?cs /if ?>
+	$("#ddassc_srv_for").val("<?cs var:config.config_srv_for ?>");
+	$('#ddassc_sand_box').val(<?cs var:config.sand_box ?>);
+});
+
+</script>
+
+
+<div class="pageContent">
+	<form method="post" action="<?cs var:config.cgipath?>mt_slog_machine?action=<?cs var:config.action ?>&navTabId=dmt_list_sys_srv" class="pageForm required-validate" onsubmit="return ddasscValidateCallback(this);">
+		<div class="pageFormContent" layoutH="56" id="ddac_log_type">
+			<?cs if:config.action == "save_mod_syssrv" ?>
+			<input type="hidden" name="ddassc_id" value="<?cs var:config.config_id ?>" />
+			<?cs /if ?>
+
+			<p id='ddassc_sys_srv_type_list'>
+			</p>
+			<p>
+				<label>IP 地址：</label>
+				<?cs if:config.action == "save_add_syssrv" ?>
+				<input type="text" size="20" name="ddassc_ip" id="ddassc_ip" minlength="7" maxlength="16" alt="请输入服务器IP地址" class="required" />
+				<?cs else ?>
+				<input type="text" size="20" name="ddassc_ip" id="ddassc_ip" minlength="7" maxlength="16" alt="请输入服务器IP地址" value="<?cs var:config.config_ip ?>"  />
+				<?cs /if ?>
+			</p>
+			<p>
+				<label>监听端口：</label>
+				<input type="text" size="10" name="ddassc_port" id="ddassc_port" number alt="请输入端口" class="required" value="<?cs var:config.config_port ?>" />
+			</p>
+			<p>
+				<label>权重：</label>
+				<input type="text" size="12" name="ddassc_weight" id="ddassc_weight" number alt="请输入权重"  value="<?cs var:config.config_weight ?>" />
+			</p>
+			<p>
+				<label>服务状态：</label>
+				<select name="ddassc_sand_box" id="ddassc_sand_box">
+					<option value="0">接受新用户</option>
+					<option value="1">限制使用中</option>
+					<option value="2">数据迁移中</option>
+					<option value="3">已下架</option>
+				</select>
+			</p>
+			<p>
+				<label>服务器描述：</label>
+				<input type="text" size="32" name="ddassc_desc" id="ddassc_desc" maxlength="32" alt="请输入服务器描述信息" value="<?cs var:config.config_desc ?>"  />
+			</p>
+			<p>
+				<label>绑定服务对象：</label>
+				<textarea rows="8" cols="50" name="ddassc_srv_for" id="ddassc_srv_for" alt="请输入绑定信息" />
+			</p>
+		</div>
+		<div class="formBar">
+			<ul>
+				<li><div class="button"><div class="buttonContent"><button type="submit">&nbsp;&nbsp;保&nbsp;存&nbsp;&nbsp;</button></div></div></li>
+				<li>
+					<div class="button"><div class="buttonContent"><button type="button" class="close">&nbsp;&nbsp;取&nbsp;消&nbsp;&nbsp;</button></div></div>
+				</li>
+			</ul>
+		</div>
+	</form>
+</div>
+

@@ -1,0 +1,180 @@
+<script language="javascript" type="text/javascript">
+
+var ds_bind_machines_<?cs var:config.view_id ?> = $.parseJSON('<?cs var:config.bind_machine_list ?>');
+var ds_not_bind_machines_<?cs var:config.view_id ?> = $.parseJSON('<?cs var:config.not_bind_machine_list ?>');
+
+var ds_select_bind_idx_<?cs var:config.view_id ?> = "null";
+var ds_select_not_bind_idx_<?cs var:config.view_id ?> = "null";
+
+function dsDelBindMachine_<?cs var:config.view_id ?>()
+{
+	var ds_select_bind_idx = ds_select_bind_idx_<?cs var:config.view_id ?>;
+	var ds_bind_machines = ds_bind_machines_<?cs var:config.view_id ?>;
+
+	if(ds_select_bind_idx == "null")
+		alertMsg.info("请从绑定机器列表中选择一个机器！");
+	else
+	{
+		var requrl = "<?cs var:config.cgipath ?>mt_slog_showview?action=save_not_bind_machine&machine_id=";
+		var i = ds_select_bind_idx;
+		var list_machine = ds_bind_machines.list;
+		requrl += list_machine[i].id;
+		requrl += "&view_id=" + "<?cs var:config.view_id ?>";
+		$.ajax({
+			type:"get",
+			url:requrl,
+			dataType:"json",
+			global:false,
+			cache: false,
+			success: function(result) {
+				if(dmtFirstDealAjaxResponse(result))
+				{
+					return;
+				}
+				return dialogAjaxDone(result);
+			},
+			error:DWZ.ajaxError
+		});
+	}
+}
+
+function dsSelectMachine_<?cs var:config.view_id ?>(idx, bind)
+{
+	if(bind)
+		ds_select_bind_idx_<?cs var:config.view_id ?> = idx;
+	else
+		ds_select_not_bind_idx_<?cs var:config.view_id ?> = idx;
+}
+
+function dsAddBindMachine_<?cs var:config.view_id ?>()
+{
+	var ds_select_not_bind_idx = ds_select_not_bind_idx_<?cs var:config.view_id ?>;
+	var ds_not_bind_machines = ds_not_bind_machines_<?cs var:config.view_id ?>;
+
+	if(ds_select_not_bind_idx == "null")
+		alertMsg.info("请从未绑定机器列表中选择一台机器！");
+	else
+	{
+		var requrl = "<?cs var:config.cgipath ?>mt_slog_showview?action=save_bind_machine&machine_id=";
+		var i = ds_select_not_bind_idx;
+		var list_machine = ds_not_bind_machines.list;
+		requrl += list_machine[i].id;
+		requrl += "&view_id=" + "<?cs var:config.view_id ?>";
+		$.ajax({
+			type:"get",
+			url:requrl,
+			dataType:"json",
+			global:false,
+			cache: false,
+			success: function(result) {
+				if(dmtFirstDealAjaxResponse(result))
+					return ;
+				return dialogAjaxDone(result);
+			},
+			error:DWZ.ajaxError
+		});
+	}
+	return false;
+}
+
+function dsUnAutoBindMachine_<?cs var:config.view_id ?>()
+{
+	var requrl = "<?cs var:config.cgipath ?>mt_slog_view?action=view_unauto_bind_machine";
+	requrl += "&view_id=" + "<?cs var:config.view_id ?>";
+	$.ajax({
+		type:"get",
+		url:requrl,
+		dataType:"json",
+		global:false,
+		cache: false,
+		success: function(result) {
+			if(dmtFirstDealAjaxResponse(result))
+				return ;
+			if(result.statusCode == 200) {
+				$('#dsb_auto_bind_tip_<?cs var:config.view_id ?>').text('提示：已解除视图自动绑定上报机器，现在您可以手动操作了');
+				$('#dsb_btn_bind_<?cs var:config.view_id ?>').attr('disabled', false);
+				$('#dsb_btn_unbind_<?cs var:config.view_id ?>').attr('disabled', false);
+				$('#dsb_btn_unauto_bind_<?cs var:config.view_id ?>').css('display', 'none');
+			}
+			else {
+				alertMsg.warn("设置解除视图自动绑定机器失败");
+				$.pdialog.closeCurrent();
+			}
+		},
+		error:DWZ.ajaxError
+	});
+}
+
+function dsSetMachineList_<?cs var:config.view_id ?>(machine_info, bind)
+{
+	var list = "";
+	var list_machine = machine_info.list;
+	for(var i=0,j=0; i < machine_info.count && i < list_machine.length; i++)
+	{
+		list += "<tr onclick='dsSelectMachine_<?cs var:config.view_id ?>(" + i + "," + bind +");'>";
+		list += "<td>" + list_machine[i].name + "_" + list_machine[i].id + "</td>";
+		list += "</tr>";
+	}
+	return list;
+}
+
+$(document).ready(function(){
+	var ds_bind_machines = ds_bind_machines_<?cs var:config.view_id ?>;
+	var ds_not_bind_machines = ds_not_bind_machines_<?cs var:config.view_id ?>;
+
+	var not_bind_machines = dsSetMachineList_<?cs var:config.view_id ?>(ds_not_bind_machines, 0);
+	var not_bind = $("#ds_not_bind_machine_list_<?cs var:config.view_id ?>");
+	not_bind.html(not_bind_machines);
+
+	var bind_machines = dsSetMachineList_<?cs var:config.view_id ?>(ds_bind_machines, 1);
+	var bind = $("#ds_bind_machine_list_<?cs var:config.view_id ?>");
+	bind.html(bind_machines);
+});
+
+</script>
+
+<div class="pageContent">
+	<?cs if:config.auto_bind_machine == 1 ?>
+	<font class='note-text' style="float:left; overflow-x:hidden; height:24px; text-align:center; width:485px; border:2px; border-color:EEF4F5; background-color:#e8eff1; padding-top:6px; font-size:13px;" id="dsb_auto_bind_tip_<?cs var:config.view_id ?>">
+		提示：该视图已设置自动绑定上报机器，如需手动配置，请先解除自动绑定
+	</font>
+	<?cs /if ?>
+
+	<div layoutH="<?cs var:config.bind_machine_dlg_layout ?>" width="200" style="float:left; display:block; overflow-x:hidden; border-right:1px #B8D0D6 solid">
+		<div class="pageFormContent" style="padding:0px; overflow-x:hidden">
+			<table class="list" style="overflow-x:hidden;width:200px"> 
+				<thead> 
+					<tr><th width="200">已绑定机器列表</th></tr>
+				</thead>
+				<tbody id="ds_bind_machine_list_<?cs var:config.view_id ?>">
+				</tbody>
+			</table>
+		</div>
+	</div>
+
+	<div layoutH="<?cs var:config.bind_machine_dlg_layout ?>" align="center" style="float:left; width:103px; display:block; border:2px; border-color:EEF4F5; background-color:#EDEDED;">
+		<div align="center" style="padding-top:120px"> 
+
+			<?cs if:config.auto_bind_machine == 1 ?>
+			<button id='dsb_btn_unauto_bind_<?cs var:config.view_id ?>' onclick="dsUnAutoBindMachine_<?cs var:config.view_id ?>();">解除自动绑定</button><br><br>
+			<?cs /if ?>
+
+			<button id='dsb_btn_bind_<?cs var:config.view_id ?>' <?cs var:config.btn_disabled ?> onclick="dsAddBindMachine_<?cs var:config.view_id ?>();">&lt;&lt;&lt;绑定</button><br><br>
+			<button id='dsb_btn_unbind_<?cs var:config.view_id ?>' <?cs var:config.btn_disabled ?> onclick="dsDelBindMachine_<?cs var:config.view_id ?>();">解绑&gt;&gt;&gt;</button>
+		</div>
+	</div>
+
+	<div layoutH="<?cs var:config.bind_machine_dlg_layout ?>" width="200" style="float:right; overflow-x:hidden; border-left:1px #B8D0D6 solid;padding:0px; margin:0px">
+		<div class="pageFormContent" style="padding:0px; margin:0px; overflow-x:hidden" >
+			<table class="list" style="overflow-x:hidden;width:200px"> 
+				<thead> 
+					<tr><th width="200">未绑定机器列表</th></tr>
+				</thead>
+				<tbody id="ds_not_bind_machine_list_<?cs var:config.view_id ?>"> 
+				</tbody>
+			</table>
+		</div>
+	</div>
+
+</div>
+

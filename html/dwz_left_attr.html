@@ -1,0 +1,24 @@
+<div class="accordion" fillSpace="sidebar">
+	<div class="accordionContent">
+		<ul class="tree treeFolder expand">
+			<li><a href="<?cs var:config.cgipath?>mt_slog_showview?action=show_warn_list" target="navTab" rel="dmt_warn_list">监控点告警列表</a></li>
+
+			<li><a>视图上报查看</a>
+			<ul>
+			<?cs each:mlist=Output.amlists ?>
+				<li title='<?cs var:mlist.name ?>'><a href="<?cs var:config.cgipath ?>mt_slog_showview?action=list&view_id=<?cs var:mlist.id ?>&view_name=<?cs var:mlist.name ?>" rel="showview_<?cs var:mlist.id ?>" target="navTab" fresh="true"><?cs var:mlist.name ?></a>
+			<?cs /each ?>
+			</ul>
+			</li>
+
+			<li><a>单机上报查看</a>
+			<ul>
+			<?cs each:mlist=Output.machlists ?>
+				<li title='<?cs var:mlist.name ?>'><a href="<?cs var:config.cgipath ?>mt_slog_showview?action=show_machine_attr&machine_id=<?cs var:mlist.id ?>&date=today" rel="showmachine_<?cs var:mlist.id ?>" target="navTab" fresh="true"><?cs var:mlist.name ?></a>
+			<?cs /each ?>
+			</ul>
+			</li>
+		</ul>
+	</div>
+</div>
+

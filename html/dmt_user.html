@@ -1,0 +1,240 @@
+<div class="pageContent">
+	<div class="unitBox" style="margin-left:1px;"> 
+		<form id="pagerForm" method="get" action="<?cs var:config.cgipath?>mt_slog_user?action=search_user">
+			<input type="hidden" name="pageNum" value="<?cs var:config.currentPage ?>" />
+			<input type="hidden" name="numPerPage" value="<?cs var:config.numPerPage ?>" />
+			<input type="hidden" name="orderField" value="<?cs var:config.orderField ?>" />
+			<input type="hidden" name="orderDirection" value="<?cs var:config.orderDirection ?>" />
+			<input type="hidden" name="dul_user_name" value="<?cs var:config.dul_user_name?>">
+		</form>
+
+		<div class="pageHeader" style="border:1px #B8D0D6 solid">
+			<form onsubmit="return navTabSearch(this, 'dmt_user');" action="<?cs var:config.cgipath?>mt_slog_user?action=search_user" method="get">
+			<div class="searchBar">
+				<table class="searchContent" >
+					<tr>
+						<td>
+							账号名：<input type="text" name="dul_user_name" id="dul_user_name" size="16" value="<?cs var:config.dul_user_name ?>" />
+						</td>
+						<td>
+							<button type="submit" class="sexybutton" id="dul_btn_submit"><span><span><span class="search">查找</span></span></span></button>
+							<button type="button" class="sexybutton" onclick="return dulClearSearch()"><span><span><span class="erase">重填</span></span></span></button>
+						</td>
+					</tr>
+				</table>
+			</div>
+			</form>
+		</div>
+	
+		<div class="pageContent" style="border-left:1px #B8D0D6 solid;border-right:1px #B8D0D6 solid">
+			<div class="panelBar">
+				<ul class="toolBar">
+					<li><a class="add" href="#" onclick="return dulAddNewUser();"><span>添加</span></a></li>
+					<li class="line">line</li>
+					<li><a class="delete" href="#" onclick="return dulDeleteUser();"><span>删除</span></a></li>
+					<li class="line">line</li>
+					<li><a class="edit" href="#" onclick="return dulModUser();"><span>修改</span></a></li>
+					<li class="line">line</li>
+					<li><a class="edit" href="#" onclick="return dulSuResetPass();"><span>重置密码</span></a></li>
+					<li class="line">line</li>
+				</ul>
+			</div>
+
+			<div>
+				<table class="list" width="100%" layoutH="90">
+					<thead>
+						<tr>
+							<th width="10">序号</th>
+
+							<?cs if:config.order_user_id ?>
+							<th width="30" orderField="user_id" class="<?cs var:config.order_user_id ?>">账号 id</th>
+							<?cs else ?>
+							<th width="30" orderField="user_id" class="desc">账号 id</th>
+							<?cs /if ?>
+
+							<?cs if:config.order_user_name ?>
+							<th width="60" orderField="user_name" class="<?cs var:config.order_user_name ?>">账号名</th>
+							<?cs else ?>
+							<th width="60" orderField="user_name" class="asc">账号名</th>
+							<?cs /if ?>
+
+							<th width="100">电子邮箱</th>
+							<th width="70">最后登陆IP</th>
+							<?cs if:config.order_last_login_time ?>
+							<th width="70" orderField="last_login_time" class="<?cs var:config.order_last_login_time ?>">最后登陆时间</th>
+							<?cs else ?>
+							<th width="70" orderField="last_login_time" class="asc">最后登陆时间</th>
+							<?cs /if ?>
+							<th width="80">备注</th>
+							<th width="20">详情</th>
+						</tr>
+					</thead>
+					<tbody id="dul_list_user">
+					</tbody>
+				</table>
+	
+				<div class="panelBar" layoutH="0">
+					<div class="pages">
+						<span>每页显示</span>
+						<select name="numPerPage" onchange="navTabPageBreak({numPerPage:this.value})">
+							<option value="10">10</option>
+							<option value="20">20</option>
+							<option value="50">50</option>
+							<option value="100">100</option>
+							<option value="200">200</option>
+						</select>
+						<span>条，共 <?cs var:config.totalCount ?>  条</span>
+					</div>
+					<div class="pagination" targetType="navTab" totalCount="<?cs var:config.totalCount ?>" numPerPage="<?cs var:config.numPerPage ?>" pageNumShown="<?cs var:config.pageNumShown ?>" currentPage="<?cs var:config.currentPage ?>"></div>
+				</div>
+
+			</div> 
+		</div>
+	</div>
+</div> <!-- unitBox -->
+
+<script language="javascript" type="text/javascript">
+var dul_userinfo = $.parseJSON('<?cs var:config.userinfo ?>');
+var dul_sel_user = "null"; 
+
+function dulSetSelUser(selIndex)
+{
+	dul_sel_user = dul_userinfo.list[selIndex];
+}
+
+function dulClearSearch()
+{
+	$("#dul_user_name").val("").focus();
+}
+
+function dulSetUserList()
+{
+	if(dul_userinfo == null || dul_userinfo.count <= 0)
+		return "";
+
+	var ulist = dul_userinfo.list;
+	var uhtml = "";
+	for(var i=0, j=0; i < ulist.length; i++)
+	{
+		uhtml += "<tr onclick='dulSetSelUser(" + i + ")'>";
+		j = (<?cs var:config.currentPage ?>-1) * <?cs var:config.numPerPage ?> + 1;
+		uhtml += "<td>" + (i+j) + "</td>";
+		uhtml += "<td>" + ulist[i].user_id + "</td>";
+		uhtml += "<td>" + ulist[i].user_name + "</td>";
+		uhtml += "<td>" + ulist[i].email + "</td>";
+		uhtml += "<td>" + ulist[i].last_login_address + "</td>";
+		uhtml += "<td>" + ulist[i].last_login_time + "</td>";
+		uhtml += "<td>" + ulist[i].remark + "</td>";
+
+		var udetail = "<a class='detail' href='<?cs var:config.cgipath?>mt_slog_user?";
+		udetail += "action=detail_user&user_id=" + ulist[i].user_id + "'" ;
+		udetail += " target='dialog' rel='du_dlg_user_detail' maxable=false minable=false";
+		udetail += " title='账号："+ulist[i].user_name+" 详细信息' width='720' height='320' mask=true>详情</a>";
+
+		uhtml += "<td>" + udetail + "</td>";
+		uhtml += "</tr>";
+	}
+	return uhtml;
+}
+
+function dulAddNewUser()
+{
+	var url = "<?cs var:config.cgipath?>mt_slog_user?action=add_user";
+	var op = $.parseJSON('{"mask":true,"maxable":false,"height":300,"width":520}'); 
+	$.pdialog.open(url, "dul_dlg_add_new_user", "添加账号", op); 
+}
+
+function dulDeleteUser()
+{
+	if(dul_sel_user == "null")
+	{
+		alertMsg.info("请先点击账号列表选择一个要删除的账号");
+		return;
+	}
+
+	if(<?cs var:comm.user_id ?> == dul_sel_user.user_id)
+	{
+		alertMsg.info("不允许删除自己的账号");
+		return;
+	}
+
+	if(dul_sel_user.user_type == 1)
+	{
+		alertMsg.info("不允许删除管理员账号");
+		return;
+	}
+
+	var msg="确认删除账号：" + dul_sel_user.user_name + " (id:" + dul_sel_user.user_id + ") ?";
+	alertMsg.confirm(msg, {
+		okCall: function(){
+			var url = "<?cs var:config.cgipath?>mt_slog_user?action=delete_user"+"&id="+dul_sel_user.user_id;
+			$.get(url, function(data){
+					if(dmtFirstDealAjaxResponse(data))
+						return;
+
+					if(data.statusCode==200){
+						alertMsg.info("删除成功。");
+						return navTab.reload();
+					}
+					else if(data.msg)
+						alertMsg.warn(data.msg);
+					else 
+						alertMsg.warn("删除失败！(注意：内置账号不允许删除)");
+				}, "json"); 
+			}
+		});
+	return;
+}
+
+function dulModUser()
+{
+	if(dul_sel_user == "null")
+	{
+		alertMsg.info("请先点击账号列表选择一个要修改的账号");
+		return;
+	}
+
+	var url = "<?cs var:config.cgipath?>mt_slog_user?action=mod_user";
+	url += "&user_id=" + dul_sel_user.user_id; 
+	url += "&user_name=" + encodeURIComponent(dul_sel_user.user_name);
+	if(typeof dul_sel_user.remark != "undefined")
+		url += "&remark=" + encodeURIComponent(dul_sel_user.remark);
+
+	var op = $.parseJSON('{"mask":true,"maxable":false,"height":300,"width":520}'); 
+	$.pdialog.open(url, "dul_dlg_mod_user", "修改账号信息", op); 
+}
+
+function dulSuResetPass()
+{ 
+	if(dul_sel_user == "null")
+	{
+		alertMsg.info("请先点击账号列表选择一个要重置密码的账号");
+		return;
+	}
+
+	<?cs if:config.has_email == 0 ?>
+	alertMsg.info("您的账号未绑定邮箱或者手机号码，请先绑定");
+	return;
+	<?cs /if ?>
+
+	var burl = '<?cs var:config.cgipath?>mt_slog_user?action=init_change_info';
+	burl += '&field=su_pass';
+	burl += '&has_email=' + '<?cs var:config.has_email ?>';
+	burl += '&mod_user_id=' + dul_sel_user.user_id;
+	burl += '&mod_user_name=' + dul_sel_user.user_name;
+	$.pdialog.open(burl, 'duc_dlg_modify_name', '管理员重置账号密码', 
+		{ mask:true, maxable:false, width:440, height:280, close:dmt_duc_dlg_modify_name_close});
+}
+
+$(document).ready(function(){
+	var ulist = dulSetUserList();
+	$("#dul_list_user").html(ulist);
+
+	$("select[name=numPerPage] option").each(function(){
+		if(this.value == <?cs var:config.numPerPage ?>)
+			$(this).attr("selected", true);
+	});
+});
+
+</script>
+

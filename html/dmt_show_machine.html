@@ -1,0 +1,210 @@
+<div class="pageContent">
+	<div class="unitBox" style="margin-left:1px;"> 
+		<div class="pageContent" style="border-left:1px #B8D0D6 solid;border-right:1px #B8D0D6 solid">
+			<div class="panelBar">
+				<ul class="toolBar">
+					<li>指定日期：<input type="text" class="date" size="10" readonly="true" id="dsm_date_<?cs var:config.machine_id ?>" value="<?cs var:config.cust_date ?>" onblur="setTimeout(dsmOnCustDateChange_<?cs var:config.machine_id ?>, 600);" minDate="2014-01-01" maxDate="2088-12-31" /></li>
+					<li><a class="add" href="#" onclick="return dsmAttrShow_<?cs var:config.machine_id ?>(2);"><span>日图</span></a></li>
+					<li class="line">line</li>
+					<li><a class="add" href="#" onclick="return dsmAttrShow_<?cs var:config.machine_id ?>(1);"><span>日同比图</span></a></li>
+					<li class="line">line</li>
+					<li><a class="add" href="#" onclick="return dsmAttrShow_<?cs var:config.machine_id ?>(3);"><span>周图</span></a></li>
+					<li class="line">line</li>
+					<li style="display:none"><a id="dsm_href_<?cs var:config.machine_id ?>" href="#" target="navTab" rel="showmachine_<?cs var:config.machine_id ?>" fresh="false"></a></li>
+					<li><a class="add" href="#" onclick="return dsmLeftMenuShow_<?cs var:config.machine_id ?>();"><span>导航菜单</span></a></li>
+					&nbsp;&nbsp;&nbsp;<li><span id="dsm_show_proc_<?cs var:config.machine_id ?>"></span></li>
+				</ul>
+			</div>
+
+			<div> 
+				<div id='dsmLeftMenu_<?cs var:config.machine_id ?>' layoutH="28" class="chartLeftMenu">
+					<ul class="tree treeFolder" id="dsm_attr_list_<?cs var:config.machine_id ?>">
+					</ul>
+				</div> 
+
+				<div layoutH="28" class="unitBox" id="dsm_ct_attr_show_list_<?cs var:config.machine_id ?>"> 
+				</div>
+			</div>
+		</div>
+	</div> <!-- unitBox -->
+</div>
+
+<script language="javascript" type="text/javascript">
+
+var dsm_attr_list_arry_<?cs var:config.machine_id ?> = new Array();
+var dsm_attr_show_index_cur_<?cs var:config.machine_id ?>;
+var dsm_attr_show_get_auto_<?cs var:config.machine_id ?> = null;
+var dsm_attr_show_get_last_seq_<?cs var:config.machine_id ?> = <?cs var:config.last_seq ?>;
+var dsm_attr_show_type_<?cs var:config.machine_id ?> = <?cs var:config.show_type ?>;
+var dsm_attr_show_reqstart_timestamp_<?cs var:config.machine_id ?> = 0;
+var dsm_cust_date_save_<?cs var:config.machine_id ?> = '<?cs var:config.cust_date ?>';
+
+function dsmAttrShow_<?cs var:config.machine_id ?>(type)
+{
+	var dt = $("#dsm_date_<?cs var:config.machine_id ?>").val();
+	if(dt != "")
+		param = '&date=' + dt;
+	else
+		param = "&date=today" 
+
+	param += '&_r=' + Math.random();
+	param += '&machine_id=' + '<?cs var:config.machine_id ?>';
+	param += '&type=' + type;
+
+	var requrl = "<?cs var:config.cgipath ?>mt_slog_showview?action=show_machine_attr" + param;
+	var idhref = "#dsm_href_<?cs var:config.machine_id ?>";
+	if(type == 1)
+		$(idhref).html('日同比图');
+	else if(type== 2) 
+		$(idhref).html('日图');
+	else
+		$(idhref).html('周图');
+
+	$(idhref).attr('href', requrl);
+	$(idhref).click();
+	return false;
+}
+
+function dsmClickMachineAttr_<?cs var:config.machine_id ?>(show_id)
+{
+	var arrStr = show_id.split('_');
+	var page_start_index = 0;
+	for(var i=0; i < dsm_attr_list_arry_<?cs var:config.machine_id ?>.length; i++)
+	{
+		if(page_start_index+<?cs var:config.per_count ?> <= i)
+			page_start_index += <?cs var:config.per_count ?>;
+
+		if(arrStr[1] == dsm_attr_list_arry_<?cs var:config.machine_id ?>[i])
+			break;
+	}
+
+	// 非法 attr
+	if(i >= dsm_attr_list_arry_<?cs var:config.machine_id ?>.length)
+		return false;
+
+	// 已获取到的 attr, 没有数据上报
+	if(page_start_index < dsm_attr_show_index_cur_<?cs var:config.machine_id ?>)
+		return false;
+
+	// 正在获取中的 attr
+	return true;
+}
+
+function dsmAttrShowDate2_<?cs var:config.machine_id ?>(idx)
+{
+	var reqAttr = dsm_attr_list_arry_<?cs var:config.machine_id ?>.slice(
+			idx, idx+<?cs var:config.per_count ?>);
+	if(reqAttr.length <= 0)
+	{
+		return;
+	}
+
+	var requrl = "<?cs var:config.cgipath?>mt_slog_showview";
+	var reqpara = {};
+	reqpara.machine_id = <?cs var:config.machine_id ?>;
+	reqpara.attr_list = reqAttr.toString();
+	reqpara.action = 'show_machine_attr_cust';
+	reqpara.last_seq = dsm_attr_show_get_last_seq_<?cs var:config.machine_id ?>;;
+	reqpara.type = dsm_attr_show_type_<?cs var:config.machine_id ?>;
+	if(dsm_attr_show_get_auto_<?cs var:config.machine_id ?> == 'auto')
+		reqpara.global = false;
+	else
+		reqpara.global = true;
+
+	var dt = $("#dsm_date_<?cs var:config.machine_id ?>").val();
+	if(dt != "")
+		reqpara.date = dt;
+	else
+		reqpara.date = 'today';
+	reqpara._r = Math.random();
+	dsm_attr_show_index_cur_<?cs var:config.machine_id ?> = idx; 
+
+	// 首次获取上报耗时信息
+	if(idx == 0)
+	{
+		var d = new Date();
+		dsm_attr_show_reqstart_timestamp_<?cs var:config.machine_id ?> = d.getTime();
+		reqpara.req_timestamp = dsm_attr_show_reqstart_timestamp_<?cs var:config.machine_id ?>;
+	}
+
+	ajaxTodoPost(requrl, reqpara, function(json) {
+		if(dmtFirstDealAjaxResponse(json))
+			return;
+
+		if(json.statusCode == DWZ.statusCode.success ||json.statusCode == DWZ.statusCode.ok)
+		{
+			if(dsm_attr_show_get_last_seq_<?cs var:config.machine_id ?> != json.last_req_seq)
+				return;
+
+			dmtShowAttrInfo(json.attr_list, json.attr_val_list, 
+				'#dsm_ct_attr_show_list_<?cs var:config.machine_id ?>', 'machine');
+
+			// ajax 自动获取
+			if(dsm_attr_show_index_cur_<?cs var:config.machine_id ?> + <?cs var:config.per_count ?>
+				< dsm_attr_list_arry_<?cs var:config.machine_id ?>.length) 
+			{
+				dsm_attr_show_get_auto_<?cs var:config.machine_id ?> = 'auto';
+				dsmAttrShowDate2_<?cs var:config.machine_id ?>(
+					dsm_attr_show_index_cur_<?cs var:config.machine_id ?> + <?cs var:config.per_count ?>);
+			}
+			else
+				dsm_attr_show_get_auto_<?cs var:config.machine_id ?> = null;
+		}
+		else if(json.msgid && alertMsg)
+		{
+			var msg = DWZ.msg(json.msgid);
+			alertMsg.info(msg);
+		}
+		else if(json.msg)
+			alertMsg.info(json.msg);
+	});
+}
+
+function dsmOnCustDateChange_<?cs var:config.machine_id ?>()
+{
+	var dt = $("#dsm_date_<?cs var:config.machine_id ?>").val();
+	if(dt != dsm_cust_date_save_<?cs var:config.machine_id ?>)
+	{
+		return dsmAttrShow_<?cs var:config.machine_id ?>(dsm_attr_show_type_<?cs var:config.machine_id ?>);
+	}
+}
+
+function dsmLeftMenuShow_<?cs var:config.machine_id ?>()
+{
+	if($('#dsmLeftMenu_<?cs var:config.machine_id ?>').css('display') == 'none')
+	{
+		$('#dsmLeftMenu_<?cs var:config.machine_id ?>').show();
+		window.localStorage.setItem('dsmLeftMenu_<?cs var:config.machine_id ?>_hide', '0');
+		dmtRedrawCharts('<?cs var:config.machine_id ?>', 'machine', true);
+	}
+	else
+	{
+		$('#dsmLeftMenu_<?cs var:config.machine_id ?>').hide();
+		window.localStorage.setItem('dsmLeftMenu_<?cs var:config.machine_id ?>_hide', '1');
+		dmtRedrawCharts('<?cs var:config.machine_id ?>', 'machine', false);
+	}
+}
+
+$(document).ready(function(){
+	dmtSetRedrawChartsInfo('<?cs var:config.machine_id ?>', 'machine', true);
+	dmtSetChartSize();
+	var attr_list = $.parseJSON('<?cs var:config.attr_list ?>');
+	var attr_type_list = $.parseJSON('<?cs var:config.attr_type_list ?>');
+	var attr_info = dmtSetAttrList(attr_list, attr_type_list, 'machine', 
+		dsm_attr_list_arry_<?cs var:config.machine_id ?>, dsmClickMachineAttr_<?cs var:config.machine_id ?>);
+
+	var hideLeft = window.localStorage.getItem("dsmLeftMenu_<?cs var:config.machine_id ?>_hide");
+	if(hideLeft == '1') {
+		$('#dsmLeftMenu_<?cs var:config.machine_id ?>').hide();
+		$("#dsm_attr_list_<?cs var:config.machine_id ?>").html(attr_info);
+		dmtRedrawCharts('<?cs var:config.machine_id ?>', 'machine', false);
+	}
+	else
+		$("#dsm_attr_list_<?cs var:config.machine_id ?>").html(attr_info);
+
+	$('#dsm_ct_attr_show_list_<?cs var:config.machine_id ?>').html('');
+	dsmAttrShowDate2_<?cs var:config.machine_id ?>(0);
+});
+
+</script>
+

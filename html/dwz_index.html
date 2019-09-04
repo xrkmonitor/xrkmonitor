@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+
+<?cs include:config.cspath+"main_meta.html" ?>
+
+<link href="<?cs var:config.dwzpath?>themes/default/style.css" rel="stylesheet" type="text/css" media="screen"/>
+<link href="<?cs var:config.dwzpath?>themes/css/core.css" rel="stylesheet" type="text/css" media="screen"/>
+<link href="<?cs var:config.dwzpath?>themes/css/print.css" rel="stylesheet" type="text/css" media="print"/>
+<link href="<?cs var:config.dwzpath?>uploadify/css/uploadify.css" rel="stylesheet" type="text/css" media="screen"/>
+<link href="<?cs var:config.dwzpath?>themes/sexybuttons/sexybuttons.css" rel="stylesheet" type="text/css" media="screen"/>
+
+<!--[if IE]>
+<link href="<?cs var:config.dwzpath?>themes/css/ieHack.css" rel="stylesheet" type="text/css" media="screen"/>
+<![endif]-->
+
+<?cs include:config.cspath+"dwz_js.html" ?>
+
+<!-- 控制横向导航条 -->
+<style type="text/css">
+    #header{height:85px}
+    #leftside, #container, #splitBar, #splitBarProxy{top:90px}
+</style>
+
+</head>
+
+<body scroll="no">
+	<div id="layout"> 
+		<div id="header">
+		<?cs include:config.cspath+"dwz_header_base.html" ?>
+		<?cs include:config.cspath+"dwz_header.html" ?>
+		</div>
+		<?cs include:config.cspath+"dwz_left.html" ?>
+		<?cs include:config.cspath+"dwz_container.html" ?>
+	</div>
+	<?cs include:config.cspath+"dwz_foot.html" ?>
+</body>
+
+<script type="text/javascript">
+var g_di_cspath = '<?cs var:config.cspath ?>';
+var g_di_dwzpath = '<?cs var:config.dwzpath ?>';
+var g_di_cgipath = '<?cs var:config.cgipath?>';
+</script>
+
+</html>
+

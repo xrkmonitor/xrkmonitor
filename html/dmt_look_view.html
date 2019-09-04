@@ -1,0 +1,56 @@
+<script language="javascript" type="text/javascript">
+
+var dlm_view_list = $.parseJSON('<?cs var:config.view_info?>');
+
+function dlmSetViewList(view_info)
+{
+	var list = "";
+	var list_view = view_info.list;
+	for(var i=0; i < view_info.count && i < list_view.length; i++)
+	{
+		list += "<tr>";
+		list += "<td>" + (i+1) + "</td>";
+		list += "<td>" + list_view[i].id + "</td>";
+		list += "<td>" + list_view[i].name + "</td>";
+		list += "<td>" + list_view[i].view_desc + "</td>";
+		list += "<td>";
+		list += '<a class="btnSelect" href="javascript:$.bringBack({';
+		list += "ddwc_warn_type_val:'" + list_view[i].id + "', ddwc_warn_type_name:'";
+		list += list_view[i].name + "_" + list_view[i].id + "'})\" title='查找带回'>选择</a>";
+		list += "</td>";
+		list += "</tr>";
+	}
+	return list;
+}
+
+$(document).ready(function(){
+	var thtml = dlmSetViewList(dlm_view_list);
+	var obj= $("#dml_view_info_list");
+	obj.html(thtml);
+});
+
+</script>
+
+<div class="pageContent">
+	<div class="pageFormContent" layoutH="58">
+		<table class="table" width="100%">
+			<thead>
+				<tr>
+					<th width="60">序号</th>
+					<th width="60">视图id</th>
+					<th width="200">视图名称</th>
+					<th width="240">视图描述</th>
+					<th>查找带回</th>
+				</tr>
+			</thead>
+			<tbody id="dml_view_info_list"></tbody>
+		</table>
+	</div>
+	
+	<div class="formBar">
+		<ul>
+			<li><div class="button"><div class="buttonContent"><button class="close" type="button">&nbsp;&nbsp;关&nbsp;闭&nbsp;&nbsp;</button></div></div></li>
+		</ul>
+	</div>
+</div>
+

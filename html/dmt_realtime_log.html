@@ -1,0 +1,754 @@
+<link href="<?cs var:config.dwzpath?>themes/css/showlog.css" rel="stylesheet" type="text/css" media="screen"/>
+
+<div class="pageContent">
+	<div class="panel collapse" style="width:99%; float:left;" id="drlLogFilter" defH="170" OnToggle="drlPanelFun">
+		<h1>实时日志查询参数</h1>
+		<div>
+			<fieldset style="width:205px; height:155px; float:left;" >
+				<legend>应用模块过滤</legend>
+				<div style="margin-left:5px;">
+				<label>应用</label>
+				<select id="drl_appName" style="width:120px">
+					<option value="-">-</option>
+				</select>
+				<span><input id='drl_flt_all_am' type='checkbox' onclick="drlSelectAllModule()">
+					<label class="for" title="选择全部模块" for="drl_flt_all_am">全选</label></span>
+				</div>
+
+				<fieldset style="margin-top:5px; height:105px; overflow:auto">
+				<div id="drl_flt_app_module"> </div>
+				</fieldset>
+			</fieldset>
+			<fieldset style="width:75px; height:155px; float:left; margin-left:5px"> 
+				<legend>日志类型</legend>
+				<div>
+					<input type="checkbox" value="2" name="drlLogType" id="drlLogType2" checked >
+					<label class="for" title="调试日志" for="drlLogType2">调试日志</label>
+				</div>
+				<div>
+					<input type="checkbox" value="4" name="drlLogType" id="drlLogType4" checked >
+					<label class="for" title="信息日志" for="drlLogType4">信息日志</label>
+				</div>
+				<div>
+					<input type="checkbox" value="8" name="drlLogType" id="drlLogType8" checked >
+					<label class="for" title="警告日志" for="drlLogType8">警告日志</label>
+				</div>
+				<div>
+					<input type="checkbox" value="16" name="drlLogType" id="drlLogType16" checked >
+					<label class="for" title="输入错误日志" for="drlLogType16">输入错误</label>
+				</div>
+				<div>
+					<input type="checkbox" value="32" name="drlLogType" id="drlLogType32" checked >
+					<label class="for" title="程序错误日志" for="drlLogType32">程序错误</label>
+				</div>
+				<div>
+					<input type="checkbox" value="64" name="drlLogType" id="drlLogType64" checked >
+					<label class="for" title="严重错误日志" for="drlLogType64">严重错误</label>
+				</div>
+				<div>
+					<input type="checkbox" value="1" name="drlLogType" id="drlLogType1" checked >
+					<label class="for" title="其它类型" for="drlLogType1">其它类型</label>
+				</div>
+			</fieldset>
+
+			<fieldset style="width:170px; height:155px; float:left; margin-left:5px;"> 
+				<legend>日志展示字段</legend>
+				<table>
+					<tr>
+						<td><input name="drl_log_field" id="drl_log_field_logtype" type="checkbox" title="日志类型"checked value="512">
+						<label class="for" title="日志类型" for="drl_log_field_logtype">日志类型</label>
+						</td>
+						<td><input name="drl_log_field" id="drl_log_field_cust1" type="checkbox" title="应用模块自定义字段-1" value="4">
+						<label class="for" title="应用模块自定义字段-1" for="drl_log_field_cust1">自定义字段1</label>
+						</td>
+					</tr>
+					<tr>
+						<td><input name="drl_log_field" id="drl_log_field_time" type="checkbox" title="该条日志的产生时间"checked value="1">
+						<label class="for" title="该条日志的产生时间" for="drl_log_field_time">日志时间</label>
+						</td>
+						<td><input name="drl_log_field" id="drl_log_field_cust2" type="checkbox" title="应用模块自定义字段-2" value="32">
+						<label class="for" title="应用模块自定义字段-2" for="drl_log_field_cust2">自定义字段2</label>
+						</td>
+					</tr>
+					<tr>
+						<td><input name="drl_log_field" id="drl_log_field_pos" type="checkbox" title="产生该条日志的文件位置"checked value="2048">
+						<label class="for" title="产生该条日志的文件位置" for="drl_log_field_pos">日志位置</label>
+						</td>
+						<td><input name="drl_log_field" id="drl_log_field_cust3" type="checkbox" title="应用模块自定义字段-3" value="256">
+						<label class="for" title="应用模块自定义字段-3" for="drl_log_field_cust3">自定义字段3</label>
+						</td>
+					</tr>
+					<tr>
+						<td><input name="drl_log_field" id="drl_log_field_app" type="checkbox" title="该条日志所属应用" value="8">
+						<label class="for" title="该条日志所属应用" for="drl_log_field_app">所属应用</label>
+						</td>
+						<td><input name="drl_log_field" id="drl_log_field_cust4" type="checkbox" title="应用模块自定义字段-4" value="1024">
+						<label class="for" title="应用模块自定义字段-4" for="drl_log_field_cust4">自定义字段4</label>
+						</td>
+					</tr>
+					<tr>
+						<td><input name="drl_log_field" id="drl_log_field_module" type="checkbox" title="该条日志所属模块"checked value="16">
+						<label class="for" title="该条日志所属模块" for="drl_log_field_module">所属模块</label>
+						</td>
+
+						<td><input name="drl_log_field" id="drl_log_field_cust5" type="checkbox" title="应用模块自定义字段54" value="4096">
+						<label class="for" title="应用模块自定义字段-5" for="drl_log_field_cust5">自定义字段5</label>
+						</td>
+					</tr>
+					<tr>
+						<td><input name="drl_log_field" id="drl_log_field_logconfig" type="checkbox" title="该条日志的日志配置" value="128"> 
+						<label class="for" title="该条日志的日志配置" for="drl_log_field_logconfig">日志配置</label>
+						</td>
+						<td><input name="drl_log_field" id="drl_log_field_cust6" type="checkbox" title="应用模块自定义字段64" value="8192">
+						<label class="for" title="应用模块自定义字段-6" for="drl_log_field_cust6">自定义字段6</label>
+						</td>
+					</tr>
+					<tr>
+						<td><input name="drl_log_field" id="drl_log_field_content" type="checkbox" title="日志内容"checked value="64">
+						<label class="for" title="日志内容" for="drl_log_field_content">日志内容</label>
+						</td>
+
+						<td><input name="drl_log_field" id="drl_log_field_addr" type="checkbox" title="产生该条日志的机器地址"checked value="2">
+						<label class="for" title="产生该条日志的机器地址" for="drl_log_field_addr">日志来源</label>
+						</td>
+					</tr>
+				</table>
+			</fieldset>
+
+			<fieldset style="width:240px; height:100px; float:left; margin-left:5px;" >
+				<legend>包含关键字【与】</legend>
+				<input id="drl_key_include" size="12" type="text" title="日志包含关键字，多个包含关键字之间的关系为与关系" value="" maxlength="16" onkeyup="this.value=this.value.replace(/[_]/g,'')" onafterpaste="this.value=this.value.replace(/[_]/g,'')" >
+				<span>
+					<button onclick="drlAddLogKey(true, 'drl_inc_keylist');">添加</button>
+				</span>
+				<span>
+					<button onclick="drlClearLogKey('drl_inc_keylist', 'drl_key_include');">清空</button>
+				</span>
+
+				<fieldset style="margin-top:5px; height:45px; overflow:auto">
+					<div id="drl_inc_keylist"> </div>
+				</fieldset>
+			</fieldset>
+
+			<fieldset style="width:240px; height:100px; float:left; margin-left:5px;" >
+				<legend>排除关键字【或】</legend>
+				<input id="drl_key_exce" size="12" type="text" title="日志排除关键字，多个排除关键字之间的关系为或关系" value="" maxlength="10">
+				<span>
+					<button onclick="drlAddLogKey(false, 'drl_exce_keylist');">添加</button>
+				</span>
+				<span>
+					<button onclick="drlClearLogKey('drl_exce_keylist', 'drl_key_exce');">清空</button>
+				</span>
+				<fieldset style="margin-top:5px; height:45px; overflow:auto">
+					<div id="drl_exce_keylist"> </div>
+				</fieldset>
+			</fieldset>
+
+			<fieldset style="width:240px; height:42px; float:left; margin-left:5px;" >
+				<legend>上报机器</legend>
+				<div>
+					<select id="drlReportHost" title="按上报机器过滤日志">
+						<option value="0">全部机器</option>
+					</select>
+				</div>
+			</fieldset>
+
+			<fieldset style="width:240px; height:42px; float:left; margin-left:5px;"> 
+				<legend>显示记录</legend>
+				<div>
+					<label>最多同时显示日志条数</label>
+					<select id="drlMaxRecords" title="超出后日志记录将滚动显示" style="width:80px">
+						<option value="100">100</option>
+						<option value="200" selected>200</option>
+						<option value="400">400</option>
+						<option value="500">500</option>
+						<option value="800">800</option>
+					</select>
+				</div>
+			</fieldset>
+		</div>
+	</div>
+
+	<div class="formBar"> 
+		<div style="float:left; width:160px; margin-top:5px;">
+			<h1 id="drl_realtime_status_recv">实时日志</h1>
+		</div>
+		<div style="float:left; margin-top:5px;" 
+			title="每次请求最多接收100条记录，超出的将被丢弃，以便保证日志的实时性">
+			<span>最近接收日志: <span id="drl_lastRecvLogCount" style="color:blue">0</span> 条，</span>
+			<span title="每次请求最多接收100条记录，超出的将被丢弃，以便保证日志的实时性">丢弃未接收: <span id="drl_lastLostLogCount" style="color:red">0</span> 条</span>
+			<span>&nbsp;|&nbsp;</span>
+			<span>总共接收日志: <span id="drl_recvLogTotal" style="color:blue">0</span> 条，</span>
+			<span>总共未接收: <span id="drl_lostLogTotal" style="color:red">0</span> 条</span>
+			<span>滚动丢弃: <span id="drl_ScrollLogTotal" style="color:red">0</span> 条</span>
+		</div>
+		<ul>
+	        <li><div class="buttonActive"><div class="buttonContent"><button type="button" onclick="drlShowPause();" id="drl_button_pause">&nbsp;&nbsp;查&nbsp;看&nbsp;&nbsp;</button></div></div></li>
+	        <li><div class="buttonActive"><div class="buttonContent"><button type="button" onclick="drlClearRealTimeLog();" >&nbsp;&nbsp;清&nbsp;空&nbsp;&nbsp;</button></div></div></li>
+	        <li><div class="buttonActive"><div class="buttonContent"><button type="button" onclick="drlShowMax();" id="drl_button_show">扩展显示区</button></div></div></li>
+	    </ul>
+	</div>
+
+	<div class="unitBox" style="overflow:auto" id="drlLogShow" layoutH="255"> 
+		<ol id="drlRealtimeList"></ol>
+	</div> <!-- panel 实时日志 -->
+</div>
+
+<script language="javascript" type="text/javascript">
+
+var drl_app_module_list = $.parseJSON('<?cs var:config.app_module_list ?>');
+var drl_report_machines = $.parseJSON('<?cs var:config.report_machines ?>');
+var drl_logReqSeq = 0;
+var drl_logRequestNo = 0; // 用于请求响应配对
+var drl_logRecvTotal = 0;
+var drl_logLostTotal = 0;
+var drl_show_pause = false; // 当前日志接收状态
+var drl_show_max = false;
+var drl_status_times = 0;
+var drl_interval_id = 0;
+var drl_time_id = 0;
+var drl_log_type_bg = [];
+var drl_log_type_nm = [];
+var drl_showlog_ary = ["[]", "{}", "()"];
+var drl_scroll_records = 0;
+var drl_request_time_info = 0;
+
+function drlGetModuleNameById(id)
+{
+	if(drl_app_module_list == null || drl_app_module_list.app_count <= 0) 
+		return "未知模块";
+
+	var app_list = drl_app_module_list.applist;
+	for (var i = 0; i < app_list.length; ++i) { 
+		for(var j=0; j < app_list[i].module_count; j++)
+			if(app_list[i].modulelist[j].id == id)
+				return app_list[i].modulelist[j].name;
+	}
+	return "未知模块";
+}
+
+
+function drlGetAppNameById(id)
+{
+	if(drl_app_module_list == null || drl_app_module_list.app_count <= 0) 
+		return "未知应用";
+
+	var app_list = drl_app_module_list.applist;
+	for (var i = 0; i < app_list.length; ++i) { 
+		if(app_list[i].app_id == id)
+			return app_list[i].app_name;
+	}
+	return "未知应用";
+}
+
+function drlPanelFun(c)
+{
+	var hfilter = parseInt($("#drlLogFilter").attr("defH"));
+	var hshow = parseInt($("#drlLogShow").height());
+	var hshow_dapt = 8;
+	if(c == 1) 
+		$("#drlLogShow").height(hshow+hfilter+hshow_dapt);
+	else 
+		$("#drlLogShow").height(hshow-hfilter-hshow_dapt);
+
+}
+
+function drlShowMax()
+{
+	var hfilter = parseInt($("#drlLogFilter").attr("defH"));
+	var hfcont = $("#drlLogFilter .panelContent").height();
+	var hshow = parseInt($("#drlLogShow").height());
+
+	// 查询参数设置区内容隐藏/显示的情况区分处理
+	var hshow_dapt = 43;
+	if(hfcont > 0)
+		hshow_dapt += hfilter + 5;
+	if(drl_show_max){
+		drl_show_max = false;
+		$("#drl_button_show").text("扩展显示区");
+		$("#drlLogFilter").show(100);
+		if(DWZ.ui.sbar == false)
+		    $("#sidebar_s .toggleCollapse div").trigger("click");
+		$("#drlLogShow").height(hshow-hshow_dapt);
+	}
+	else {
+		drl_show_max = true;
+		$("#drl_button_show").text("收缩显示区");
+		$("#drlLogFilter").hide(100);
+		if(DWZ.ui.sbar == true)
+		    $("#sidebar .toggleCollapse div").trigger("click");
+		$("#drlLogShow").height(hshow+hshow_dapt);
+	}
+}
+
+function drlClearRealTimeLog()
+{
+	$('#drlRealtimeList').html("");
+}
+
+function drlGetShowLogChar(j, i)
+{
+	if(j >= drl_showlog_ary.length)
+		j = 0;
+	return drl_showlog_ary[j][i];
+}
+
+function drlShowPause(bPause)
+{
+	if(typeof bPause != 'undefined' && drl_show_pause == bPause)
+		return;
+
+	if(drl_show_pause) {
+		drl_interval_id = setTimeout("drlShowRealtimeStatus();", 300);
+		drl_show_pause = false;
+		$("#drl_button_pause").html("&nbsp;&nbsp;暂&nbsp;停&nbsp;&nbsp;");
+		drl_request_time_info = (new Date()).valueOf();
+		drlShowRealTimeLog();
+	}
+	else {
+		drl_show_pause = true;
+		clearTimeout(drl_time_id);
+		clearInterval(drl_interval_id);
+		drlShowRealtimeStatus();
+		$("#drl_button_pause").html("&nbsp;&nbsp;查&nbsp;看&nbsp;&nbsp;");
+	}
+}
+
+function drlSelectAllModule()
+{
+	$("#drl_flt_app_module input[name=drl_flt_module]").each(function () {
+			if($("#drl_flt_all_am").attr("checked"))
+				this.checked = true;
+			else
+				this.checked = false;
+	});
+	return true;
+}
+
+function drlSortByTime(a, b)
+{
+    if (b.s_time && a.s_time) {
+		if(a.s_time > b.s_time)
+			return 1;
+		else if(a.s_time < b.s_time)
+			return -1;
+		return 0;
+    } else {
+        return 0;
+    }
+}
+
+function drlShowRealtimeLogResult(result)
+{
+	drl_request_time_info = (new Date()).valueOf();
+
+	if(dmtFirstDealAjaxResponse(result))
+	{
+		drlShowPause();
+		return;
+	}
+
+	if(drl_logRequestNo != result.RequestNo) {
+		drl_logRequestNo++;
+		if (!drl_show_pause)
+			drl_time_id = setTimeout("drlShowRealTimeLog();", 1000);
+		return;
+	}
+	drl_logRequestNo++;
+
+	if(result.ec != 0){
+		alertMsg.error("实时日志获取失败！");
+		if (!drl_show_pause)
+			drl_time_id = setTimeout("drlShowRealTimeLog();", 1000);
+		return;
+	}
+
+	var recv = result.Rece || 0;
+	var send = result.Send || 0; 
+	$("#drl_lastRecvLogCount").text(send);
+	$("#drl_lastLostLogCount").text(recv-send);
+	drl_logRecvTotal += send;
+	drl_logLostTotal += recv-send;
+	$("#drl_recvLogTotal").text(drl_logRecvTotal);
+	$("#drl_lostLogTotal").text(drl_logLostTotal);
+
+	drl_logReqSeq = result.RequestSeq;
+	if(result.list && result.list.length > 0) {
+
+	   var ct = $('#drlRealtimeList');
+	   var ctlist = ct[0].innerHTML;
+	   var ctadd = "";
+	   var logtype = "";
+	   var showLog = [];
+	   result.list.sort(drlSortByTime);
+	   for(var i=0,j=0; i < result.list.length; i++){
+		   logtype = result.list[i].type.toString();
+			if(typeof drl_log_type_bg[logtype] != "undefined"){
+				ctadd = '<li class="log_type_' + drl_log_type_bg[logtype] + '">';
+				if(result.LogField & 512){
+					ctadd += "<span>"+drlGetShowLogChar(j,0)+drl_log_type_nm[logtype]
+						+ drlGetShowLogChar(j++, 1)+" </span>";
+					if(j >= drl_showlog_ary.length)
+						j = 0;
+				}
+			}
+			else {
+				ctadd = '<li class="log_type_other">';
+				if(result.LogField & 512) {
+					ctadd += "<span>"
+						+drlGetShowLogChar(j,0)+"其它类型"+drlGetShowLogChar(j++, 1)+" </span>";
+					if(j >= drl_showlog_ary.length)
+						j = 0;
+				}
+
+			}
+			if(result.LogField & 1) {
+				ctadd += "<span>"+drlGetShowLogChar(j,0) + result.list[i].time + drlGetShowLogChar(j++, 1)+" </span>";
+				if(j >= drl_showlog_ary.length)
+					j = 0;
+			}
+
+			if(result.LogField & 2048) {
+				ctadd += "<span>"+drlGetShowLogChar(j,0) + result.list[i].pos + drlGetShowLogChar(j++, 1)+" </span>";
+				if(j >= drl_showlog_ary.length)
+					j = 0;
+			}
+
+
+			if(result.LogField & 8) {
+				ctadd += "<span>"+drlGetShowLogChar(j,0) + drlGetAppNameById(result.list[i].app) + drlGetShowLogChar(j++, 1)+" </span>";
+				if(j >= drl_showlog_ary.length)
+					j = 0;
+			}
+
+
+			if(result.LogField & 16) {
+				ctadd += "<span>"+drlGetShowLogChar(j,0) + drlGetModuleNameById(result.list[i].module) + drlGetShowLogChar(j++, 1)+" </span>";
+				if(j >= drl_showlog_ary.length)
+					j = 0;
+			}
+
+
+			if(result.LogField & 128) {
+				ctadd += "<span>"+drlGetShowLogChar(j,0) + result.list[i].config + drlGetShowLogChar(j++, 1)+" </span>";
+				if(j >= drl_showlog_ary.length)
+					j = 0;
+			}
+
+
+			if(result.LogField & 4) {
+				ctadd += "<span>"+drlGetShowLogChar(j,0) + result.list[i].cust_1 + drlGetShowLogChar(j++, 1)+" </span>";
+				if(j >= drl_showlog_ary.length)
+					j = 0;
+			}
+
+
+			if(result.LogField & 32) {
+				ctadd += "<span>"+drlGetShowLogChar(j,0) + result.list[i].cust_2 + drlGetShowLogChar(j++, 1)+" </span>";
+				if(j >= drl_showlog_ary.length)
+					j = 0;
+			}
+
+
+			if(result.LogField & 256) {
+				ctadd += "<span>"+drlGetShowLogChar(j,0) + result.list[i].cust_3 + drlGetShowLogChar(j++, 1)+" </span>";
+				if(j >= drl_showlog_ary.length)
+					j = 0;
+			}
+
+
+			if(result.LogField & 1024) {
+				ctadd += "<span>"+drlGetShowLogChar(j,0) + result.list[i].cust_4 + drlGetShowLogChar(j++, 1)+" </span>";
+				if(j >= drl_showlog_ary.length)
+					j = 0;
+			}
+
+			if(result.LogField & 4096) {
+				ctadd += "<span>"+drlGetShowLogChar(j,0) + result.list[i].cust_5 + drlGetShowLogChar(j++, 1)+" </span>";
+				if(j >= drl_showlog_ary.length)
+					j = 0;
+			}
+
+			if(result.LogField & 8192) {
+				ctadd += "<span>"+drlGetShowLogChar(j,0) + result.list[i].cust_6 + drlGetShowLogChar(j++, 1)+" </span>";
+				if(j >= drl_showlog_ary.length)
+					j = 0;
+			}
+
+			if(result.LogField & 64) 
+				ctadd += "<span class='log_content'> --- "+dmtEncodeHTML(result.list[i].Content)+" </span>";
+
+			if(result.LogField & 2) {
+				ctadd += "<span>"+drlGetShowLogChar(j,0) + result.list[i].addr + drlGetShowLogChar(j++, 1)+" </span>";
+				if(j >= drl_showlog_ary.length)
+					j = 0;
+			}
+
+			ctadd += '</li>'; 
+			ctlist = ctadd + ctlist;
+	   }
+	   ct[0].innerHTML = ctlist;
+
+	   var items = $('#drlRealtimeList>li');
+	   var logmax = parseInt($("#drlMaxRecords").val());
+	   if (items.length > logmax) {
+		   for (var i = logmax; i < items.length; ++i) {
+			   items[i].parentNode.removeChild(items[i]);
+			   drl_scroll_records++;
+		   }
+		   $('#drl_ScrollLogTotal').text(drl_scroll_records);
+	   }
+
+	   // 高亮关键字
+	   $("#drl_inc_keylist").children('.log-keyword').children('span').each(function () {
+				ct.highlight($(this).text());
+		});
+   }
+
+   if (!drl_show_pause)
+		drl_time_id = setTimeout("drlShowRealTimeLog();", 1000);
+}
+
+function drlShowRealtimeStatus()
+{
+	// 看下是否响应超时
+	var cur = (new Date()).valueOf();
+	if(drl_request_time_info != 0 && drl_request_time_info+4000 < cur) {
+		drlShowPause(true);
+		$("#drl_realtime_status_recv").css('color', 'red').text("查询超时，请稍后再试");
+		return;
+	}
+
+	if(drl_show_pause) {
+		$("#drl_realtime_status_recv").css('color', 'black').text("实时日志");
+		clearTimeout(drl_time_id);
+		clearTimeout(drl_interval_id);
+	}
+	else {
+		drl_status_times++;
+		var show = new Array((drl_status_times%8)+1).join(".");
+		$("#drl_realtime_status_recv").css('color', 'black').text("实时日志 【 接收中 "+show);
+		drl_interval_id = setTimeout("drlShowRealtimeStatus();", 300);
+	}
+}
+
+function drlShowRealTimeLog()
+{
+	var para = new Object();
+
+	// 应用模块 --
+	var appIdx = $("#drl_appName").val();
+	para.appId = drl_app_module_list.applist[appIdx].app_id;
+	if(drl_app_module_list.applist[appIdx].module_count <= 0){
+		alertMsg.warn("所选应用，模块数目为0，请先添加模块！");
+		return drlShowPause();
+	}
+	para.moduleIdList = "";
+	$("#drl_flt_app_module input[name=drl_flt_module]").each(function () {
+			if (this.checked) {
+				if(para.moduleIdList == "")
+					para.moduleIdList = this.value;
+				else
+					para.moduleIdList += "_" + this.value;
+			}
+	});
+	if(para.moduleIdList == "") {
+		alertMsg.warn("请在 [应用模块过滤] 的模块列表中选择要显示日志的模块！");
+		return drlShowPause();
+	}
+
+	// 日志类型 --
+	para.logType = 0;
+	$("input[name=drlLogType]").each(function(){
+			if(this.checked)
+				para.logType |= this.value;
+	});
+	if(para.logType == 0) {
+		alertMsg.warn("请选择要显示的日志类型！");
+		return drlShowPause();
+	}
+
+	// 包含关键字 --
+	var keylist = "";
+	$("#drl_inc_keylist").children('.log-keyword').children('span').each(function () {
+			if(keylist == "")
+				keylist = $(this).text();
+			else
+				keylist += "_" + $(this).text();
+	});
+	if(keylist != "")
+		para.incKeyList = keylist;
+
+	// 排除关键字 --
+	keylist = "";
+	$("#drl_exce_keylist").children('.log-keyword').children('span').each(function () {
+			if(keylist == "")
+				keylist = $(this).text();
+			else
+				keylist += "_" + $(this).text();
+	});
+	if(keylist != "")
+		para.exceKeyList = keylist;
+
+	// 日志展示字段 ---
+	para.logField = 0;
+	$("input[name=drl_log_field]").each(function(){
+			if(this.checked)
+				para.logField |= this.value;
+	});
+	if(para.logField == 0) {
+		alertMsg.warn("请选择要显示的日志字段！");
+		return drlShowPause();
+	}
+
+	// 上报机器
+	para.machine = $('#drlReportHost').val();
+
+	para.action = "get_realtime";
+	para.RequestSeq = drl_logReqSeq;
+	para.RequestNo = drl_logRequestNo;
+	para.MaxResultCount = 100; // 每次最多获取日志记录数
+	para.ex_flogin_user = $.cookie("flogin_user");
+	para.ex_flogin_md5 = $.cookie("flogin_md5");
+	para.ex_flogin_type = $.cookie("flogin_type");
+	para.ex_flogin_uid = $.cookie("flogin_uid");
+	para.ex_flogin_index = $.cookie("flogin_index");
+	var requrl = 'http://'+drl_app_module_list.applist[appIdx].log_server_ip;
+	requrl += "<?cs var:config.cgipath?>mt_slog?";
+	
+	$.ajax({
+		type: "POST",
+		url: requrl,
+		data: para,
+		success: drlShowRealtimeLogResult,
+		dataType: 'json', 
+		global: false,
+		timeout: function(){
+			drl_logRequestNo++;
+			if (!drl_show_pause)
+				drl_time_id = setTimeout("drlShowRealTimeLog();", 1000);
+		},
+	});
+}
+
+function drlClearLogKey(container, ct2)
+{
+	var ctstr = "#" + container;
+	$(ctstr).html('');
+
+	var ct2str = "#" + ct2;
+	$(ct2str).val('');
+}
+
+function drlAddLogKey(isKeyInc, container)
+{
+	var keyw = "";
+	if(isKeyInc)
+		keyw = $.trim($("#drl_key_include").val());
+	else
+		keyw = $.trim($("#drl_key_exce").val());
+	var ctstr = "#" + container;
+	var ct = $(ctstr);
+	ct.children('.log-keyword').children('span').each(function () {
+		if($(this).text() == keyw) {
+			keyw="";
+			return false;
+		}
+	});
+	if(keyw == "")
+		return;
+	var span = $('<span class="log-keyword"><span></span><a href="#" class="close"></a></span>');	
+	span.children('span').text(keyw);
+	ct.append(span);
+	$('#drl_key_include').val('');
+}
+
+function drlSetReportMachines()
+{
+	var op_machine = $('#drlReportHost');
+	if(drl_report_machines.mach_count <= 0) {
+		alertMsg.info("上报机器数目为0，请先添加上报机器");
+		return ;
+	}
+	op_machine.html('');
+	var op = $('<option value="0">全部机器</option>');
+	op_machine.append(op);
+
+	var mach_list = drl_report_machines.mach_list;
+	for (var i = 0; i < mach_list.length; ++i) { 
+		var op = $('<option></option>');
+		op.val(mach_list[i].id).text(mach_list[i].name);
+		op_machine.append(op);
+	}
+}
+
+function drlOpAppChange()
+{
+	var idx = $('#drl_appName').val();
+	var app = drl_app_module_list.applist[idx];
+	$('#drl_flt_app_module').html('');
+
+	$("#drl_flt_all_am").attr("checked", true);
+	for(var i=0; i < app.module_count; i++) {
+		var spid = "drl_flt_module_" + i;
+		var sp = $('<div style="margin-left:5px"><input name="drl_flt_module" type="checkbox" checked /><label class="for"></label></div>');
+		sp.children('input').attr('id', spid).attr('title', app.modulelist[i].name).val(app.modulelist[i].id);
+		sp.children('label').attr('for', spid).text(app.modulelist[i].name);
+		$('#drl_flt_app_module').append(sp);
+	}
+
+	if(app.module_count <= 0) {
+		return false;
+	}
+}
+
+$(document).ready(function(){
+	drl_show_pause = true;
+	var op_app = $('#drl_appName');
+	if(drl_app_module_list.app_count <= 0) {
+		alertMsg.info("应用数目为0，请先添加应用");
+		return ;
+	}
+	op_app.html('');
+	op_app.change(drlOpAppChange);
+	var app_list = drl_app_module_list.applist;
+	for (var i = 0; i < app_list.length; ++i) { 
+		var op = $('<option></option>');
+		op.val(i).text(app_list[i].app_name);
+		if(i == 0)
+			op.attr("selected", true);
+		op_app.append(op);
+	}
+	drlOpAppChange();
+
+	// 上报机器初始化
+	drlSetReportMachines();
+
+	$("#drl_inc_keylist").delegate('.close', 'click', function(){
+			$("#drl_inc_keylist")[0].removeChild(this.parentNode);
+	});
+
+	$("#drl_exce_keylist").delegate('.close', 'click', function(){
+		$("#drl_exce_keylist")[0].removeChild(this.parentNode);
+	});
+
+	drl_log_type_bg['1'] = 'other';
+	drl_log_type_bg['2'] = 'debug';
+	drl_log_type_bg['4'] = 'info';
+	drl_log_type_bg['8'] = 'warn';
+	drl_log_type_bg['16'] = 'in_error';
+	drl_log_type_bg['32'] = 'error';
+	drl_log_type_bg['64'] = 'fatal';
+
+	// 重要日志&流水日志
+	drl_log_type_nm['1'] = '其它类型';
+	drl_log_type_nm['2'] = '调试日志';
+	drl_log_type_nm['4'] = '信息日志';
+	drl_log_type_nm['8'] = '警告日志';
+	drl_log_type_nm['16'] = '输入错误';
+	drl_log_type_nm['32'] = '程序错误';
+	drl_log_type_nm['64'] = '严重错误';
+});
+
+</script>
+

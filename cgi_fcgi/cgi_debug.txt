@@ -1,0 +1,18 @@
+cgi 调试 ：
+------------------------------------------
+1 -- config 
+*) pause config - ENABLE_CGI_PAUSE 2317893   --- CGI 运行时暂停，可以等待 gdb 调试介入
+*) debug save in/out - ENABLE_CGI_DEBUG  1317791  --- 开启调试，cgi 的输入输出可保存到文件
+
+2 -- mkdir /tmp/cgi/(cgi_name)/ --- cgi 调试的输入输出保存
+cgi req output file : - /tmp/cgi/(cgi_name)/ or /tmp/cgi/cgi_request/
+cgi resp output file : - /tmp/cgi/(cgi_name)/
+
+
+cgi 开发注意：
+-------------------------------------------
+*) 新增cgi 接口注意事项
+	a. 如果新接口返回的 ajax 需要在cgi 中注册下
+
+*) javascript 中设置定时器时，要注意定时器重复问题，典型的在对话框中设置的定时器，对话框关闭后要注意取消定时器
+

@@ -1,0 +1,278 @@
+<script language="javascript" type="text/javascript">
+/*
+   *
+   * 引用 dmt_log_config.html 中的全局变量：dlc_app_modules
+   *
+   */
+
+var g_ddac_adv_config_show = false;
+
+function ddacShowAdvConfig()
+{
+	if(g_ddac_adv_config_show)
+		$('#ddac_adv_config_item').css('display', 'none');
+	else
+		$('#ddac_adv_config_item').css('display', 'block');
+	g_ddac_adv_config_show = !g_ddac_adv_config_show;
+}
+
+function ddacAddLogKeyToContainer(keytype_v)
+{
+	var ct = $('#ddac_log_keylist');
+	ct.children('.log-keyword').children('span').each(function () {
+		if($(this).text() == keytype_v) {
+			keytype_v = "";
+			return false;
+		}
+	});
+	if(keytype_v == "")
+		return;
+	var span = $('<span class="log-keyword"><span></span><a href="#" class="close"></a></span>');	
+	span.children('span').text(keytype_v);
+	ct.append(span);
+}
+
+function ddacAddLogKey()
+{
+	var keytype = $('#ddac_log_key_type').val();
+	if(Math.floor(keytype) != keytype || keytype == 0)
+	{
+		alertMsg.warn("染色配置 - 类型 字段请输入一个非 0 的整数");
+		return false;
+	}
+
+	var keyv = $('#ddac_log_key_val').val();
+	var len = dmtGetBytesLength(keyv);
+	if(len > 20 || len < 1)
+	{
+		alertMsg.warn("染色配置 - 值 字段请输入一个长度为 1-20 个字节的字符串");
+		return false;
+	}
+	if(keyv.search(/[|~]/) != -1)
+	{
+		alertMsg.warn("染色配置 - 值 字符串不能含有: | 或者 ~ 字符");
+		return false;
+	}
+
+	$('#ddac_log_key_type').val('');
+	$('#ddac_log_key_val').val('');
+
+	var keytype_v = keytype + '~' + keyv;
+	ddacAddLogKeyToContainer(keytype_v);
+}
+
+function ddacOpAppChange()
+{
+	if($('#ddac_op_app').val() < 0) {
+		alertMsg.error("脚本错误，应用非法！");
+		return;
+	}
+	var appIdx = $('#ddac_op_app').children('option:selected').data('index');
+	var app = dlc_app_modules.applist[appIdx];
+	if(app.module_count <= 0) {
+		$('#ddac_op_module').html('');
+		var msg = '应用：' + app.app_name + '，模块数目为 0，请先添加模块！';
+		alertMsg.info(msg);
+		return;
+	}
+
+	var op_module = $('#ddac_op_module');
+	op_module.html('');
+	var module_list = app.modulelist;
+	for(var i=0;  i < module_list.length; i++) {
+		var op = $('<option></option>');
+		op.val(module_list[i].id).text(module_list[i].name).data('index', i);
+		op_module.append(op);
+	}
+}
+
+function ddacValidateCallback(fm)
+{
+	var sel_config = 0;
+	$("#ddac_log_type").find("input:checked").filter("[name='ddac_ck_logtype']").each(function(i){
+	    sel_config += parseInt($(this).val());
+	});
+	$("input[name='ddac_ck_logtype_all']").val(sel_config);
+
+	// 染色配置
+	var keylist = "";
+	$("#ddac_log_keylist").children('.log-keyword').children('span').each(function () {
+		if(keylist == "")
+			keylist = $(this).text();
+		else
+			keylist += "|" + $(this).text();
+	});
+	if(keylist != "")
+		$("input[name='ddac_log_test_keys']").val(keylist);
+
+	return validateCallback(fm, dialogAjaxDone);
+}
+
+$(document).ready(function(){
+	<?cs if:config.action == "save_add_config" ?>
+	var op_app = $('#ddac_op_app');
+	op_app.html('');
+	if(dlc_app_modules.app_count <= 0) {
+		alertMsg.error("可选应用数目为 0！");
+		return ;
+	}
+	op_app.change(ddacOpAppChange);
+	var app_list = dlc_app_modules.applist;
+	for (var i = 0; i < app_list.length; ++i) { 
+		var op = $('<option></option>');
+		op.val(app_list[i].app_id).text(app_list[i].app_name).data('index', i);
+		op_app.append(op);
+	}
+	$("#ddac_config_name").focus();
+	op_app.change();
+	<?cs else ?>
+	var logtype = <?cs var:config.log_type ?>;
+	$("input[name='ddac_ck_logtype']").each(function(){
+		if(logtype & $(this).val())
+			$(this).attr("checked", true);
+		else 
+			$(this).attr('checked', false);
+	});
+
+	var testkeys = '<?cs var:config.test_keys ?>';
+	if(testkeys != 'null') {
+		var tarry = testkeys.split("|");
+		for(var i=0; i < tarry.length; i++)
+			ddacAddLogKeyToContainer(tarry[i]);
+	}
+	<?cs /if ?>
+
+	var freqShow = '&nbsp; 每分钟日志数，请填写 大于0的整数';
+	$('#ddac_log_freq_note').html(freqShow);
+
+	$("#ddac_log_keylist").delegate('.close', 'click', function(){
+        $("#ddac_log_keylist")[0].removeChild(this.parentNode);
+	});
+});
+
+</script>
+
+<style type="text/css">
+.pageFormContent label { float:left; overflow:visible; width:60px; padding:0 5px; line-height:21px;}
+.pageFormContent input[type='checkbox'] { float:left; }
+.pageFormContent label[class='for'] { width:50px; } 
+</style> 
+
+<div class="pageContent">
+	<form method="get" action="<?cs var:config.cgipath?>mt_slog?action=<?cs var:config.action ?>&navTabId=dmt_list_log_config" class="pageForm required-validate" onsubmit="return ddacValidateCallback(this);">
+		<div class="pageFormContent" layoutH="56" id="ddac_log_type">
+			<p>
+				<label>配置名称：</label>
+				<input type="text" size="30" name="ddac_config_name" id="ddac_config_name" minlength="2" maxlength="30" alt="请输入配置名称" class="required" value="<?cs var:config.config_name ?>" />
+			</p>
+
+			<?cs if:config.action == "save_mod_config" ?>
+			<input type="hidden" name="ddac_config_id" value="<?cs var:config.config_id ?>" />
+			<p style="display:none">
+				<label>所属应用：</label>
+				<input type="text" value="<?cs var:config.app_name ?>" readonly />
+				<input type="hidden" name="ddac_op_app" value="<?cs var:config.app_id ?>" />
+			</p>
+			<p style="display:none">
+				<label>所属模块：</label>
+				<input type="text" value="<?cs var:config.module_name ?>" readonly />
+				<input type="hidden" name="ddac_op_module" value="<?cs var:config.module_id ?>" />
+			</p>
+			<?cs else ?>
+			<p>
+				<label>所属应用：</label>
+				<select name="ddac_op_app" id="ddac_op_app">
+					<option value="-1">-</option>
+				</select>
+			</p>
+			<p>
+				<label>所属模块：</label>
+				<select name="ddac_op_module" id="ddac_op_module">
+					<option value="-1">-</option>
+				</select>
+			</p>
+			<?cs /if ?>
+
+			<p>
+				<label>日志类型：</label>
+				<input type="checkbox" name="ddac_ck_logtype" id="ddac_ck_logtype_64" value="64" checked />
+				<label class="for" for="ddac_ck_logtype_64">严重错误</label>
+
+				<input type="checkbox" name="ddac_ck_logtype" value="32" id="ddac_ck_logtype_32" checked />
+				<label class="for" for="ddac_ck_logtype_32">程序错误</label>
+
+				<input type="checkbox" name="ddac_ck_logtype" id="ddac_ck_logtype_16" value="16" />
+				<label class="for" for="ddac_ck_logtype_16">输入错误</label>
+
+				<input type="hidden" name="ddac_ck_logtype_all" />
+			</p>
+			<p>
+				<label>&nbsp;&nbsp;&nbsp;&nbsp;</label>
+				<input type="checkbox" name="ddac_ck_logtype" id="ddac_ck_logtype_8" value="8" checked />
+				<label class="for" for="ddac_ck_logtype_8" style="width:30px"> 警 告 </label>
+
+				<input type="checkbox" name="ddac_ck_logtype" id="ddac_ck_logtype_4" value="4" />
+				<label class="for" for="ddac_ck_logtype_4" style="width:30px"> 信 息 </label>
+
+				<input type="checkbox" name="ddac_ck_logtype" id="ddac_ck_logtype_2" value="2" />
+				<label class="for" for="ddac_ck_logtype_2" style="width:30px"> 调 试 </label>
+
+				<input type="checkbox" name="ddac_ck_logtype" id="ddac_ck_logtype_1" value="1" />
+				<label class="for" for="ddac_ck_logtype_1" style="width:30px"> 其 它 </label>
+			</p>
+
+			<p>
+				<label>配置描述：</label>
+				<input type="text" size="42" name="ddac_config_desc" id="ddac_config_desc" maxlength="42" alt="请输入配置描述"  value="<?cs var:config.config_desc ?>" />
+			</p>
+
+			<p>
+				<font style="margin-left:120px;margin-top:10px;font-size:16px; color:blue; cursor:pointer;" onclick='ddacShowAdvConfig();'>
+					&gt;&gt;&gt;&nbsp;高级选项&nbsp;&lt;&lt;&lt;
+				</font>
+			</p>
+
+			<div id='ddac_adv_config_item' style='display:none'>
+			<p>
+				<label>频率限制：</label>
+				<input type="text" size="6" name="ddac_log_freq" id="ddac_log_freq" min="1" value="<?cs var:config.log_freq_limit ?>" /><font style="margin-top:4px" class='note-text' id='ddac_log_freq_note'></font>
+			</p>
+
+			<p>
+				<label>染色配置：</label>
+
+				<span>
+				<label style='width:30px'>类 型</label><input type='text' size='4' id='ddac_log_key_type'>
+				</span>
+				<span>
+				<label style='width:15px'>值</label><input type='text' size='16' id='ddac_log_key_val'>
+				</span>
+				<span>
+					&nbsp;&nbsp;<button type='button' onclick="return ddacAddLogKey();">添加</button>
+				</span>
+			</p>
+			<p>
+				<label>&nbsp;</label>
+				<span>
+					&nbsp;<font class='note-text'>类型 - 填写整数，值 - 填写长度为1-20字节的字符串</font>
+				</span>
+
+				<fieldset style="margin-left:70px; height:90px; width:270px; overflow:auto;">
+					<div id="ddac_log_keylist"> </div>
+				</fieldset>
+				<input type="hidden" name="ddac_log_test_keys" />
+			</p>
+			</div>
+
+		</div>
+		<div class="formBar">
+			<ul>
+				<li><div class="button"><div class="buttonContent"><button type="submit">&nbsp;&nbsp;保&nbsp;存&nbsp;&nbsp;</button></div></div></li>
+				<li>
+					<div class="button"><div class="buttonContent"><button type="button" class="close">&nbsp;&nbsp;取&nbsp;消&nbsp;&nbsp;</button></div></div>
+				</li>
+			</ul>
+		</div>
+	</form>
+</div>
+

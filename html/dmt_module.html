@@ -1,0 +1,237 @@
+<div class="pageContent">
+	<div class="unitBox" style="margin-left:1px;"> 
+		<div class="pageHeader" style="border:1px #B8D0D6 solid">
+			<form onsubmit="return navTabSearch(this, 'dmt_list_module');" action="<?cs var:config.cgipath ?>mt_slog?action=list_module" method="post">
+			<div class="searchBar">
+				<table class="searchContent" >
+					<tr>
+						<td>
+							应 用：
+							<select name="dm_app_id" id="dm_app_id">
+								<option value="0"> - 请选择 - </option>
+							</select>
+						</td>
+						<td>
+							模 块：
+							<select name="dm_module_id" id="dm_module_id">
+								<option value="0"> - 请选择 - </option>
+							</select>
+						</td>
+						<td>
+							<button class="sexybutton" id="dm_btn_submit"><span><span><span class="search">查找</span></span></span></button>
+						</td>
+					</tr>
+				</table>
+			</div>
+			</form>
+		</div>
+
+		<div class="pageContent" style="border-left:1px #B8D0D6 solid;border-right:1px #B8D0D6 solid">
+			<div class="panelBar">
+				<ul class="toolBar">
+					<li><a class="add" href="#" onclick="return dmAddModule();"><span>添加</span></a></li>
+					<li class="line">line</li>
+					<li><a class="delete" href="#" onclick="return dmDeleteModule();"><span>删除</span></a></li>
+					<li class="line">line</li>
+					<li><a class="edit" href="#" onclick="return dmModModule();"><span>修改</span></a></li>
+					<li class="line">line</li>
+				</ul>
+			</div>
+
+			<div>
+				<table class="list" width="100%" layoutH="65" id="dm_table_id"> 
+					<thead>
+						<tr>
+							<th width="40">序号</th>
+							<th width="60">模块 id</th>
+							<th width="100">模块名称</th>
+							<th width="140">所属应用</th>
+							<th width="90">创建人</th>
+							<th width="100">最近更新时间</th>
+							<th width="140">模块描述</th>
+							<th width="60">详情</th>
+						</tr>
+					</thead>
+					<tbody id="dm_module_list_tbody">
+					</tbody>
+				</table>
+			</div> 
+		</div>
+	</div> <!-- unitBox -->
+</div>
+
+<script language="javascript" type="text/javascript">
+var dm_src_module_list = '<?cs var:config.module_list ?>';
+var dm_module_list = $.parseJSON(dm_src_module_list);
+var dm_sel_module = "";
+var dm_sel_app_idx = ""; 
+var dm_sel_detail_app_idx = ""; 
+
+function dmSetSelModule(appIdx, moduleIdx)
+{
+	dm_sel_app_idx = appIdx;
+	dm_sel_module = dm_module_list.applist[appIdx].modulelist[moduleIdx];
+}
+
+function dmOnDetail(appIdx, idx)
+{
+	dm_sel_detail_app_idx = appIdx;
+	var moduleinfo = dm_module_list.applist[appIdx].modulelist[idx];
+	var op = $.parseJSON('{"mask":true,"maxable":false,"height":340,"width":580}');
+	$.pdialog.open("<?cs var:config.docpath?>dmt_dlg_detail_module.html", "dm_dlg_detail",
+		"模块："+moduleinfo.name+" 详情", op);
+}
+
+function dmSetModulelist()
+{
+	$("#dm_module_list_tbody").html('');
+	if(dm_module_list == null || dm_module_list.app_count <= 0)
+		return "";
+	var app_id = $('#dm_app_id').val();
+	
+	var ulist = dm_module_list.applist;
+	var uhtml = "";
+	for(var i=0, j=1; i < ulist.length; i++)
+	{
+		if(app_id != ulist[i].app_id || ulist[i].module_count <= 0)
+			continue;
+
+		var mlist = ulist[i].modulelist;
+		var module_id = $('#dm_module_id').val();
+		for(var k=0; k < mlist.length; k++, j++) {
+			if(module_id != 0 && module_id != mlist[k].id)
+				continue;
+			uhtml += "<tr onclick='dmSetSelModule("+i+','+k+")'>";
+			uhtml += "<td>" + j + "</td>";
+			uhtml += "<td>" + mlist[k].id + "</td>";
+			uhtml += "<td>" + mlist[k].name + "</td>";
+			uhtml += "<td>" + ulist[i].app_name + "</td>";
+
+			uhtml += "<td>" + mlist[k].user_add + "</td>";
+			uhtml += "<td>" + mlist[k].mod_time + "</td>";
+			uhtml += "<td>" + mlist[k].desc + "</td>";
+
+			var detail = "<a class='detail' href='#' onclick='return dmOnDetail("+i+','+k+");'>详情</a>";
+			uhtml += "<td>"+detail+"</td>";
+			uhtml += "</tr>";
+		}
+
+		break;
+	}
+	$("#dm_module_list_tbody").html(uhtml);
+}
+
+function dmAddModule()
+{
+	if(dm_module_list == null || dm_module_list.app_count <= 0){
+		alertMsg.warn("您的应用数目为 0，请先添加应用！");
+		return false;
+	}
+	var url = "<?cs var:config.cgipath?>mt_slog?action=add_module";
+	var op = $.parseJSON('{"mask":true,"maxable":false,"height":300,"width":520}'); 
+	$.pdialog.open(url, "dm_dlg_add_module", "添加模块", op); 
+}
+
+function dmDeleteModule()
+{
+	if(dm_sel_module == "")
+	{
+		alertMsg.info("请先点击模块列表选择一个要删除的模块");
+		return;
+	}
+
+	var msg="确认删除模块：" + dm_sel_module.name + " (id:" + dm_sel_module.id + ") 吗？";
+	alertMsg.confirm(msg, {
+		okCall: function(){
+			var url = "<?cs var:config.cgipath?>mt_slog?action=delete_module"+"&id="+dm_sel_module.id;
+			url += '&app_id='+dm_module_list.applist[dm_sel_app_idx].app_id;
+			$.get(url, function(dmta){
+				if(dmtFirstDealAjaxResponse(dmta))
+					return;
+
+				if(dmta.statusCode==200){
+					alertMsg.info("删除成功。");
+					return navTab.reload();
+				}
+				else if(data.msg)
+					alertMsg.error(data.msg);
+				else
+					alertMsg.error("删除失败！");
+			}, "json"); 
+		}
+	});
+	return;
+}
+
+function dmAppChange()
+{
+	var app_id = $('#dm_app_id').val();
+	var app_list = dm_module_list.applist;
+	var modules = $('#dm_module_id');
+	modules.html('<option value="0"> - 请选择 - </option>');
+	var module_sel = <?cs var:config.dm_module_id ?>+0;
+	for(var i=0; i < app_list.length; ++i) 
+	{
+		if(app_list[i].app_id == app_id) {
+			var app = app_list[i];
+			for(var j=0; j < app.module_count; ++j)
+			{
+				var op = $('<option></option>');
+				op.val(app.modulelist[j].id).text(app.modulelist[j].name);
+				if(module_sel != 0 && app.modulelist[j].id == module_sel)
+					op.attr("selected", true);
+				modules.append(op);
+			}
+			break;
+		}
+	}
+}
+
+function dmModModule()
+{
+	if(dm_sel_module == "")
+	{
+		alertMsg.info("请先点击模块列表选择一个要修改的模块");
+		return;
+	}
+
+	var url = "<?cs var:config.cgipath?>mt_slog?action=mod_module";
+	url += "&id=" + dm_sel_module.id; 
+	url += "&app_id=" + dm_module_list.applist[dm_sel_app_idx].app_id;
+	url += "&app_name=" + encodeURIComponent(dm_module_list.applist[dm_sel_app_idx].app_name); 
+	url += "&module_name=" + encodeURIComponent(dm_sel_module.name);
+	url += "&module_desc=" + encodeURIComponent(dm_sel_module.desc);
+
+	var op = $.parseJSON('{"mask":true,"maxable":false,"height":300,"width":520}'); 
+	$.pdialog.open(url, "dm_dlg_mod_module", "修改模块信息", op); 
+}
+
+$(document).ready(function(){
+	if(dm_module_list.app_count <= 0) {
+		alertMsg.info("应用数目为0，请先添加应用！");
+		return;
+	}
+	else {
+		var app_sel = <?cs var:config.dm_app_id ?>+0;
+
+		var app = $('#dm_app_id');
+		app.change(dmAppChange); 
+		app.html('<option value="0"> - 请选择 - </option>');
+		var app_list = dm_module_list.applist;
+		for(var i=0; i < app_list.length; ++i) {
+			var op = $('<option></option>');
+			op.val(app_list[i].app_id).text(app_list[i].app_name);
+			if(i==0 && app_sel == 0)
+				op.attr("selected", true);
+			else if(app_sel == app_list[i].app_id)
+				op.attr("selected", true);
+			app.append(op);
+		}
+		dmAppChange();
+		dmSetModulelist();
+	}
+});
+
+</script>
+
+

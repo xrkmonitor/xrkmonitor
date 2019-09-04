@@ -1,0 +1,14 @@
+<div id="navMenu">
+	<ul>
+		<li><a href="<?cs var:config.cgipath?>mt_slog_monitor?action=left_attr"><span>监控点上报查看</span></a></li>
+		<li><a href="<?cs var:config.cgipath?>mt_slog_monitor?action=left_log"><span>日志上报查看</span></a></li>
+		<li><a href="<?cs var:config.cgipath?>mt_slog_monitor?action=left_m"><span>上报管理</span></a></li>
+
+		<?cs if:comm.user_type == 1 ?>
+		<li><a href="<?cs var:config.cgipath?>mt_slog_monitor?action=left_user" id='dh_left_user'><span>用户管理</span></a></li>
+		<li><a href="<?cs var:config.cgipath?>mt_slog_monitor?action=left_syssrv"><span>系统服务器</span></a></li>
+		<?cs /if ?>
+		<li class="selected" id='navMenuLast'><a href="<?cs var:config.cgipath?>mt_slog_monitor?action=left_main"><span>我的主页</span></a></li>
+	</ul>
+</div>
+

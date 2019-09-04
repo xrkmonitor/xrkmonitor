@@ -1,0 +1,96 @@
+<script language="javascript" type="text/javascript">
+
+/*  引用了 dmt_log_config.html 中的变量： dlc_detail_sel_config, dlcGetLogType()
+   */
+
+$(document).ready(function(){
+	$("#dddc_config_id").html(dlc_detail_sel_config.config_id);
+	$("#dddc_config_name").html(dlc_detail_sel_config.config_name);
+	$("#dddc_app_name").html(dlc_detail_sel_config.app_name);
+	$("#dddc_app_id").html(dlc_detail_sel_config.app_id);
+	$("#dddc_module_name").html(dlc_detail_sel_config.module_name);
+	$("#dddc_module_id").html(dlc_detail_sel_config.module_id);
+	$("#dddc_user_add").html(dlc_detail_sel_config.user_add);
+	$("#dddc_add_time").html(dlc_detail_sel_config.create_time);
+	$("#dddc_user_mod").html(dlc_detail_sel_config.user_mod);
+	$("#dddc_mod_time").html(dlc_detail_sel_config.update_time);
+	$("#dddc_log_type").html(dlcGetLogType(dlc_detail_sel_config.log_types));
+	$("#dddc_log_freq").html(dlc_detail_sel_config.log_freq + ' (条/分钟)');
+	$("#dddc_config_desc").html(dlc_detail_sel_config.config_desc);
+
+	var testkeys = '<?cs var:config.test_keys ?>';
+	if(testkeys != 'null') {
+		var tarry = testkeys.split("|");
+		var sp;
+		for(var i=0; i < tarry.length; i++)
+		{
+			sp = $('<span class="log-keyword"><span></span></span>');
+			sp.children('span').text(tarry[i]);
+			$('#dddc_log_testkey').append(sp);
+		}
+	}
+});
+
+</script>
+
+<div class="pageContent">
+	<div class="pageFormContent" layoutH="56">
+		<table> 
+			<tr height="30">
+				<td width="120" align="right">配置名称：</td>
+				<td width="200" id="dddc_config_name"></td>
+				<td width="120" align="right">配置 id：</td>
+				<td width="200" id="dddc_config_id"></td>
+			</tr>
+
+			<tr height="30">
+				<td width="120" align="right">所属应用：</td>
+				<td width="200" id="dddc_app_name"></td>
+				<td width="120" align="right">应用 id：</td>
+				<td width="200" id="dddc_app_id"></td>
+			</tr>
+
+			<tr height="30">
+				<td width="120" align="right">所属模块：</td>
+				<td width="200" id="dddc_module_name"></td>
+				<td width="120" align="right">模块 id：</td>
+				<td width="200" id="dddc_module_id"></td>
+			</tr>
+
+			<tr height="30">
+				<td width="120" align="right">创建人：</td>
+				<td width="200" id="dddc_user_add"></td>
+				<td width="120" align="right">创建时间：</td>
+				<td width="200" id="dddc_add_time"></td>
+			</tr>
+
+			<tr height="30">
+				<td width="120" align="right">最近更新人：</td>
+				<td width="200" id="dddc_user_mod"></td>
+				<td width="140" align="right">最近更新时间：</td>
+				<td width="200" id="dddc_mod_time"></td>
+			</tr>
+
+			<tr height="35">
+				<td width="120" align="right">频率限制：</td>
+				<td width="200" id="dddc_log_freq"></td>
+				<td width="120" align="right">日志类型：</td>
+				<td width="200" id="dddc_log_type"></td>
+			</tr>
+			
+			<tr height="35" style='margin-top:5px'>
+				<td width="120" align="right" valign="top">染色配置：</td>
+				<td width="200" height="80" valign="top" id="dddc_log_testkey"></td>
+				<td width="120" valign="top" align="right">配置描述：</td>
+				<td width="200" height="80" valign="top" id="dddc_config_desc"></td>
+			</tr>
+		</table>
+	</div>
+
+	<div class="formBar">
+		<ul> <li><div class="button"><div class="buttonContent"><button type="button" class="close">&nbsp;&nbsp;关&nbsp;闭&nbsp;&nbsp;</button></div></div></li>
+		</ul>
+	</div>
+</div>
+
+

@@ -1,0 +1,63 @@
+import "comm.proto";
+
+package top;
+
+message SlogLogInfo
+{
+	required uint32 uint32_app_id = 1;
+	required uint32 uint32_module_id = 2;
+	optional uint64 uint64_log_time = 3;
+	optional uint32 uint32_log_seq = 4;
+	required uint32 uint32_log_type = 5; // debug, info, error, failed
+	required bytes bytes_log = 6;
+	optional uint32 uint32_log_config_id = 7;
+	optional uint32 uint32_log_host = 8;
+	optional uint32 uint32_cust_1 = 9;
+	optional uint32 uint32_cust_2 = 10;
+	optional int32 int32_cust_3 = 11;
+	optional int32 int32_cust_4 = 12;
+	optional bytes bytes_cust_5 = 13;
+	optional bytes bytes_cust_6 = 14;
+}
+
+message SlogClientPkgBody
+{
+	repeated SlogLogInfo log = 1;
+	optional uint32 uint32_app_id = 2;
+}
+
+// 获取 app 占用的磁盘空间
+// cmd CMD_SLOG_GET_APP_LOG_SIZE
+message SlogGetAppLogSizeReq
+{
+	repeated int32 appid_list = 2; // 请求的 app 列表
+}
+message AppLogSizeInfo
+{
+	optional int32 appid = 1;
+	optional uint64 log_size = 2; // app 占用的磁盘空间
+	optional uint32 oldest_log_file_time = 3; // 最老的日志文件时间
+	optional uint32 debug_logs_count = 4; // debug 日志记录数
+	optional uint32 info_logs_count = 5; // info 日志记录数
+	optional uint32 warn_logs_count = 6; // warn 日志记录数
+	optional uint32 reqerr_logs_count = 7; // reqerr 日志记录数
+	optional uint32 error_logs_count = 8; // error 日志记录数
+	optional uint32 fatal_logs_count = 9; //  fatal 日志记录数
+	optional uint32 other_logs_count = 10; // other 日志记录数
+}
+message SlogGetAppLogSizeRsp
+{
+	optional uint32 master_user_id = 1; // 用户 id
+	repeated AppLogSizeInfo app_log_size_info = 2;
+	optional int32 req_app_count = 3; // 请求的 app 数目
+}
+
+// 删除旧的 app 日志文件
+// cmd CMD_SLOG_REMOVE_OLD_APP_LOG_FILE
+message SlogRemoveAppLogFile
+{
+	optional uint32 master_user_id = 1; // 用户 id
+	optional int32 app_id = 2; // 要删除文件的 app 
+	optional uint32 app_log_file_time = 3; // app 日志文件日志起始时间
+}
+

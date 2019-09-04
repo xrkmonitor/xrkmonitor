@@ -1,0 +1,10 @@
+<script type="text/javascript">
+
+$(document).ready(function(){
+	navTab.closeCurrentTab(); 
+	if(typeof($.pdialog._current) != "undefined" && $.pdialog._current != null)
+		$.pdialog.closeCurrent();
+	window.open('http://<?cs var:config.master_domain_url ?>', '_top', '', true);
+});
+
+</script>

@@ -1,0 +1,68 @@
+<script language="javascript" type="text/javascript">
+
+/*  引用了 dmt_module.html 中的变量：
+	* dm_sel_module_idx, dm_sel_module, dm_module_list, dm_sel_detail_app_idx
+   */
+
+$(document).ready(function(){
+	var appinfo = dm_module_list.applist[dm_sel_detail_app_idx];
+	$("#dddm_module_id").html(dm_sel_module.id);
+	$("#dddm_module_name").html(dm_sel_module.name);
+	$("#dddm_app_name").html(appinfo.app_name);
+	$("#dddm_app_id").html(appinfo.app_id);
+	$("#dddm_user_add").html(dm_sel_module.user_add);
+	$("#dddm_add_time").html(dm_sel_module.create_time);
+	$("#dddm_user_mod").html(dm_sel_module.user_mod);
+	$("#dddm_mod_time").html(dm_sel_module.mod_time);
+	$("#dddm_module_desc").html(dm_sel_module.desc);
+});
+
+</script>
+
+<div class="pageContent">
+	<div class="pageFormContent" layoutH="56">
+		<table> 
+			<tr height="30">
+				<td width="120" align="right">模块名称：</td>
+				<td width="200" id="dddm_module_name"></td>
+				<td width="120" align="right">模块 id：</td>
+				<td width="200" id="dddm_module_id"></td>
+			</tr>
+
+			<tr height="30">
+				<td width="120" align="right">所属应用：</td>
+				<td width="200" id="dddm_app_name"></td>
+				<td width="120" align="right">应用 id：</td>
+				<td width="200" id="dddm_app_id"></td>
+			</tr>
+
+			<tr height="30">
+				<td width="120" align="right">创建人：</td>
+				<td width="200" id="dddm_user_add"></td>
+				<td width="120" align="right">创建时间：</td>
+				<td width="200" id="dddm_add_time"></td>
+			</tr>
+
+			<tr height="30">
+				<td width="120" align="right">最近更新人：</td>
+				<td width="200" id="dddm_user_mod"></td>
+				<td width="140" align="right">最近更新时间：</td>
+				<td width="200" id="dddm_mod_time"></td>
+			</tr>
+
+			<tr height="30">
+				<td width="120" align="right" valign="top">模块描述：</td>
+				<td width="200" height="100" valign="top" id="dddm_module_desc"></td>
+				<td width="120" valign="top" align="right"></td>
+				<td width="200" valign="top"></td>
+			</tr>
+		</table>
+	</div>
+
+	<div class="formBar">
+		<ul> <li><div class="button"><div class="buttonContent"><button type="button" class="close">&nbsp;&nbsp;关&nbsp;闭&nbsp;&nbsp;</button></div></div></li>
+		</ul>
+	</div>
+</div>
+
+

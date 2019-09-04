@@ -1,0 +1,282 @@
+<div class="pageContent">
+	<div layoutH="2" style="float:left; display:block; overflow:auto; width:250px; border:solid 1px #CCC; line-height:21p
+	    x; background:#fff">
+	    <ul class="tree treeFolder" id="attr_type_list">
+			<li><a href='#'>-</a></li>
+		</ul>
+	</div>
+
+	<div class="panelBar">
+		<ul class="toolBar"> 
+			<li><a class="add" href="#" id="attr_type_add"><span>添加</span></a></li>
+			<li class="line">line</li>
+			<li><a class="delete" href="#" id="attr_type_del"><span>删除</span></a></li>
+			<li class="line">line</li>
+			<li><a class="edit" href="#" id="attr_type_mod"><span>修改</span></a></li>
+			<li class="line">line</li>
+		</ul>
+	</div>
+
+	<div id="js_attr_type" class="unitBox" style="margin-left:251px;">
+		<form method="get" action="<?cs var:config.cgipath?>mt_slog_attr?" class="pageForm required-validate" onsubmit=" return validateCallback(this, afterAjaxBack)">
+
+			<div class="pageFormContent nowrap" layoutH="83">
+				<input type="hidden" value="" id="action" name="action" />
+				<input type="hidden" value="" id="parent_attr_type" name="parent_attr_type" />
+				<input type="hidden" value="" id="attr_type_pos" name="attr_type_pos" />
+				<input type="hidden" value="" id="mod_attr_type" name="mod_attr_type" />
+				<dl>
+					<dt>当前选中的属性类型：</dt>
+					<dd id="attr_type_cur_type_tip"></dd>
+				</dl>
+				<dl>
+					<dt>类型位置：</dt>
+					<dd>
+						<input type="text" value="系统分配" id="attr_type_mypos" name="attr_type_mypos" disabled />
+					</dd>
+				</dl>
+				<dl>
+					<dt>类型编号：</dt>
+					<dd>
+						<input type="text" value="系统分配" id="attr_type_type" disabled />
+					</dd>
+				</dl>
+				<dl>
+					<dt>创建人：</dt>
+					<dd>
+						<input type="text" value="系统分配" id="attr_type_cuser" disabled />
+					</dd>
+				</dl>
+				<dl>
+					<dt>创建时间：</dt>
+					<dd>
+						<input type="text" value="系统分配" id="attr_type_ctime" disabled />
+					</dd>
+				</dl>
+				<dl>
+					<dt>最后修改人：</dt>
+					<dd>
+						<input type="text" value="系统分配" id="attr_type_muser" disabled />
+					</dd>
+				</dl>
+				<dl>
+					<dt>最后修改时间：</dt>
+					<dd>
+						<input type="text" value="系统分配" id="attr_type_mtime" disabled />
+					</dd>
+				</dl>
+				<dl>
+					<dt>类型名称：</dt>
+					<dd>
+						<input type="text" id="attr_type_name" name="attr_type_name" class="required" maxlength="18" disabled /> 
+					</dd>
+				</dl>
+				<dl>
+					<dt>类型描述：</dt>
+					<dd>
+						<textarea rows="5" cols="30" id="attr_type_desc" name="attr_type_desc" maxlength="64" disabled></textarea>
+					</dd>
+				</dl>
+			</div>
+
+			<div class="formBar"> 
+				<ul> 
+					<li>
+						<button type="submit" class="sexybutton" id="at_btn_submit"><span><span><span class="report">提交</span></span></span></button>
+					</li>
+					<li>
+						<button class="sexybutton" id="at_btn_erase" onclick="return OnBtnClear()"><span><span><span class="erase">重填</span></span></span></button>
+					</li>
+					<li>
+						<button class="sexybutton" onclick="return OnBtnCancel()"><span><span><span class="cancel">取消</span></span></span></button>
+					</li>
+				</ul>
+			</div>
+		</form>
+	</div>
+</div>
+
+<script language="javascript" type="text/javascript">
+
+var treeinfo = $.parseJSON('<?cs var:config.treeinfo ?>');
+var sel_attr_type = "null";
+
+function afterAjaxBack(jsd)
+{
+	if(dmtFirstDealAjaxResponse(jsd))
+		return;
+
+	if(jsd.statusCode == 200)
+	{
+		if($("#action").val() == "add")
+			alertMsg.correct("添加成功！");
+		else
+			alertMsg.correct("修改成功！");
+		return navTab.reload();
+	}
+	return DWZ.ajaxDone(jsd);
+}
+
+function OnBtnClear()
+{
+	$("#attr_type_name").val("").focus();
+	$("#attr_type_desc").val("");
+	return false;
+}
+
+function OnBtnCancel()
+{
+	$("#action").val("cancel");
+	BtnStatusSet();
+
+	js = sel_attr_type;
+	$("#attr_type_mypos").val(js.type_pos);
+	$("#attr_type_type").val(js.type);
+	$("#attr_type_cuser").val(js.create_user);
+	$("#attr_type_ctime").val(js.create_time);
+	$("#attr_type_muser").val(js.mod_user);
+	$("#attr_type_mtime").val(js.update_time);
+	$("#attr_type_name").val(js.name).attr("disabled", true);
+	$("#attr_type_desc").val(js.desc).attr("disabled", true);
+	return false;
+}
+
+function BtnStatusSet()
+{
+	switch($("#action").val())
+	{
+		case "add":
+		case "mod":
+			$("#at_btn_submit").removeClass("disabled").attr("disabled", false);
+			$("#at_btn_erase").removeClass("disabled").attr("disabled", false);
+			break;
+
+		default:
+			$("#at_btn_submit").addClass("disabled").attr("disabled", "disabled");
+			$("#at_btn_erase").addClass("disabled").attr("disabled", "disabled");
+			break;
+	}
+}
+
+$(document).ready(function(){
+	var obj= $("#attr_type_list");
+	var thtml = dmtSetTypeTree(treeinfo);
+	obj.html(thtml);
+
+	$("#attr_type_list a").each(function(){ 
+		$(this).click(function(){
+			var js = dmtGetTypeInfo(treeinfo, this.name);
+			if(js != "null")
+			{
+				$("#attr_type_mypos").val(js.type_pos);
+				$("#attr_type_type").val(js.type);
+				$("#attr_type_cuser").val(js.create_user);
+				$("#attr_type_ctime").val(js.create_time);
+				$("#attr_type_muser").val(js.mod_user);
+				$("#attr_type_mtime").val(js.update_time);
+				$("#attr_type_name").val(js.name).prop("disabled", true);
+				$("#attr_type_desc").val(js.desc).prop("disabled", true);
+
+				var curTip = "<font color=red>" + js.name + "</font>";
+				curTip += " <font color=#7F7F7F>&nbsp;&nbsp; -- 该类型将作为新增类型的父类型</font>";
+				$("#attr_type_cur_type_tip").html(curTip);
+				sel_attr_type = js;
+			}
+			else
+			{
+				$("#attr_type_mypos").val("获取失败");
+				$("#attr_type_type").val(this.name);
+				$("#attr_type_cuser").val("获取失败");
+				$("#attr_type_ctime").val("获取失败");
+				$("#attr_type_muser").val("获取失败");
+				$("#attr_type_mtime").val("获取失败");
+				$("#attr_type_name").val(this.outerText).prop("disabled", true);
+				$("#attr_type_desc").val("获取失败").prop("disabled", true);
+				alertMsg.error("获取类型:" + this.name +"失败！");
+				sel_attr_type = "null";
+			}
+			$("#action").val("list");
+			BtnStatusSet();
+		});
+	});
+
+	$("#attr_type_add").click(function(){
+			if(sel_attr_type == "null"){
+				alertMsg.info("请先选择一个类型做为父类型");
+				return;
+			}
+			$("#attr_type_mypos").val(sel_attr_type.type_pos+".1");
+			$("#attr_type_pos").val(sel_attr_type.type_pos+".1");
+			$("#attr_type_type").val("系统分配");
+			$("#attr_type_cuser").val(g_siteInfo.user_name);
+			$("#attr_type_muser").val(g_siteInfo.user_name);
+			$("#attr_type_ctime").val("系统填写");
+			$("#attr_type_mtime").val("系统填写");
+
+			$("#attr_type_name").val("").prop("disabled", false).focus();
+			$("#attr_type_desc").val("").prop("disabled", false);
+			$("#action").val("add");
+			$("#parent_attr_type").val(sel_attr_type.type);
+			BtnStatusSet();
+		});
+
+	$("#attr_type_del").click(function(){
+			if(sel_attr_type == "null"){
+				alertMsg.info("请先选择一个叶子类型节点");
+				return;
+			}
+			if(sel_attr_type.type == 1){
+				alertMsg.info("根类型节点不能删除！");
+				return;
+			}
+			if(sel_attr_type.subcount != 0){
+				alertMsg.info("非叶子类型节点不允许删除！");
+				return;
+			}
+			var msg="确认删除属性类型：" + sel_attr_type.name + " ?";
+			alertMsg.confirm(msg, {
+				okCall: function(){
+					var url = "<?cs var:config.cgipath?>mt_slog_attr?action=delete"+"&type="+sel_attr_type.type;
+					$.get(url, function(data){
+							if(dmtFirstDealAjaxResponse(data))
+								return;
+
+							if(data.statusCode==200){
+								alertMsg.info("删除成功。");
+								return navTab.reload();
+							}
+							else {
+								if(data.msg)
+									alertMsg.error(data.msg);
+								else
+									alertMsg.error("删除失败！");
+							}
+						}, "json");
+				}
+			});
+		});
+
+	$("#attr_type_mod").click(function(){
+			if(sel_attr_type == "null"){
+				alertMsg.info("请先选择一个类型节点");
+				return;
+			}
+			if(sel_attr_type.type == 1){
+				alertMsg.info("根类型节点不允许修改！");
+				return;
+			}
+			$("#attr_type_muser").val(g_siteInfo.user_name);
+			$("#attr_type_mtime").val("系统填写");
+
+			$("#attr_type_name").prop("disabled", false).focus();
+			$("#attr_type_desc").prop("disabled", false);
+			$("#mod_attr_type").val(sel_attr_type.type);
+			$("#action").val("mod");
+			BtnStatusSet();
+		});
+
+	$("#attr_type_list a:first").click();
+});
+
+</script>
+

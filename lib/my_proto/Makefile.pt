@@ -1,0 +1,37 @@
+PROTOC := protoc
+PROTOCFLAGS := --cpp_out=.
+
+INCLUDE := 
+
+PROTOSRC := $(wildcard *.proto)
+PROTOCPP := $(PROTOSRC:.proto=.pb.cc)
+CPPSRC := $(wildcard *.cc) $(PROTOCPP)
+CPPOBJ := $(CPPSRC:.cc=.o)
+CPPDEP := $(CPPSRC:.cc=.d)
+COMMOBJ := $(filter-out $(TARGETSRC:.cc=.o), $(CPPOBJ))
+ARFLAGS := r
+
+
+all: proto 
+
+libmyproto.a: $(CPPOBJ)
+	$(AR) $(ARFLAGS) $@ $^
+
+proto: $(PROTOCPP)
+
+clean:
+	$(RM) *.pb.h *.pb.cc tags
+	$(RM) *.a
+	$(RM) *.o *.d $(TARGET)
+
+%.pb.cc: %.proto
+	$(PROTOC) $(PROTOCFLAGS) $<
+
+%.pb.h: %.proto
+	$(PROTOC) $(PROTOCFLAGS) $<
+
+.PHONY: all proto clean cleanall
+
+.SECONDARY: $(CPPOBJ)
+
+sinclude $(CPPDEP)

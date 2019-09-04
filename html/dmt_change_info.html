@@ -1,0 +1,760 @@
+<div class="pageContent">
+	<div class="pageFormContent" layoutH="58" id='dci_show_dlg_main'>
+		<div id='dci_show_note_txt'>
+		<?cs if:config.field == 'xrkmonitor' ?>
+		<font class="note-text" style="margin-left:30px;">
+			提示：云账号绑定成功后可免费使用监控系统云版本提供的告警服务
+		</font>
+		<?cs else ?>
+		<font class="note-text" style="margin-left:30px;">提示：敏感资料修改需要进行身份验证</font>
+		<?cs /if ?>
+		<br />
+		</div>
+
+		<div class="unit" id='su_pass_user_info' style='display:none'>
+		<br />
+		<font style="margin-left:60px;"></font>
+		<br />
+		</div>
+		<br>
+
+		<div class="unit" id='dci_change_verify_info'>
+			<label>选择验证方式：</label>
+			<select id="dci_sel_verify_type" style="width:100px; text-align:center;">
+				<?cs if:config.field!='pass' && config.field!='su_pass' ?>
+				<option value="1">密 码</option>
+				<?cs /if ?>
+
+				<?cs if:config.has_email && config.field!='email' && config.field!='xrkmonitor' ?>
+				<option value="2">邮箱验证码</option>
+				<?cs /if ?>
+			</select>
+			<span id='dci_resend_vcode_show' style='display:none;'>
+				<div class="buttonActive"><div class="buttonContent"><button id="dci_resend_vcode" type="button">发送验证码</button></div></div>
+			</span>
+		</div>
+
+		<div class="unit" id='dci_passwd'>
+			<?cs if:config.field!='pass' && config.field!='su_pass' ?>
+			<label>登陆密码：</label>
+			<?cs else ?>
+			<label>新登陆密码：</label>
+			<?cs /if ?>
+			<input type="password" name="oldPassword" style="display:none">
+			<input autocomplete="off" type="text" onfocus="this.type='password'" id="dci_password" name="oldPassword" size="28">
+		</div>
+
+		<div class="unit" style="display:none" id='dci_xrkmonitor'>
+			<p>
+			<label>云账号：</label>
+			<input type="text" id='dci_xrkmonitor_account' name="dci_xrkmonitor_account" size='28' />
+			</p>
+			<p>
+			<label>云账号登录密码：</label>
+			<input autocomplete="off" type="text" onfocus="this.type='password'" id='dci_xrkmonitor_pass' name="dci_xrkmonitor_pass" size="28" />
+			</p>
+			<p>
+			<label>绑定验证码：</label>
+			<input id="dci_xrkmonitor_vcode" type="text" class="inputclass" size="9" align="top">&nbsp;
+			<img id="dci_img_vcode" title="点击更换验证码" src="#" width="76" height="20" border="0" style="position: relative; border:1px solid #eeeeee; background:#ffffff" >
+			<input id="dci_vcode_index" type="hidden">
+			<input id="dci_xrkmonitor_svr" type="hidden">
+			</p>
+		</div>
+
+		<div class="unit" style="display:none;margin-left:30px" id='dci_xrkmonitor_bind_info'>
+			<font style="font-weight:bold; font-size:13px;">恭喜您，绑定云账号成功，账号信息如下：</font>
+			<div style='margin-left:20px;margin-top:10px'>
+			云账号：<font style="font-weight:bold; font-size:12px; color:blue" id='dci_bind_xrkmonitor_name'></font>
+			</div>
+			<div style='margin-left:20px;margin-top:10px'>
+			云账号ID：<font style="font-weight:bold; font-size:12px; color:blue" id='dci_bind_xrkmonitor_uid'></font>
+			</div>
+			<div style='margin-top:10px;margin-left:10px;margin-right:10px'>
+				现在您可以使用云版本提供的监控告警服务了，告警服务包括：<br />
+				1、告警发送时间段设置<br />
+				2、告警发送频率限制<br />
+				3、短信/邮件/微信等告警通道支持。
+				<br /> <br />
+				注意：不要忘了为 <font style='color:blue'>slog_deal_warn</font> 服务配置以下两个配置项<br>
+				<font style='color:red'>XRKMONITOR_UID - 云账号ID</font><br />
+				<font style='color:red'>XRKMONITOR_UKEY - 云账号数据上报 KEY</font> <br />
+			</div>
+		</div>
+
+		<div class="unit" style="display:none" id='dci_new_email'>
+			<label>新电子邮箱：</label>
+			<input type="text" name="dci_user_email" id="dci_user_email" title="请输入电子邮箱地址" size="28" />
+			<span>
+				&nbsp;<div class="buttonActive"><div class="buttonContent"><button id="dci_resend_vcode_email">发送验证码</button></div></div>
+			</span>
+		</div>
+
+		<div class="unit" id='dci_email' style="display:none">
+			<label>邮箱验证码：</label>
+			<input type="text" id="dci_email_vcode" size="28" /> 
+		</div>
+
+		<div class="unit" style="display:none" id='dci_new_name'>
+			<label>新账号名：</label>
+			<input type="text" name="dci_user_name" id="dci_user_name" title="请输入4-20位字母或者数字" size="28" /> 
+		</div>
+
+		<br id='dci_layout_br1' />
+		<br id='dci_layout_br2' />
+		<br id='dci_layout_br3' />
+		<div class="unit" id='dci_op_tip_msg_show' align='center' style='display:none'>
+			<font id='dci_op_tip_msg'></font>
+		</div>
+		<div class="unit" id='dci_op_msg_show' align='center' style='display:none'>
+			<font style="color:red" id='dci_op_msg'></font>
+		</div>
+	</div>
+	<div class="formBar">
+		<ul>
+			<li id='dci_submit_li'>
+				<div class="buttonActive"><div class="buttonContent"><button type="button" id='dci_submit'>&nbsp;&nbsp;提&nbsp;交&nbsp;&nbsp;</button></div></div>
+			</li>
+			<li><div class="button"><div class="buttonContent"><button type="button" class="close" id='dci_close'>&nbsp;&nbsp;取&nbsp;消&nbsp;&nbsp;</button></div></div></li>
+		</ul>
+	</div>
+</div>
+
+<script type="text/javascript">
+
+var dci_op_field = '<?cs var:config.field ?>';
+function dciAjaxRetFailed(ret)
+{
+	switch(ret)
+	{
+		case 301:
+			dciShowMsg('密码验证失败，请重新输入');
+			break;
+		case 302:
+			dciShowMsg('验证码已过期，请重试');
+			break;
+		case 303:
+			dciShowMsg('验证码错误，请重试');
+			break;
+		case 304:
+			dciShowMsg('账户名已存在，请重新输入');
+			$('#dci_user_name').focus();
+			break;
+		case 305:
+			dciShowMsg('电子邮箱地址不匹配，请重新输入');
+			break;
+		case 306:
+			dciShowMsg('请先发送验证码');
+			break;
+			break;
+		default:
+			$.pdialog.closeCurrent();
+			alertMsg.warn('服务器返回错误，错误码：'+js.ec+' 请刷新页面稍后再试');
+			break;
+	}
+}
+
+function dciCheckVerifyInfo(vinfo)
+{
+	vinfo.vcode = '';
+	vinfo.pass = '';
+
+	if($('#dci_sel_verify_type').val() == 2) 
+	{
+		vinfo.vcode = $('#dci_email_vcode').val();
+		if(vinfo.vcode.length != 6 || /^\d+$/i.test(vinfo.vcode) == false) {
+			dciShowMsg('请输入 6 位数字邮箱验证码');
+			$('#dci_email_vcode').focus();
+			return false;
+		}
+	}
+	else if($('#dci_sel_verify_type').val() == 1)
+	{
+		if(!dciCheckPass())
+			return false;
+		vinfo.pass = $('#dci_password').val();
+		vinfo.pass = $.md5(vinfo.pass);
+	}
+	else {
+		alertMsg.error("脚本运行错误，未知验证类型："+$('#dci_sel_verify_type').val());
+		return false;
+	}
+	return true;
+}
+
+function dciCheckEmail(pemail)
+{
+	var email = pemail || $('#dci_user_email').val();
+	if(email.length < 4 || email.length > 40 
+		|| !/^([a-zA-Z0-9]+[_|\_|\.]?)*[a-zA-Z0-9]+@([a-zA-Z0-9]+[_|\_|\.]?)*[a-zA-Z0-9]+\.[a-zA-Z]{2,3}$/.test(email))
+	{
+		dciShowMsg('请输入长度为 4-40 的电子邮箱地址');
+		$('#dci_user_email').focus();
+		return false;
+	}
+	return true;
+}
+
+function dciCheckPass(ppass)
+{
+	var pass = ppass || $('#dci_password').val();
+	if(pass.length < 6 || pass.length > 20 || /^\w+$/i.test(pass)==false) {
+		if(dci_op_field == 'pass')
+			dciShowMsg('请输入长度为 6-20 位的密码');
+		else if(pass.length > 0)
+			dciShowMsg('登录密码不合法，请输入登录密码');
+		else
+			dciShowMsg('请输入登录密码');
+		$('#dci_password').focus();
+		return false;
+	}
+	return true;
+}
+
+function dciGetBindXrkmonitorVcode()
+{
+	var reqvcode = '<?cs var:config.xrkmonitor_url ?>';
+	reqvcode += '/cgi-bin/slog_flogin?action=bind_xrkmonitor_vcode';
+	$.ajax({ 
+		url:reqvcode,
+		global:false,
+		dataType:'json',
+		error:function() {
+			alertMsg.warn("获取绑定云账号的验证码失败，请稍后再试或者联系云监控管理员！");
+		},
+		success:function(result){
+			if(result.code == 0) {
+				$('#dci_img_vcode').attr('src', 'http://'+result.xrkmonitor_web_svr+'/'+result.verify_code_img);	
+				$('#dci_vcode_index').val(result.vcode_index);
+				$('#dci_xrkmonitor_svr').val('http://'+result.xrkmonitor_web_svr);
+			}
+			else {
+				alertMsg.warn("获取绑定云账号的验证码失败，请稍后再试或者联系云监控管理员！");
+			}
+		}
+	});
+}
+
+
+function dciBindXrkmonitorCheck(binfo)
+{
+	var reqpara = {};
+	var name = $('#dci_xrkmonitor_account').val();
+	if(name.length < 3 || name.length > 16 || /^[a-zA-Z][a-zA-Z0-9_]*$/.test(name) == false)
+	{
+		dciShowMsg('请输入云账号，云账号长度3-16，以字母开头，由字母数字或者下划线组成');
+		$('#dci_xrkmonitor_account').focus();
+		return false;
+	}
+
+	var input_passwd = $('#dci_xrkmonitor_pass').val();
+	if(input_passwd.length < 6 || input_passwd.length > 20 || /^\w+$/i.test(input_passwd)==false)
+	{
+		dciShowMsg('请输入云账号登录密码，密码长度为 6-20 位');
+		$('#dci_xrkmonitor_pass').focus();
+		return false;
+	}
+
+	reqpara.vcode = $('#dci_xrkmonitor_vcode').val();
+	if(reqpara.vcode.length < 4) {
+		dciShowMsg('请输入绑定验证码');
+		$('#dci_xrkmonitor_vcode').focus();
+		return false;
+	}
+
+	reqpara.user_name = name;
+	reqpara.vcode_index = $('#dci_vcode_index').val();
+	var pass_md5 = $.md5(input_passwd);
+	reqpara.password = $.md5(pass_md5+reqpara.vcode);
+	reqpara.action = "bind_xrkmonitor_check";
+	reqpara.response_method = "json";
+	var svr = $('#dci_xrkmonitor_svr').val();
+	var requrl = svr + '/cgi-bin/slog_flogin';
+	var bBindCheckOk = false;
+	$.ajax({
+		url:requrl,
+		data:reqpara,
+		async:false,
+		success:function(result){
+			switch (result.code) {
+				case 0:
+					binfo.uid = result.user_id;
+					binfo.uname = result.user_name;
+					binfo.bsess_id = result.bind_sess_id;
+					binfo.bsess_seq = result.bind_sess_seq;
+					binfo.bsess_key = result.bind_sess_key;
+					bBindCheckOk = true;
+					break;
+				case 1:
+					dciShowMsg('绑定验证码校验失败，请重试');	
+					$('#dci_xrkmonitor_vcode').val("");
+					$('#dci_xrkmonitor_vcode').focus();
+					break;
+				case 2:
+					dciShowMsg('绑定验证码已过期，请重新输入！');
+					$('#dci_vcode_index').val(result.vcode_index);
+					$('#dci_img_vcode').attr('src', svr + '/' + result.verify_code_img);	
+					$('#dci_xrkmonitor_vcode').val("");
+					$('#dci_xrkmonitor_vcode').focus();
+					break;
+				case 3:
+					dciShowMsg('绑定操作失败，该云账号已被绑定');
+					break;
+				case 4:
+					dciShowMsg('绑定云账号失败，注意只能绑定字符云监控的主账号');
+					break;
+				case 5:
+					dciShowMsg('绑定云账号失败，账号或密码错误');
+					break;
+				default:
+					dciShowMsg('绑定云账号失败，注意只能绑定云监控的主账号');
+				    $('#dci_xrkmonitor_account').focus();
+					break;
+			}
+		},
+		error:function(){
+			dciShowMsg('绑定云账号失败，请稍后再试或者联系云监控管理员');
+		},
+		dataType:'json'
+	});
+	return bBindCheckOk;
+}
+
+function dciBindXrkmonitorRemote(binfo)
+{
+	var reqpara = {};
+	reqpara.user_id = binfo.uid;
+	reqpara.bind_sess_id = binfo.bsess_id;
+	reqpara.bind_sess_seq = binfo.bsess_seq;
+	reqpara.bind_sess_key = binfo.bsess_key;
+	reqpara.action = "bind_xrkmonitor";
+	reqpara.response_method = "json";
+	var svr = $('#dci_xrkmonitor_svr').val();
+	var requrl = svr + '/cgi-bin/slog_flogin';
+	var bBindOk = false;
+	$.ajax({
+		url:requrl,
+		data:reqpara,
+		async:false,
+		global:false,
+		success:function(result){
+			switch (result.code) {
+				case 0:
+					bBindOk = true;
+					break;
+				case 1:
+					dciShowMsg('绑定信息校验错误，请稍后再试或者联系云监控管理员');
+					break;
+				default:
+					dciShowMsg('绑定云账号失败，请稍后再试');
+					break;
+			}
+		},
+		error:function(){
+			dciShowMsg('绑定云账号失败，请稍后再试或者联系云监控管理员');
+		},
+		dataType:'json'
+	});
+	return bBindOk;
+}
+
+function dciUnBindXrkmonitorLocal(binfo)
+{
+	var rurl = '<?cs var:config.cgipath?>mt_slog_user?action=';
+	rurl += 'unbind_xrkmonitor';
+	rurl += '&xrkmonitor_uid=' + binfo.uid;
+	$.ajax({
+		url:rurl,
+		global:false,
+		dataType: 'json'
+	});
+}
+
+function dciBindXrkmonitorLocal(vinfo, binfo)
+{
+	var rurl = '<?cs var:config.cgipath?>mt_slog_user?action=';
+	rurl += 'bind_xrkmonitor';
+	rurl += '&verify_type=' + $('#dci_sel_verify_type').val();
+	rurl += '&pass=' + vinfo.pass;
+	rurl += '&xrkmonitor_uid=' + binfo.uid;
+	rurl += '&xrkmonitor_uname=' + binfo.uname;
+
+	var bBindLocalOk = false;
+	$.ajax({
+		url: rurl,
+		success: function(js) {
+			if(dmtFirstDealAjaxResponse(js))
+			    return;
+			if(js.ec == 0) {
+				bBindLocalOk = true;
+			}
+			else 
+				dciAjaxRetFailed(js.ec);
+		}, 
+		error: function(js) {
+			dciShowMsg("服务器错误, 请稍后再试");
+		},
+		cache:false,
+		async:false,
+		global:false,
+		dataType: 'json'
+	});
+	return bBindLocalOk;
+}
+
+function dciSendVcode(btn)
+{
+	if(s_dci_InputTimeoutSec > 0) {
+		dciShowMsg('发送频率过快，请'+s_dci_InputTimeoutSec+" 秒后再试");
+		return;
+	}
+	var requrl = g_siteInfo.cgi_path+"mt_slog_user";
+	var reqpara = {};
+	var n_email = '';
+	var n_mobile = '';
+	reqpara.action = 'send_op_vcode';
+	reqpara.field = dci_op_field;
+	reqpara.has_email = <?cs var:config.has_email ?>;
+	reqpara.verify_type = $('#dci_sel_verify_type').val();
+
+	if($('#dci_new_email').css('display') == 'block') {
+		if(dciCheckEmail() == false)
+			return;
+		reqpara.new_email = $('#dci_user_email').val();
+		n_email = reqpara.new_email;
+	}
+
+	// 管理员重置密码
+	if(dci_op_field == 'su_pass')
+	{
+		reqpara.mod_user_id = '<?cs var:config.mod_user_id ?>';
+		reqpara.mod_user_name = '<?cs var:config.mod_user_name ?>';
+	}
+
+	$.ajax({ 
+		url:requrl,
+		data:reqpara,
+		global:false,
+		success:function(result){
+			if(dmtFirstDealAjaxResponse(result))
+			    return;
+
+			switch (result.ec) {
+				case 0:
+					dciShowTipMsg("验证码发送成功, 请查收后输入");
+					s_dci_InputTimeoutSec = 61;
+					dciTimeoutCheck(btn);
+					if($('#dci_sel_verify_type').val() == 2)
+						$('#dci_email_vcode').val('').focus();
+					else 
+						$('#dci_mobile_vcode').val('').focus();
+					break;
+
+				case 301:
+					dciShowMsg("发送频率过快，请 "+ result.timeout_remain + " 秒后再试");
+					s_dci_InputTimeoutSec = result.timeout_remain+1;
+					dciTimeoutCheck(btn);
+					break;
+
+				case 302:
+					dciShowMsg("电子邮件地址：" + n_email + " 已存在，请重新输入");
+					break;
+					
+				default:
+					dciShowMsg("验证码发送失败，请稍后再试");
+					s_dci_InputTimeoutSec = 61;
+					dciTimeoutCheck(btn);
+					break;
+				}
+			}, 
+		error:function(q,errmsg,err){
+				dciShowMsg("服务器错误, 请稍后再试");
+				s_dci_InputTimeoutSec = 61;
+				dciTimeoutCheck(btn);
+			},
+		dataType:'json'
+	});
+}
+
+$(document).ready(function(){
+	$('#dci_submit').click(function() {
+		dciHideMsg();
+		if(dci_op_field == 'name')
+		{
+			var vinfo = { vcode:'', pass:'' };
+			if(!dciCheckVerifyInfo(vinfo))
+				return false;
+
+			var name = $('#dci_user_name').val();
+			if(name.length < 3 || name.length > 16 || /^[a-zA-Z][a-zA-Z0-9_]*$/.test(name) == false)
+			{
+				dciShowMsg('账号名长度3-16个字符，以字母开头，字符为字母数字或者下划线');
+				$('#dci_user_name').focus();
+				return false;
+			}
+
+			var rurl = '<?cs var:config.cgipath?>mt_slog_user?action=change_uname';
+			rurl += '&new_name=' + name;
+			rurl += '&verify_type=' + $('#dci_sel_verify_type').val();
+			if(vinfo.vcode != '')
+				rurl += '&vcode=' + vinfo.vcode;
+			else
+				rurl += '&pass=' + vinfo.pass;
+
+			$.ajax({
+				url: rurl,
+				success: function(js) {
+					if(dmtFirstDealAjaxResponse(js))
+					    return;
+
+					if(js.ec == 0) {
+						$.pdialog.closeCurrent();
+						alertMsg.info('账号名修改成功');
+
+						// 修改页面上的显示
+						$('#duc_uname').text(name);
+						$('#dc_uname').text(name);
+						$.cookie('flogin_user', name, {expires:7, path:'/'}); 
+					}
+					else 
+						dciAjaxRetFailed(js.ec);
+				}, 
+				error: function(js) {
+					dciShowMsg("服务器错误, 请稍后再试");
+				},
+				cache:false,
+				async:false,
+				global:false,
+				dataType: 'json'
+			});
+		}
+		else if(dci_op_field == 'email')
+		{
+			var em = $('#dci_user_email').val();
+			if(dciCheckEmail(em) == false)
+				return false;
+
+			var vcode = $('#dci_email_vcode').val();
+			if(vcode.length != 6 || /^\d+$/i.test(vcode) == false) {
+				dciShowMsg('请输入 6 位数字邮箱验证码');
+				$('#dci_email_vcode').focus();
+				return false;
+			}
+
+			var vinfo = { vcode:'', pass:'' };
+			if(!dciCheckVerifyInfo(vinfo))
+				return false;
+
+			var rurl = '<?cs var:config.cgipath?>mt_slog_user?';
+			rurl += 'action=change_email'+'&new_email='+em;
+
+			rurl += '&verify_type=1';
+			rurl += '&vcode=' + vcode;
+			rurl += '&pass=' + vinfo.pass;
+			$.ajax({
+				url: rurl,
+				success: function(js) {
+					if(dmtFirstDealAjaxResponse(js))
+					    return;
+
+					if(js.ec == 0) {
+						$.pdialog.closeCurrent();
+						<?cs if:config.has_email==1 ?>
+						alertMsg.info('电子邮箱地址修改成功');
+						<?cs else ?>
+						alertMsg.info('电子邮箱地址绑定成功');
+						<?cs /if ?>
+						djUserCenter();
+					}
+					else 
+						dciAjaxRetFailed(js.ec);
+				}, 
+				error: function(js) {
+					dciShowMsg("服务器错误, 请稍后再试");
+				},
+				cache:false,
+				async:false,
+				global:false,
+				dataType: 'json'
+			});
+		}
+		else if(dci_op_field == 'pass' || dci_op_field == 'su_pass') 
+		{
+			var vinfo = { vcode:'', pass:'' };
+			if(!dciCheckVerifyInfo(vinfo))
+				return false;
+
+			if(dciCheckPass() == false)
+				return false;
+			var pass = $('#dci_password').val();
+			pass = $.md5(pass);
+
+			var rurl = '<?cs var:config.cgipath?>mt_slog_user?action=';
+			if(dci_op_field == 'pass')
+				rurl += 'reset_pass';
+			else
+			{
+				rurl += 'su_reset_pass';
+				rurl += '&mod_user_id=' + '<?cs var:config.mod_user_id ?>';
+			}
+
+			rurl += '&verify_type=' + $('#dci_sel_verify_type').val();
+			rurl += '&vcode=' + vinfo.vcode;
+			rurl += '&pass=' + pass;
+			$.ajax({
+				url: rurl,
+				success: function(js) {
+					if(dmtFirstDealAjaxResponse(js))
+					    return;
+
+					if(js.ec == 0) {
+						var pass_src = $('#dci_password').val();
+						var msg="密码重置成功，请牢记您的新密码：<font color='red'>" + pass_src + '</font>';
+						dciShowTipMsg(msg);
+						if(typeof js.new_login_md5 != 'undefined')
+							$.cookie('flogin_md5', js.new_login_md5, {expires:7, path:'/'}); 
+						$('#dci_resend_vcode_show').css('display', 'none');
+						$('#dci_submit_li').css('display', 'none');
+						$('#dci_close').html('&nbsp;&nbsp;确&nbsp;&nbsp;定&nbsp;&nbsp;'); 
+					}
+					else 
+						dciAjaxRetFailed(js.ec);
+				}, 
+				error: function(js) {
+					dciShowMsg("服务器错误, 请稍后再试");
+				},
+				cache:false,
+				async:false,
+				global:false,
+				dataType: 'json'
+			});
+		}
+		else if(dci_op_field == 'xrkmonitor') 
+		{
+			var vinfo = { vcode:'', pass:'' };
+			if(!dciCheckVerifyInfo(vinfo))
+				return false;
+
+			var binfo = { uid:'', uname:'', bsess_id:'', bsess_seq:'', bsess_key:'' };
+			if(!dciBindXrkmonitorCheck(binfo))
+				return false;
+
+			if(!dciBindXrkmonitorLocal(vinfo, binfo))
+				return false;
+
+			if(!dciBindXrkmonitorRemote(binfo))
+			{
+				dciUnBindXrkmonitorLocal(binfo);
+				return false;
+			}
+
+			$('#dci_xrkmonitor').css('display', 'none');
+			$('#dci_show_note_txt').css('display', 'none');
+			$('#dci_change_verify_info').css('display', 'none');
+			$('#dci_passwd').css('display', 'none');
+			$('#dci_xrkmonitor_bind_info').css('display', 'block');
+			$('#dci_bind_xrkmonitor_name').text(binfo.uname);
+			$('#dci_bind_xrkmonitor_uid').text(binfo.uid);
+			$('#dci_submit_li').css('display', 'none');
+			$('#dci_close').html('&nbsp;&nbsp;确&nbsp;定&nbsp;&nbsp;');
+
+			// 重新加载或者打开账号中心
+			djUserCenter();
+		}
+	});
+
+	// 修改邮箱或者修改手机号码，显示验证码框以及发送按钮
+	if(dci_op_field == 'email') // 邮箱
+	{
+		$('#dci_new_email').css('display', 'block');
+		$('#dci_email').css('display', 'block');
+	}
+	else if(dci_op_field == 'pass' || dci_op_field == 'su_pass') // 密码
+	{
+		if(dci_op_field == 'su_pass')
+		{
+			$('#su_pass_user_info').css('display', 'block');
+			$('#su_pass_user_info font').html('您正在重置账号：<font color="red">' + '<?cs var:config.mod_user_name ?>' + ' </font>&nbsp;的密码');
+		}
+
+		$('#dci_resend_vcode_show').css('display', 'block');
+		$('#dci_email').css('display', 'block');
+	}
+	else if(dci_op_field == 'name') // 用户名
+		$('#dci_new_name').css('display', 'block');
+	else if(dci_op_field == 'xrkmonitor') // 云账号
+	{
+
+		$('#dci_xrkmonitor').css('display', 'block');
+		dciGetBindXrkmonitorVcode();
+		$('#dci_img_vcode').click(function(){
+			dciGetBindXrkmonitorVcode();
+		});
+	}
+	else {
+		alertMsg.warn("脚本运行出错，请刷新页面重试");
+		$.pdialog.closeCurrent();
+		return;
+	}
+	
+	$('#dci_sel_verify_type').change(function(){
+		if(dci_op_field != 'pass' && dci_op_field != 'su_pass')
+			$('#dci_passwd').css('display', 'none');
+
+		$('#dci_email').css('display', 'none');
+		if($('#dci_sel_verify_type').val() == 1)
+		{
+			$('#dci_passwd').css('display', 'block');
+			$('#dci_resend_vcode_show').css('display', 'none');
+		}
+		else
+		{
+			$('#dci_email').css('display', 'block');
+			$('#dci_resend_vcode_show').css('display', 'block');
+		}
+	});
+
+	$('#dci_resend_vcode').click(function(){ dciSendVcode("dci_resend_vcode"); });				
+	$('#dci_resend_vcode_email').click(function(){ dciSendVcode("dci_resend_vcode_email"); });				
+});
+
+function dciShowTipMsg(msg)
+{
+	$('#dci_op_tip_msg_show').css('display', 'block');
+	$('#dci_op_msg_show').css('display', 'none');
+	$('#dci_op_tip_msg').html(msg);
+}
+
+function dciHideMsg()
+{
+	$('#dci_op_tip_msg_show').css('display', 'none');
+	$('#dci_op_msg_show').css('display', 'none');
+}
+
+function dciShowMsg(msg)
+{
+	$('#dci_op_tip_msg_show').css('display', 'none');
+	$('#dci_op_msg_show').css('display', 'block');
+	$('#dci_op_msg').text(msg);
+}
+
+var s_dci_InputTimeoutSec = 0;
+var g_dci_TimerId = null;
+function dciTimeoutCheck(btn)
+{
+	s_dci_InputTimeoutSec--;
+	if(s_dci_InputTimeoutSec > 0)
+	{
+		$('#'+btn).attr("disabled", true);
+		$('#'+btn).text(""+s_dci_InputTimeoutSec+" 秒后重新发送");
+		g_dci_TimerId = setTimeout( function(){ dciTimeoutCheck(btn); }, 1000);
+	}
+	else
+	{
+		$('#'+btn).attr("disabled", false);
+		$('#'+btn).text("重新发送验证码");
+	}
+}
+
+</script>
+

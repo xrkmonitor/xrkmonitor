@@ -1,0 +1,191 @@
+<script language="javascript" type="text/javascript">
+//
+// 引用 dmt.comm.js 中的 dmtGetServerTypeName() 函数
+//
+var dss_src_syssrv_list = '<?cs var:config.syssrv_list ?>';
+var dss_syssrv_list = $.parseJSON(dss_src_syssrv_list);
+var dss_sel_syssrv = "null";
+var dss_sel_detail_idx = ""; // 用于弹出详情对话框时设置数据
+
+function dssSetSelSyssrv(selIndex)
+{
+	dss_sel_syssrv = dss_syssrv_list.syssrv_list[selIndex];
+}
+
+function dssOnDetail(idx)
+{
+	dss_sel_detail_idx = idx;
+	var op = $.parseJSON('{"mask":true,"maxable":false,"height":420,"width":620}'); 
+	$.pdialog.open("<?cs var:config.dwzpath?>dmt_dlg_detail_syssrv.html", "dss_dlg_detail",
+		"服务器："+dss_syssrv_list.syssrv_list[idx].ip+" 详情", op);
+}
+
+function dssSetSyssrvList()
+{
+	if(dss_syssrv_list == null || dss_syssrv_list.syssrv_count <= 0)
+		return "";
+
+	var ulist = dss_syssrv_list.syssrv_list;
+	var uhtml = "";
+	for(var i=0, j=1; i < ulist.length; i++,j++)
+	{
+		uhtml += "<tr onclick='dssSetSelSyssrv(" + i + ")'>";
+		uhtml += "<td>" + j + "</td>";
+		uhtml += "<td>" + ulist[i].id + "</td>";
+		uhtml += "<td>" + ulist[i].ip + "</td>";
+		uhtml += "<td>" + ulist[i].port + "</td>";
+		uhtml += "<td>" + dmtGetServerTypeName(ulist[i].type) + "</td>";
+		uhtml += "<td>" + ulist[i].weight + "</td>";
+
+		if(ulist[i].sand_box == 0)
+			uhtml += "<td style='color:#4169E1'>接受新用户</td>";
+		else if(ulist[i].sand_box == 1)
+			uhtml += "<td style='color:#5F9EA0'>限制使用中</td>";
+		else if(ulist[i].sand_box == 2)
+			uhtml += "<td style='color:red'>数据迁移中</td>";
+		else
+			uhtml += "<td>已下架</td>";
+
+		uhtml += "<td>" + ulist[i].update_time + "</td>";
+		uhtml += "<td>" + ulist[i].desc + "</td>";
+
+		var detail = "<a class='detail' href='#' onclick='return dssOnDetail("+i+");'>详情</a>";
+		uhtml += "<td>"+detail+"</td>";
+		uhtml += "</tr>";
+	}
+	return uhtml;
+}
+
+function dssAddSyssrv()
+{
+	var url = "<?cs var:config.cgipath?>mt_slog_machine?action=add_syssrv";
+	var op = $.parseJSON('{"mask":true,"maxable":false,"height":480,"width":620}'); 
+	$.pdialog.open(url, "dss_dlg_add_syssrv", "添加系统服务器", op); 
+}
+
+function dssDeleteSyssrv()
+{
+	if(dss_sel_syssrv == "null")
+	{
+		alertMsg.info("请先点击系统服务器列表选择一个要删除的服务器");
+		return;
+	}
+
+	var msg="确认删除系统服务器：" + dss_sel_syssrv.ip + " (id:" + dss_sel_syssrv.id + ") 吗？";
+
+	alertMsg.confirm(msg, {
+		okCall: function(){
+			var url = "<?cs var:config.cgipath?>mt_slog_machine?action=delete_syssrv"+"&id="+dss_sel_syssrv.id;
+			$.get(url, function(dssta){
+				if(dmtFirstDealAjaxResponse(dssta))
+					return;
+
+				if(dssta.statusCode==200){
+					alertMsg.info("删除成功。");
+					return navTab.reload();
+				}
+				else if(dssta.msg)
+					alertMsg.error(dssta.msg);
+				else
+					alertMsg.error("删除失败！");
+			}, "json"); 
+		}
+	});
+	return;
+}
+
+function dssModSyssrv()
+{
+	if(dss_sel_syssrv == "null")
+	{
+		alertMsg.info("请先点击系统服务器列表选择一个要修改的服务器");
+		return;
+	}
+
+	var url = "<?cs var:config.cgipath?>mt_slog_machine?action=mod_syssrv";
+	url += "&srv_id=" + dss_sel_syssrv.id; 
+
+	var op = $.parseJSON('{"mask":true,"maxable":false,"height":460,"width":620}'); 
+	$.pdialog.open(url, "dss_dlg_mod_syssrv", "修改系统服务器信息", op); 
+}
+
+$(document).ready(function(){
+	var ulist = dssSetSyssrvList();
+	$("#dss_syssrv_list_tbody").html(ulist);
+});
+
+</script>
+
+<div class="pageContent">
+	<div class="unitBox" style="margin-left:1px;"> 
+		<form id="pagerForm" method="post" action="<?cs var:config.cgipath?>mt_slog_machine?action=list_sys_srv">
+			<input type="hidden" name="pageNum" value="<?cs var:config.currentPage ?>" />
+			<input type="hidden" name="numPerPage" value="<?cs var:config.numPerPage ?>" />
+			<input type="hidden" name="orderField" value="<?cs var:config.orderField ?>" />
+			<input type="hidden" name="orderDirection" value="<?cs var:config.orderDirection ?>" />
+		</form>
+
+		<div class="pageContent" style="border-left:1px #B8D0D6 solid;border-right:1px #B8D0D6 solid">
+			<div class="panelBar">
+				<ul class="toolBar">
+					<li><a class="add" href="#" onclick="return dssAddSyssrv();"><span>添加</span></a></li>
+					<li class="line">line</li>
+					<li><a class="delete" href="#" onclick="return dssDeleteSyssrv();"><span>删除</span></a></li>
+					<li class="line">line</li>
+					<li><a class="edit" href="#" onclick="return dssModSyssrv();"><span>修改</span></a></li>
+					<li class="line">line</li>
+				</ul>
+			</div>
+
+			<div>
+				<table class="table" width="100%" layoutH="50"> 
+					<thead>
+						<tr>
+							<th width="40">序号</th>
+
+							<?cs if:config.order_id ?>
+							<th width="40" orderField="id" class="<?cs var:config.order_id ?>">服务ID</th>
+							<?cs else ?>
+							<th width="40" orderField="id" class="desc">服务ID</th>
+							<?cs /if ?>
+
+							<?cs if:config.order_ip ?>
+							<th width="60" orderField="ip" class="<?cs var:config.order_ip ?>">服务器IP</th>
+							<?cs else ?>
+							<th width="60" orderField="ip" class="desc">服务器IP</th>
+							<?cs /if ?>
+
+							<th width="60">监听端口</th>
+
+							<?cs if:config.order_type ?>
+							<th width="100" orderField="type" class="<?cs var:config.order_type ?>">服务器类型</th>
+							<?cs else ?>
+							<th width="100" orderField="type" class="desc">服务器类型</th>
+							<?cs /if ?>
+
+							<?cs if:config.order_weight ?>
+							<th width="40" orderField="weight" class="<?cs var:config.order_weight ?>">权重</th>
+							<?cs else ?>
+							<th width="40" orderField="weight" class="desc">权重</th>
+							<?cs /if ?>
+
+							<th width="60">服务状态</th>
+
+							<?cs if:config.order_update_time ?>
+							<th width="90" orderField="update_time" class="<?cs var:config.order_update_time ?>">最后更新时间</th>
+							<?cs else ?>
+							<th width="90" orderField="update_time" class="desc">最后更新时间</th>
+							<?cs /if ?>
+
+							<th width="130">描述</th>
+							<th width="30">详情</th>
+						</tr>
+					</thead>
+					<tbody id="dss_syssrv_list_tbody">
+					</tbody>
+				</table>
+			</div> 
+		</div>
+	</div> <!-- unitBox -->
+</div>
+

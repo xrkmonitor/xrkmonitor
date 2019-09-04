@@ -1,0 +1,30 @@
+COMM_INC = -I/usr/include/my_proto -I/usr/include/comm -I/usr/include/mysql -I/usr/include/Sockets 
+COMM_LIB = /usr/lib64/libSockets.a /usr/lib64/libmysqlwrapped.a -lmysqlclient /usr/lib64/libsrvbase.a /usr/lib64/libmyproto.a -lprotobuf -lz -lpthread -lcurl
+RELEASE := -g -DMT_DEBUG
+
+CC = g++ 
+WARNINGS := -Wall -Wsign-compare
+CXXFLAGS := $(WARNINGS) $(RELEASE) $(COMM_INC) 
+
+TARGETS = test 
+all:$(TARGETS)
+
+SRC := test.cpp
+OBJ := $(SRC:.cpp=.o)
+DEP := $(SRC:.cpp=.d)
+
+$(TARGETS): ${OBJ} 
+	$(CC) -g -Wall -o $@ $^ $(COMM_LIB) $(COMM_INC)  -lrt
+
+install:
+	cp ./$(TARGETS) $(TARGETS_DIR)
+	cp ./$(TARGETS).conf $(TARGETS_DIR)
+
+uninstall:
+	rm -f $(TARGETS_DIR)$(TARGETS)
+
+clean: 
+	rm -f *.o
+	rm -f *.d
+	rm -f ./$(TARGETS)
+

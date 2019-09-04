@@ -1,0 +1,45 @@
+<script language="javascript" type="text/javascript">
+
+/*
+   * 引用了全局变量 ds_view_name_{view_id} 在文件 dmt_showview.html 中定义
+   */
+
+// 绑定 or 解绑之后的回调函数
+function dsbAfterAttrOpr_<?cs var:config.view_id ?>(json)
+{
+	dialogAjaxDone(json);
+
+	var ds_view_name = ds_view_name_<?cs var:config.view_id ?>;
+	var url = "<?cs var:config.cgipath ?>mt_slog_showview?action=list&view_id=<?cs var:config.view_id ?>";
+	url += "&view_name=" + encodeURI(ds_view_name);
+	var rel = "showview_<?cs var:config.view_id ?>";
+	navTab.openTab(rel, url, {title:ds_view_name}); // 重新打开下当前视图
+}
+
+</script>
+
+<div class="pageContent">
+	<div class="tabs" currentIndex="0" eventType="click">
+		<div class="tabsHeader">
+			<div class="tabsHeaderContent">
+				<ul>
+					<li><a href="javascript:;"><span>已绑定监控点列表</span></a></li>
+					<li><a href="<?cs var:config.cgipath ?>mt_slog_showview?action=not_bind_attr&view_id=<?cs var:config.view_id ?>" class="j-ajax"><span>未绑定监控点列表</span></a></li>
+				</ul>
+			</div>
+		</div>
+		<div class="tabsContent" style="height:400px;" id="dsb_attr">
+			<div id="dsb_bind_attr_list_<?cs var:config.view_id ?>"> <!-- tab 0 bind attr list -->
+			<?cs include:config.cspath+"dmt_showview_bind_attr.html" ?>
+			</div> <!-- tab 0 bind attr list end -->
+
+			<div id="dsb_not_bind_attr_list_<?cs var:config.view_id ?>"> <!-- tab 1 not bind attr list -->
+			</div> <!-- tab 1 not bind attr list -->
+		</div>
+		<div class="tabsFooter" style="height:0px;">
+			<div class="tabsFooterContent">
+			</div> <!-- tabsFooterContent -->
+		</div>
+	</div>
+</div>
+

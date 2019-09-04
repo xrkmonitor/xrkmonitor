@@ -1,0 +1,54 @@
+<style type="text/css">
+.pageFormContent label { float:left; overflow:visible; width:140px; padding:0 5px; line-height:21px;}
+.pageFormContent p { width:500px;} 
+</style>
+
+<script language="javascript" type="text/javascript">
+
+$(document).ready(function(){
+	<?cs if:config.action == "save_mod_view" ?>
+	if(<?cs var:view.dvm_view_flag ?> & 1)
+		$('#dvm_auto_bind_machine').attr("checked", true);
+
+	$("input[name=dvm_view_name]").val("<?cs var:view.dvm_view_name ?>");
+	$("textarea[name=dvm_view_desc]").val("<?cs var:view.dvm_view_desc ?>");
+	<?cs /if ?>
+
+	$("#dvm_view_name").focus();
+});
+
+</script>
+
+<div class="pageContent">
+	<form method="get" action="<?cs var:config.cgipath?>mt_slog_view?action=<?cs var:config.action ?>&navTabId=dmt_slog_view" class="pageForm required-validate" onsubmit="return validateCallback(this, dialogAjaxDone);">
+		<div class="pageFormContent" layoutH="56">
+			<input type="hidden" name="dvm_view_id" value="<?cs var:view.dvm_view_id?>" />
+			<p>
+				<label>视图名称：</label>
+				<input type="text" size="22" name="dvm_view_name" id="dvm_view_name" maxlength="20" alt="请输入视图名称" class="required" />
+			</p>
+			<p>
+				<label>开启自动绑定上报机器：</label>
+				<input type="checkbox" name="dvm_auto_bind_machine" id="dvm_auto_bind_machine">
+				<font class="note-text">
+					<label class='for' style="float:right;width:320px;" for='dvm_auto_bind_machine'>
+						如果机器有已绑定的监控点数据上报，则自动绑定该机器
+					</label>
+				</font>
+			</p>
+			<p>
+				<label>视图描述：</label>
+				<textarea rows="4" cols="30" name="dvm_view_desc" maxlength="64" alt="请输入视图描述"></textarea>
+			</p>
+		</div>
+		<div class="formBar">
+			<ul>
+				<li><div class="button"><div class="buttonContent"><button type="submit">&nbsp;&nbsp;保&nbsp;存&nbsp;&nbsp;</button></div></div></li>
+				<li>
+					<div class="button"><div class="buttonContent"><button type="button" class="close">&nbsp;&nbsp;取&nbsp;消&nbsp;&nbsp;</button></div></div>
+				</li>
+			</ul>
+		</div>
+	</form>
+</div>
+

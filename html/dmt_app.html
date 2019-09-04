@@ -1,0 +1,141 @@
+<script language="javascript" type="text/javascript">
+var da_src_app_list = '<?cs var:config.app_list ?>';
+var da_app_list = $.parseJSON(da_src_app_list);
+var da_sel_app = "null";
+var da_sel_detail_idx = ""; // 用于弹出详情对话框时设置数据
+
+function daSetSelApp(selIndex)
+{
+	da_sel_app = da_app_list.applist[selIndex];
+}
+
+function daOnDetail(idx)
+{
+	da_sel_detail_idx = idx;
+	var op = $.parseJSON('{"mask":true,"maxable":false,"height":300,"width":580}');
+	$.pdialog.open("<?cs var:config.docpath?>dmt_dlg_detail_app.html", "da_dlg_detail",
+		"应用："+da_app_list.applist[idx].name+" 详情", op);
+}
+
+function daSetAppList()
+{
+	if(da_app_list == null || da_app_list.app_count <= 0)
+		return "";
+
+	var ulist = da_app_list.applist;
+	var uhtml = "";
+	for(var i=0, j=1; i < ulist.length; i++,j++)
+	{
+		uhtml += "<tr onclick='daSetSelApp(" + i + ")'>";
+		uhtml += "<td>" + j + "</td>";
+		uhtml += "<td>" + ulist[i].id + "</td>";
+		uhtml += "<td>" + ulist[i].name + "</td>";
+		uhtml += "<td>" + ulist[i].user_add + "</td>";
+		uhtml += "<td>" + ulist[i].update_time + "</td>";
+		uhtml += "<td>" + ulist[i].desc + "</td>";
+
+		var detail = "<a class='detail' href='#' onclick='return daOnDetail("+i+");'>详情</a>";
+		uhtml += "<td>"+detail+"</td>";
+		uhtml += "</tr>";
+	}
+	return uhtml;
+}
+
+function daAddApp()
+{
+	var url = "<?cs var:config.cgipath?>mt_slog?action=add_app";
+	var op = $.parseJSON('{"mask":true,"maxable":false,"height":300,"width":460}'); 
+	$.pdialog.open(url, "da_dlg_add_app", "添加应用", op); 
+}
+
+function daDeleteApp()
+{
+	if(da_sel_app == "null")
+	{
+		alertMsg.info("请先点击应用列表选择一个要删除的应用");
+		return;
+	}
+
+	var msg="确认删除应用：" + da_sel_app.name + " (id:" + da_sel_app.id + ")";
+	msg += " 以及该应用下的所有模块吗？";
+
+	alertMsg.confirm(msg, {
+		okCall: function(){
+			var url = "<?cs var:config.cgipath?>mt_slog?action=delete_app"+"&id="+da_sel_app.id;
+			$.get(url, function(data){
+				if(dmtFirstDealAjaxResponse(data))
+					return;
+
+				if(data.statusCode==200){
+					alertMsg.info("删除成功。");
+					return navTab.reload();
+				}
+				else if(data.msg)
+					alertMsg.error(data.msg);
+				else
+					alertMsg.error("删除失败！");
+			}, "json"); 
+		}
+	});
+	return;
+}
+
+function daModApp()
+{
+	if(da_sel_app == "null")
+	{
+		alertMsg.info("请先点击应用列表选择一个要修改的应用");
+		return;
+	}
+
+	var url = "<?cs var:config.cgipath?>mt_slog?action=mod_app";
+	url += "&app_id=" + da_sel_app.id; 
+	url += "&app_name=" + encodeURIComponent(da_sel_app.name);
+	url += "&app_desc=" + encodeURIComponent(da_sel_app.desc);
+
+	var op = $.parseJSON('{"mask":true,"maxable":false,"height":300,"width":440}'); 
+	$.pdialog.open(url, "da_dlg_mod_app", "修改应用信息", op); 
+}
+
+$(document).ready(function(){
+	var ulist = daSetAppList();
+	$("#da_app_list_tbody").html(ulist);
+});
+
+</script>
+
+<div class="pageContent">
+	<div class="unitBox" style="margin-left:1px;"> 
+		<div class="pageContent" style="border-left:1px #B8D0D6 solid;border-right:1px #B8D0D6 solid">
+			<div class="panelBar">
+				<ul class="toolBar">
+					<li><a class="add" href="#" onclick="return daAddApp();"><span>添加</span></a></li>
+					<li class="line">line</li>
+					<li><a class="delete" href="#" id='da_del' onclick="return daDeleteApp();"><span>删除</span></a></li>
+					<li class="line">line</li>
+					<li><a class="edit" href="#" id='da_mod' onclick="return daModApp();"><span>修改</span></a></li>
+					<li class="line">line</li>
+				</ul>
+			</div>
+
+			<div>
+				<table class="list" width="100%" layoutH="35"> 
+					<thead>
+						<tr>
+							<th width="40">序号</th>
+							<th width="60">应用 id</th>
+							<th width="140">应用名称</th>
+							<th width="90">创建人</th>
+							<th width="100">最近更新时间</th>
+							<th width="140">应用描述</th>
+							<th width="60">详情</th>
+						</tr>
+					</thead>
+					<tbody id="da_app_list_tbody">
+					</tbody>
+				</table>
+			</div> 
+		</div>
+	</div> <!-- unitBox -->
+</div>
+

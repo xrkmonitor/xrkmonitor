@@ -1,0 +1,81 @@
+<script type="text/javascript">
+
+var dcStrNewPasswd = ""; // rockdeng --- 2014-09-07
+function dcDoResponse(js)
+{
+	if(js.statusCode == 200){
+		$.pdialog.closeCurrent();
+		var msg="修改成功，新密码：" + dcStrNewPasswd;
+		alertMsg.info(msg);
+		$.cookie('flogin_md5', js.new_pass_md5, {expires:7, path:'/'}); 
+		return;
+	}
+
+	if(js.statusCode == 300 && typeof js.msg != "undefined"){
+		alertMsg.warn(js.msg);
+		return;
+	}
+
+	if(js.statusCode == 311) {
+		alertMsg.info("老密码错误，请重新输入！");
+		$("#oldPassword").val("");
+		$("#newPassword").val(dcStrNewPasswd);
+		$("#dc_rnewPassword").val(dcStrNewPasswd);
+		$("#oldPassword").focus();
+		return;
+	}
+	return DWZ.ajaxDone(js);
+}
+
+function dcOnSubmit(elem)
+{
+	var $form = $(elem);
+	if (!$form.valid()) {
+		return false;
+	}   
+
+	var oldpwd = $("#oldPassword").val();
+	var oldpwd_md5 = $.md5(oldpwd);
+	$("#oldPassword").val(oldpwd_md5);
+
+	dcStrNewPasswd = $("#newPassword").val();
+	var newpwd_md5 = $.md5(dcStrNewPasswd);
+	$("#newPassword").val(newpwd_md5);
+	$("#dc_rnewPassword").val(newpwd_md5);
+	return noValidateCallback(elem, dcDoResponse);
+}
+
+</script>
+
+<div class="pageContent">
+	<form method="get" action="<?cs var:config.cgipath?>mt_slog_user" class="pageForm required-validate" onsubmit="return dcOnSubmit(this);">
+		<div class="pageFormContent" layoutH="58">
+			<font class='note-text'>&nbsp;&nbsp;提示：如您已经忘记旧密码，可以在账号中心重置密码</font>
+			<br />
+			<br />
+			<input type="hidden" name="action" value="change_pwd">
+			<div class="unit">
+				<label>旧密码：</label>
+				<input type="password" name="s_oldPassword" style="display:none">
+				<input autocomplete="off" type="text" onfocus="this.type='password'" id="oldPassword" name="oldPassword" size="20" minlength="6" maxlength="20" class="required " />
+			</div>
+			<div class="unit">
+				<label>新密码：</label>
+				<input autocomplete="off" type="text" onfocus="this.type='password'" id="newPassword" name="newPassword" size="20" minlength="6" maxlength="20" class="required "/>
+			</div>
+			<div class="unit">
+				<label>确认密码：</label>
+				<input autocomplete="off" type="text" onfocus="this.type='password'" id="dc_rnewPassword" name="dc_rnewPassword" size="20" equalTo="#newPassword" class="required "/>
+			</div>
+			
+		</div>
+		<div class="formBar">
+			<ul>
+				<li><div class="buttonActive"><div class="buttonContent"><button type="submit">&nbsp;&nbsp;提&nbsp;交&nbsp;&nbsp;</button></div></div></li>
+				<li><div class="button"><div class="buttonContent"><button type="button" class="close">&nbsp;&nbsp;取&nbsp;消&nbsp;&nbsp;</button></div></div></li>
+			</ul>
+		</div>
+	</form>
+</div>
+
+

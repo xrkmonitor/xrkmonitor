@@ -1,0 +1,291 @@
+<div class="pageContent">
+	<div class="unitBox" style="margin-left:1px;"> 
+		<form id="pagerForm" method="post" action="<?cs var:config.cgipath?>mt_slog_attr?action=search">
+			<input type="hidden" name="pageNum" value="<?cs var:config.currentPage ?>" />
+			<input type="hidden" name="numPerPage" value="<?cs var:config.numPerPage ?>" />
+			<input type="hidden" name="orderField" value="<?cs var:config.orderField ?>" />
+			<input type="hidden" name="orderDirection" value="<?cs var:config.orderDirection ?>" />
+
+			<input type="hidden" name="da_attr_data_type" value="<?cs var:config.da_attr_data_type ?>" />
+			<input type="hidden" name="da_keyword" value="<?cs var:config.da_keyword ?>" />
+			<input type="hidden" name="dam_attr_type" value="<?cs var:config.dam_attr_type ?>">
+			<input type="hidden" name="dam_attr_type_name" value="<?cs var:config.dam_attr_type_name ?>">
+			<?cs if:config.da_excp_mask == 1 ?>
+			<input type="hidden" name="da_excp_mask" value="on">
+			<?cs /if ?>
+		</form>
+
+		<div class="pageHeader" style="border:1px #B8D0D6 solid">
+			<form onsubmit="return navTabSearch(this, 'dmt_attr');" action="<?cs var:config.cgipath?>mt_slog_attr?action=search" method="post">
+			<div class="searchBar">
+				<table class="searchContent" >
+					<tr>
+						<td>
+							数据类型：
+							<select name="da_attr_data_type" id="da_attr_data_type">
+								<option value="0">全部</option>
+								<option value="<?cs var:config.sum_report_m ?>">累计量</option> 
+								<option value="<?cs var:config.sum_report_his ?>">历史累计量</option>
+								<option value="<?cs var:config.sum_report_min ?>">取上报最小值</option>
+								<option value="<?cs var:config.sum_report_max ?>">取上报最大值</option>
+								<option value="<?cs var:config.ex_report ?>">异常量</option>
+								<option value="<?cs var:config.str_report_d ?>">字符串型</option>
+							</select>
+						</td>
+						<td>
+							监控点类型：
+							<input type="hidden" name="dam_attr_type" value="<?cs var:config.dam_attr_type ?>">
+							<input type="text" size="14" name="dam_attr_type_name" value="<?cs var:config.dam_attr_type_name ?>" readonly="readonly" />
+						</td>
+						<td align="left">
+							<a class="btnLook" href="<?cs var:config.cgipath ?>mt_slog_attr?action=lookUpAttrType" title="监控点类型选择" lookupGroup="" ></a>
+						</td>
+						<td>
+							监控点ID：<input type="text" name="da_keyword" size="8" onkeyup="this.value=this.value.replace(/\D/g,'')" onafterpaste="this.value=this.value.replace(/\D/g,'')" value="<?cs var:config.da_keyword ?>" />
+						</td>
+						<td>
+							<div id='da_excp_mask_id' style='display:none'>
+							<?cs if:config.da_excp_mask == 1 ?>
+							<input type="checkbox" name="da_excp_mask" checked id='da_excp_mask'>
+							<?cs else ?>
+							<input type="checkbox" name="da_excp_mask" id='da_excp_mask'>
+							<?cs /if ?>
+							<label class='for' for='da_excp_mask' style='float:right;width:40px'>已屏蔽</label>
+							</div>
+						</td> 
+						<td>
+							<button type="submit" class="sexybutton" id="da_btn_submit"><span><span><span class="search">查找</span></span></span></button>
+							<button class="sexybutton" id="da_btn_erase" onclick="return daClearSearch()"><span><span><span class="erase">重填</span></span></span></button>
+						</td>
+					</tr>
+				</table>
+			</div>
+			</form>
+		</div>
+		
+		<div class="pageContent" style="border-left:1px #B8D0D6 solid;border-right:1px #B8D0D6 solid">
+			<div class="panelBar">
+				<ul class="toolBar">
+					<li><a class="add" href="#" onclick="return daAddNewAttr();"><span>添加</span></a></li>
+					<li class="line">line</li>
+					<li><a class="delete" href="#" onclick="return daDeleteAttr();"><span>删除</span></a></li>
+					<li class="line">line</li>
+					<li><a class="edit" href="#" onclick="return daModAttr();"><span>修改</span></a></li>
+					<li class="line">line</li>
+				</ul>
+			</div>
+
+			<div id="da_attr_list">
+				<table class="list" width="100%" layoutH="90">
+					<thead>
+						<tr>
+							<th width="60">序号</th>
+							<?cs if:config.order_id ?>
+							<th width="60" orderField="id" class="<?cs var:config.order_id ?>">监控点id</th>
+							<?cs else ?>
+							<th width="60" orderField="id" class="asc">监控点id</th>
+							<?cs /if ?>
+
+							<th width="240">监控点名称</th>
+
+							<?cs if:config.order_attr_type ?>
+							<th width="180" orderField="attr_type" class="<?cs var:config.order_attr_type ?>">监控点类型</th>
+							<?cs else ?>
+							<th width="180" orderField="attr_type" class="asc">监控点类型</th>
+							<?cs /if ?>
+
+							<th width="80">数据类型</th>
+							<th width="200">监控点描述</th>
+							<th width="100">添加者</th>
+							<?cs if:config.order_create_time ?>
+							<th width="140" orderField="create_time" class="<?cs var:config.order_create_time ?>">添加时间</th>
+							<?cs else ?>
+							<th width="140" orderField="create_time" class="asc">添加时间</th>
+							<?cs /if ?>
+						</tr>
+					</thead>
+					<tbody id="da_attr_list_info">
+					</tbody>
+				</table>
+		
+				<div class="panelBar" layoutH="0">
+					<div class="pages">
+						<span>每页显示</span>
+						<select name="numPerPage" onchange="navTabPageBreak({numPerPage:this.value})">
+							<option value="10">10</option>
+							<option value="20">20</option>
+							<option value="50">50</option>
+							<option value="100">100</option>
+							<option value="200">200</option>
+						</select>
+						<span>条，共 <?cs var:config.totalCount ?>  条</span>
+					</div>
+					<div class="pagination" targetType="navTab" totalCount="<?cs var:config.totalCount ?>" numPerPage="<?cs var:config.numPerPage ?>" pageNumShown="<?cs var:config.pageNumShown ?>" currentPage="<?cs var:config.currentPage ?>"></div>
+				</div>
+			</div> <!-- da_attr_list -->
+		</div>
+	</div> <!-- unitBox -->
+</div>
+
+<script language="javascript" type="text/javascript">
+var da_attrinfo = $.parseJSON('<?cs var:config.attrinfo ?>');
+
+// 当前选中的监控点
+var da_sel_attr = "null";
+
+function daSetSelAttr(selIndex)
+{
+	da_sel_attr = da_attrinfo.list[selIndex];
+}
+
+function daSetAttrList(attrinfo)
+{
+	var list = "";
+	var listattr = attrinfo.list;
+	for(var i=0,j=0; i < attrinfo.count && i < listattr.length; i++)
+	{
+		list += "<tr onclick='daSetSelAttr(" + i + ")'>";
+
+		j = (<?cs var:config.currentPage ?>-1) * <?cs var:config.numPerPage ?> + 1;
+		list += "<td>" + (i+j) + "</td>";
+		list += "<td>" + listattr[i].id + "</td>";
+		list += "<td>" + listattr[i].name + "</td>";
+		list += "<td>" + listattr[i].attr_type + "</td>";
+
+		if(listattr[i].data_type == <?cs var:config.sum_report_m ?>)
+			list += "<td>累计量</td>";
+		else if(listattr[i].data_type == <?cs var:config.sum_report_his ?>)
+			list += "<td>历史累计量</td>";
+		else if(listattr[i].data_type == <?cs var:config.sum_report_min ?>)
+			list += "<td>取上报最小值</td>";
+		else if(listattr[i].data_type == <?cs var:config.sum_report_max ?>)
+			list += "<td>取上报最大值</td>";
+		else if(listattr[i].data_type == <?cs var:config.str_report_d ?>)
+		{
+			if(listattr[i].str_attr_type == 1)
+				list += "<td>字符串型&nbsp;-&nbsp;IP</td>";
+			else
+				list += "<td>字符串型</td>";
+		}
+		else if(listattr[i].data_type == <?cs var:config.ex_report ?>)
+		{
+			if(listattr[i].excep_attr_mask == 1)
+				list += "<td style='color:red'>异常量 | 已屏蔽告警</td>";
+			else
+				list += "<td>异常量</td>";
+		}
+		else
+			list += "<td>数据类型未知</td>";
+
+		list += "<td>" + listattr[i].attr_desc + "</td>";
+		list += "<td>" + listattr[i].user_add + "</td>";
+		list += "<td>" + listattr[i].add_time + "</td>";
+		list += "</tr>";
+	}
+	return list;
+}
+
+function daModAttr()
+{
+	if(da_sel_attr == "null")
+	{
+		alertMsg.info("请先点击监控点列表选择一个要修改的监控点");
+		return;
+	}
+
+	var url = "<?cs var:config.cgipath?>mt_slog_attr?action=mod_attr";
+	url += "&attr_id=" + da_sel_attr.id; 
+	url += "&attr_name=" + encodeURIComponent(da_sel_attr.name);
+	url += "&attr_desc=" + encodeURIComponent(da_sel_attr.attr_desc);
+	url += "&attr_data_type=" + da_sel_attr.data_type;
+	url += "&attr_type_name=" + encodeURIComponent(da_sel_attr.attr_type);
+	url += "&attr_inner=" + da_sel_attr.inner;
+	url += "&attr_type_id=" + da_sel_attr.attr_type_id;
+	url += "&excep_attr_mask=" + da_sel_attr.excep_attr_mask;
+	url += "&str_attr_type=" + da_sel_attr.str_attr_type;
+
+	var op = $.parseJSON('{"mask":true,"maxable":false,"height":360,"width":520}'); 
+	$.pdialog.open(url, "da_dlg_mod_attr", "修改监控点", op); 
+}
+
+function daDeleteAttr()
+{
+	if(da_sel_attr == "null")
+	{
+		alertMsg.info("请先点击监控点列表选择一个要删除的监控点");
+		return;
+	}
+
+	var msg="确认删除监控点：" + da_sel_attr.name + " (id:" + da_sel_attr.id + ") ?";
+	alertMsg.confirm(msg, {
+		okCall: function(){
+			var url = "<?cs var:config.cgipath?>mt_slog_attr?action=attr_delete"+"&id="+da_sel_attr.id;
+			$.get(url, function(data){
+					if(dmtFirstDealAjaxResponse(data))
+						return;
+
+					if(data.statusCode==200){
+						alertMsg.info("删除成功。");
+						return navTab.reload();
+					}
+					else
+						alertMsg.warn("删除失败！");
+				}, "json"); 
+			}
+		});
+	return;
+}
+
+function daClearSearch()
+{
+	$("#da_attr_data_type").val(0);
+	$("select[name=da_attr_data_type] option").each(function(){
+		if(this.value == 0)
+			$(this).attr("selected", true);
+	});
+
+	$('#da_excp_mask_id').css('display', 'none');
+	$("input[name=dam_attr_type]").val(0);
+	$("input[name=dam_attr_type_name]").val("");
+	$("input[name=da_keyword]").val("");
+	return false;
+}
+
+function daAddNewAttr()
+{
+	var url = "<?cs var:config.cgipath?>mt_slog_attr?action=add_attr";
+	var op = $.parseJSON('{"mask":true,"maxable":false,"height":360,"width":520}'); 
+	$.pdialog.open(url, "da_dlg_add_new_attr", "添加监控点", op); 
+}
+
+$(document).ready(function(){
+	var attr_info = daSetAttrList(da_attrinfo);
+	var attr = $("#da_attr_list_info");
+	attr.html(attr_info);
+
+	$("select[name=da_attr_data_type] option").each(function(){
+		<?cs if:config.da_attr_data_type ?>
+			if(this.value == <?cs var:config.da_attr_data_type ?>) {
+				$(this).attr("selected", true);
+			}
+		<?cs /if ?>
+	});
+
+	$('#da_attr_data_type').change(function() {
+		var tp = $('#da_attr_data_type').val();
+		if(tp == '<?cs var:config.ex_report ?>')
+			$('#da_excp_mask_id').css('display', 'block');
+		else
+			$('#da_excp_mask_id').css('display', 'none');
+	});
+	$('#da_attr_data_type').change();
+
+	$("select[name=numPerPage] option").each(function(){
+		if(this.value == <?cs var:config.numPerPage ?>)
+			$(this).attr("selected", true);
+	});
+});
+
+</script>
+
+

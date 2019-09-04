@@ -1,0 +1,21 @@
+pkg = ucSPKG + ReqPkgHead + TSignature + stCmdContent + stTlvBody + ucEPKG
+ReqPkgHead = dwCmd + dwSeq + wPkgLen + wToPkgBody + ucRetCode + ucResendTimes + wVersion + sEchoBuf[32] + sReserved[16]
+TSignature = ucSigType + wSigLen + sSig[wSigLen]
+
+stCmdContent = {
+	switch ReqPkgHead.dwCmd
+		0xc9: dwUserMasterId + iUserMasterIndex + iMtClientIndex + iMachineId
+		0xca:dwHelloTimes + dwUserMasterId + dwServerResponseTime
+		*:sCmdContent[ReqPkgHead.wToPkgBody - offsetof(stCmdContent)]
+}
+
+stTlvBody = ucTlvNum + tlvBodyList[ucTlvNum]
+tlvBodyList = wType+wLen+stValue
+<
+	stValue = {
+		switch wType
+			0x8:wTimeZoneVer + dwLocaleID + wtimeZoneOffsetMin
+			*:sValue[wLen]
+	}
+>
+

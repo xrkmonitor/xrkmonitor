@@ -1,0 +1,100 @@
+<script language="javascript" type="text/javascript">
+
+/*  引用了 dmt_sys_srv.html 中的变量： dss_syssrv_list, dss_sel_detail_idx 
+   */
+
+$(document).ready(function(){
+	var ulist = dss_syssrv_list.syssrv_list;
+	$("#ddds_ip").html(ulist[dss_sel_detail_idx].ip);
+	$("#ddds_port").html(ulist[dss_sel_detail_idx].port);
+	$("#ddds_type").html(dmtGetServerTypeName(ulist[dss_sel_detail_idx].type));
+	$("#ddds_set").html(ulist[dss_sel_detail_idx].set);
+	$("#ddds_id").html(ulist[dss_sel_detail_idx].id);
+	$("#ddds_sand_box").html(ulist[dss_sel_detail_idx].sand_box);
+	$("#ddds_region").html(ulist[dss_sel_detail_idx].region);
+	$("#ddds_idc").html(ulist[dss_sel_detail_idx].idc);
+	$("#ddds_weight").html(ulist[dss_sel_detail_idx].weight);
+	$("#ddds_seq").html(ulist[dss_sel_detail_idx].cfg_seq);
+	$("#ddds_user_add").html(ulist[dss_sel_detail_idx].user_add);
+	$("#ddds_add_time").html(ulist[dss_sel_detail_idx].create_time);
+	$("#ddds_user_mod").html(ulist[dss_sel_detail_idx].user_mod);
+	$("#ddds_mod_time").html(ulist[dss_sel_detail_idx].update_time);
+	$("#ddds_srv_for").val(ulist[dss_sel_detail_idx].srv_for);
+	$("#ddds_desc").html(ulist[dss_sel_detail_idx].desc);
+});
+
+</script>
+
+<div class="pageContent">
+	<div class="pageFormContent" layoutH="56">
+		<table> 
+			<tr height="25">
+				<td width="120" align="right">服务器IP：</td>
+				<td width="200" id="ddds_ip"></td>
+				<td width="120" align="right">端口：</td>
+				<td width="200" id="ddds_port"></td>
+			</tr>
+
+			<tr height="25">
+				<td width="120" align="right">服务器类型：</td>
+				<td width="200" id="ddds_type"></td>
+				<td width="120" align="right">所属set：</td>
+				<td width="200" id="ddds_set"></td>
+			</tr>
+
+			<tr height="25">
+				<td width="120" align="right">服务器id：</td>
+				<td width="200" id="ddds_id"></td>
+				<td width="120" align="right">沙箱：</td>
+				<td width="200" id="ddds_sand_box"></td>
+			</tr>
+
+			<tr height="25">
+				<td width="120" align="right">地区：</td>
+				<td width="200" id="ddds_region"></td>
+				<td width="120" align="right">IDC：</td>
+				<td width="200" id="ddds_idc"></td>
+			</tr>
+
+			<tr height="25">
+				<td width="120" align="right">权重：</td>
+				<td width="200" id="ddds_weight"></td>
+				<td width="120" align="right">当前配置seq：</td>
+				<td width="200" id="ddds_seq"></td>
+			</tr>
+
+			<tr height="25">
+				<td width="120" align="right">创建人：</td>
+				<td width="200" id="ddds_user_add"></td>
+				<td width="120" align="right">创建时间：</td>
+				<td width="200" id="ddds_add_time"></td>
+			</tr>
+
+			<tr height="25">
+				<td width="120" align="right">最近更新人：</td>
+				<td width="200" id="ddds_user_mod"></td>
+				<td width="140" align="right">最近更新时间：</td>
+				<td width="200" id="ddds_mod_time"></td>
+			</tr>
+
+			<tr height="30">
+				<td width="120" align="right">描述：</td>
+				<td colspan='3' id="ddds_desc"></td>
+			</tr>
+
+			<tr height="25">
+				<td width="120" align="right" valign="top">绑定服务对象：</td>
+				<td colspan='3' valign="top">
+					<textarea rows="6" cols="60" id="ddds_srv_for" readonly />
+				</td>
+			</tr>
+		</table>
+	</div>
+
+	<div class="formBar">
+		<ul> <li><div class="button"><div class="buttonContent"><button type="button" class="close">&nbsp;&nbsp;关&nbsp;闭&nbsp;&nbsp;</button></div></div></li>
+		</ul>
+	</div>
+</div>
+
+

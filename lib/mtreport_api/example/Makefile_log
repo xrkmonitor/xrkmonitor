@@ -1,0 +1,35 @@
+COMM_INC = -I../
+COMM_LIB =  ../libmtreport_api.a
+
+CC = g++ 
+WARNINGS := -g -Wall -Wcast-qual -Wsign-compare
+CXXFLAGS := $(WARNINGS) $(DEBUG) $(RELEASE) $(COMM_INC)
+
+#TARGETS = mtreport_test 
+TARGETS = test_log 
+#TARGETS = test_attr
+
+all:$(TARGETS)
+
+#SRC := $(wildcard *.cpp)
+SRC := test_log.cpp
+#SRC := test_attr.cpp
+
+OBJ := $(SRC:.cpp=.o)
+DEP := $(SRC:.cpp=.d)
+
+$(TARGETS): ${OBJ} 
+	$(CC) -g -Wall -o $@ $^ $(COMM_LIB) $(COMM_INC)  -lrt
+
+install:
+	cp ./$(TARGETS) $(TARGETS_DIR)
+	cp ./$(TARGETS).conf $(TARGETS_DIR)
+
+uninstall:
+	rm -f $(TARGETS_DIR)$(TARGETS)
+
+clean: 
+	rm -f *.o
+	rm -f *.d
+	rm -f ./$(TARGETS)
+

@@ -1,0 +1,83 @@
+<script language="javascript" type="text/javascript">
+
+/*
+   * 引用了全局变量 : dul_type_list 用户类型列表，在文件：dmt_user_list.html 中定义
+   */
+$(document).ready(function(){
+	<?cs if:config.action!="save_mod_user" ?>
+	$("#ddau_user_name").focus();
+	<?cs /if ?>
+});
+
+function ddauOnSubmit(elem)
+{
+	var $form = $(elem);
+	if (!$form.valid()) {
+		return false;
+	}
+
+	<?cs if:config.action!="save_mod_user" ?>
+	var newpwd_md5 = $.md5( $("#ddau_newPassword").val() );
+	$("#ddau_newPassword").val(newpwd_md5);
+	$("#ddau_rnewPassword").val(newpwd_md5);
+	<?cs /if ?>
+	return noValidateCallback(elem, dialogAjaxDone);
+}
+
+function ddau_customvalidPwd(ps)
+{
+	if(ps.length < 6 || ps.length > 12)
+		return false;
+	return true;
+}
+
+</script>
+
+<div class="pageContent">
+	<form method="get" action="<?cs var:config.cgipath?>mt_slog_user" class="pageForm required-validate" onsubmit="return ddauOnSubmit(this);" >
+		<div class="pageFormContent" layoutH="56">
+			<input type="hidden" name="action" value="<?cs var:config.action ?>" />
+			<input type="hidden" name="call_back_type" value="closeCurrent" />
+			<input type="hidden" name="reload_navTab_id" value="dmt_user" />
+
+			<?cs if:config.action=="save_mod_user" ?>
+			<input type="hidden" name="ddau_cur_user_id" value="<?cs var:config.user_id ?>" />
+			<?cs /if ?>
+
+			<div class="unit">
+				<label>账号名：</label>
+				<?cs if:config.action=="save_mod_user" ?>
+				<input type="text" name="ddau_user_name" id="ddau_user_name" class="required" value="<?cs var:config.user_name ?>" size="40" readonly />
+				<?cs else ?>
+				<input type="text" name="ddau_user_name" id="ddau_user_name" class="required alphanumeric" title="请输入4-30位字母或者数字" size="40" minlength="4" maxlength="40" />
+				<?cs /if ?>
+			</div>
+
+			<?cs if:config.action!="save_mod_user" ?>
+            <div class="unit">
+                <label>登录密码：</label>
+                <input type="password" id="ddau_newPassword" name="ddau_newPassword" customvalid="ddau_customvalidPwd(element)" title="请输入6-40位字母数字密码" size="40" minlength="6" maxlength="40" class="required alphanumeric"/>
+            </div>
+            <div class="unit">
+                <label>确认密码：</label>
+                <input type="password" name="ddau_rnewPassword" size="40" equalTo="#ddau_newPassword" class="required alphanumeric" />
+            </div>
+			<?cs /if ?>
+
+            <div class="unit">
+                <label>备注：</label>
+                <input type="text" name="remark" id="ddau_remark" size="40" value="<?cs var:config.remark ?>" />
+            </div>
+		</div>
+
+		<div class="formBar">
+			<ul>
+				<li><div class="button"><div class="buttonContent"><button type="submit"><?cs if:config.action=="save_mod_user" ?>&nbsp;&nbsp;修&nbsp;改&nbsp;&nbsp;<?cs else ?>&nbsp;&nbsp;新&nbsp;增&nbsp;&nbsp;<?cs /if ?></button></div></div></li>
+				<li>
+					<div class="button"><div class="buttonContent"><button type="button" class="close">&nbsp;&nbsp;关&nbsp;闭&nbsp;&nbsp;</button></div></div>
+				</li>
+			</ul>
+		</div>
+	</form>
+</div>
+

@@ -1,0 +1,89 @@
+package comm;
+
+// 501-1000 -- protobuf 协议使用命令范围
+enum Command
+{
+	SLOG_CLIENT_SEND_LOG=501;
+	MONITOR_CLIENT_REPORT_ATTR=502;
+	CMD_SLOG_CLIENT_HEART=504;
+	CMD_SLOG_MONITOR_CLIENT_HEART=505;
+	CMD_SLOG_GET_APP_LOG_SIZE_REQ = 506;
+	CMD_SLOG_GET_APP_LOG_SIZE_RSP = 507;
+	CMD_SLOG_REMOVE_OLD_APP_LOG_FILE = 508;
+	CMD_SLOG_OPEN_SEND_WARN = 510;
+	CMD_SLOG_OPEN_SEND_EMAIL = 511;
+}
+
+message PkgHead
+{
+	required Command en_cmd = 1;
+	required uint32 uint32_seq = 2;
+	optional uint32 uint32_result = 3;
+	optional string str_errmsg = 4;
+	optional bytes echo_buf = 5;
+	optional uint32 uint32_magic_response_num = 6;
+	optional uint32 uid = 7;
+}
+
+// for monitor system ----------------- start
+
+message HeartInfo
+{
+	optional bytes bytes_req_ip=1;
+}
+
+message AttrInfo
+{
+	optional uint32 uint32_attr_id=1;
+	optional uint32 uint32_attr_value=2;
+	optional bytes str = 3; // 字符串型监控点的字符串
+}
+
+message ReportAttr
+{
+	optional uint32 uint32_client_rep_time=1;
+	optional bytes bytes_report_ip=2;
+	repeated AttrInfo msg_attr_info=3;
+	optional int32 report_host_id = 4;
+	optional uint32 user_master_id = 5 [default=1];
+}
+
+message AppLogInfo
+{
+	required uint32 uint32_app_id = 1;
+	required uint32 uint32_module_id = 2;
+	required uint64 uint64_log_time = 3;
+	optional uint32 uint32_log_seq = 4;
+	required uint32 uint32_log_type = 5; // debug, info, error, failed
+	required bytes bytes_log = 6;
+	optional bytes bytes_report_ip=7;
+}
+
+message ReportAppLog 
+{
+	optional uint32 uint32_client_rep_time=1;
+	optional bytes bytes_report_ip=2;
+	repeated AppLogInfo log = 3;
+}
+
+message SendEmailInfo
+{
+	optional bytes addr = 1;
+	optional bytes subject = 2;
+	optional bytes text_body = 3;
+}
+
+message SendWarnInfo
+{
+	optional uint32 attr_id = 1; 
+	optional bytes attr_name = 2;
+	optional uint32 start_time = 3;
+	optional uint32 warn_flag = 4;
+	optional int32 warn_obj_type_id = 5;
+	optional bytes warn_obj_type_name = 6;
+	optional bytes warn_text = 7;
+	optional uint32 warn_id = 8;
+}
+
+// for monitor system ----------------- end 
+

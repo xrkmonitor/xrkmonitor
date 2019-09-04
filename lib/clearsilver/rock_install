@@ -1,0 +1,2 @@
+INSTALL_INC_DIR = /usr/include/cgi
+INSTALL_LIB_DIR = /usr/lib64

@@ -1,0 +1,16 @@
+操作失败： <?cs var:err.msg ?>
+
+<?cs if:config.debug==1 ?>
+	请求信息：<br />
+	<?cs if:HTTP.Referer ?>
+		引用：<?cs var:HTTP.Referer ?><br />
+	<?cs /if ?>
+	
+	<?cs if:CGI.RemoteAddress ?>
+		请求IP：<?cs var:CGI.RemoteAddress ?><br />
+	<?cs /if ?>
+	
+	<?cs if:CGI.RequestURI ?>
+		请求URI：<?cs var:CGI.RequestURI ?><br />
+	<?cs /if ?>
+<?cs /if ?>

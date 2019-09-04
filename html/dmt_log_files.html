@@ -1,0 +1,235 @@
+<style> 
+.table-b table td{border:solid 1px #ededed;}
+.table tr td label { width:80px;}
+</style>
+
+<div class="pageContent">
+	<div class="unitBox" style="margin-left:1px;"> 
+		<div class="pageHeader" style="border:1px #B8D0D6 solid">
+			<div class="panelBar">
+				<table class="searchContent" style='padding-left:10px;margin-top:2px' >
+					<tr> 
+						<td width="240px" valign='center'>
+							<label>应用名称：</label>
+							<select name="dlf_appName" id="dlf_appName" style="width:160px;">
+								<option value="-">-</option>
+							</select>
+						</td>
+						<td width="150px"> 
+							<label>占用磁盘空间：</label>
+							<font id="logSizeTotal" style="color:blue"></font>
+						</td>
+						<td width="120px">
+							<label>日志文件数：</label>
+							<font id="logFilesTotal" style="color:blue"></font>
+						</td>
+						<td>
+							<label>日志记录总数：</label>
+							<font id="logTotal" style="color:blue"></font>
+						</td>
+					</tr>
+				</table>
+			</div>
+		</div>
+	
+		<div class="pageContent" style="border:1px #B8D0D6 solid;">
+			<div class="table-b">
+				<table class="list" width="100%" layoutH="64"> 
+					<thead>
+						<tr>
+							<th width="30">序号</th>
+							<th width="150">日志文件</th>
+							<th width="50">文件大小</th>
+							<th width="40">日志记录数</th>
+							<th width="30">起始时间</th>
+							<th width="30">结束时间</th>
+						</tr>
+					</thead>
+
+					<tbody id="dlf_files_list"> 
+					</tbody>
+				</table>
+
+				<div class="panelBar" layoutH="0">
+					<div class="pages">
+						<span>每页显示</span>
+						<select id="numPerPage" onchange="return dlfPageNumPerChange(this.value);">
+							<option value="10">10</option>
+							<option value="20" selected >20</option>
+							<option value="50">50</option>
+							<option value="100">100</option>
+							<option value="200">200</option>
+						</select>
+						<span>条，共 <font id="pageTotalCount"></font>  条</span>
+					</div>
+					<div class="pagination" id="pagination"> </div> 
+				</div>
+			</div> 
+		</div>
+	</div>
+</div> 
+
+<script language="javascript" type="text/javascript">
+var dlf_app_list = $.parseJSON('<?cs var:config.dfl_app_list ?>');
+
+function dlfOnSearch(name)
+{
+	var requrl_old = $("a[rel='dmt_history_log']").attr('href');
+	var requrl = requrl_old + "&logfile=" + name;
+
+	var idx = $('#dlf_appName').val();
+	var app = dlf_app_list[idx];
+	requrl += "&app_id="+app.app_id;
+	requrl += "&reqrand="+Math.random();
+	
+	$("a[rel='dmt_history_log']").attr('href', requrl);
+	$("a[rel='dmt_history_log']").click();
+	$("a[rel='dmt_history_log']").attr('href', requrl_old);
+}
+
+function dlfPageNumPerChange(numPerPage)
+{
+	var idx = $('#dlf_appName').val();
+	var app = dlf_app_list[idx];
+	var requrl = 'http://'+ app.log_server_ip + ':';
+	requrl += app.log_server_port;
+	requrl += "<?cs var:config.cgipath?>mt_slog?action=show_log_files";
+	requrl += "&app_id="+app.app_id;
+
+	var para = new Object();
+	para.ex_flogin_user = $.cookie("flogin_user");
+	para.ex_flogin_md5 = $.cookie("flogin_md5");
+	para.ex_flogin_type = $.cookie("flogin_type");
+	para.ex_flogin_uid = $.cookie("flogin_uid");
+	para.ex_flogin_index = $.cookie("flogin_index");
+	para.pageNum = 1;
+	para.numPerPage = numPerPage;
+	
+	$.ajax({
+		url: requrl,
+		data: para,
+		success: dlfShowLogFiles,
+		dataType: 'json', 
+		global: true,
+	});
+}
+
+function dlfJumpPage(js_para)
+{
+	var idx = $('#dlf_appName').val();
+	var app = dlf_app_list[idx];
+	var requrl = 'http://'+ app.log_server_ip + ':';
+	requrl += app.log_server_port;
+	requrl += "<?cs var:config.cgipath?>mt_slog?action=show_log_files";
+	requrl += "&app_id="+app.app_id;
+
+	var para = new Object();
+	para.ex_flogin_user = $.cookie("flogin_user");
+	para.ex_flogin_md5 = $.cookie("flogin_md5");
+	para.ex_flogin_type = $.cookie("flogin_type");
+	para.ex_flogin_uid = $.cookie("flogin_uid");
+	para.ex_flogin_index = $.cookie("flogin_index");
+	para.pageNum = js_para.pageNum;
+	para.numPerPage = $("#numPerPage").val();
+	
+	$.ajax({
+		url: requrl,
+		data: para,
+		success: dlfShowLogFiles,
+		dataType: 'json', 
+		global: true,
+	});
+}
+
+function dlfShowLogFiles(js_result)
+{
+	if(dmtFirstDealAjaxResponse(js_result))
+	{
+		return;
+	}
+
+	var uhtml = "";
+	var result = js_result.list;
+
+ 	$("#pageTotalCount").text(js_result.totalCount);
+ 	$("#logFilesTotal").text(js_result.totalCount);
+ 	$("#logSizeTotal").text(js_result.logsize);
+ 	$("#logTotal").text(js_result.logtotal);
+
+	$("#pagination").pagination({
+    	totalCount: js_result.totalCount,
+    	numPerPage: js_result.numPerPage,
+    	pageNumShown: js_result.pageNumShown,
+    	currentPage: js_result.currentPage,
+		targetType: dlfJumpPage,
+	});
+
+	if(js_result.totalCount == 0)
+	{
+		$("#dlf_files_list").html("");
+		return;
+	}
+
+	for(var i=0,j=0; i < result.length; i++) {
+		uhtml += "<tr>";
+		j = (js_result.currentPage-1)*js_result.numPerPage+1;
+		uhtml += "<td>" + (i+j) + "</td>";
+		var search = "<a class='detail' href='#' onclick='return dlfOnSearch("+'"'+result[i].fname+'"'+");'>"+result[i].name+"</a>";
+		uhtml += "<td>"+search+"</td>";
+		uhtml += "<td>" + result[i].size + "</td>";
+		uhtml += "<td>" + result[i].records + "</td>";
+		uhtml += "<td>" + result[i].time_start + "</td>";
+		uhtml += "<td>" + result[i].time_end + "</td>";
+		uhtml += "</tr>";
+	}
+	$("#dlf_files_list").html(uhtml);
+}
+
+function dlfOpAppChange()
+{
+	var idx = $('#dlf_appName').val();
+	var app = dlf_app_list[idx];
+	var requrl = 'http://'+ app.log_server_ip + ':';
+	requrl += app.log_server_port;
+	requrl += "<?cs var:config.cgipath?>mt_slog?action=show_log_files";
+	requrl += "&app_id="+app.app_id;
+
+	var para = new Object();
+	para.ex_flogin_user = $.cookie("flogin_user");
+	para.ex_flogin_md5 = $.cookie("flogin_md5");
+	para.ex_flogin_type = $.cookie("flogin_type");
+	para.ex_flogin_uid = $.cookie("flogin_uid");
+	para.ex_flogin_index = $.cookie("flogin_index");
+	
+	$.ajax({
+		url: requrl,
+		data: para,
+		success: dlfShowLogFiles,
+		dataType: 'json', 
+		global: true,
+	});
+}
+
+$(document).ready(function(){
+	if(typeof dlf_app_list == "undefined" || dlf_app_list.length <= 0) {
+		alertMsg.warn("应用数目为0，请先添加应用！");
+		return;
+	}
+
+	var op_app = $('#dlf_appName');
+	op_app.html('');
+	op_app.change(dlfOpAppChange);
+	for (var i = 0; i < dlf_app_list.length; ++i) { 
+		var op = $('<option></option>');
+		op.val(i).text(dlf_app_list[i].app_name);
+		if(i == 0) {
+			op.attr("selected", true);
+		}
+		op_app.append(op);
+	}
+	dlfOpAppChange();
+});
+
+</script>
+
+

@@ -1,0 +1,284 @@
+<div class="pageContent">
+	<div class="unitBox" style="margin-left:1px;"> 
+		<form id="pagerForm" method="post" action="<?cs var:config.cgipath?>mt_slog?action=list_log_config">
+			<input type="hidden" name="pageNum" value="<?cs var:config.currentPage ?>" />
+			<input type="hidden" name="numPerPage" value="<?cs var:config.numPerPage ?>" />
+			<input type="hidden" name="orderField" value="<?cs var:config.orderField ?>" />
+			<input type="hidden" name="orderDirection" value="<?cs var:config.orderDirection ?>" />
+
+			<input type="hidden" name="dlc_app_id" value="<?cs var:config.dlc_app_id ?>" />
+			<input type="hidden" name="dlc_module_id" value="<?cs var:config.dlc_module_id ?>" />
+		</form>
+
+		<div class="pageHeader" style="border:1px #B8D0D6 solid">
+			<form onsubmit="return navTabSearch(this, 'dmt_list_log_config');" action="<?cs var:config.cgipath ?>mt_slog?action=list_log_config" method="post">
+			<div class="searchBar">
+				<table class="searchContent" >
+					<tr>
+						<td>
+							应 用：
+							<select name="dlc_app_id" id="dlc_app_id">
+								<option value="0"> 全 部 </option>
+							</select>
+						</td>
+						<td>
+							模 块：
+							<select name="dlc_module_id" id="dlc_module_id">
+								<option value="0"> 全 部 </option>
+							</select>
+						</td>
+						<td>
+							<button type="submit" class="sexybutton" id="dlc_btn_submit"><span><span><span class="search">查找</span></span></span></button>
+						</td>
+					</tr>
+				</table>
+			</div>
+			</form>
+		</div>
+
+		<div class="pageContent" style="border-left:1px #B8D0D6 solid;border-right:1px #B8D0D6 solid">
+			<div class="panelBar">
+				<ul class="toolBar">
+					<li><a class="add" href="#" onclick="return dlcAddConfig();"><span>添加</span></a></li>
+					<li class="line">line</li>
+					<li><a class="delete" href="#" onclick="return dlcDeleteConfig();"><span>删除</span></a></li>
+					<li class="line">line</li>
+					<li><a class="edit" href="#" onclick="return dlcModConfig();"><span>修改</span></a></li>
+					<li class="line">line</li>
+				</ul>
+			</div>
+
+			<div>
+				<table class="list" width="100%" layoutH="90">
+					<thead>
+						<tr>
+							<th width="30">序号</th>
+							<?cs if:config.order_config_id ?>
+							<th width="40" orderField="config_id" class="<?cs var:config.order_config_id ?>">配置 id</th>
+							<?cs else ?>
+							<th width="40" orderField="config_id" class="asc">配置 id</th>
+							<?cs /if ?>
+
+							<?cs if:config.order_config_name ?>
+							<th width="130" orderField="config_name" class="<?cs var:config.order_config_name ?>" >配置名称</th>
+							<?cs else ?>
+							<th width="130" orderField="config_name" class="desc" >配置名称</th>
+							<?cs /if ?>
+
+							<?cs if:config.order_app_id ?>
+							<th width="130" orderField="app_id" class="<?cs var:config.order_app_id ?>">所属应用</th>
+							<?cs else ?>
+							<th width="130" orderField="app_id" class="desc">所属应用</th>
+							<?cs /if ?>
+
+							<th width="70">所属模块</th>
+							<th width="280">频率限制 (条/每分钟) | 日志类型</th>
+							<th width="40">详情</th>
+						</tr>
+					</thead>
+					<tbody id="dlc_config_list_tbody"> 
+					</tbody>
+				</table>
+
+				<div class="panelBar" layoutH="0">
+					<div class="pages">
+						<span>每页显示</span>
+						<select name="numPerPage" onchange="navTabPageBreak({numPerPage:this.value})">
+							<option value="10">10</option>
+							<option value="20">20</option>
+							<option value="50">50</option>
+							<option value="100">100</option>
+							<option value="200">200</option>
+						</select>
+						<span>条，共 <?cs var:config.totalCount ?>  条</span>
+					</div>
+					<div class="pagination" targetType="navTab" totalCount="<?cs var:config.totalCount ?>" numPerPage="<?cs var:config.numPerPage ?>" pageNumShown="<?cs var:config.pageNumShown ?>" currentPage="<?cs var:config.currentPage ?>"></div>
+				</div>
+	
+			</div> 
+		</div>
+	</div> <!-- unitBox -->
+</div>
+
+<script language="javascript" type="text/javascript">
+var dlc_src_config_list = '<?cs var:config.config_list ?>';
+var dlc_config_list = $.parseJSON(dlc_src_config_list);
+var dlc_sel_config = "";
+var dlc_detail_sel_config = "";
+var dlc_app_modules = $.parseJSON('<?cs var:config.app_module_list ?>');
+
+function dlcGetLogType(type)
+{
+	var stype = "";
+	if(64 & type)
+		stype += (stype!="" ? "| 严重错误" : "严重错误");
+	if(32 & type)
+		stype += (stype!="" ? "| 程序错误" : "程序错误");
+	if(16 & type)
+		stype += (stype!="" ? "| 输入错误" : "输入错误");
+	if(8 & type)
+		stype += (stype!="" ? "| 警告" : "警告");
+	if(4 & type)
+		stype += (stype!="" ? "| 信息" : "信息");
+	if(2 & type)
+		stype += (stype!="" ? "| 调试" : "调试");
+	if(1 & type)
+		stype += (stype!="" ? "| 其它" : "其它");
+	
+	if(stype == "")
+		stype += (stype!="" ? "| 未知类型" : "未知类型");
+	return stype;
+}
+
+function dlcSetSelConfig(configIdx)
+{
+	dlc_sel_config = dlc_config_list.configlist[configIdx];
+}
+
+function dlcOnDetail(idx)
+{
+	dlc_detail_sel_config = dlc_config_list.configlist[idx];
+	var op = $.parseJSON('{"mask":true,"maxable":false,"height":360,"width":600}');
+	var url = "<?cs var:config.cgipath?>mt_slog?action=detail_log_config";
+	url += "&config_id=" + dlc_detail_sel_config.config_id;
+	$.pdialog.open(url, "dlc_dlg_detail", "日志配置："+dlc_detail_sel_config.config_name+" 详情", op);
+}
+
+function dlcSetConfiglist()
+{
+	if(dlc_config_list == null || dlc_config_list.config_count <= 0)
+		return "";
+	var ulist = dlc_config_list.configlist;
+	var uhtml = "";
+	for(var i=0, j=1; i < ulist.length; i++,j++)
+	{
+		uhtml += "<tr onclick='dlcSetSelConfig("+i+")'>";
+		uhtml += "<td>" + j + "</td>";
+		uhtml += "<td>" + ulist[i].config_id + "</td>";
+		uhtml += "<td>" + ulist[i].config_name + "</td>";
+		uhtml += "<td>" + ulist[i].app_name + "</td>";
+		uhtml += "<td>" + ulist[i].module_name + "</td>";
+		uhtml += "<td>" + ulist[i].log_freq + "&nbsp;|&nbsp;" + dlcGetLogType(ulist[i].log_types) + "</td>";
+
+		var detail = "<a class='detail' href='#' onclick='return dlcOnDetail("+i+");'>详情</a>";
+		uhtml += "<td>"+detail+"</td>";
+		uhtml += "</tr>";
+	}
+	return uhtml;
+}
+
+function dlcAddConfig()
+{
+	var url = "<?cs var:config.cgipath?>mt_slog?action=add_config";
+	var op = $.parseJSON('{"mask":true,"maxable":false,"height":360,"width":540}'); 
+	$.pdialog.open(url, "dlc_dlg_add_config", "添加日志配置", op); 
+}
+
+function dlcDeleteConfig()
+{
+	if(dlc_sel_config == "null" || dlc_sel_config == "")
+	{
+		alertMsg.info("请先点击配置列表选择一个要删除的配置");
+		return;
+	}
+
+	var msg="确认删除日志配置：" + dlc_sel_config.config_name + " (id:" + dlc_sel_config.config_id + ") 吗？";
+	alertMsg.confirm(msg, {
+		okCall: function(){
+			var url = "<?cs var:config.cgipath?>mt_slog?action=delete_config"+"&id="+dlc_sel_config.config_id;
+			$.get(url, function(data){
+				if(dmtFirstDealAjaxResponse(data))
+					return;
+
+				if(data.statusCode==200){
+					alertMsg.info("删除成功。");
+					return navTab.reload();
+				}
+				else if(data.msg)
+					alertMsg.error(data.msg);
+				else
+					alertMsg.error("删除失败！");
+			}, "json"); 
+		}
+	});
+	return;
+}
+
+var dlc_init_module = <?cs var:config.dlc_module_id ?>;
+function dlcAppChange()
+{
+	var app_id = $('#dlc_app_id').val();
+	var app_list = dlc_app_modules.applist;
+	var modules = $('#dlc_module_id');
+	modules.html('<option value="0"> 全 部 </option>');
+	for(var i=0; i < app_list.length; ++i) {
+		if(app_list[i].app_id == app_id) {
+			var app = app_list[i];
+			for(var j=0; j < app.module_count; ++j){
+				var op = $('<option></option>');
+				op.val(app.modulelist[j].id).text(app.modulelist[j].name);
+				if(dlc_init_module == app.modulelist[j].id)
+					op.attr("selected", true);
+				modules.append(op);
+			}
+			break;
+		}
+	}
+}
+
+function dlcModConfig()
+{
+	if(dlc_sel_config == "null" || dlc_sel_config == "")
+	{
+		alertMsg.info("请先点击配置列表选择一个要修改的配置");
+		return;
+	}
+
+	var url = "<?cs var:config.cgipath?>mt_slog?action=mod_config";
+	url += "&config_id=" + dlc_sel_config.config_id; 
+	url += "&config_name=" + dlc_sel_config.config_name; 
+	url += "&config_desc=" + dlc_sel_config.config_desc; 
+	url += "&app_name=" + dlc_sel_config.app_name; 
+	url += "&app_id=" + dlc_sel_config.app_id; 
+	url += "&module_name=" + dlc_sel_config.module_name; 
+	url += "&module_id=" + dlc_sel_config.module_id; 
+	url += "&log_type=" + dlc_sel_config.log_types; 
+	var op = $.parseJSON('{"mask":true,"maxable":false,"height":360,"width":540}'); 
+	$.pdialog.open(url, "dlc_dlg_mod_config", "修改日志配置", op); 
+}
+
+$(document).ready(function(){
+	var ulist = dlcSetConfiglist();
+	$("#dlc_config_list_tbody").html(ulist);
+	dlc_sel_config = "";
+	dlc_detail_sel_config = "";
+
+	if(dlc_app_modules.app_count <= 0) {
+		alertMsg.warn("应用数目为0，请先添加应用！");
+	}
+	else {
+		var app = $('#dlc_app_id');
+		app.change(dlcAppChange);
+		var app_list = dlc_app_modules.applist;
+		for(var i=0; i < app_list.length; ++i) {
+			var op = $('<option></option>');
+			op.val(app_list[i].app_id).text(app_list[i].app_name);
+			if(<?cs var:config.dlc_app_id ?> == app_list[i].app_id)
+			{
+				op.attr("selected", true);
+				app.append(op);
+				dlcAppChange();
+			}
+			else
+				app.append(op);
+		}
+	}
+
+	$("select[name=numPerPage] option").each(function(){
+		if(this.value == <?cs var:config.numPerPage ?>)
+			$(this).attr("selected", true);
+	});
+});
+
+</script>
+

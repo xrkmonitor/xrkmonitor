@@ -1,0 +1,233 @@
+<style type="text/css">
+	.duc_modify { width:100%; height:100%; font-size:14px; color:blue; cursor:pointer; }
+	#duc_login_info td { height:26px; font-size:14px; }
+</style>
+
+<div id='duc_dlg_show_warn_test_error' style='display:none'>
+    <div align='left' style='margin-left:20px' layoutH="32">
+        <br />
+		<font color='red' style='font-size:16px'>发送告警测试失败</font>
+		<br />
+		<br />
+		请查看是否删除预置 监控点ID:&nbsp;<font color='blue'>261-测试云版本告警通道</font>&nbsp;
+		<br />
+        <br />
+		请检查监控点上报服务是否正常部署
+		<br />
+    </div>
+    <div class="formBar">
+        <ul>
+            <li><div class="button"><div class="buttonContent"><button type="button" class="close">&nbsp;&nbsp;关&nbsp;闭&nbsp;&nbsp;</bu
+tton></div></div></li>
+        </ul>
+    </div>
+</div>
+
+<div id='duc_dlg_show_warn_test' style='display:none'>
+    <div align='left' style='margin-left:20px' layoutH="32">
+        <br />
+		<font color='blue' style='font-size:16px'>已发送测试告警测试请求</font>
+		<br />
+		<br />
+		云版本告警通道使用异常ID:&nbsp;<font color='red'>261-测试云版本告警通道</font>&nbsp;测试
+		<br />
+        <br />
+		<font color='blue'>测试效果</font>（测试效果在一分钟左右出现）：<br />
+		1、您可以收到云版本下发的告警通知 <br />
+		2、您可以在云版本控制台查看到开源版告警记录
+		<br />
+		<br />
+		<font color='blue'>如未出现测试效果，请检查以下几点：</font><br />
+		1、在云版本控制台确认对应的云账号已完成开源版绑定 <br />
+		2、确保开源版相关监控服务已正常部署 <br />
+		3、确保服务 slog_deal_warn 中有配置云账号相关信息 <br />
+		4、确保网络 OK，检查 slog_deal_warn 的日志看是否收到了响应包
+    </div>
+    <div class="formBar">
+        <ul>
+            <li><div class="button"><div class="buttonContent"><button type="button" class="close">&nbsp;&nbsp;关&nbsp;闭&nbsp;&nbsp;</bu
+tton></div></div></li>
+        </ul>
+    </div>
+</div>
+
+<div class="navTab-panel tabsPageContent layoutBox" style="overflow:auto" id='duc_div'>
+	<div>
+		<div class="panel" align='center' style="width:320px; float:left; margin:6px;" defH="240">
+			<h1>账号信息</h1>
+			<div>
+				<table width="100%" align="center" class="list" style="margin-top:2px">
+					<thead>
+						<tr>
+							<th class="ucPageTdName">字段名</th>
+							<th class="ucPageTdVal">字段值</th>
+							<th class="ucPageTdName">操作</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td class="ucPageTdName">账号名</td>
+							<td class='ucPageTdVal' id='duc_uname'><?cs var:config.user_name ?></td>
+							<td align='center'>
+								<span class='duc_modify' onclick='ducModifyInfo("name");'>&nbsp;修&nbsp;&nbsp;改&nbsp;</span>
+							</td>
+						</tr>
+						<tr>
+							<td class="ucPageTdName">账号 ID</td>
+							<td class='ucPageTdVal' id='duc_uid'><?cs var:config.user_id ?></td>
+							<td />
+						</tr>
+						<tr>
+							<td class="ucPageTdName">登录密码</td>
+							<td class='ucPageTdVal' id='duc_pass'>************</td>
+							<td align='center'>
+								<span class='duc_modify' onclick='ducModifyInfo("pass");'>&nbsp;重&nbsp;&nbsp;置&nbsp;</span>
+							</td>
+						</tr>
+						<tr>
+							<td class="ucPageTdName">电子邮箱</td>
+							<td class='ucPageTdVal' id='duc_email'><?cs var:config.user_email ?></td>
+							<td align='center'>
+								<?cs if:config.user_email ?>
+								<span class='duc_modify' onclick='ducModifyInfo("email");'>&nbsp;修&nbsp;&nbsp;改&nbsp;</span>
+								<?cs else ?>
+								<span class='duc_modify' onclick='ducModifyInfo("email");'>&nbsp;绑&nbsp;&nbsp;定&nbsp;</span>
+								<?cs /if ?>
+							</td>
+						</tr>
+						
+						<?cs if:config.xrkmonitor_account ?>
+						<tr title='您已绑定云账号，可以使用云版本提供的监控告警服务，可在云版本控制台查看告警发送情况'>
+							<td class="ucPageTdName">云账号</td>
+							<td class='ucPageTdVal' id='duc_xrkmonitor_account'>已绑云账号ID：<?cs var:config.xrkmonitor_account ?></td>
+							<td align='center' title='使用预制的异常监控点测试云版提供的告警服务是否正常'>
+								<span class='duc_modify' onclick='ducTestXrkmonitorWarn();'>&nbsp;测试告警&nbsp;</span>
+							</td>
+						</tr>
+						<?cs else ?>
+						<tr title='绑定云账号后可使用监控系统云版本提供的监控告警服务'>
+							<td class="ucPageTdName">云账号</td>
+							<td class='ucPageTdVal' id='duc_xrkmonitor_account'></td>
+							<td align='center'>
+								<span class='duc_modify' onclick='ducModifyInfo("xrkmonitor");'>&nbsp;绑&nbsp;&nbsp;定&nbsp;</span>
+							</td>
+						</tr>
+						<?cs /if ?>
+
+					</tbody>
+				</table>
+			</div>
+		</div>
+
+		<div class="panel" align='left' style="float:left; margin:6px 15px;width:620px">
+			<h1>最近登陆历史记录</h1>
+			<div>
+				<table width="100%" align="center" class="list" style="margin-top:2px">
+					<thead>
+						<tr>
+							<th class="ucPageTdVal">序 号</th>
+							<th class="ucPageTdVal">登录时间</th>
+							<th class="ucPageTdVal">登录IP</th>
+							<th class="ucPageTdVal">登录有效期</th>
+						</tr>
+					</thead>
+					<tbody id='duc_login_info'>
+					</tbody>
+				</table>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script language="javascript" type="text/javascript">
+
+function ducTestXrkmonitorWarn()
+{
+	var rurl = '<?cs var:config.cgipath?>mt_slog_user?action=test_xrkmonitor_sendwarn';
+	var op = { mask:true, maxable:false, height:280, width:410, resizable:false, drawable:true };
+	$.ajax({
+		url:rurl,
+		global:false,
+		dataType:'json',
+		success: function(js) {
+			if(dmtFirstDealAjaxResponse(js))
+				return;
+			if(js.ec == 0)	
+					$.pdialog.openLocal('duc_dlg_show_warn_test', 'duc_dlg_show_warn_test', '云版本告警通道测试', op);
+				else
+					$.pdialog.openLocal(
+						'duc_dlg_show_warn_test_error', 'duc_dlg_show_warn_test_error', '云版本告警通道测试', op);
+		},
+		error:function() {
+			$.pdialog.openLocal(
+				'duc_dlg_show_warn_test_error', 'duc_dlg_show_warn_test_error', '云版本告警通道测试', op);
+		}
+	});
+}
+
+function ducModifyInfo(fname)
+{
+	var title = "";
+	var has_email = 0;
+
+	<?cs if:config.user_email ?>
+	has_email = 1;
+	<?cs /if ?>
+
+	if(fname == "name")
+		title = "修改账号名";
+	else if(fname == "email")
+	{
+		<?cs if:config.user_email ?>
+		title = "修改电子邮箱";
+		<?cs else ?>
+		title = "绑定电子邮箱";
+		<?cs /if ?>
+	}
+	else if(fname == 'pass' && !has_email)
+	{
+		alertMsg.info("您的账号未绑定邮箱，请先绑定邮箱，或者请求管理员协助。");
+		return;
+	}
+	else if(fname == 'pass' || fname == 'su_pass')
+		title = "重置密码";
+	else if(fname == 'xrkmonitor')
+	{
+		<?cs if:config.xrkmonitor_account == '' || config.xrkmonitor_account == 0 ?>
+		title = '绑定云账号';
+		<?cs /if ?>
+	}
+
+	var rurl = '<?cs var:config.cgipath?>mt_slog_user?action=init_change_info&field='+fname;
+	rurl += '&has_email='+has_email;
+
+	$.pdialog.open(rurl, 'duc_dlg_modify_name', title, 
+		{ mask:true, maxable:false, width:480, height:320, close:dmt_duc_dlg_modify_name_close}
+	);
+}
+
+$(document).ready(function(){
+	var duc_login_history = $.parseJSON('<?cs var:config.history_list ?>');
+	var uhtml = '';
+	var ulist = duc_login_history.list;
+	for(var i=0, j=1; i < duc_login_history.count; i++, j++)
+	{
+		uhtml += '<tr>';
+		uhtml += '<td>'+ j + '</td>';
+		uhtml += '<td>'+ ulist[i].time + '</td>';
+		uhtml += '<td>'+ ulist[i].remote + '</td>';
+		if(i > 0)
+			uhtml += '<td>'+ ulist[i].valid_time + '&nbsp;&nbsp;&nbsp;[已失效]</td>';
+		else
+			uhtml += '<td>'+ ulist[i].valid_time + '</td>';
+		uhtml += '</tr>';
+	}
+	$('#duc_login_info').html(uhtml);
+
+	// js add html 后需要重算窗口尺寸
+	var iContentH = $(window).height() - $("#header").height() - 34;
+	$("#container .tabsPageContent").height(iContentH - 34).find("[layoutH]").layoutH();
+});
+
+</script>
+

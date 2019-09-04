@@ -1,0 +1,48 @@
+<script language="javascript" type="text/javascript">
+
+$(document).ready(function(){
+	<?cs if:config.action == "save_mod_view" ?>
+	$("#dvm_view_flag").children("option").each(function(){
+		if(<?cs var:view.dvm_view_flag ?> == $(this).val())
+			$(this).attr("selected", true);
+	});
+	$("input[name=dvm_view_name]").val("<?cs var:view.dvm_view_name ?>");
+	$("textarea[name=dvm_view_desc]").val("<?cs var:view.dvm_view_desc ?>");
+	<?cs /if ?>
+
+	$("#dvm_view_name").focus();
+});
+
+</script>
+
+<div class="pageContent">
+	<form method="get" action="<?cs var:config.cgipath?>mt_slog_view?action=<?cs var:config.action ?>&navTabId=dmt_slog_view" class="pageForm required-validate" onsubmit="return validateCallback(this, dialogAjaxDone);">
+		<div class="pageFormContent" layoutH="56">
+			<input type="hidden" name="dvm_view_id" value="<?cs var:view.dvm_view_id?>" />
+			<p>
+				<label>视图名称：</label>
+				<input type="text" size="22" name="dvm_view_name" id="dvm_view_name" maxlength="20" alt="请输入视图名称" class="required" />
+			</p>
+			<p>
+				<label>视图标记：</label>
+				<select class="combox" name="dvm_view_flag" id="dvm_view_flag">
+					<option value="<?cs var:config.view_flag_show_all ?>">显示所有绑定监控点</option>
+					<option value="<?cs var:config.view_flag_show_rep ?>">仅显示有上报的监控点</option>
+				</select>
+			</p>
+			<p>
+				<label>视图描述：</label>
+				<textarea rows="4" cols="20" name="dvm_view_desc" maxlength="64" class="required" alt="请输入视图描述"></textarea>
+			</p>
+		</div>
+		<div class="formBar">
+			<ul>
+				<li><div class="button"><div class="buttonContent"><button type="submit">&nbsp;&nbsp;保&nbsp;存&nbsp;&nbsp;</button></div></div></li>
+				<li>
+					<div class="button"><div class="buttonContent"><button type="button" class="close">&nbsp;&nbsp;取&nbsp;消&nbsp;&nbsp;</button></div></div>
+				</li>
+			</ul>
+		</div>
+	</form>
+</div>
+

@@ -1,0 +1,157 @@
+<div class="pageContent">
+	<div class="unitBox" style="margin-left:1px;"> 
+		<form id="pagerForm" method="post" action="<?cs var:config.cgipath?>mt_slog_machine?action=search">
+			<input type="hidden" name="pageNum" value="<?cs var:config.currentPage ?>" />
+			<input type="hidden" name="numPerPage" value="<?cs var:config.numPerPage ?>" />
+
+			<input type="hidden" name="dm_keyword" value="<?cs var:config.dm_keyword ?>" />
+			<input type="hidden" name="dm_machine_id" value="<?cs var:config.dm_machine_id ?>" />
+			<input type="hidden" name="dm_machine_ip" value="<?cs var:config.dm_machine_ip ?>" />
+			<input type="hidden" name="dm_machine_warn_flag_list" value="<?cs var:config.dm_machine_warn_flag ?>" />
+		</form>
+
+		<div class="pageHeader" style="border:1px #B8D0D6 solid">
+			<form onsubmit="return navTabSearch(this, 'dmt_machine');" action="<?cs var:config.cgipath?>mt_slog_machine?action=search">
+			<div class="searchBar">
+				<table class="searchContent" >
+					<tr>
+						<td>
+							机器ID：<input type="text" name="dm_machine_id" size="10" value="<?cs var:config.dm_machine_id?>" />
+						</td>
+						<td>
+							机器IP：<input type="text" name="dm_machine_ip" size="16" value="<?cs var:config.dm_machine_ip ?>" />
+						</td>
+						<td>
+							告警标记：
+							<select name="dm_machine_warn_flag_list" id="dm_machine_warn_flag_list">
+								<option value="0">全部</option>
+								<option value="<?cs var:config.dmm_mach_allow_all ?>">不屏蔽</option>
+								<option value="<?cs var:config.dmm_mach_deny_all ?>">完全屏蔽</option>
+								<option value="<?cs var:config.dmm_mach_deny_basic ?>">屏蔽基础告警</option>
+								<option value="<?cs var:config.dmm_mach_deny_except ?>">屏蔽异常告警</option>
+							</select>
+						</td>
+						<td>
+							<button type="submit" class="sexybutton"><span><span><span class="search">查找</span></span></span></button>
+							<button class="sexybutton" id="dm_btn_erase" ><span><span><span class="erase">重填</span></span></span></button>
+						</td>
+					</tr>
+				</table>
+			</div>
+			</form>
+		</div>
+		
+		<div class="pageContent" style="border-left:1px #B8D0D6 solid;border-right:1px #B8D0D6 solid">
+			<div class="panelBar">
+				<ul class="toolBar">
+					<li><a class="add" href="<?cs var:config.cgipath?>mt_slog_machine?action=add&navTabId=dmt_machine" target="dialog" mask="true" maxable="false" resizable="false" width="520" height="420" title="添加上报机器"><span>添加</span></a></li>
+					<li class="line">line</li>
+
+					<li><a class="delete" href="<?cs var:config.cgipath?>mt_slog_machine?action=delete&id={machine_id}&navTabId=dmt_machine" target="ajaxTodo" title="确定要删除吗?"><span>删除</span></a></li>
+					<li class="line">line</li>
+
+					<li><a class="edit" href="<?cs var:config.cgipath?>mt_slog_machine?action=mod&id={machine_id}&navTabId=dmt_machine" target="dialog" mask="true" maxable="false" resizable="false" width="520" height="420" title="修改机器配置"><span>修改</span></a></li>
+					<li class="line">line</li>
+				</ul>
+			</div>
+
+			<div>
+				<table class="list" width="100%" layoutH="90">
+					<thead>
+						<tr>
+							<th >序号</th>
+							<th >机器id</th>
+							<th >机器名称</th>
+							<th >机器IP</th>
+							<th >机器IP2</th>
+							<th >告警标记</th>
+							<th >机器描述</th>
+						</tr>
+					</thead>
+					<tbody id="dm_machine_info_list">
+					</tbody>
+				</table>
+		
+				<div class="panelBar" layoutH="0">
+					<div class="pages">
+						<span>每页显示</span>
+						<select name="numPerPage" onchange="navTabPageBreak({numPerPage:this.value})">
+							<option value="10">10</option>
+							<option value="20">20</option>
+							<option value="50">50</option>
+							<option value="100">100</option>
+							<option value="200">200</option>
+						</select>
+						<span>条，共 <?cs var:config.totalCount ?>  条</span>
+					</div>
+					<div class="pagination" targetType="navTab" totalCount="<?cs var:config.totalCount ?>" numPerPage="<?cs var:config.numPerPage ?>" pageNumShown="<?cs var:config.pageNumShown ?>" currentPage="<?cs var:config.currentPage ?>"></div>
+				</div>
+			</div> <!-- da_attr_list -->
+		</div>
+	</div> <!-- unitBox -->
+</div>
+
+<script language="javascript" type="text/javascript">
+var dm_machine_info = $.parseJSON('<?cs var:config.machine_info ?>');
+
+function dmSetMachineList(machine_info)
+{
+	var list = "";
+	var list_machine = machine_info.list;
+	for(var i=0,j=0; i < machine_info.count && i < list_machine.length; i++)
+	{
+		list += "<tr target='machine_id' rel='" + list_machine[i].id + "'>";
+		j = (<?cs var:config.currentPage ?>-1) * <?cs var:config.numPerPage ?> + 1;
+		list += "<td>" + (i+j) + "</td>";
+		list += "<td>" + list_machine[i].id + "</td>";
+		list += "<td>" + list_machine[i].name + "</td>";
+
+		list += "<td>" + list_machine[i].ip + "</td>";
+		if(typeof list_machine[i].ip2 != "undefined")
+			list += "<td>" + list_machine[i].ip2 + "</td>";
+		else
+			list += "<td></td>";
+		if(list_machine[i].warn_flag == <?cs var:config.dmm_mach_allow_all ?>)
+			list += "<td>不屏蔽</td>";
+		else if(list_machine[i].warn_flag == <?cs var:config.dmm_mach_deny_all ?>)
+			list += "<td>完全屏蔽</td>";
+		else if(list_machine[i].warn_flag == <?cs var:config.dmm_mach_deny_basic ?>)
+			list += "<td>屏蔽基础告警</td>";
+		else if(list_machine[i].warn_flag == <?cs var:config.dmm_mach_deny_except ?>)
+			list += "<td>屏蔽异常告警</td>";
+		else 
+			list += "<td>未知告警标记</td>";
+		list += "<td>" + list_machine[i].desc + "</td>";
+		list += "</tr>";
+	}
+	return list;
+}
+
+$(document).ready(function(){
+	var machine_info = dmSetMachineList(dm_machine_info);
+	var machine = $("#dm_machine_info_list");
+	machine.html(machine_info);
+
+	$("select[name=numPerPage] option").each(function(){
+		if(this.value == <?cs var:config.numPerPage ?>)
+			$(this).attr("selected", true);
+	});
+
+	<?cs if:config.dm_machine_warn_flag ?>
+	$("#dm_machine_warn_flag_list").children("option").each(function(){
+		if(<?cs var:config.dm_machine_warn_flag ?> == $(this).val())
+			$(this).attr("selected", true);
+	});
+	<?cs /if ?>
+
+	$("#dm_btn_erase").click(function(){
+		$("input[name=dm_keyword]").val("");
+		$("input[name=dm_machine_id]").val("");
+		$("input[name=dm_machine_ip]").val("");
+		$("select[name=dm_machine_warn_flag_list]").val(0);
+		return false;
+	});
+});
+
+</script>
+

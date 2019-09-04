@@ -1,0 +1,39 @@
+<style type="text/css">
+.pageFormContent label { float:left; overflow:visible; width:70px; padding:0 5px; line-height:21px;}
+.pageFormContent p { width:420px;} 
+</style>
+
+<script language="javascript" type="text/javascript">
+$(document).ready(function(){
+	<?cs if:config.action == "save_add_app" ?>
+	$("#ddaa_app_name").focus();
+	<?cs /if ?>
+});
+</script>
+
+<div class="pageContent">
+	<form method="get" action="<?cs var:config.cgipath?>mt_slog?action=<?cs var:config.action ?>&navTabId=dmt_list_app" class="pageForm required-validate" onsubmit="return validateCallback(this, dialogAjaxDone);">
+		<div class="pageFormContent" layoutH="56">
+			<?cs if:config.action == "save_mod_app" ?>
+			<input type="hidden" name="ddaa_app_id" value="<?cs var:config.app_id ?>" />
+			<?cs /if ?>
+			<p>
+				<label>应用名称：</label>
+				<input type="text" size="24" name="ddaa_app_name" id="ddaa_app_name" minlength="2" maxlength="20" alt="请输入应用名称" class="required" value="<?cs var:config.app_name ?>" />
+			</p>
+			<p>
+				<label>应用描述：</label>
+				<textarea rows="4" cols="20" name="ddaa_app_desc" maxlength="64" alt="请输入应用描述"><?cs var:config.app_desc ?></textarea>
+			</p>
+		</div>
+		<div class="formBar">
+			<ul>
+				<li><div class="button"><div class="buttonContent"><button type="submit">&nbsp;&nbsp;保&nbsp;存&nbsp;&nbsp;</button></div></div></li>
+				<li>
+					<div class="button"><div class="buttonContent"><button type="button" class="close">&nbsp;&nbsp;取&nbsp;消&nbsp;&nbsp;</button></div></div>
+				</li>
+			</ul>
+		</div>
+	</form>
+</div>
+

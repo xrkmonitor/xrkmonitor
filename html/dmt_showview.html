@@ -1,0 +1,282 @@
+<div class="pageContent">
+	<div class="unitBox" style="margin-left:1px;"> 
+		<div class="pageContent" style="border-left:1px #B8D0D6 solid;border-right:1px #B8D0D6 solid">
+			<div class="panelBar">
+				<ul class="toolBar">
+					<li><a class="edit" href="#" onclick="return dsAttrBind_<?cs var:config.view_id ?>();"><span>监控点绑定</span></a></li>
+					<li class="line">line</li>
+					<li><a class="edit" href="#" onclick="return dsMachineBind_<?cs var:config.view_id ?>();"><span>机器绑定</span></a></li>
+					<li class="line">line</li>
+					<li>指定日期：<input type="text" class="date" size="10" readonly="true" id="ds_date_<?cs var:config.view_id ?>" value="<?cs var:config.cust_date ?>" onblur="setTimeout(dsOnCustDateChange_<?cs var:config.view_id ?>, 600);" minDate="2014-01-01" maxDate="2088-12-31" /></li>
+
+					<li class="line">line</li>
+					<li><a class="add" href="#" onclick="return dsAttrShow_<?cs var:config.view_id ?>(2);"><span>日图</span></a></li>
+
+					<li class="line">line</li>
+					<li><a class="add" href="#" onclick="return dsAttrShow_<?cs var:config.view_id ?>(1);"><span>日同比图</span></a></li>
+
+					<li class="line">line</li>
+					<li><a class="add" href="#" onclick="return dsAttrShow_<?cs var:config.view_id ?>(3);"><span>周图</span></a></li>
+
+					<li class="line">line</li>
+					<li><a class="add" href="#" onclick="return dsLeftMenuShow_<?cs var:config.view_id ?>();"><span>导航菜单</span></a></li>
+
+					<li class="line">line</li>
+					<li>
+						<input type="checkbox" id="ds_check_show_<?cs var:config.view_id ?>" onclick="return dsCheckShow_<?cs var:config.view_id ?>();"/>
+						<label class='for' for='ds_check_show_<?cs var:config.view_id ?>'>仅绘制有上报的监控点图表</label>
+					</li>
+
+					<li style="display:none"><a id="ds_href_<?cs var:config.view_id ?>" href="#" target="navTab" rel="showview_<?cs var:config.view_id ?>" fresh="false"></a></li>
+				</ul>
+			</div>
+
+			<div> 
+				<div id='dsLeftMenu_<?cs var:config.view_id ?>' layoutH="28" class="chartLeftMenu">
+					<ul class="tree treeFolder" id="ds_attr_list_<?cs var:config.view_id ?>">
+					</ul>
+				</div> 
+				<div layoutH="28" id="ds_ct_attr_show_list_<?cs var:config.view_id ?>"> 
+				</div>
+			</div>
+		</div>
+	</div> <!-- unitBox -->
+</div>
+
+<script language="javascript" type="text/javascript">
+
+// 以下两变量在别处有引用，请勿删除
+var ds_attr_type_list_<?cs var:config.view_id ?> = $.parseJSON('<?cs var:config.attr_type_list ?>');
+var ds_view_name_<?cs var:config.view_id ?> = "<?cs var:config.view_name ?>";
+
+var ds_attr_show_get_last_seq_<?cs var:config.view_id ?> = <?cs var:config.last_seq ?>;
+var ds_attr_list_arry_<?cs var:config.view_id ?> = new Array();
+var ds_attr_show_index_cur_<?cs var:config.view_id ?>;
+var ds_attr_show_get_auto_<?cs var:config.view_id ?> = null;
+var ds_attr_show_type_<?cs var:config.view_id ?> = <?cs var:config.show_type ?>;
+var ds_cust_date_save_<?cs var:config.view_id ?> = '<?cs var:config.cust_date ?>';
+
+// 视图绑定监控点对话框
+function dsAttrBind_<?cs var:config.view_id ?>()
+{
+	var view_id = "<?cs var:config.view_id ?>";
+	var url = "<?cs var:config.cgipath ?>mt_slog_showview?action=bind_attr";
+	url += "&view_id=" + view_id;
+	var dlg = "ds_dlg_bind_attr_" + view_id;
+
+	var op = $.parseJSON('{"mask":true,"maxable":false,"height":480,"width":780,"resizable":false}'); 
+	$.pdialog.open(url, dlg, "绑定监控点", op); 
+}
+
+// 视图绑定机器对话框
+function dsMachineBind_<?cs var:config.view_id ?>()
+{
+	var view_id = "<?cs var:config.view_id ?>";
+	var url = "<?cs var:config.cgipath ?>mt_slog_showview?action=bind_machine";
+	url += "&view_id=" + view_id;
+	var dlg = "ds_dlg_bind_machine_" + view_id;
+
+	var op = $.parseJSON('{"mask":true,"maxable":false,"height":460,"width":520,"resizable":false}'); 
+	$.pdialog.open(url, dlg, "绑定服务器", op); 
+}
+
+function dsOnCustDateChange_<?cs var:config.view_id ?>()
+{
+	var dt = $("#ds_date_<?cs var:config.view_id ?>").val();
+	if(dt != ds_cust_date_save_<?cs var:config.view_id ?>)
+	{
+		return dsAttrShow_<?cs var:config.view_id ?>(ds_attr_show_type_<?cs var:config.view_id ?>);
+	}
+}
+
+function dsLeftMenuShow_<?cs var:config.view_id ?>()
+{
+	if($('#dsLeftMenu_<?cs var:config.view_id ?>').css('display') == 'none')
+	{
+		$('#dsLeftMenu_<?cs var:config.view_id ?>').show();
+		window.localStorage.setItem('dsLeftMenu_<?cs var:config.view_id ?>_hide', '0');
+		dmtRedrawCharts('<?cs var:config.view_id ?>', 'view', true);
+	}
+	else
+	{
+		$('#dsLeftMenu_<?cs var:config.view_id ?>').hide();
+		window.localStorage.setItem('dsLeftMenu_<?cs var:config.view_id ?>_hide', '1');
+		dmtRedrawCharts('<?cs var:config.view_id ?>', 'view', false);
+	}
+}
+
+function dsClickViewAttr_<?cs var:config.view_id ?>(show_id)
+{
+	// 寻找该图表的数组索引
+	var arrStr = show_id.split('_');
+	var i = 0;
+	for(; i < ds_attr_list_arry_<?cs var:config.view_id ?>.length; i++)
+	{
+		if(arrStr[1] == ds_attr_list_arry_<?cs var:config.view_id ?>[i])
+			break;
+	}
+
+	// 没找到非法 attr
+	if(i >= ds_attr_list_arry_<?cs var:config.view_id ?>.length)
+		return false;
+
+	// 已获取到的 attr, 没有数据上报
+	if(i < ds_attr_show_index_cur_<?cs var:config.view_id ?>)
+		return false;
+
+	// 正在获取中的 attr
+	return true;
+}
+
+function dsAttrShow_<?cs var:config.view_id ?>(type)
+{
+	var dt = $("#ds_date_<?cs var:config.view_id ?>").val();
+	if(dt != "")
+		param = '&date=' + dt;
+	else
+		param = "&date=today" 
+
+	var ck = $("#ds_check_show_<?cs var:config.view_id ?>").attr("checked");
+	if(ck == "checked")
+		param += '&show_rep=1';
+	else
+		param += '&show_rep=0';
+	
+	param += '&_r=' + Math.random();
+	param += '&view_id=' + '<?cs var:config.view_id ?>';
+	param += '&type=' + type;
+	param += '&view_name=' + '<?cs var:config.view_name ?>';
+
+	var requrl = "<?cs var:config.cgipath ?>mt_slog_showview?action=list" + param;
+	var idhref = "#ds_href_<?cs var:config.view_id ?>";
+	$(idhref).html(ds_view_name_<?cs var:config.view_id ?>);
+
+	$(idhref).attr('href', requrl);
+	$(idhref).click();
+	return false;
+}
+
+function dmtAddNoDataTextForView(view_attr_ct)
+{
+	var sel = '#' + view_attr_ct + ' a[ctid]';
+	$(sel).each(function() {
+		var ctsel = '#' + $(this).attr('ctid');
+		if($(ctsel).length <= 0) {
+			var showno = $(this).html();
+			$(this).html("<font color='blue'>&nbsp;[无上报]&nbsp;</font>" + showno);
+		}
+	});
+}
+
+function dsAttrShowDate2_<?cs var:config.view_id ?>(idx)
+{
+	var reqAttr = ds_attr_list_arry_<?cs var:config.view_id ?>.slice(
+			idx, idx+<?cs var:config.per_count ?>);
+	if(reqAttr.length <= 0)
+	{
+		return;
+	}
+
+	var requrl = "<?cs var:config.cgipath?>mt_slog_showview";
+	var reqpara = {};
+	var ck = $("#ds_check_show_<?cs var:config.view_id ?>").attr("checked");
+	if(ck == "checked")
+		reqpara.show_rep = 1;
+	else
+		reqpara.show_rep = 0;
+	reqpara.view_id = <?cs var:config.view_id ?>;
+	reqpara.attr_list = reqAttr.toString();
+	reqpara.action = 'show_view_attr_cust';
+	reqpara.last_seq = ds_attr_show_get_last_seq_<?cs var:config.view_id ?>;;
+	reqpara.type = ds_attr_show_type_<?cs var:config.view_id ?>;
+	if(ds_attr_show_get_auto_<?cs var:config.view_id ?> == 'auto')
+		reqpara.global = false;
+	else
+		reqpara.global = true;
+
+	var dt = $("#ds_date_<?cs var:config.view_id ?>").val();
+	if(dt != "")
+		reqpara.date = dt;
+	else
+		reqpara.date = 'today';
+	reqpara._r = Math.random();
+
+	ds_attr_show_index_cur_<?cs var:config.view_id ?> = idx; 
+	ajaxTodoPost(requrl, reqpara, function(json) {
+		if(dmtFirstDealAjaxResponse(json))
+			return;
+
+		if(json.statusCode == DWZ.statusCode.success ||json.statusCode == DWZ.statusCode.ok)
+		{
+			if(ds_attr_show_get_last_seq_<?cs var:config.view_id ?> != json.last_req_seq)
+				return;
+
+			dmtShowAttrInfo(json.attr_list, json.attr_val_list, 
+				'#ds_ct_attr_show_list_<?cs var:config.view_id ?>', 'view');
+
+			// ajax 自动获取
+			if(ds_attr_show_index_cur_<?cs var:config.view_id ?> + <?cs var:config.per_count ?>
+				< ds_attr_list_arry_<?cs var:config.view_id ?>.length) 
+			{
+				ds_attr_show_get_auto_<?cs var:config.view_id ?> = 'auto';
+				dsAttrShowDate2_<?cs var:config.view_id?>(
+					ds_attr_show_index_cur_<?cs var:config.view_id ?> + <?cs var:config.per_count ?>);
+			}
+			else
+			{
+				// 获取完毕
+				ds_attr_show_get_auto_<?cs var:config.view_id ?> = null;
+				ds_attr_show_index_cur_<?cs var:config.view_id ?> = ds_attr_list_arry_<?cs var:config.view_id ?>.length;
+				var ck = $("#ds_check_show_<?cs var:config.view_id ?>").attr("checked");
+				if(ck == "checked")
+					dmtAddNoDataTextForView('ds_attr_list_<?cs var:config.view_id ?>');
+			}
+		}
+		else if(json.msgid && alertMsg)
+		{
+			var msg = DWZ.msg(json.msgid);
+			alertMsg.warn(msg);
+		}
+		else if(json.msg)
+			alertMsg.warn(json.msg);
+	});
+}
+
+$(document).ready(function(){
+	dmtSetRedrawChartsInfo('<?cs var:config.view_id ?>', 'view', true);
+	dmtSetChartSize();
+	var attr_list = $.parseJSON('<?cs var:config.view_attr_list ?>');
+	var attr_type_list = ds_attr_type_list_<?cs var:config.view_id ?>;
+	var attr_info = dmtSetAttrList(attr_list, attr_type_list, 'view', 
+		ds_attr_list_arry_<?cs var:config.view_id ?>, dsClickViewAttr_<?cs var:config.view_id ?>);
+
+	var hideLeft = window.localStorage.getItem("dsLeftMenu_<?cs var:config.view_id ?>_hide");
+	if(hideLeft == '1') {
+		$('#dsLeftMenu_<?cs var:config.view_id ?>').hide();
+		$("#ds_attr_list_<?cs var:config.view_id ?>").html(attr_info);
+		dmtRedrawCharts('<?cs var:config.view_id ?>', 'view', false);
+	}
+	else
+		$("#ds_attr_list_<?cs var:config.view_id ?>").html(attr_info);
+
+	var ck = window.localStorage.getItem("cookie_ds_check_show_<?cs var:config.view_id ?>");
+	if(ck == '1')
+		$("#ds_check_show_<?cs var:config.view_id ?>").attr("checked", true);
+	$('#ds_ct_attr_show_list_<?cs var:config.view_id ?>').html('');
+	dsAttrShowDate2_<?cs var:config.view_id ?>(0);
+});
+
+function dsCheckShow_<?cs var:config.view_id ?>()
+{
+	var ckName = "cookie_ds_check_show_<?cs var:config.view_id ?>";
+	var ck = $("#ds_check_show_<?cs var:config.view_id ?>").attr("checked");
+	if(ck == "checked")
+		window.localStorage.setItem(ckName, '1');
+	else
+		window.localStorage.setItem(ckName, '0');
+	return dsAttrShow_<?cs var:config.view_id ?>(ds_attr_show_type_<?cs var:config.view_id ?>);
+}
+
+</script>
+
+
