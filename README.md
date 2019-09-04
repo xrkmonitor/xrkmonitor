@@ -32,6 +32,9 @@ web 控制台首页展示：
 部署前需要将 memcached 可执行文件放入 slog_memcached 目录下，并重命名为 slog_memcached  
 (memcached 可执行文件通过编译 memcache 源码或者从 rpm 发布包中获取)
 
+控制台cgi 在部署时支持普通cgi以及 fastcgi 方式，如需使用 fastcgi 方式部署需要 apache 导入模块  
+mod_fastcgi , 模块源码在 lib 目录下，fastcgi 参考配置文件：cgi_fcgi/fastcgi.conf   
+
 部署方式支持集中部署、分布式部署，部署方法如下：
 ### 一：集中部署
 全部服务部署在一台服务器上的操作步骤：
