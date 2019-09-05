@@ -113,17 +113,6 @@
 #define MSG_ID_ADD_SUCCESS 1002
 #define MSG_ID_MODIFY_SUCCESS 1003
 
-#define CGI_CONFFILE "./cgi.conf"
-#define FCGI_CONFFILE "./fcgi.conf"
-#define CSPATH "../htdocs/"
-
-#define JQUERY_FILE "/js/jquery-1.8.3.min.js"
-#define PAGE_ERROR "error.html"
-#define PAGE_MAIN CSPATH"monitor/index.html"
-#define PAGE_FCGI_LOGIN CSPATH"monitor/dmt_login.html"
-#define PAGE_FCGI_LOGIN_DWZ CSPATH"monitor/dmt_login_dwz.html"
-#define PAGE_FCGI_DLG_LOGIN_DWZ CSPATH"monitor/dmt_dlg_login_dwz.html"
-
 // string list 
 #define SET_ERRMSG(msg) do { if(!stConfig.bSetError) { \
 	hdf_set_value(stConfig.cgi->hdf, "err.msg", msg); \

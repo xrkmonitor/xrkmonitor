@@ -8,6 +8,9 @@ cgi 调试 ：
 cgi req output file : - /tmp/cgi/(cgi_name)/ or /tmp/cgi/cgi_request/
 cgi resp output file : - /tmp/cgi/(cgi_name)/
 
+3 -- 如果没有日志输出，前端显示 500 错误可以直接待任意参数执行 cgi
+   比如：./slog_flogin test，查看下控制台的输出
+
 
 cgi 开发注意：
 -------------------------------------------

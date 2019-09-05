@@ -663,7 +663,7 @@ int main(int argc, char **argv, char **envp)
 	}
 
 	if(stConfig.cgi != NULL)
-		DealCgiFailedExit(stConfig.cgi, stConfig.err);
+		DealCgiFailedExit(stConfig, stConfig.err);
 
 	stConfig.dwEnd = time(NULL);
 	INFO_LOG("fcgi - %s stop at:%u run:%u pid:%u errmsg:%s",

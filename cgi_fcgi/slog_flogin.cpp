@@ -190,7 +190,23 @@ static int SetFreeAccountInfo(CGI *cgi, HDF *hdf)
 
 static int PopLoginWindow(CGI *cgi, HDF *hdf)
 {
+	static std::string s_page_dlg_login_dwz;
+	static std::string s_page_login_dwz;
+	static std::string s_page_login;
+
 	NEOERR *err = NULL;
+	if(s_page_login.empty()) {
+		s_page_login = stConfig.szCsPath;
+		s_page_login += "dmt_login.html";
+	}
+	if(s_page_dlg_login_dwz.empty()) {
+		s_page_dlg_login_dwz = stConfig.szCsPath;
+		s_page_dlg_login_dwz += "dmt_dlg_login_dwz.html";
+	}
+	if(s_page_login_dwz.empty()) {
+		s_page_login_dwz = stConfig.szCsPath;
+		s_page_login_dwz += "dmt_login_dwz.html";
+	}
 
 	uint8_t bLoginType = g_iLoginType;
 	hdf_set_value(hdf, "config.jquery_file", g_szJqueryUrl);
@@ -214,16 +230,16 @@ static int PopLoginWindow(CGI *cgi, HDF *hdf)
 	{
 		// 日志系统重登可能需要跨站
 		hdf_set_value(cgi->hdf, "cgiout.other.cros", "Access-Control-Allow-Origin:*");
-		err = cgi_display(cgi, PAGE_FCGI_LOGIN_DWZ); 
+		err = cgi_display(cgi, s_page_login_dwz.c_str()); 
 	}
 	else if(stConfig.pAction != NULL && !strcmp(stConfig.pAction, "pop_dlg_dwz_login"))
 	{
 		// 日志系统重登可能需要跨站
 		hdf_set_value(cgi->hdf, "cgiout.other.cros", "Access-Control-Allow-Origin:*");
-		err = cgi_display(cgi, PAGE_FCGI_DLG_LOGIN_DWZ); 
+		err = cgi_display(cgi, s_page_dlg_login_dwz.c_str()); 
 	}
 	else
-		err = cgi_display(cgi, PAGE_FCGI_LOGIN); 
+		err = cgi_display(cgi, s_page_login.c_str()); 
 
 	if(err != NULL && err != STATUS_OK)
 	{
@@ -239,6 +255,12 @@ static int PopLoginWindow(CGI *cgi, HDF *hdf)
 
 static int ResponseCheckResult(CGI *cgi, HDF *hdf, int32_t iResultCode)
 {
+	static std::string s_page_login;
+	if(s_page_login.empty()) {
+		s_page_login = stConfig.szCsPath;
+		s_page_login += "dmt_login.html";
+	}
+	
 	NEOERR *err = NULL;
 	STRING str;
 	Json js;
@@ -268,7 +290,7 @@ static int ResponseCheckResult(CGI *cgi, HDF *hdf, int32_t iResultCode)
 		{
 			if(PopLoginWindow(cgi, hdf) >= 0)
 			{
-				DEBUG_LOG("flogin result:%d jump to login page:%s", iResultCode, PAGE_FCGI_LOGIN); 
+				DEBUG_LOG("flogin result:%d jump to login page:%s", iResultCode, s_page_login.c_str()); 
 			}
 		}
 		else
@@ -606,7 +628,7 @@ int main(int argc, char **argv, char **envp)
 	}
 
 	if(stConfig.cgi != NULL)
-		DealCgiFailedExit(stConfig.cgi, stConfig.err);
+		DealCgiFailedExit(stConfig, stConfig.err);
 
 	stConfig.dwEnd = time(NULL);
 	INFO_LOG("fcgi - %s exist at:%u run:%u pid:%u msg:%s",

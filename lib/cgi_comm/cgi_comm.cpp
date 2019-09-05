@@ -1153,16 +1153,25 @@ int InitFastCgi(CGIConfig &myCfg, const char *pszLogPath)
 	return 0;
 }
 
-void DealCgiFailedExit(CGI *cgi, NEOERR *err)
+void DealCgiFailedExit(CGIConfig &stConfig, NEOERR *err)
 {
+	static std::string s_page_error;
+
+	CGI *cgi  = stConfig.cgi;
 	if(NULL == cgi->hdf)
 		return;
+
+	if(s_page_error.empty())
+	{
+		s_page_error = stConfig.szCsPath;
+		s_page_error += "error.html";
+	}
 
 	const char *pfile = hdf_get_value(cgi->hdf, "Config.DebugInnerFile", NULL);
 	if(NULL == pfile)
 	{
-		hdf_set_value(cgi->hdf,"err.msg", CGI_REQERR);
-		cgi_display(cgi, PAGE_ERROR);
+		hdf_set_value(cgi->hdf, "err.msg", CGI_REQERR);
+		cgi_display(cgi, s_page_error.c_str());
 		return;
 	}
 
@@ -1182,7 +1191,7 @@ void DealCgiFailedExit(CGI *cgi, NEOERR *err)
 	}
 	hdf_set_value(cgi->hdf,"err.msg", CGI_REQERR);
 	hdf_set_value(cgi->hdf, "err.file", pfile);
-	cgi_display(cgi, PAGE_ERROR);
+	cgi_display(cgi, s_page_error.c_str());
 }
 
 void DealCgiCoredump(int sig, const char *pszFile, void *pdata) 

@@ -78,7 +78,7 @@ int CheckLogin(CGI *cgi,
 int CheckLoginEx(CGIConfig &stConfig, CGI *cgi,
 	FloginList *pshmLoginList, const char *remote, uint32_t dwCurTime=0, CgiReqUserInfo *pinfo=NULL);
 void InitCgiDebug(CGIConfig &myCfg);
-void DealCgiFailedExit(CGI *cgi, NEOERR *err);
+void DealCgiFailedExit(CGIConfig &stConfig, NEOERR *err);
 int DealDbConnect(CGIConfig &stCfg);
 void DealCgiCoredump(int sig, const char *pszFile, void *pdata);
 
