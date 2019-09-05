@@ -12,7 +12,7 @@
 5.	告警通道无需开发，且支持多种告警方式   
 ```
    
-项目演示链接：[字符云监控开源版演示 http://open.xrkmonitor.com](http://open.xrkmonitor.com)  
+**项目演示链接：[字符云监控开源版演示 http://open.xrkmonitor.com](http://open.xrkmonitor.com)**     
 
 (演示账号在登录窗下方查看, 提供两类账号：管理员账号、普通账号做为演示账号)  
      
