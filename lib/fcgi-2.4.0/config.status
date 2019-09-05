@@ -292,13 +292,13 @@ s,@PACKAGE@,fcgi,;t t
 s,@VERSION@,2.4.0,;t t
 s,@EXEEXT@,,;t t
 s,@OBJEXT@,o,;t t
-s,@ACLOCAL@,${SHELL} /home/monitor/mtreport_proj/3rd/fcgi-2.4.0/missing --run aclocal,;t t
-s,@AUTOCONF@,${SHELL} /home/monitor/mtreport_proj/3rd/fcgi-2.4.0/missing --run autoconf,;t t
-s,@AUTOMAKE@,${SHELL} /home/monitor/mtreport_proj/3rd/fcgi-2.4.0/missing --run automake,;t t
-s,@AUTOHEADER@,${SHELL} /home/monitor/mtreport_proj/3rd/fcgi-2.4.0/missing --run autoheader,;t t
-s,@MAKEINFO@,${SHELL} /home/monitor/mtreport_proj/3rd/fcgi-2.4.0/missing --run makeinfo,;t t
-s,@AMTAR@,${SHELL} /home/monitor/mtreport_proj/3rd/fcgi-2.4.0/missing --run tar,;t t
-s,@install_sh@,/home/monitor/mtreport_proj/3rd/fcgi-2.4.0/install-sh,;t t
+s,@ACLOCAL@,${SHELL} /home/mysvn/my_monitor/mtreport_proj/3rd/fcgi-2.4.0/missing --run aclocal,;t t
+s,@AUTOCONF@,${SHELL} /home/mysvn/my_monitor/mtreport_proj/3rd/fcgi-2.4.0/missing --run autoconf,;t t
+s,@AUTOMAKE@,${SHELL} /home/mysvn/my_monitor/mtreport_proj/3rd/fcgi-2.4.0/missing --run automake,;t t
+s,@AUTOHEADER@,${SHELL} /home/mysvn/my_monitor/mtreport_proj/3rd/fcgi-2.4.0/missing --run autoheader,;t t
+s,@MAKEINFO@,${SHELL} /home/mysvn/my_monitor/mtreport_proj/3rd/fcgi-2.4.0/missing --run makeinfo,;t t
+s,@AMTAR@,${SHELL} /home/mysvn/my_monitor/mtreport_proj/3rd/fcgi-2.4.0/missing --run tar,;t t
+s,@install_sh@,/home/mysvn/my_monitor/mtreport_proj/3rd/fcgi-2.4.0/install-sh,;t t
 s,@INSTALL_STRIP_PROGRAM@,${SHELL} $(install_sh) -c -s,;t t
 s,@AWK@,gawk,;t t
 s,@SET_MAKE@,,;t t

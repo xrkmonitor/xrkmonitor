@@ -40,10 +40,10 @@ pkglibdir = $(libdir)/fcgi
 pkgincludedir = $(includedir)/fcgi
 top_builddir = ..
 
-ACLOCAL = ${SHELL} /home/monitor/mtreport_proj/3rd/fcgi-2.4.0/missing --run aclocal
-AUTOCONF = ${SHELL} /home/monitor/mtreport_proj/3rd/fcgi-2.4.0/missing --run autoconf
-AUTOMAKE = ${SHELL} /home/monitor/mtreport_proj/3rd/fcgi-2.4.0/missing --run automake
-AUTOHEADER = ${SHELL} /home/monitor/mtreport_proj/3rd/fcgi-2.4.0/missing --run autoheader
+ACLOCAL = ${SHELL} /home/mysvn/my_monitor/mtreport_proj/3rd/fcgi-2.4.0/missing --run aclocal
+AUTOCONF = ${SHELL} /home/mysvn/my_monitor/mtreport_proj/3rd/fcgi-2.4.0/missing --run autoconf
+AUTOMAKE = ${SHELL} /home/mysvn/my_monitor/mtreport_proj/3rd/fcgi-2.4.0/missing --run automake
+AUTOHEADER = ${SHELL} /home/mysvn/my_monitor/mtreport_proj/3rd/fcgi-2.4.0/missing --run autoheader
 
 INSTALL = /usr/bin/install -c
 INSTALL_PROGRAM = ${INSTALL}
@@ -59,7 +59,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 host_alias = 
 host_triplet = x86_64-unknown-linux-gnu
-AMTAR = ${SHELL} /home/monitor/mtreport_proj/3rd/fcgi-2.4.0/missing --run tar
+AMTAR = ${SHELL} /home/mysvn/my_monitor/mtreport_proj/3rd/fcgi-2.4.0/missing --run tar
 AS = @AS@
 AWK = gawk
 CC = gcc
@@ -87,7 +87,7 @@ THREADED = threaded
 VERSION = 2.4.0
 am__include = include
 am__quote = 
-install_sh = /home/monitor/mtreport_proj/3rd/fcgi-2.4.0/install-sh
+install_sh = /home/mysvn/my_monitor/mtreport_proj/3rd/fcgi-2.4.0/install-sh
 
 include_HEADERS = \
 	fastcgi.h \
