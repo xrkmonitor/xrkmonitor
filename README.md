@@ -34,6 +34,8 @@
 
 
 ## 编译说明 
+视频教程：[源码介绍和编译 https://www.bilibili.com/video/av66685598](https://www.bilibili.com/video/av66685598)  
+
 项目目前只支持在 linux 系统中编译，推荐使用 opensuse 或者 ubuntu 系统   
 项目依赖 mysql 开发库 libmysqlclient.so、protobuf、curl、fcgi，其中 protobuf、curl、fcgi 的源  
 码已经集成到项目中，您只需要安装 libmysqlclient.so 开发库即可，安装完成后执行如下操作即可编译：
