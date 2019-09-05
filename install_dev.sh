@@ -73,7 +73,8 @@ function InstallFastcgiDev()
 
 	if [ ! -f /usr/include/fastcgi/fastcgi.h -o ! -f /usr/lib64/libfcgi.a ]; then
 		echo "install fastcgi devel($SUFFIX)"
-		cd $cdir/lib/fcgi-2.4.0 
+		tar -zxf fcgi-2.4.0.tar.gz; tar -zxf fcgi-2.4.0.tar.gz
+		cd fcgi-2.4.0
 		./configure --libdir=/usr/lib64 --includedir=/usr/include/fastcgi
 		make
 		make install
