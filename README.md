@@ -29,8 +29,8 @@
 ![开源版监控系统告警示例](http://xrkmonitor.com/monitor/images/open_wx_2.png)
 
 ## 视频教程 
-视频教程紧急制作做，感谢大家关注   
-1. 源码介绍和编译(ubuntu 系统) [源码介绍和编译 https://www.bilibili.com/video/av66685598](https://www.bilibili.com/video/av66685598)  
+视频教程紧急制作中，感谢大家关注   
+1. 源码介绍和编译(ubuntu系统)[源码介绍和编译 https://www.bilibili.com/video/av66685598](https://www.bilibili.com/video/av66685598)  
 
 
 ## 编译说明 
