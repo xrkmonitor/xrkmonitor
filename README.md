@@ -13,20 +13,19 @@
 ```
    
 **项目演示链接：[字符云监控开源版演示 http://open.xrkmonitor.com](http://open.xrkmonitor.com)**     
-
 (演示账号在登录窗下方查看, 提供两类账号：管理员账号、普通账号做为演示账号)  
      
 	   
-web 控制台首页展示：  
+**web 控制台首页展示:**     
 ![开源版监控系统首页](http://xrkmonitor.com/monitor/images/open_main.png)
 
-日志查看界面：  
+**日志查看界面:**   
 ![开源版监控系统](http://xrkmonitor.com/monitor/images/open_log.png)
 
-监控点数据图表查看界面：  
+**监控点数据图表查看界面:**   
 ![开源版监控系统](http://xrkmonitor.com/monitor/images/open_chart.png)
 
-微信告警示例：(支持邮件、短信、微信、PC客户端等告警方式，告警功能无需开发直接可用)  
+**微信告警示例:**(支持邮件、短信、微信、PC客户端等告警方式，告警功能无需开发直接可用)  
 ![开源版监控系统告警示例](http://xrkmonitor.com/monitor/images/open_wx_2.png)
 
    
@@ -47,7 +46,7 @@ web 控制台首页展示：
 mod_fastcgi , 模块源码在 lib 目录下，fastcgi 参考配置文件：cgi_fcgi/fastcgi.conf   
 
 部署方式支持集中部署、分布式部署，部署方法如下：
-### 一：集中部署
+### 集中部署
 全部服务部署在一台服务器上的操作步骤：
 1. 在部署机上安装 mysql, apache 软件
 2. 打完整部署包：cd  tools_sh; ./make_all.sh 生成： slog_all.tar.gz 部署包
@@ -64,7 +63,7 @@ mod_fastcgi , 模块源码在 lib 目录下，fastcgi 参考配置文件：cgi_f
 9. 启动 apache，使用内置账号：sadmin, 密码：sadmin 访问控制台，将系统服务器配置的IP 全部改为部署机IP  
 10. 启动所有服务：进入部署目录，cd tools_sh; ./check_proc_monitor.sh 1，约1分钟后即可查看日志和监控点图表  
 
-### 二：分布式部署说明
+### 分布式部署说明
 开源版监控系统包含以下服务器类型：
 1. mysql 配置服务器，用于存储监控系统的相关配置(分布式部署时，需要在 slog_config.conf 中配置)  
 2. mysql 监控点服务器，用于存储监控点数据(可在控制台配置，系统自动调度)  
