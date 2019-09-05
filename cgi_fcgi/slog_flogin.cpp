@@ -215,7 +215,7 @@ static int PopLoginWindow(CGI *cgi, HDF *hdf)
 		hdf_set_int_value(hdf, "config.login_type", bLoginType);
 
 	hdf_set_value(hdf, "config.redirect_url", "/cgi-bin/mt_slog_monitor");
-	hdf_set_value(hdf, "config.dwzpath", stConfig.szCsPath);
+	hdf_set_value(hdf, "config.dwzpath", DWZ_PATH);
 	hdf_set_value(hdf, "config.cgipath", stConfig.szCgiPath);
 
 	if(IsDaemonDenyOp(stConfig, false)) {
