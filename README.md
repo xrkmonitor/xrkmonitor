@@ -30,7 +30,7 @@
 
 ## 视频教程 
 视频教程紧急制作中，感谢大家关注   
-1. 源码介绍和编译(ubuntu系统)[源码介绍和编译 https://www.bilibili.com/video/av66685598](https://www.bilibili.com/video/av66685598)  
+1. 源码介绍和编译(ubuntu系统) [源码介绍和编译 https://www.bilibili.com/video/av66685598](https://www.bilibili.com/video/av66685598)  
 
 
 ## 编译说明 
@@ -62,7 +62,7 @@ mod_fastcgi , 模块源码在 lib 目录下，fastcgi 参考配置文件：cgi_f
 6. 初始化 mysql 数据库，将 mtreport_db.sql, attr_db.mysql 导入到 mysql 中(文件在源码 db 目录下)  
 7. 授权 mysql 账号：mtreport 访问密码：mtreport875, 访问操作  mtreport_db,attr_db 数据库
 8. 启动 slog_config 服务: cd slog_config; ./start.sh
-9. 拷贝 html、cgi 文件到 apache 网站，假设网站根目录为： /srv/www/htdocs，按如下方法拷贝文件：   
+9. 拷贝 html、cgi 文件到 apache 网站，网站根目录设为： /srv/www/htdocs，按如下方法拷贝文件：   
    a. 部署 html/js 文件：将源码中 html 目录下的文件/目录全部拷贝到 /srv/www/htdocs/monitor 目录下  
    b. 将入口文件 html/index.html 拷贝到根目录下 /srv/www/htdocs  
    c. 部署 cgi：将部署机 cgi_fcgi 目录下的文件全部拷贝到 /srv/www/cgi-bin 目录下  
