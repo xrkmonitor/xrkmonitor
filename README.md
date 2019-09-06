@@ -31,6 +31,8 @@
 ## 视频教程 
 视频教程紧急制作中，感谢大家关注   
 1. 源码介绍和编译(ubuntu系统) [源码介绍和编译 https://www.bilibili.com/video/av66685598](https://www.bilibili.com/video/av66685598)  
+2. 集中部署(ubuntu系统) [集中部署教程 https://www.bilibili.com/video/av66819048/](https://www.bilibili.com/video/av66819048/)  
+
 
 
 ## 编译说明 
@@ -58,6 +60,8 @@ mod_fastcgi , 模块源码在 lib 目录下，fastcgi 参考配置文件：cgi_f
 
 部署方式支持集中部署、分布式部署，部署方法如下：
 ### 集中部署
+视频教程：集中部署(ubuntu系统) [集中部署教程 https://www.bilibili.com/video/av66819048/](https://www.bilibili.com/video/av66819048/)   
+
 全部服务部署在一台服务器上的操作步骤：
 1. 在部署机上安装 mysql, apache 软件
 2. 确保目录 slog_memcached 下存在 slog_memcached 可执行文件    
