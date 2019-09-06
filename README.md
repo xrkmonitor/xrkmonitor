@@ -63,7 +63,7 @@ mod_fastcgi , 模块源码在 lib 目录下，fastcgi 参考配置文件：cgi_f
 2. 确保目录 slog_memcached 下存在 slog_memcached 可执行文件    
 3. 打完整部署包：cd  tools_sh; ./make_all.sh 生成： slog_all.tar.gz 部署包
 4. 将部署包 slog_all.tar.gz 拷贝到部署机器的部署目录下   
-5. 解压部署包： tar -zxf slog_all.tar.gz; tar -xf slog_all.tar
+5. 解压部署包： tar -zxf slog_all.tar.gz 
 6. 初始化 mysql 数据库，将 mtreport_db.sql, attr_db.mysql 导入到 mysql 中(文件在源码 db 目录下)  
 7. 授权 mysql 账号：mtreport 访问密码：mtreport875, 访问操作  mtreport_db,attr_db 数据库
 8. 启动 slog_config 服务: cd slog_config; ./start.sh
