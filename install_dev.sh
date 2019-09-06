@@ -46,7 +46,9 @@ function InstallProtobuf()
 	fi
 
 	if [ ! -f  /usr/lib64/libprotobuf.a ]; then
-		cd $cdir/lib/protobuf-2.3.0
+		cd $cdir/lib/protobuf
+		tar -zxf protobuf-2.4.1.tar.gz
+		cd protobuf-2.4.1
 		./configure --libdir=/usr/lib64 --includedir=/usr/include
 		make 
 		make install
