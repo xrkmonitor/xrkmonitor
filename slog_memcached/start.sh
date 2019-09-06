@@ -1,8 +1,10 @@
 #!/bin/bash
 
-username=mtreport
+# 如果未指定运行账号，则以当前账号启动 memcached
 if [ $# -eq 1 ];then
 	username=$1
+else
+	username=$USER
 fi
 
 if [ ! -f slog_memcached ]; then
