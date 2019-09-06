@@ -37,16 +37,21 @@
 视频教程：[源码介绍和编译 https://www.bilibili.com/video/av66685598](https://www.bilibili.com/video/av66685598)  
 
 项目目前只支持在 linux 系统中编译，推荐使用 opensuse 或者 ubuntu 系统   
-项目依赖 mysql 开发库 libmysqlclient.so、protobuf、curl、fcgi，其中 protobuf、curl、fcgi 的源  
-码已经集成到项目中，您只需要安装 libmysqlclient.so 开发库即可，安装完成后执行如下操作即可编译：
+项目依赖 mysql 开发库 libmysqlclient、protobuf、curl、fcgi，其中 protobuf、curl、fcgi 的源  
+码已经集成到项目中，您只需要安装 libmysqlclient 开发库即可，安装完成后执行如下操作即可编译：
 1. 修改 make_env 文件，指定 libmysqlclient 库/头文件的安装路径
-2. 执行脚本 ./install_dev.sh，按提示根据需要完成编译依赖包的安装
-3. 执行 make 命令即可编译整个项目，后续如需编译指定模块在模块目录执行 make 命令即可  
+2. 执行脚本 ./install_dev.sh，按提示根据需要完成依赖包的安装
+3. 执行 make 命令即可编译整个项目，后续如需编译指定模块在模块目录执行 make 命令即可   
+   
+
+如您在编译源码包时遇到问题，请给我们留言或者加入QQ群在QQ群中提出您的问题   
 
 ## 部署说明
 字符云监控系统部署需要安装  memcached，mysql，apache 软件   
-部署前需要将 memcached 可执行文件放入 slog_memcached 目录下，并重命名为 slog_memcached  
-(memcached 可执行文件通过编译 memcache 源码或者从 rpm 发布包中获取)
+memcached 在编译源码执行 install_dev.sh 的时候会提示是否编译生成 memcached 可执行文件   
+若您没有选择编译生成 memcached 文件，则您需要自行生成 memcached 文件，并将 memcached    
+文件放入 slog_memcached 目录下，并重命名为 slog_memcached，以便能使用监控系统脚本控制   
+memcached 的启停   
 
 控制台cgi 在部署时支持普通cgi以及 fastcgi 方式，如需使用 fastcgi 方式部署需要 apache 导入模块  
 mod_fastcgi , 模块源码在 lib 目录下，fastcgi 参考配置文件：cgi_fcgi/fastcgi.conf   
@@ -55,7 +60,7 @@ mod_fastcgi , 模块源码在 lib 目录下，fastcgi 参考配置文件：cgi_f
 ### 集中部署
 全部服务部署在一台服务器上的操作步骤：
 1. 在部署机上安装 mysql, apache 软件
-2. 安装拷贝 memcached 可执行文件到路径 slog_memcached 目录下，并重命名为 slog_memcached
+2. 确保目录 slog_memcached 下存在 slog_memcached 可执行文件    
 3. 打完整部署包：cd  tools_sh; ./make_all.sh 生成： slog_all.tar.gz 部署包
 4. 将部署包 slog_all.tar.gz 拷贝到部署机器的部署目录下   
 5. 解压部署包： tar -zxf slog_all.tar.gz; tar -xf slog_all.tar
