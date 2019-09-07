@@ -163,11 +163,12 @@ function InstallMemcached()
 		tar -zxf libevent-2.0.21-stable.tar.gz
 		tar -zxf memcached-1.5.3.tar.gz
 		cd libevent-2.0.21-stable
-		./configure  --enable-static --disable-openssl --disable-shared --prefix=/usr/local/libevent
+		./configure  --enable-static --disable-openssl --disable-shared 
 		make
 		make install
+
 		cd ../memcached-1.5.3
-		./configure --prefix=/usr/local/memcached --with-libevent=/usr/local/libevent --disable-option-checking --disable-sasl --disable-sasl-pwdb --disable-coverage
+		./configure --prefix=/usr/local/memcached --disable-option-checking --disable-sasl --disable-sasl-pwdb --disable-coverage 
 		make
 		make install
 		cp /usr/local/memcached/bin/memcached $cdir/slog_memcached/slog_memcached
