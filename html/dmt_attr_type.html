@@ -26,7 +26,7 @@
 				<input type="hidden" value="" id="attr_type_pos" name="attr_type_pos" />
 				<input type="hidden" value="" id="mod_attr_type" name="mod_attr_type" />
 				<dl>
-					<dt>当前选中的属性类型：</dt>
+					<dt>当前选中的监控点类型：</dt>
 					<dd id="attr_type_cur_type_tip"></dd>
 				</dl>
 				<dl>
@@ -233,7 +233,7 @@ $(document).ready(function(){
 				alertMsg.info("非叶子类型节点不允许删除！");
 				return;
 			}
-			var msg="确认删除属性类型：" + sel_attr_type.name + " ?";
+			var msg="确认删除监控点类型：" + sel_attr_type.name + " ?";
 			alertMsg.confirm(msg, {
 				okCall: function(){
 					var url = "<?cs var:config.cgipath?>mt_slog_attr?action=delete"+"&type="+sel_attr_type.type;
