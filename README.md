@@ -4,8 +4,9 @@
 使用的技术方案：   
 1. apache + mysql(监控点数据、配置信息使用 mysql 存储)   
 2. 前端 web 控制台采用 [dwz 开源框架](http://jui.org/)   
-3. 后台 cgi 使用开源的cgi模板引擎 - [clearsilver](http://www.clearsilver.net/)   
-4. 后台服务使用了开源的 socket 开发框架 - [C++ Sockets](http://www.alhem.net/Sockets/)   
+3. 前端监控图表采用开源 [echarts](https://www.echartsjs.com/zh/index.html) 绘制
+4. 后台 cgi 使用开源的cgi模板引擎 - [clearsilver](http://www.clearsilver.net/)   
+5. 后台服务使用了开源的 socket 开发框架 - [C++ Sockets](http://www.alhem.net/Sockets/)   
 
 近期开发规划：   
 1. 目前web 后台只支持c/c++语言，近期会引入php ci框架，支持php语言开发   
