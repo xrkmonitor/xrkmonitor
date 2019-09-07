@@ -34,7 +34,6 @@
 #endif
 
 #include <errno.h>
-#include <curl/curl.h>
 #include <time.h>
 #include <map>
 #include <cstdlib>  

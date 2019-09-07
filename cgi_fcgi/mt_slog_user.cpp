@@ -45,7 +45,6 @@
 #include <inttypes.h>
 #include <cgi_head.h>
 #include <cgi_comm.h>
-#include <curl/curl.h>
 #include <algorithm>
 
 #include <sv_str.h>

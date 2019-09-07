@@ -46,7 +46,6 @@
 #include <cgi_comm.h>
 #include <cgi_attr.h>
 #include <sstream>
-#include <curl/curl.h>
 #include "Memcache.h"
 
 #define DB_ATTR "attr_db"

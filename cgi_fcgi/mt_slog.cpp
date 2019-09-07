@@ -51,7 +51,6 @@
 #include <cgi_head.h>
 #include <cgi_comm.h>
 #include <cgi_attr.h>
-#include <curl/curl.h>
 #include <iostream>
 
 CSupperLog slog;

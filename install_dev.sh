@@ -3,7 +3,7 @@
 SUFFIX=xrkmonitor.com
 cdir=`pwd`
 
-STEP_TOTAL=6
+STEP_TOTAL=5
 
 # mysql 开发环境 check
 MYSQL_INCLUDE=`cat make_env |grep MYSQL_INCLUDE|awk '{print $3}'`
@@ -93,36 +93,6 @@ function InstallFastcgiDev()
 	fi
 }
 
-# 安装 curl 编译环境
-function InstallCurlDev()
-{
-	echo ""
-	read -p "(4/$STEP_TOTAL) install curl devel(y/n)? " op
-	while [ $op != "Y" -a $op != "y" -a $op != "N" -a $op != "n" ]; do 
-		read -p "please input y/n: " op
-	done
-	if [ $op != "y" -a $op != "Y" ];then
-		return;
-	fi
-
-	if [ ! -f /usr/include/curl/curl.h ]; then
-		echo "install curl devel ($SUFFIX)"
-		cd $cdir/lib/curl
-		tar -zxf curl-7.54.1.tar.gz
-		cd curl-7.54.1
-		./configure --libdir=/usr/lib64 --includedir=/usr/include
-		make
-		make install
-	else
-		echo "curl devel is already install ($SUFFIX)"
-	fi
-
-	if [ ! -f /usr/include/curl/curl.h ]; then
-		echo "not find file:/usr/include/curl/curl.h"
-		InstallFailed "curl devel"
-	fi
-}
-
 # 0 - 交叉依赖预安装头文件
 function InstallMysqlwrap()
 {
@@ -132,11 +102,11 @@ function InstallMysqlwrap()
 		cd $cdir/lib/clearsilver; ./configure
 	
 		cd $cdir/lib/mysqlwrapped
-		echo "(5/$STEP_TOTAL) preinstall mysqlwrapped ($SUFFIX)"
+		echo "(4/$STEP_TOTAL) preinstall mysqlwrapped ($SUFFIX)"
 		cat IError.h enum_t.h set_t.h Database.h Query.h > libmysqlwrapped.h
 		cp libmysqlwrapped.h /usr/include/
 	else
-		echo "(5/$STEP_TOTAL) mysqlwrapped is already preinstall ($SUFFIX)"
+		echo "(4/$STEP_TOTAL) mysqlwrapped is already preinstall ($SUFFIX)"
 	fi
 
 	if [ ! -f /usr/include/libmysqlwrapped.h ]; then
@@ -149,7 +119,7 @@ function InstallMysqlwrap()
 function InstallMemcached()
 {
 	echo ""
-	read -p "(6/$STEP_TOTAL) make and install memcached(y/n)? " op
+	read -p "(5/$STEP_TOTAL) make and install memcached(y/n)? " op
 	while [ $op != "Y" -a $op != "y" -a $op != "N" -a $op != "n" ]; do 
 		read -p "please input y/n: " op
 	done
@@ -184,7 +154,6 @@ function InstallMemcached()
 
 InstallProtobuf
 InstallFastcgiDev
-InstallCurlDev
 InstallMysqlwrap
 InstallMemcached
 

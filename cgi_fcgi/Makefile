@@ -2,7 +2,7 @@ include ../make_env
 COMM_INC = -I$(MTLIB_INCLUDE_PATH)/mtagent_api_open -I$(MYSQL_INCLUDE)/mysql -I$(MTLIB_INCLUDE_PATH)/Sockets -I/usr/include/fastcgi/ -I$(MTLIB_INCLUDE_PATH)/cgi -I$(MTLIB_INCLUDE_PATH)/my_proto 
 
 LIBPATH=$(MTLIB_LIB_PATH)
-COMM_LIB += -lrt $(LIBPATH)/libfcgi.a $(LIBPATH)/libneo_cgi.a $(LIBPATH)/libneo_cs.a $(LIBPATH)/libneo_utl.a -lz  $(LIBPATH)/libcgicomm.a $(LIBPATH)/libmysqlwrapped.a -L$(MYSQL_LIB) -lmysqlclient $(LIBPATH)/libmtreport_api_open.a $(LIBPATH)/libSockets.a  $(LIBPATH)/libmyproto.a /usr/lib64/libprotobuf.a  -lpthread -lcurl 
+COMM_LIB += -lrt $(LIBPATH)/libfcgi.a $(LIBPATH)/libneo_cgi.a $(LIBPATH)/libneo_cs.a $(LIBPATH)/libneo_utl.a -lz  $(LIBPATH)/libcgicomm.a $(LIBPATH)/libmysqlwrapped.a -L$(MYSQL_LIB) -lmysqlclient $(LIBPATH)/libmtreport_api_open.a $(LIBPATH)/libSockets.a  $(LIBPATH)/libmyproto.a /usr/lib64/libprotobuf.a  -lpthread 
 
 CC = g++
 OBJECT=$(patsubst %.cpp,%,$(wildcard *.cpp))
