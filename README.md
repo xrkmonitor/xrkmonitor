@@ -9,7 +9,7 @@
 5. 后台服务使用了开源的 socket 开发框架 - [C++ Sockets](http://www.alhem.net/Sockets/)   
 
 近期开发规划：   
-1. 目前web 后台只支持c/c++语言，近期会引入php ci框架，支持php语言开发   
+1. 目前web 后台 cgi 只支持c/c++语言，近期会引入php ci框架，支持php语言开发   
 2. 目前开发 api 只支持c/c++语言，近期会增加对 php 语言的支持    
 3. 规划扩展插件模式，以便能够无限扩展无需开发即可使用通用监控需求       
 
