@@ -30,7 +30,7 @@
 **微信告警示例:**(支持邮件、短信、微信、PC客户端等告警方式，告警功能无需开发直接可用)  
 ![开源版监控系统告警示例](http://xrkmonitor.com/monitor/images/open_wx_2.png)
 
-## 视频教程 
+## 视频教程列表
 视频教程紧急制作中，感谢大家关注   
 1. 源码介绍和编译(ubuntu系统) [源码介绍和编译 https://www.bilibili.com/video/av66685598](https://www.bilibili.com/video/av66685598)  
 2. 集中部署(ubuntu系统) [集中部署教程 https://www.bilibili.com/video/av66819048/](https://www.bilibili.com/video/av66819048/)  

@@ -1422,6 +1422,8 @@ int AfterCgiRequestInit(CGIConfig &stConfig)
 int AfterCgiResponse(CGIConfig &stConfig)
 {
 	int iRunMs = 0;
+
+	MtReport_Attr_Add(143, 1);
 	if(stConfig.cgi != NULL)
 	{
 		iRunMs = (int)((stConfig.cgi->time_end-stConfig.cgi->time_start)*1000);
