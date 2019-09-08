@@ -169,12 +169,17 @@
 	<!-- 以下代码为演示版所需，您可以删除掉 -->
 	<?cs if:config.isdaemon == 1 ?>
 	<div align='center' style='margin-left:-50px'>
-		<font style='font-size:16px;margin-left:-40px'>当前可用的演示账号(登录密码同用户名)</font> <br>
+		<font style='font-size:16px;margin-left:-40px'>当前可用的演示账号:</font> <br>
 		<br>
 		<table border='1'>
-			<tr><th width="100px">用户名</th><th width="100px">用户类型</th></tr>
+			<tr>
+				<th width="100px">用户名</th>
+				<th width="100px">登录密码</th>
+				<th width="100px">用户类型</th>
+			</tr>
 		<?cs each:ulist=Output.freelists ?>
 			<tr>
+				<td align='center'><?cs var:ulist.uname ?></td>
 				<td align='center'><?cs var:ulist.uname ?></td>
 				<?cs if:ulist.utype == 1 ?>
 				<td align='center'>管理员</td>
