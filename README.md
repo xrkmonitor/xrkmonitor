@@ -18,8 +18,8 @@
 **项目演示链接：[字符云监控开源版演示 http://open.xrkmonitor.com](http://open.xrkmonitor.com)**   
      
 	   
-**web 控制台首页展示:**     
-![开源版监控系统首页](http://xrkmonitor.com/monitor/images/open_main.png)
+**web 控制台页面展示:**     
+![字符云监控系统](http://xrkmonitor.com/monitor/images/web_page.gif)
 
 **日志查看界面:**   
 ![开源版监控系统](http://xrkmonitor.com/monitor/images/open_log.png)
@@ -32,13 +32,12 @@
 
 ## 编译说明 
 项目目前只支持在 linux 系统中编译，推荐使用 opensuse 或者 ubuntu 系统   
-项目依赖 mysql 开发库 libmysqlclient、protobuf、curl、fcgi，其中 protobuf、curl、fcgi 的源  
+项目依赖 mysql 开发库 libmysqlclient、protobuf、fcgi、memcached，其中 protobuf、fcgi memcached 的源  
 码已经集成到项目中，您只需要安装 libmysqlclient 开发库即可，安装完成后执行如下操作即可编译：
 1. 修改 make_env 文件，指定 libmysqlclient 库/头文件的安装路径
 2. 执行脚本 ./install_dev.sh，按提示根据需要完成依赖包的安装
 3. 执行 make 命令即可编译整个项目，后续如需编译指定模块在模块目录执行 make 命令即可   
    
-
 如您在编译源码包时遇到问题，请给我们留言或者加入QQ群在QQ群中提出您的问题   
 
 ## 部署说明
