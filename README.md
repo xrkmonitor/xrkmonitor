@@ -9,20 +9,22 @@
 5. 后台服务使用了开源的 socket 开发框架 - [C++ Sockets](http://www.alhem.net/Sockets/)   
 
 相比其它开源监控系统优势：  
-1.	安装部署配置简单，支持自动化配置  
-2.	API接口清晰，易于使用   
-3.	告警设置方便   
-4.	集成日志功能   
-5.	告警通道无需开发，且支持多种告警方式   
+1.	集成告警功能，支持多种告警方式，告警通道无需开发    
+2.	集成分布式日志系统功能    
+3.  支持多种部署方式    
+	a.集中部署，小规模需求只需一台服务器即可部署   
+	b.分布式部署，轻松应对超大规模监控需求    
+4.	支持自动化配置，轻松应对超大规模部署   
+5.  监控点 api 接口清晰简单，轻松集成到您的软件系统中   
    
-**项目演示链接：[字符云监控开源版演示 http://open.xrkmonitor.com](http://open.xrkmonitor.com)**   
+**项目演示链接：[字符云监控项目演示 http://open.xrkmonitor.com](http://open.xrkmonitor.com)**   
      
 	   
 **web 控制台页面展示:**     
 ![字符云监控系统](http://open.xrkmonitor.com/monitor/images/web_page.gif)
 
-**日志查看界面:**   
-![开源版监控系统](http://xrkmonitor.com/monitor/images/open_log.png)
+**分布式日志系统日志查看:**   
+![开源版监控系统](http://open.xrkmonitor.com/monitor/images/web_log.png)
 
 **监控点数据图表查看界面:**   
 ![开源版监控系统](http://xrkmonitor.com/monitor/images/open_chart.png)
