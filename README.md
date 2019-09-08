@@ -24,7 +24,7 @@
 ![字符云监控系统](http://open.xrkmonitor.com/monitor/images/web_page.gif)
 
 **分布式日志系统日志查看:**   
-![开源版监控系统](http://open.xrkmonitor.com/monitor/images/web_log.png)
+![开源版监控系统](http://open.xrkmonitor.com/monitor/images/web_log.gif)
 
 **监控点数据图表查看界面:**   
 ![开源版监控系统](http://xrkmonitor.com/monitor/images/open_chart.png)
