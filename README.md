@@ -5,7 +5,7 @@
 1. apache + mysql(监控点数据、配置信息使用 mysql 存储, 支持分布式部署)   
 2. 前端 web 控制台采用 [dwz 开源框架](http://jui.org/)   
 3. 前端监控图表采用开源 [echarts](https://www.echartsjs.com/zh/index.html) 绘制
-4. 后台 cgi 使用开源的cgi模板引擎 - [clearsilver](http://www.clearsilver.net/), 支持以fastcgi方式部署      
+4. 后台 cgi 使用开源的cgi模板引擎 - [clearsilver](http://www.clearsilver.net/), 所有cgi支持以fastcgi方式部署    
 5. 后台服务使用了开源的 socket 开发框架 - [C++ Sockets](http://www.alhem.net/Sockets/)   
 
 相比其它开源监控系统优势：  
@@ -23,11 +23,11 @@
 **web 控制台页面展示:**     
 ![字符云监控系统](http://open.xrkmonitor.com/monitor/images/web_page.gif)
 
-**分布式日志系统日志查看:**   
+**分布式日志系统日志查看演示:**   
 ![开源版监控系统](http://open.xrkmonitor.com/monitor/images/web_log.gif)
 
-**监控点数据图表查看界面:**   
-![开源版监控系统](http://xrkmonitor.com/monitor/images/open_chart.png)
+**监控点数据图表查看演示:**   
+![开源版监控系统](http://open.xrkmonitor.com/monitor/images/web_attr.gif)
 
 **微信告警示例:**(支持邮件、短信、微信、PC客户端等告警方式，告警功能无需开发直接可用)  
 ![开源版监控系统告警示例](http://xrkmonitor.com/monitor/images/open_wx_2.png)
