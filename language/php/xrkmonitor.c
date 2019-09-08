@@ -26,6 +26,7 @@
 #include "php_ini.h"
 #include "ext/standard/info.h"
 #include "php_xrkmonitor.h"
+#include "mt_report.h"
 
 // 调试开关
 static int s_debug = 0;
@@ -257,5 +258,20 @@ PHP_FUNCTION(MtReport_Init)
 	add_assoc_string(return_value, "ret_msg", "ok");
 }
 
+PHP_FUNCTION(MtReport_Attr_Add)
+{
+}
+
+PHP_FUNCTION(MtReport_Attr_Set)
+{
+}
+
+PHP_FUNCTION(MtReport_Str_Attr_Add)
+{
+}
+
+PHP_FUNCTION(MtReport_Str_Attr_Set)
+{
+}
 
 

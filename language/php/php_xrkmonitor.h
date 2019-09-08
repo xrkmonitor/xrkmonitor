@@ -53,7 +53,6 @@ PHP_FUNCTION(MtReport_Str_Attr_Add);
 PHP_FUNCTION(MtReport_Str_Attr_Set);	
 
 
-
 /* 
   	Declare any global variables you may need between the BEGIN
 	and END macros here:     
