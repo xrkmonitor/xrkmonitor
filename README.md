@@ -19,7 +19,7 @@
      
 	   
 **web 控制台页面展示:**     
-![字符云监控系统](http://xrkmonitor.com/monitor/images/web_page.gif)
+![字符云监控系统](http://open.xrkmonitor.com/monitor/images/web_page.gif)
 
 **日志查看界面:**   
 ![开源版监控系统](http://xrkmonitor.com/monitor/images/open_log.png)
