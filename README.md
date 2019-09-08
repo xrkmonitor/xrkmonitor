@@ -35,8 +35,8 @@
 ##视频教程列表
 更多视频教程制作中，感谢大家关注   
 
-1. [源码介绍和编译(ubuntu系统)](https://www.bilibili.com/video/av66685598)  
-2. [集中部署(ubuntu系统)](https://www.bilibili.com/video/av66819048)   
+1. [源码介绍和编译(ubuntu系统) https://www.bilibili.com/video/av66685598](https://www.bilibili.com/video/av66685598)  
+2. [集中部署(ubuntu系统) https://www.bilibili.com/video/av66819048](https://www.bilibili.com/video/av66819048)   
 
 
 ## 编译说明 
