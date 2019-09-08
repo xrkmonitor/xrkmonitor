@@ -30,16 +30,7 @@
 **微信告警示例:**(支持邮件、短信、微信、PC客户端等告警方式，告警功能无需开发直接可用)  
 ![开源版监控系统告警示例](http://xrkmonitor.com/monitor/images/open_wx_2.png)
 
-## 视频教程列表
-视频教程紧急制作中，感谢大家关注   
-1. 源码介绍和编译(ubuntu系统) [源码介绍和编译 https://www.bilibili.com/video/av66685598](https://www.bilibili.com/video/av66685598)  
-2. 集中部署(ubuntu系统) [集中部署教程 https://www.bilibili.com/video/av66819048/](https://www.bilibili.com/video/av66819048/)  
-
-
-
 ## 编译说明 
-视频教程：[源码介绍和编译 https://www.bilibili.com/video/av66685598](https://www.bilibili.com/video/av66685598)  
-
 项目目前只支持在 linux 系统中编译，推荐使用 opensuse 或者 ubuntu 系统   
 项目依赖 mysql 开发库 libmysqlclient、protobuf、curl、fcgi，其中 protobuf、curl、fcgi 的源  
 码已经集成到项目中，您只需要安装 libmysqlclient 开发库即可，安装完成后执行如下操作即可编译：
@@ -62,8 +53,6 @@ mod_fastcgi , 模块源码在 lib 目录下，fastcgi 参考配置文件：cgi_f
 
 部署方式支持集中部署、分布式部署，部署方法如下：
 ### 集中部署
-视频教程：集中部署(ubuntu系统) [集中部署教程 https://www.bilibili.com/video/av66819048/](https://www.bilibili.com/video/av66819048/)   
-
 全部服务部署在一台服务器上的操作步骤：
 1. 在部署机上安装 mysql, apache 软件
 2. 确保目录 slog_memcached 下存在 slog_memcached 可执行文件    
