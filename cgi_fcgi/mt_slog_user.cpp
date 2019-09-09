@@ -144,7 +144,7 @@ static int GetUserList(Json &js, UserSearchInfo *pinfo=NULL)
 	iOrder = (iOrder==0 ? SetRecordsOrder(stConfig.cgi, sSqlBuf, "user_name") : 1);
 	iOrder = (iOrder==0 ? SetRecordsOrder(stConfig.cgi, sSqlBuf, "last_login_time") : 1);
 	if(iOrder == 0) 
-		strcat(sSqlBuf, " order by user_id asc");
+		strcat(sSqlBuf, " order by last_login_time desc");
 
 	memset(sTmpBuf, 0, sizeof(sTmpBuf));
 	sprintf(sTmpBuf, " limit %d,%d", iNumPerPage*(iCurPage-1), iNumPerPage);
@@ -636,7 +636,7 @@ static int DealUserCenter()
 		hdf_set_int_value(stConfig.cgi->hdf, "config.xrkmonitor_account", user.bind_xrkmonitor_uid());
 	
 	snprintf(sSqlBuf, sizeof(sSqlBuf), 
-		"select * from flogin_history where user_id=%d order by id desc", pUserInfo->iUserId);
+		"select * from flogin_history where user_id=%d order by login_time desc", pUserInfo->iUserId);
 	qu.get_result(sSqlBuf);
 	int iCount = 0;
 	Json js;
