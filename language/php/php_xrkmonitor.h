@@ -46,11 +46,11 @@ PHP_MINFO_FUNCTION(xrkmonitor);
 
 PHP_FUNCTION(confirm_xrkmonitor_compiled);	/* For testing, remove later. */
 PHP_FUNCTION(MtReport_phpex_set_debug);
-PHP_FUNCTION(MtReport_Init);
-PHP_FUNCTION(MtReport_Attr_Add);
-PHP_FUNCTION(MtReport_Attr_Set);
-PHP_FUNCTION(MtReport_Str_Attr_Add);	
-PHP_FUNCTION(MtReport_Str_Attr_Set);	
+PHP_FUNCTION(php_MtReport_Init);
+PHP_FUNCTION(php_MtReport_Attr_Add);
+PHP_FUNCTION(php_MtReport_Attr_Set);
+PHP_FUNCTION(php_MtReport_Str_Attr_Add);	
+PHP_FUNCTION(php_MtReport_Str_Attr_Set);	
 
 
 /* 

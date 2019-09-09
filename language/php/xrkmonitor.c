@@ -34,13 +34,13 @@ static const char *s_logFilePath = "/tmp/php_ex/ex_pay.log";
 
 #define PHP_EX_DEBUG(fmt, ...) { \
     if (s_debug) { \
-        FILE *file = fopen(s_logFilePath, "a"); \
+        FILE *file = fopen(s_logFilePath, "a+"); \
         if (file != NULL) { \
             time_t rawtime; \
             struct tm *timeinfo; \
             time(&rawtime); \
             timeinfo = localtime(&rawtime); \
-            fprintf(file, "%d-%02d-%02d %02d:%02d:%02d\t %s:%s:%d :%s"fmt"\n", \
+            fprintf(file, "%d-%02d-%02d %02d:%02d:%02d\t %s:%s:%d " fmt "\n", \
                 1900+timeinfo->tm_year, 1+timeinfo->tm_mon, timeinfo->tm_mday, timeinfo->tm_hour, \
                 timeinfo->tm_min, timeinfo->tm_sec, __FILE__, __FUNCTION__, __LINE__, \
                 ##__VA_ARGS__); \
@@ -64,11 +64,12 @@ static int le_xrkmonitor;
  */
 const zend_function_entry xrkmonitor_functions[] = {
 	PHP_FE(confirm_xrkmonitor_compiled,	NULL)		/* For testing, remove later. */
-	PHP_FE(MtReport_Init,	NULL)
-	PHP_FE(MtReport_Attr_Add,	NULL)
-	PHP_FE(MtReport_Attr_Set,	NULL)
-	PHP_FE(MtReport_Str_Attr_Add,	NULL)
-	PHP_FE(MtReport_Str_Attr_Set,	NULL)
+	PHP_FE(MtReport_phpex_set_debug,	NULL)
+	PHP_FE(php_MtReport_Init,	NULL)
+	PHP_FE(php_MtReport_Attr_Add,	NULL)
+	PHP_FE(php_MtReport_Attr_Set,	NULL)
+	PHP_FE(php_MtReport_Str_Attr_Add,	NULL)
+	PHP_FE(php_MtReport_Str_Attr_Set,	NULL)
 	PHP_FE_END	/* Must be the last line in xrkmonitor_functions[] */
 };
 /* }}} */
@@ -228,15 +229,13 @@ PHP_FUNCTION(MtReport_phpex_set_debug)
    * api 接口初始化函数
    *
  */
-PHP_FUNCTION(MtReport_Init)
+PHP_FUNCTION(php_MtReport_Init)
 {
 	long int config_id = 0;
 	char *local_log_file = NULL;
 	int file_len = 0;
 	long int local_log_type = 0;
 	long int shm_key = MT_REPORT_DEF_SHM_KEY;
-	long int ret = 0;
-	char *err_msg = NULL;
 
 	array_init(return_value);
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|lsll", 
@@ -255,23 +254,156 @@ PHP_FUNCTION(MtReport_Init)
 	}
 
 	add_assoc_long(return_value, "ret_code", 0);
-	add_assoc_string(return_value, "ret_msg", "ok");
+	add_assoc_string(return_value, "ret_msg", "ok", 1);
 }
 
-PHP_FUNCTION(MtReport_Attr_Add)
+PHP_FUNCTION(php_MtReport_Attr_Add)
 {
+	long int attr_id = 0;
+	long int attr_val = 0;
+	int err_len = 0, ret = 0;
+	char *err_msg = NULL;
+
+	array_init(return_value);
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ll", &attr_id, &attr_val) == FAILURE)
+	{
+		add_assoc_long(return_value, "ret_code", -1);
+		add_assoc_string(return_value, "ret_msg", "read parameters failed", 1);
+		return;
+	}
+
+	if(attr_id == 0 || attr_val <= 0)
+	{
+		add_assoc_long(return_value, "ret_code", -2);
+		err_len = spprintf(&err_msg, 0, "invalid parameters, attr:%ld, val:%ld", attr_id, attr_val);
+		add_assoc_stringl(return_value, "ret_msg", err_msg, err_len, 0);
+		return;
+	}
+
+	if((ret=MtReport_Attr_Add(attr_id, attr_val)) != 0)
+	{
+		add_assoc_long(return_value, "ret_code", -3);
+		err_len = spprintf(&err_msg, 0, "MtReport_Attr_Add failed, ret:%d", ret);
+		add_assoc_stringl(return_value, "ret_msg", err_msg, err_len, 0);
+		return;
+	}
+
+	PHP_EX_DEBUG("MtReport_Attr_Add, attr:%ld, val:%ld", attr_id, attr_val);
+	add_assoc_long(return_value, "ret_code", 0);
+	add_assoc_string(return_value, "ret_msg", "ok", 1);
 }
 
-PHP_FUNCTION(MtReport_Attr_Set)
+PHP_FUNCTION(php_MtReport_Attr_Set)
 {
+	long int attr_id = 0;
+	long int attr_val = 0;
+	int err_len = 0, ret = 0;
+	char *err_msg = NULL;
+
+	array_init(return_value);
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ll", &attr_id, &attr_val) == FAILURE)
+	{
+		add_assoc_long(return_value, "ret_code", -1);
+		add_assoc_string(return_value, "ret_msg", "read parameters failed", 1);
+		return;
+	}
+
+	if(attr_id == 0 || attr_val <= 0)
+	{
+		add_assoc_long(return_value, "ret_code", -2);
+		err_len = spprintf(&err_msg, 0, "invalid parameters, attr:%ld, val:%ld", attr_id, attr_val);
+		add_assoc_stringl(return_value, "ret_msg", err_msg, err_len, 0);
+		return;
+	}
+
+	if((ret=MtReport_Attr_Set(attr_id, attr_val)) != 0)
+	{
+		add_assoc_long(return_value, "ret_code", -3);
+		err_len = spprintf(&err_msg, 0, "MtReport_Attr_Set failed, ret:%d", ret);
+		add_assoc_stringl(return_value, "ret_msg", err_msg, err_len, 0);
+		return;
+	}
+
+	PHP_EX_DEBUG("MtReport_Attr_Set, attr:%ld, val:%ld", attr_id, attr_val);
+	add_assoc_long(return_value, "ret_code", 0);
+	add_assoc_string(return_value, "ret_msg", "ok", 1);
 }
 
-PHP_FUNCTION(MtReport_Str_Attr_Add)
+PHP_FUNCTION(php_MtReport_Str_Attr_Add)
 {
+	long int attr_id = 0;
+	long int attr_val = 0;
+	char *str = NULL;
+	int str_len = 0;
+	int err_len = 0, ret = 0;
+	char *err_msg = NULL;
+
+	array_init(return_value);
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "lsl", &attr_id, &str, &str_len, &attr_val) == FAILURE)
+	{
+		add_assoc_long(return_value, "ret_code", -1);
+		add_assoc_string(return_value, "ret_msg", "read parameters failed", 1);
+		return;
+	}
+
+	if(attr_id == 0 || attr_val <= 0 || str_len <= 0 || str_len > 64)
+	{
+		add_assoc_long(return_value, "ret_code", -2);
+		err_len = spprintf(&err_msg, 0, "invalid parameters, attr:%ld, str:%s, str_len:%d, val:%ld",
+			attr_id, attr_val, str, str_len);
+		add_assoc_stringl(return_value, "ret_msg", err_msg, err_len, 0);
+		return;
+	}
+
+	if((ret=MtReport_Str_Attr_Add(attr_id, str, attr_val)) != 0)
+	{
+		add_assoc_long(return_value, "ret_code", -3);
+		err_len = spprintf(&err_msg, 0, "MtReport_Str_Attr_Add failed, ret:%d", ret);
+		add_assoc_stringl(return_value, "ret_msg", err_msg, err_len, 0);
+		return;
+	}
+
+	PHP_EX_DEBUG("MtReport_Str_Attr_Add, attr:%ld, str:%s, val:%ld", attr_id, str, attr_val);
+	add_assoc_long(return_value, "ret_code", 0);
+	add_assoc_string(return_value, "ret_msg", "ok", 1);
 }
 
-PHP_FUNCTION(MtReport_Str_Attr_Set)
+PHP_FUNCTION(php_MtReport_Str_Attr_Set)
 {
-}
+	long int attr_id = 0;
+	long int attr_val = 0;
+	char *str = NULL;
+	int str_len = 0;
+	int err_len = 0, ret = 0;
+	char *err_msg = NULL;
 
+	array_init(return_value);
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "lsl", &attr_id, &str, &str_len, &attr_val) == FAILURE)
+	{
+		add_assoc_long(return_value, "ret_code", -1);
+		add_assoc_string(return_value, "ret_msg", "read parameters failed", 1);
+		return;
+	}
+
+	if(attr_id == 0 || attr_val <= 0 || str_len <= 0 || str_len > 64)
+	{
+		add_assoc_long(return_value, "ret_code", -2);
+		err_len = spprintf(&err_msg, 0, "invalid parameters, attr:%ld, str:%s, str_len:%d, val:%ld",
+			attr_id, attr_val, str, str_len);
+		add_assoc_stringl(return_value, "ret_msg", err_msg, err_len, 0);
+		return;
+	}
+
+	if((ret=MtReport_Str_Attr_Set(attr_id, str, attr_val)) != 0)
+	{
+		add_assoc_long(return_value, "ret_code", -3);
+		err_len = spprintf(&err_msg, 0, "MtReport_Str_Attr_Set failed, ret:%d", ret);
+		add_assoc_stringl(return_value, "ret_msg", err_msg, err_len, 0);
+		return;
+	}
+
+	PHP_EX_DEBUG("php_MtReport_Str_Attr_Set, attr:%ld, str:%s, val:%ld", attr_id, str, attr_val);
+	add_assoc_long(return_value, "ret_code", 0);
+	add_assoc_string(return_value, "ret_msg", "ok", 1);
+}
 

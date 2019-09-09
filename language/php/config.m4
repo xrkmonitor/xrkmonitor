@@ -18,10 +18,9 @@ dnl Make sure that the comment is aligned:
 [  --enable-xrkmonitor           Enable xrkmonitor support])
 
 if test "$PHP_XRKMONITOR" != "no"; then
-  XRKMONITOR_DIR="$MTLIB_INCLUDE_PATH/mtreport_api"
-  PHP_ADD_INCLUDE($XRKMONITOR_DIR/include)
+  PHP_ADD_INCLUDE(/usr/include/mtreport_api/)
+  PHP_ADD_LIBRARY_WITH_PATH(mtreport_api, /usr/lib64, XRKMONITOR_SHARED_LIBADD)
 
-  PHP_ADD_LIBRARY_WITH_PATH("mtreport_api", $MTLIB_LIB_PATH, XRKMONITOR_LIB)
-  PHP_SUBST(XRKMONITOR_LIB)
+  PHP_SUBST(XRKMONITOR_SHARED_LIBADD)
   PHP_NEW_EXTENSION(xrkmonitor, xrkmonitor.c, $ext_shared)
 fi
