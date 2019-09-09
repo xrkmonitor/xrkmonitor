@@ -58,13 +58,13 @@
 							<th width="60" orderField="user_name" class="asc">账号名</th>
 							<?cs /if ?>
 
-							<th width="100">电子邮箱</th>
-							<th width="70">最后登陆IP</th>
 							<?cs if:config.order_last_login_time ?>
 							<th width="70" orderField="last_login_time" class="<?cs var:config.order_last_login_time ?>">最后登陆时间</th>
 							<?cs else ?>
 							<th width="70" orderField="last_login_time" class="asc">最后登陆时间</th>
 							<?cs /if ?>
+							<th width="70">最后登陆IP</th>
+							<th width="100">电子邮箱</th>
 							<th width="80">备注</th>
 							<th width="20">详情</th>
 						</tr>
@@ -121,9 +121,9 @@ function dulSetUserList()
 		uhtml += "<td>" + (i+j) + "</td>";
 		uhtml += "<td>" + ulist[i].user_id + "</td>";
 		uhtml += "<td>" + ulist[i].user_name + "</td>";
-		uhtml += "<td>" + ulist[i].email + "</td>";
-		uhtml += "<td>" + ulist[i].last_login_address + "</td>";
 		uhtml += "<td>" + ulist[i].last_login_time + "</td>";
+		uhtml += "<td>" + ulist[i].last_login_address + "</td>";
+		uhtml += "<td>" + ulist[i].email + "</td>";
 		uhtml += "<td>" + ulist[i].remark + "</td>";
 
 		var udetail = "<a class='detail' href='<?cs var:config.cgipath?>mt_slog_user?";
