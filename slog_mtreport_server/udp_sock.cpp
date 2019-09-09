@@ -426,6 +426,10 @@ int CUdpSock::DealCmdHello()
 		stResp.dwAttrSrvIp = stConfig.psysConfig->dwAttrSrvMasterIp;
 		INFO_LOG("set new attr server :%s:%d", ipv4_addr_str(stResp.dwAttrSrvIp), stConfig.psysConfig->wAttrSrvPort);
 	}
+	else
+	{
+		stResp.bConfigChange = 0;
+	}
 
 	if(m_pMtClient->bEnableEncryptData) {
 		char sEncBuf[128] = {0};

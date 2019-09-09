@@ -422,8 +422,9 @@ int DealResponseHello(CBasicPacket &pkg)
 	// config change check
 	if(presp->bConfigChange)
 	{
-		if(stConfig.pReportShm->dwAttrSrvIp != presp->dwAttrSrvIp
-			|| stConfig.pReportShm->wAttrServerPort != ntohs(presp->wAttrServerPort))
+		if(presp->wAttrServerPort != 0 && presp->dwAttrSrvIp != 0
+			&& (stConfig.pReportShm->dwAttrSrvIp != presp->dwAttrSrvIp
+			|| stConfig.pReportShm->wAttrServerPort != ntohs(presp->wAttrServerPort)))
 		{
 			INFO_LOG("attr server changed old %s:%d", 
 				ipv4_addr_str(stConfig.pReportShm->dwAttrSrvIp), stConfig.pReportShm->wAttrServerPort);

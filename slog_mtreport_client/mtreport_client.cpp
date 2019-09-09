@@ -332,7 +332,7 @@ static int Init()
 		"SERVER_MASTER", CFG_STRING, stConfig.szSrvIp_master, "192.168.128.128", MYSIZEOF(stConfig.szSrvIp_master),
 		"SERVER_PORT", CFG_INT, &stConfig.iSrvPort, 27000,
 		"LOG_FREQ_LIMIT_PER_SEC", CFG_INT, &stConfig.iLogLimitPerSec, 5,
-		"SERVER_KEY", CFG_STRING, stConfig.szUserKey, "", MYSIZEOF(stConfig.szUserKey), 
+		"AGENT_ACCESS_KEY", CFG_STRING, stConfig.szUserKey, "", MYSIZEOF(stConfig.szUserKey), 
 		"MTREPORT_SHM_KEY", CFG_INT, &iCfgShmKey, MT_REPORT_DEF_SHM_KEY,
 		"AGENT_CLIENT_IP", CFG_STRING, stConfig.szLocalIP, "", MYSIZEOF(stConfig.szLocalIP),
 		"CUST_ATTR_SRV_IP", CFG_STRING, stConfig.szCustAttrSrvIp, "", MYSIZEOF(stConfig.szCustAttrSrvIp),
