@@ -116,7 +116,7 @@ static int SetFreeAccountInfo(CGI *cgi, HDF *hdf)
 	uint32_t dwCurTime = time(NULL);
 	char sBuf[256] = {0};
 	snprintf(sBuf, sizeof(sBuf), 
-		"select user_name,user_id,login_type,login_index from flogin_user where last_login_time<%u",
+		"select user_name,user_id,login_type,login_index from flogin_user where last_login_time<%u or login_index<0",
 		dwCurTime-60); 
 	if(stConfig.qu->get_result(sBuf)) 
 	{
@@ -477,9 +477,7 @@ static int DealUserLogout(FloginInfo *psess)
 {
 	char sBuf[1024] = {0};
 	snprintf(sBuf, sizeof(sBuf), 
-		"update flogin_user set last_login_time=0,login_index=0,login_md5=\'\',"
-		"last_login_server=\'\' where user_id=%u",
-		psess->iUserId); 
+		"update flogin_user set login_index=-1,login_md5=\'\' where user_id=%u", psess->iUserId); 
 	stConfig.qu->execute(sBuf);
 	return 0;
 }

@@ -52,8 +52,8 @@ extern "C"
 // 单条日志内容的最大长度
 #define MTREPORT_LOG_MAX_LENGTH 1024 
 
-#ifndef MTLOG_TYPE_OHTER
-#define MTLOG_TYPE_OHTER 1 // 除以下类型以外的类型，用户可自行安排使用
+#ifndef MTLOG_TYPE_OTHER
+#define MTLOG_TYPE_OTHER 1 // 除以下类型以外的类型，用户可自行安排使用
 #define MTLOG_TYPE_DEBUG 2 // 调试日志 -- 调试程序用，正式上线请不要打开
 #define MTLOG_TYPE_INFO 4 // 信息日志 -- 用于关键信息的log
 #define MTLOG_TYPE_WARN 8 // 警告日志 -- 程序非关键性的校验错误
@@ -89,13 +89,15 @@ int MtReport_Str_Attr_Set(int32_t attr, const char *pstr, int32_t iValue);
 #define MYSTRLEN (unsigned)strlen
 
 // 日志接口, 与 printf 函数一样
-#define MtReport_Log_Other(fmt, ...) MtReport_Log(MTLOG_TYPE_OHTER, SLOG_BASE_FMT""fmt, SLOG_BASE_VAL, ##__VA_ARGS__)
+#define MtReport_Log_Other(fmt, ...) MtReport_Log(MTLOG_TYPE_OTHER, SLOG_BASE_FMT""fmt, SLOG_BASE_VAL, ##__VA_ARGS__)
 #define MtReport_Log_Debug(fmt, ...) MtReport_Log(MTLOG_TYPE_DEBUG, SLOG_BASE_FMT""fmt, SLOG_BASE_VAL, ##__VA_ARGS__)
 #define MtReport_Log_Info(fmt, ...) MtReport_Log(MTLOG_TYPE_INFO, SLOG_BASE_FMT""fmt, SLOG_BASE_VAL, ##__VA_ARGS__)
 #define MtReport_Log_Warn(fmt, ...) MtReport_Log(MTLOG_TYPE_WARN, SLOG_BASE_FMT""fmt, SLOG_BASE_VAL, ##__VA_ARGS__)
 #define MtReport_Log_Reqerr(fmt, ...) MtReport_Log(MTLOG_TYPE_REQERR, SLOG_BASE_FMT""fmt, SLOG_BASE_VAL, ##__VA_ARGS__)
 #define MtReport_Log_Error(fmt, ...) MtReport_Log(MTLOG_TYPE_ERROR, SLOG_BASE_FMT""fmt, SLOG_BASE_VAL, ##__VA_ARGS__)
 #define MtReport_Log_Fatal(fmt, ...) MtReport_Log(MTLOG_TYPE_FATAL, SLOG_BASE_FMT""fmt, SLOG_BASE_VAL, ##__VA_ARGS__)
+
+
 #define MtReport_Log_Check(p) do { if(!p) \
 	MtReport_Log(32, SLOG_BASE_FMT" check:"#p" failed", SLOG_BASE_VAL); }while(0)
 

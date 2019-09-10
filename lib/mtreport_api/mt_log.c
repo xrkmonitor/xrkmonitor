@@ -318,7 +318,7 @@ void MtReport_Log_To_Local(int iLogType, const char *pszFmt, va_list ap)
 	char sTypeStr[32] = {0};
 	switch(iLogType)
 	{
-		case MTLOG_TYPE_OHTER: 
+		case MTLOG_TYPE_OTHER: 
 			strcpy(sTypeStr, "Trace");
 			break;
 		case MTLOG_TYPE_DEBUG:
