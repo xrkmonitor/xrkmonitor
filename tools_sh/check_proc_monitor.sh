@@ -116,7 +116,6 @@ restart_process "${MONITORBASEDIR}/slog_client" 'slog_client$' 1
 restart_process "${MONITORBASEDIR}/slog_server" 'slog_server$' 1
 restart_process "${MONITORBASEDIR}/slog_check_warn" 'slog_check_warn$' 1
 restart_process "${MONITORBASEDIR}/slog_write" 'slog_write$' 5
-restart_process "${MONITORBASEDIR}/slog_monitor_client" 'slog_monitor_client$' 1
 restart_process "${MONITORBASEDIR}/slog_monitor_server" 'slog_monitor_server$' 2
 restart_process "${MONITORBASEDIR}/slog_mtreport_server" 'slog_mtreport_server$' 1
 restart_process_ex "${MONITORBASEDIR}/slog_deal_warn" 'slog_deal_warn$' 1 8

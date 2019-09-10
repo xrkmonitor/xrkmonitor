@@ -766,8 +766,8 @@ int DealRespCheckAppConfig(CBasicPacket &pkg)
 		}
 
 		if(ntohs(pTlv->wType) == TLV_MONI_CONFIG_ADD) { // 新增
-			if(stConfig.pReportShm->wAppConfigCount >= MAX_APP_COUNT_PER_USER_MASTER) {
-				ERROR_LOG("app config count over limit :%d", MAX_APP_COUNT_PER_USER_MASTER);
+			if(stConfig.pReportShm->wAppConfigCount >= MAX_APP_COUNT) {
+				ERROR_LOG("app config count over limit :%d", MAX_APP_COUNT);
 				break;
 			}
 			memset(stConfig.pReportShm->stAppConfigList+stConfig.pReportShm->wAppConfigCount, 0, MYSIZEOF(AppInfo));
@@ -815,7 +815,7 @@ static uint32_t MakeCheckAppConfigPkg(uint32_t dwLastResponseTimeMs)
 	pkg.InitReqPkgHead(&stHead, CMD_MONI_CHECK_APP_CONFIG);
 
 	// cmd content
-	static char sCheckBuf[MYSIZEOF(AppInfoReq)*MAX_APP_COUNT_PER_USER_MASTER+MYSIZEOF(ContentCheckAppInfo)];
+	static char sCheckBuf[MYSIZEOF(AppInfoReq)*MAX_APP_COUNT+MYSIZEOF(ContentCheckAppInfo)];
 	ContentCheckAppInfo *pCtInfo = (ContentCheckAppInfo*)sCheckBuf;
 	pCtInfo->dwServerResponseTime = htonl(dwLastResponseTimeMs);
 	pCtInfo->wAppInfoCount = htons(stConfig.pReportShm->wAppConfigCount);

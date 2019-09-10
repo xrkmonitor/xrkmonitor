@@ -1378,22 +1378,16 @@ void ShowShm()
 
 	MTREPORT_SHM *pstr= stConfig.pReportShm;
 	printf("\n\n--------------  config shm info as followed : ------------------\n");
-	SHOW_FIELD_VALUE_UINT(dwUserMasterId);
 	SHOW_FIELD_VALUE_UINT(bFirstHelloCheckOk);
-	SHOW_FIELD_VALUE_INT(iUserMasterIndex);
 	SHOW_FIELD_VALUE_INT(iMtClientIndex);
 	SHOW_FIELD_VALUE_INT(iMachineId);
 	SHOW_FIELD_VALUE_UINT_IP(dwConnServerIp);
 	SHOW_FIELD_VALUE_UINT_TIME(dwKeySetTime);
 	SHOW_FIELD_VALUE_MASK_CSTR(16, sRandKey);
-	SHOW_FIELD_VALUE_MASK_CSTR(16, sConfigKey);
-	SHOW_FIELD_VALUE_MASK_CSTR(16, sCommSigKey);
 	SHOW_FIELD_VALUE_UINT(dwPkgSeq);
 	SHOW_FIELD_VALUE_UINT_TIME(dwLastHelloOkTime);
 	SHOW_FIELD_VALUE_UINT_TIME(dwClientProcessStartTime);
-	SHOW_FIELD_VALUE_INT(iAttrSrvUserMasterIndex);
 	SHOW_FIELD_VALUE_INT(iAttrSrvMtClientIndex);
-	SHOW_FIELD_VALUE_INT(iAppLogSrvUserMasterIndex);
 	SHOW_FIELD_VALUE_INT(iAppLogSrvMtClientIndex);
 
 	// systen config

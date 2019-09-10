@@ -37,6 +37,7 @@
 #include <Memcache.h>
 #include "top_include_comm.h"
 #include "memcache.pb.h"
+#include "mt_attr.h"
 
 using namespace comm;
 
@@ -48,20 +49,10 @@ typedef struct
 	SLogConfig *pShmConfig;
 	SLogAppInfo *pAppInfo;
 	int iLoginShmKey;
-	SharedHashTable stHash;
-	AttrNode *pAttrBaseReport;
 	int iConfigId;
 }CONFIG;
 CONFIG stConfig;
 CSupperLog slog;
-
-inline int attr_cmp(const void *pKey, const void *pNode)
-{
-	if(((const AttrNode*)pKey)->iAttrID == ((const AttrNode*)pNode)->iAttrID)
-		return 0;
-	return 1;
-}
-
 
 int GetUserSessionInfo(FloginInfo *psess, user::UserSessionInfo & user)
 {
@@ -123,9 +114,6 @@ const char * GetTodayTableName()
 void ShowHelp()
 {
 	printf("cmd as followed: \n");
-	printf("\t show shm_all_attr \n");
-	printf("\t show shm_attr [id] \n");
-	printf("\t show shm_str_attr [id str] \n");
 	printf("\t show memcache set key val\n");
 	printf("\t show memcache get key \n");
 	printf("\t show memcache machine_attr machine_id\n");
@@ -154,7 +142,6 @@ void ShowHelp()
 	printf("\t show attrreport [machineid attrid]\n");
 	printf("\t show applogfile [appid] \n");
 	printf("\t show attrlist \n");
-	printf("\t show attrspec \n");
 	printf("\t show mailshm\n");
 	printf("\t make logs n\n");
 }
@@ -175,22 +162,7 @@ void ShowTableInfo(int argc, char *argv[])
 	const char *ptabName = argv[2];
 	printf("\n\n\nshow table :%s info ----------------------------- \n", ptabName);
 
-	if(!strcmp(ptabName, "shm_all_attr")) {
-		ShowAllAttr();
-	}
-	else if(!strcmp(ptabName, "shm_attr")) {
-		if(argc >= 4)
-			ShowAttr(atoi(argv[3]));
-		else
-			printf("use xxx show shm_attr [id]\n");
-	}
-	else if(!strcmp(ptabName, "shm_str_attr")) {
-		if(argc >= 5)
-			ShowStrAttr(atoi(argv[3]), argv[4]);
-		else
-			printf("use xxx show shm_str_attr [id str]\n");
-	}
-	else if(!strcmp(ptabName, "view")) {
+	if(!strcmp(ptabName, "view")) {
 		if(argc < 4) {
 			printf("\n use xxx show view [view_id|0]\n");
 			return;
@@ -521,32 +493,6 @@ void ShowTableInfo(int argc, char *argv[])
 			printf("get mail shm failed !\n");
 	}
 
-	if(!strcmp(ptabName, "attrspec")) {
-		for(int i=0; i < MAX_BASE_ATTR_NODE; i++)
-		{
-			if(stConfig.pAttrBaseReport[i].iAttrID != 0)
-			{
-				printf("base attr:%d, val:%d bsync:%d\n",
-					stConfig.pAttrBaseReport[i].iAttrID, stConfig.pAttrBaseReport[i].iCurValue,
-					stConfig.pAttrBaseReport[i].bSyncProcess);
-			}
-		}
-	}
-
-	if(!strcmp(ptabName, "attrlist")) {
-		AttrNode *pNode = (AttrNode*)GetFirstNode(&stConfig.stHash);
-		_HashNodeHead *pNodeHead = NULL;
-		ShowInnerSharedInfoByNode(&stConfig.stHash, NULL);
-		while(pNode != NULL)
-		{
-			pNodeHead = NODE_TO_NODE_HEAD(pNode);
-			printf("attr id:%d, val:%d, bsync:%d, node head- buse:%d, prev:%u, next:%u\n", 
-				pNode->iAttrID, pNode->iCurValue, pNode->bSyncProcess, pNodeHead->bIsUsed,
-				pNodeHead->dwNodePreIndex, pNodeHead->dwNodeNextIndex);
-			pNode = (AttrNode*)GetNextNode(&stConfig.stHash);
-		}
-	}
-
 	if(!strcmp(ptabName, "attrview")) {
 		if(argc > 3) {
 			int id = atoi(argv[3]);
@@ -668,22 +614,6 @@ int Init(const char *pFile = NULL)
 	if(IsNeedCheckTable("mt_view_battr") && slog.InitAttrViewConfig() < 0)
 	{
 		ERR_LOG("init InitwarnConfig info shm failed !");
-		return SLOG_ERROR_LINE;
-	}
-
-	stConfig.stHash.bAccessCheck = 1;
-	if(InitHashTable(&stConfig.stHash, sizeof(AttrNode), MAX_ATTR_NODE, DEP_SHM_ID, attr_cmp, NULL) != 0)
-	{
-		ERR_LOG("InitHashTable failed -- key:%d node size:%lu count:%d",
-			DEP_SHM_ID, sizeof(AttrNode), MAX_ATTR_NODE);
-		return SLOG_ERROR_LINE;
-	}
-
-	if(GetShm2((void**)&stConfig.pAttrBaseReport,
-	    DEP_BASE_SHM_ID, sizeof(AttrNode)*MAX_BASE_ATTR_NODE, 0666|IPC_CREAT) < 0)
-	{
-		ERR_LOG("attache AttrBaseReport shm failed -- key:%d size:%lu", 
-			DEP_BASE_SHM_ID, sizeof(AttrNode)*MAX_BASE_ATTR_NODE);
 		return SLOG_ERROR_LINE;
 	}
 
