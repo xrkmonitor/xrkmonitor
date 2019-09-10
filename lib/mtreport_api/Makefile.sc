@@ -56,10 +56,6 @@ install:
 	install -d $(INCDIR) $(LIBDIR)
 	install -m 644 $(INSTALL_INC) $(INCDIR)
 	install -m 644 $(STATICLIB) $(LIBDIR)
-	ln -sf $(VERLIBNAME) $(LIBDIR)/$(LIBNAME)	
-	cp libmtreport_api-1.1.0.so mtagent_api_lib
-	cp libmtreport_api.a mtagent_api_lib
-	cp mt_report.h mtagent_api_lib
 
 clean:
 	rm -f  $(MODULES) $(STATICLIB) $(LIBNAME)
