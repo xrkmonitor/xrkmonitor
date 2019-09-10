@@ -512,8 +512,7 @@ static int CheckLoginByCookie(HDF *hdf)
 		|| iUserId != psess->iUserId
 		|| stConfig.dwCurTime > psess->dwLastAccessTime+psess->iLoginExpireTime
 		|| stConfig.dwCurTime > psess->dwLoginTime+LOGIN_MAX_EXPIRE_TIME
-		|| strcmp(puser, psess->szUserName) || strcmp(pmd5, psess->szPassMd5)
-		|| psess->dwLoginIP != psess->dwLastAccessIP)
+		|| strcmp(puser, psess->szUserName) || strcmp(pmd5, psess->szPassMd5))
 	{
 		REQERR_LOG("cookie check failed ! -- "
 			"type:%d(%d), uid:%d time:%u(%u), user:%s(%s), md5:%s(%s), ip:%u(%u), from:%s",
