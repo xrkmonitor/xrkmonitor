@@ -594,14 +594,12 @@ int Query::get_count(const std::string& sql)
 
 const char *Query::get_string(const std::string& sql)
 {
-	bool found = false;
 	m_tmpstr = "";
 	if (get_result(sql))
 	{
 		if (fetch_row())
 		{
 			m_tmpstr = getstr();
-			found = true;
 		}
 		free_result();
 	}

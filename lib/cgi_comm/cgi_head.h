@@ -135,7 +135,9 @@
 // error code
 #define CGI_ERROR_CODE_COMM 300
 
+#ifndef ERROR_LINE
 #define ERROR_LINE -(__LINE__)
+#endif
 
 #define RESPONSE_TYPE_HTML 0 // default
 #define RESPONSE_TYPE_JSON 1

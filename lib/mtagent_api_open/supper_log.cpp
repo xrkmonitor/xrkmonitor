@@ -1031,7 +1031,7 @@ int CSupperLog::InitConfigByFile(const char *pszConfigFile, bool bCreateShm)
 		return SLOG_ERROR_LINE;
 	}
 
-	if((iRet=MtReport_InitAttr()) < 0)
+	if((iRet=MtReport_Init(0, NULL, 0, 0)) < 0)
 	{
 		ERR_LOG("init attr faile, ret:%d", iRet);
 		return SLOG_ERROR_LINE;
@@ -2957,7 +2957,7 @@ int CSupperLog::InitForUseLocalLog(const char *pszConfigFile)
 	if(m_iLocalLogType != 0)
 		m_iLogType = m_iLocalLogType;
 
-	if((iRet=MtReport_InitAttr()) < 0)
+	if((iRet=MtReport_Init(0, NULL, 0, 0)) < 0)
 	{
 		ERR_LOG("init attr faile, ret:%d", iRet);
 		return SLOG_ERROR_LINE;

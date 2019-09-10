@@ -48,7 +48,6 @@
 #include "sv_log.h"
 #include "sv_cfg.h"
 #include "sv_vmem.h"
-#include "sv_shared_hash.h"
 #include "sv_shm.h"
 #include "oi_bmh.h"
 #include "sv_str.h"
@@ -56,6 +55,7 @@
 #include "sv_coredump.h"
 #include "sv_net.h"
 #include "sv_struct.h"
+#include "mt_shared_hash.h"
 
 #define SLOG_MONITOR_VERSION "1.0 compile at: " __DATE__ " " __TIME__
 const std::string g_version_info = SLOG_MONITOR_VERSION; 

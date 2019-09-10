@@ -67,6 +67,11 @@ typedef struct
 	int32_t iCurValue;
 } AttrNode;
 
+
+int ShowAllAttr();
+void ShowAttr(int32_t attr);
+void ShowStrAttr(int32_t attr, const char *pstr);
+
 #ifdef __cplusplus
 }
 #endif

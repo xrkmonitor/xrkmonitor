@@ -115,7 +115,7 @@ typedef struct
 // log config shm
 #define MTLOG_MTREPORT_SHM_KEY 17001000 
 #define MAX_LOG_CONFIG_COUNT 1050 // 私有1000 + 全局 50, log config 配置数目
-#define MAX_APP_COUNT_PER_USER_MASTER 120 // 一个主账号最多能创建的应用数+最大全局应用数
+#define MAX_APP_COUNT 120 
 #define MAX_SERVICE_PER_SET 50 // 单个 set 最大包含的服务器数目(同 supper_log.h中的定义)
 
 typedef struct
@@ -187,22 +187,16 @@ typedef struct
 typedef struct
 {
 	// agent client 相关 --- local
-	uint32_t dwUserMasterId;
 	uint8_t bFirstHelloCheckOk;
-	int32_t iUserMasterIndex;
 	int32_t iMtClientIndex;
 	int32_t iMachineId;
 	uint32_t dwConnServerIp; // 接入　mtreport_server 的地址
 	uint32_t dwKeySetTime;
 	char sRandKey[16];
-	char sConfigKey[16];
-	char sCommSigKey[16];
 	uint32_t dwPkgSeq;
 	uint32_t dwLastHelloOkTime;
 	uint32_t dwClientProcessStartTime;
-	int32_t iAttrSrvUserMasterIndex;
 	int32_t iAttrSrvMtClientIndex;
-	int32_t iAppLogSrvUserMasterIndex;
 	int32_t iAppLogSrvMtClientIndex;
 
 	// systen config
@@ -211,7 +205,7 @@ typedef struct
 	// app config
 	uint32_t dwLastSyncAppConfigTime;
 	uint16_t wAppConfigCount;
-	AppInfo stAppConfigList[MAX_APP_COUNT_PER_USER_MASTER];
+	AppInfo stAppConfigList[MAX_APP_COUNT];
 
 	// app log config
 	uint32_t dwLastSyncLogConfigTime;
