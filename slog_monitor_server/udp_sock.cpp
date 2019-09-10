@@ -1799,19 +1799,7 @@ void CUdpSock::OnRawData(const char *buf, size_t len, struct sockaddr *sa, sockl
 
 	m_pcltMachine = NULL;
 	slog.CheckTest(NULL);
-
-	if(PacketPb()) {
-		if(m_pbHead.en_cmd() == comm::MONITOR_CLIENT_REPORT_ATTR) {
-			DealLocalReportAttr();
-		}
-		else {
-			REQERR_LOG("unknow cmd:%d, remote:%s", m_pbHead.en_cmd(), m_addrRemote.Convert(true).c_str());
-			AckToReq(ERR_UNKNOW_CMD); 
-		}
-	}
-	else {
-		OnRawDataClientAttr(buf, len);
-	}
+	OnRawDataClientAttr(buf, len);
 }
 
 int32_t CUdpSock::CheckSignature()
@@ -1943,40 +1931,5 @@ int32_t CUdpSock::OnRawDataClientAttr(const char *buf, size_t len)
 	INFO_LOG("write attr count: %d(%d), from:%s", 
 		iReadAttrCount, (int)stReport.msg_attr_info_size(), m_addrRemote.Convert(true).c_str());
 	return AckToReq(NO_ERROR);
-}
-
-
-void CUdpSock::DealLocalReportAttr()
-{
-	::comm::ReportAttr stReport;
-	const char *pBody = m_pReqPkg+1+4+m_iPbHeadLen+4;
-	if(!stReport.ParseFromArray(pBody, m_iPbBodyLen))
-	{
-		REQERR_LOG("ParseFromArray body failed ! bodylen:%d", m_iPbBodyLen);
-		AckToReq(ERR_INVALID_PACKET); 
-		return;
-	}
-	if(stReport.msg_attr_info().size() <= 0)
-	{
-		REQERR_LOG("have no attr report in packet ");
-		AckToReq(ERR_INVALID_PACKET); 
-		return;
-	}
-
-	if(stReport.has_report_host_id())
-		m_pcltMachine = slog.GetMachineInfo(stReport.report_host_id(), NULL);
-	else
-		m_pcltMachine = GetReportMachine(inet_addr(stReport.bytes_report_ip().c_str()));
-	if(NULL == m_pcltMachine)
-	{
-		REQERR_LOG("GetReportMachine failed, host_id:%u, ip:%s",
-			stReport.report_host_id(), stReport.bytes_report_ip().c_str());
-		AckToReq(ERR_NOT_FIND_MACHINE); 
-		return;
-	}
-
-	DealReportAttr(stReport);
-	AckToReq(NO_ERROR); 
-	DEBUG_LOG("receive attr report count:%u", stReport.msg_attr_info().size());
 }
 
