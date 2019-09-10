@@ -46,12 +46,22 @@ PHP_MINFO_FUNCTION(xrkmonitor);
 
 PHP_FUNCTION(confirm_xrkmonitor_compiled);	/* For testing, remove later. */
 PHP_FUNCTION(MtReport_phpex_set_debug);
+
+// 监控点上报接口
 PHP_FUNCTION(php_MtReport_Init);
 PHP_FUNCTION(php_MtReport_Attr_Add);
 PHP_FUNCTION(php_MtReport_Attr_Set);
 PHP_FUNCTION(php_MtReport_Str_Attr_Add);	
 PHP_FUNCTION(php_MtReport_Str_Attr_Set);	
 
+// 日志上报接口
+PHP_FUNCTION(php_MtReport_Log_Fatal);	
+PHP_FUNCTION(php_MtReport_Log_Error);	
+PHP_FUNCTION(php_MtReport_Log_Reqerr);	
+PHP_FUNCTION(php_MtReport_Log_Warn);	
+PHP_FUNCTION(php_MtReport_Log_Info);	
+PHP_FUNCTION(php_MtReport_Log_Debug);	
+PHP_FUNCTION(php_MtReport_Log_Other);	
 
 /* 
   	Declare any global variables you may need between the BEGIN
@@ -82,11 +92,3 @@ ZEND_END_MODULE_GLOBALS(xrkmonitor)
 #endif	/* PHP_XRKMONITOR_H */
 
 
-/*
- * Local variables:
- * tab-width: 4
- * c-basic-offset: 4
- * End:
- * vim600: noet sw=4 ts=4 fdm=marker
- * vim<600: noet sw=4 ts=4
- */

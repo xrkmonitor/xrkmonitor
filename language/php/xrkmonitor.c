@@ -70,6 +70,15 @@ const zend_function_entry xrkmonitor_functions[] = {
 	PHP_FE(php_MtReport_Attr_Set,	NULL)
 	PHP_FE(php_MtReport_Str_Attr_Add,	NULL)
 	PHP_FE(php_MtReport_Str_Attr_Set,	NULL)
+
+	PHP_FE(php_MtReport_Log_Fatal,	NULL)
+	PHP_FE(php_MtReport_Log_Error,	NULL)
+	PHP_FE(php_MtReport_Log_Reqerr,	NULL)
+	PHP_FE(php_MtReport_Log_Warn,	NULL)
+	PHP_FE(php_MtReport_Log_Info,	NULL)
+	PHP_FE(php_MtReport_Log_Debug,	NULL)
+	PHP_FE(php_MtReport_Log_Other,	NULL)
+
 	PHP_FE_END	/* Must be the last line in xrkmonitor_functions[] */
 };
 /* }}} */
@@ -403,6 +412,244 @@ PHP_FUNCTION(php_MtReport_Str_Attr_Set)
 	}
 
 	PHP_EX_DEBUG("php_MtReport_Str_Attr_Set, attr:%ld, str:%s, val:%ld", attr_id, str, attr_val);
+	add_assoc_long(return_value, "ret_code", 0);
+	add_assoc_string(return_value, "ret_msg", "ok", 1);
+}
+
+PHP_FUNCTION(php_MtReport_Log_Fatal)
+{
+	char *str_file = NULL;
+	int str_file_len = 0;
+	char *str_fun = NULL;
+	int str_fun_len = 0;
+	long int src_line_num = 0;
+	char *str = NULL;
+	int str_len = 0;
+	int err_len = 0, ret = 0;
+	char *err_msg = NULL;
+
+	array_init(return_value);
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ssls", 
+		&str_file, &str_file_len, &str_fun, &str_fun_len, &src_line_num, &str, &str_len) == FAILURE)
+	{
+		add_assoc_long(return_value, "ret_code", -1);
+		add_assoc_string(return_value, "ret_msg", "read parameters failed", 1);
+		return;
+	}
+
+	if((ret=MtReport_Log(MTLOG_TYPE_FATAL, " [%s:%s:%d] %s", str_file, str_fun, src_line_num, str)) != 0)
+	{
+		add_assoc_long(return_value, "ret_code", -2);
+		err_len = spprintf(&err_msg, 0, "MtReport_Log failed, ret:%d", ret);
+		add_assoc_stringl(return_value, "ret_msg", err_msg, err_len, 0);
+		return;
+	}
+
+	PHP_EX_DEBUG("write fatal log info : [%s:%s:%d] %s", str_file, str_fun, src_line_num, str);
+	add_assoc_long(return_value, "ret_code", 0);
+	add_assoc_string(return_value, "ret_msg", "ok", 1);
+}
+
+PHP_FUNCTION(php_MtReport_Log_Error)
+{
+	char *str_file = NULL;
+	int str_file_len = 0;
+	char *str_fun = NULL;
+	int str_fun_len = 0;
+	long int src_line_num = 0;
+	char *str = NULL;
+	int str_len = 0;
+	int err_len = 0, ret = 0;
+	char *err_msg = NULL;
+
+	array_init(return_value);
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ssls", 
+		&str_file, &str_file_len, &str_fun, &str_fun_len, &src_line_num, &str, &str_len) == FAILURE)
+	{
+		add_assoc_long(return_value, "ret_code", -1);
+		add_assoc_string(return_value, "ret_msg", "read parameters failed", 1);
+		return;
+	}
+
+	if((ret=MtReport_Log(MTLOG_TYPE_ERROR, " [%s:%s:%d] %s", str_file, str_fun, src_line_num, str)) != 0)
+	{
+		add_assoc_long(return_value, "ret_code", -2);
+		err_len = spprintf(&err_msg, 0, "MtReport_Log failed, ret:%d", ret);
+		add_assoc_stringl(return_value, "ret_msg", err_msg, err_len, 0);
+		return;
+	}
+
+	PHP_EX_DEBUG("write error log info : [%s:%s:%d] %s", str_file, str_fun, src_line_num, str);
+	add_assoc_long(return_value, "ret_code", 0);
+	add_assoc_string(return_value, "ret_msg", "ok", 1);
+}
+
+PHP_FUNCTION(php_MtReport_Log_Reqerr)
+{
+	char *str_file = NULL;
+	int str_file_len = 0;
+	char *str_fun = NULL;
+	int str_fun_len = 0;
+	long int src_line_num = 0;
+	char *str = NULL;
+	int str_len = 0;
+	int err_len = 0, ret = 0;
+	char *err_msg = NULL;
+
+	array_init(return_value);
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ssls", 
+		&str_file, &str_file_len, &str_fun, &str_fun_len, &src_line_num, &str, &str_len) == FAILURE)
+	{
+		add_assoc_long(return_value, "ret_code", -1);
+		add_assoc_string(return_value, "ret_msg", "read parameters failed", 1);
+		return;
+	}
+
+	if((ret=MtReport_Log(MTLOG_TYPE_REQERR, " [%s:%s:%d] %s", str_file, str_fun, src_line_num, str)) != 0)
+	{
+		add_assoc_long(return_value, "ret_code", -2);
+		err_len = spprintf(&err_msg, 0, "MtReport_Log failed, ret:%d", ret);
+		add_assoc_stringl(return_value, "ret_msg", err_msg, err_len, 0);
+		return;
+	}
+
+	PHP_EX_DEBUG("write reqerr log info : [%s:%s:%d] %s", str_file, str_fun, src_line_num, str);
+	add_assoc_long(return_value, "ret_code", 0);
+	add_assoc_string(return_value, "ret_msg", "ok", 1);
+}
+
+PHP_FUNCTION(php_MtReport_Log_Warn)
+{
+	char *str_file = NULL;
+	int str_file_len = 0;
+	char *str_fun = NULL;
+	int str_fun_len = 0;
+	long int src_line_num = 0;
+	char *str = NULL;
+	int str_len = 0;
+	int err_len = 0, ret = 0;
+	char *err_msg = NULL;
+
+	array_init(return_value);
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ssls", 
+		&str_file, &str_file_len, &str_fun, &str_fun_len, &src_line_num, &str, &str_len) == FAILURE)
+	{
+		add_assoc_long(return_value, "ret_code", -1);
+		add_assoc_string(return_value, "ret_msg", "read parameters failed", 1);
+		return;
+	}
+
+	if((ret=MtReport_Log(MTLOG_TYPE_WARN, " [%s:%s:%d] %s", str_file, str_fun, src_line_num, str)) != 0)
+	{
+		add_assoc_long(return_value, "ret_code", -2);
+		err_len = spprintf(&err_msg, 0, "MtReport_Log failed, ret:%d", ret);
+		add_assoc_stringl(return_value, "ret_msg", err_msg, err_len, 0);
+		return;
+	}
+
+	PHP_EX_DEBUG("write warn log info : [%s:%s:%d] %s", str_file, str_fun, src_line_num, str);
+	add_assoc_long(return_value, "ret_code", 0);
+	add_assoc_string(return_value, "ret_msg", "ok", 1);
+}
+
+PHP_FUNCTION(php_MtReport_Log_Info)
+{
+	char *str_file = NULL;
+	int str_file_len = 0;
+	char *str_fun = NULL;
+	int str_fun_len = 0;
+	long int src_line_num = 0;
+	char *str = NULL;
+	int str_len = 0;
+	int err_len = 0, ret = 0;
+	char *err_msg = NULL;
+
+	array_init(return_value);
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ssls", 
+		&str_file, &str_file_len, &str_fun, &str_fun_len, &src_line_num, &str, &str_len) == FAILURE)
+	{
+		add_assoc_long(return_value, "ret_code", -1);
+		add_assoc_string(return_value, "ret_msg", "read parameters failed", 1);
+		return;
+	}
+
+	if((ret=MtReport_Log(MTLOG_TYPE_INFO, " [%s:%s:%d] %s", str_file, str_fun, src_line_num, str)) != 0)
+	{
+		add_assoc_long(return_value, "ret_code", -2);
+		err_len = spprintf(&err_msg, 0, "MtReport_Log failed, ret:%d", ret);
+		add_assoc_stringl(return_value, "ret_msg", err_msg, err_len, 0);
+		return;
+	}
+
+	PHP_EX_DEBUG("write info log info : [%s:%s:%d] %s", str_file, str_fun, src_line_num, str);
+	add_assoc_long(return_value, "ret_code", 0);
+	add_assoc_string(return_value, "ret_msg", "ok", 1);
+}
+
+PHP_FUNCTION(php_MtReport_Log_Debug)
+{
+	char *str_file = NULL;
+	int str_file_len = 0;
+	char *str_fun = NULL;
+	int str_fun_len = 0;
+	long int src_line_num = 0;
+	char *str = NULL;
+	int str_len = 0;
+	int err_len = 0, ret = 0;
+	char *err_msg = NULL;
+
+	array_init(return_value);
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ssls", 
+		&str_file, &str_file_len, &str_fun, &str_fun_len, &src_line_num, &str, &str_len) == FAILURE)
+	{
+		add_assoc_long(return_value, "ret_code", -1);
+		add_assoc_string(return_value, "ret_msg", "read parameters failed", 1);
+		return;
+	}
+
+	if((ret=MtReport_Log(MTLOG_TYPE_DEBUG, " [%s:%s:%d] %s", str_file, str_fun, src_line_num, str)) != 0)
+	{
+		add_assoc_long(return_value, "ret_code", -2);
+		err_len = spprintf(&err_msg, 0, "MtReport_Log failed, ret:%d", ret);
+		add_assoc_stringl(return_value, "ret_msg", err_msg, err_len, 0);
+		return;
+	}
+
+	PHP_EX_DEBUG("write debug log info : [%s:%s:%d] %s", str_file, str_fun, src_line_num, str);
+	add_assoc_long(return_value, "ret_code", 0);
+	add_assoc_string(return_value, "ret_msg", "ok", 1);
+}
+
+PHP_FUNCTION(php_MtReport_Log_Other)
+{
+	char *str_file = NULL;
+	int str_file_len = 0;
+	char *str_fun = NULL;
+	int str_fun_len = 0;
+	long int src_line_num = 0;
+	char *str = NULL;
+	int str_len = 0;
+	int err_len = 0, ret = 0;
+	char *err_msg = NULL;
+
+	array_init(return_value);
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ssls", 
+		&str_file, &str_file_len, &str_fun, &str_fun_len, &src_line_num, &str, &str_len) == FAILURE)
+	{
+		add_assoc_long(return_value, "ret_code", -1);
+		add_assoc_string(return_value, "ret_msg", "read parameters failed", 1);
+		return;
+	}
+
+	if((ret=MtReport_Log(MTLOG_TYPE_OTHER, " [%s:%s:%d] %s", str_file, str_fun, src_line_num, str)) != 0)
+	{
+		add_assoc_long(return_value, "ret_code", -2);
+		err_len = spprintf(&err_msg, 0, "MtReport_Log failed, ret:%d", ret);
+		add_assoc_stringl(return_value, "ret_msg", err_msg, err_len, 0);
+		return;
+	}
+
+	PHP_EX_DEBUG("write other log info : [%s:%s:%d] %s", str_file, str_fun, src_line_num, str);
 	add_assoc_long(return_value, "ret_code", 0);
 	add_assoc_string(return_value, "ret_msg", "ok", 1);
 }
