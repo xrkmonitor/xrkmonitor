@@ -1857,10 +1857,11 @@ static int DealGetRealTimeLog(CGI *cgi)
 	uint64_t qwTimeNow = TIME_SEC_TO_USEC(stNow.tv_sec)+stNow.tv_usec;
 	char *pszLogEscp = NULL;
 
+	uint32_t dwInnerSeq = 0;
 	for(i=0; pShmLog != NULL
 		&& (pstLog=logsearch.RealTimeLog(iLastIndex, dwLastSeqNo, qwTimeNow)) != NULL;)
 	{
-		if(++i <  iMaxCount)
+		if(++i < iMaxCount && (dwInnerSeq > pstLog->dwLogSeq || dwInnerSeq == 0))
 		{
 			stConfig.err = cgi_js_escape(pstLog->pszLog, (char**)&pszLogEscp);
 			if(stConfig.err != STATUS_OK)
@@ -1945,10 +1946,12 @@ static int DealGetRealTimeLog(CGI *cgi)
 				log["config"] = pstLog->dwLogConfigId;
 			if(iShowLogField & SLOG_FIELD_POS)
 				log["pos"] = pszLogPos;
-
+			
 			log["type"] = pstLog->wLogType;
 			log["s_time"] = pstLog->qwLogTime;
 			js["list"].Add(log);
+
+			dwInnerSeq = pstLog->dwLogSeq;
 			free(pMem);
 		}
 		else  {
