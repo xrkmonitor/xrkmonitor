@@ -109,10 +109,10 @@ mod_fastcgi , 模块源码在 lib 目录下，fastcgi 的配置可参考文件�
 
 分布式部署推荐部署方式：  
 分布式部署的基本包包括如下模块：
-1. slog_mtreport_client   
-2. slog_client   
-3. slog_config   
-4. tools_sh 目录下全部脚本   
+1. slog_mtreport_client
+2. slog_client
+3. slog_config
+4. tools_sh 目录下全部脚本
 分布式部署时 slog_mtreport_client 模块的 SERVER_MASTER 请修改为 agent 接入服务器 的IP。  
 
 1. mysql 配置服务/web 控制台服务/agent 接入服务, 同机部署, 需要部署如下模块： (1台)   
