@@ -1,6 +1,6 @@
 include ../make_env
-COMM_INC = -I../lib/mtreport_api
-COMM_LIB = ../lib/mtreport_api/libmtreport_api.a -ldl
+COMM_INC = -I../language/c_cpp/
+COMM_LIB = ../language/c_cpp/libmtreport_api.a -ldl
 
 TARGETS_DIR = linux_monitor_agent
 

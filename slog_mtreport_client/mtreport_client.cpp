@@ -371,6 +371,11 @@ static int Init()
 		return MTREPORT_ERROR_LINE;
 	}
 
+	if(strstr(stConfig.szSrvIp_master, "127.0.0.1")) {
+		FATAL_LOG("invalid server address, must not be 127.0.0.1(%s)", stConfig.szSrvIp_master);
+		return MTREPORT_ERROR_LINE;
+	}
+
 	INFO_LOG("%s shm ok -- size:%u", (iRet==1 ? "create" : "init"), MYSIZEOF(MTREPORT_SHM)); 
 	INFO_LOG("read config - server:%s:%d ", stConfig.szSrvIp_master, stConfig.iSrvPort);
 	INFO_LOG("local ip:%s, config:%s, cmp time:%s", pip, stConfig.szLocalIP, g_strCmpTime.c_str());
