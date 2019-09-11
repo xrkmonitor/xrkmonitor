@@ -73,7 +73,7 @@ mod_fastcgi , 模块源码在 lib 目录下，fastcgi 的配置可参考文件�
 5. 解压部署包： tar -zxf slog_all.tar.gz 
 6. 初始化 mysql 数据库，将 mtreport_db.sql, attr_db.mysql 导入到 mysql 中(文件在源码 db 目录下)  
 7. 授权 mysql 账号：mtreport 访问密码：mtreport875, 访问操作  mtreport_db,attr_db 数据库
-8. 首先启动 slog_mtreport_client 模块, cd slog_mtreport_client; ./start.sh   
+8. cd slog_mtreport_client, 修改 slog_mtreport_client.conf 的SERVER_MASTER 配置项改为本机IP，./start.sh 启动模块    
 9. 再启动 slog_config 服务: cd slog_config; ./start.sh   
 10. 拷贝 html、cgi 文件到 apache 网站，网站根目录设为： /srv/www/htdocs，按如下方法拷贝文件：   
    a. 部署 html/js 文件：将源码中 html 目录下的文件/目录全部拷贝到 /srv/www/htdocs/monitor 目录下   
@@ -93,6 +93,13 @@ mod_fastcgi , 模块源码在 lib 目录下，fastcgi 的配置可参考文件�
 6. agent 接入服务器，用于控制 agent 接入以及下发配置到 agent(agent 模块为：slog_mtreport_client)   
 
 分布式部署推荐部署方式：  
+分布式部署时 slog_mtreport_client 模块的 SERVER_MASTER 请修改为 agent 接入服务器 的IP   
+分布式部署的基本包括如下模块：   
+1. slog_mtreport_client   
+2. slog_client   
+3. slog_config    
+4. tools_sh 目录下全部脚本    
+
 1. mysql 配置服务/web 控制台服务/agent 接入服务, 同机部署, 需要部署如下模块： (1台)   
 	a: 部署基本包(基本包的内容如上文)   
 	b: 部署 slog_mtreport_server 模块   
