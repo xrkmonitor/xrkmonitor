@@ -9,5 +9,5 @@ if [ $? -ne 0 ];then
 	echo "md5 check failed !"
 	exit 1
 fi
-sh -x check_proc_monitor.sh 1
-
+cd tools_sh
+./check_proc_monitor.sh 1
