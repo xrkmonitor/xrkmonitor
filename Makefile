@@ -1,6 +1,6 @@
 all:
-	make -C lib/mtreport_api
-	make install -C lib/mtreport_api
+	make -C language/c_cpp
+	make install -C language/c_cpp
 	make -C lib/my_proto 
 	make install -C lib/my_proto 
 	make -C lib/libsockets
@@ -26,7 +26,7 @@ all:
 	make -C slog_mtreport_server 
 
 clean:
-	make clean -C lib/mtreport_api
+	make clean -C language/c_cpp
 	make clean -C lib/my_proto 
 	make clean -C lib/mtagent_api_open
 	make clean -C lib/libsockets
