@@ -32,6 +32,10 @@
 4.	支持自动化配置
 5.  监控点 api 接口清晰简单，轻松集成到您的软件系统中   
    
+当前监控点上报API支持的语言如下（更多语言支持在开发中）： 
+1. c/c++ 
+2. php
+
 **项目演示链接：[字符云监控项目演示 http://open.xrkmonitor.com](http://open.xrkmonitor.com)**   
      
 	   
