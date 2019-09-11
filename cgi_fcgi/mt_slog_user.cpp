@@ -453,7 +453,7 @@ static int DealListLoginInfo()
 
 	int i=0, j=0, iShow=0;
 	std::list<int> listMatch;
-	for(i=0,j=0; i < stConfig.pshmLoginList->iLoginCount && j < FLOGIN_SESSION_NODE_COUNT; j++)
+	for(i=0,j=0; j < FLOGIN_SESSION_NODE_COUNT; j++)
 	{
 		if(stConfig.pshmLoginList->stLoginList[j].dwLastAccessTime+
 			stConfig.pshmLoginList->stLoginList[j].iLoginExpireTime > stConfig.dwCurTime)
