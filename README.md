@@ -1,5 +1,5 @@
 ## 项目简介
-集成监控点监控、日志监控、数据可视化以及监控告警为一体的国产开源监控系统，直接部署即可使用。    
+集成自定义监控点监控、日志监控、数据可视化以及监控告警为一体的国产开源监控系统，直接部署即可使用。    
 
 使用的技术方案：   
 1. apache + mysql(监控点数据、配置信息使用 mysql 存储, 支持分布式部署)   
@@ -73,14 +73,15 @@ mod_fastcgi , 模块源码在 lib 目录下，fastcgi 的配置可参考文件�
 5. 解压部署包： tar -zxf slog_all.tar.gz 
 6. 初始化 mysql 数据库，将 mtreport_db.sql, attr_db.mysql 导入到 mysql 中(文件在源码 db 目录下)  
 7. 授权 mysql 账号：mtreport 访问密码：mtreport875, 访问操作  mtreport_db,attr_db 数据库
-8. 启动 slog_config 服务: cd slog_config; ./start.sh
-9. 拷贝 html、cgi 文件到 apache 网站，网站根目录设为： /srv/www/htdocs，按如下方法拷贝文件：   
-   a. 部署 html/js 文件：将源码中 html 目录下的文件/目录全部拷贝到 /srv/www/htdocs/monitor 目录下  
-   b. 将入口文件 html/index.html 拷贝到根目录下 /srv/www/htdocs  
-   c. 部署 cgi：将部署机 cgi_fcgi 目录下的文件全部拷贝到 /srv/www/cgi-bin 目录下  
-   d. 创建 cgi 本地日志目录：/var/log/mtreport，cgi 调试目录：/srv/www/htdocs/cgi_debug  
-10. 启动 apache，使用内置账号：sadmin, 密码：sadmin 访问控制台，将系统服务器配置的IP 全部改为部署机IP  
-11. 启动所有服务：进入部署目录，cd tools_sh; ./check_proc_monitor.sh 1，约1分钟后即可查看日志和监控点图表  
+8. 首先启动 slog_mtreport_client 模块, cd slog_mtreport_client; ./start.sh   
+9. 再启动 slog_config 服务: cd slog_config; ./start.sh   
+10. 拷贝 html、cgi 文件到 apache 网站，网站根目录设为： /srv/www/htdocs，按如下方法拷贝文件：   
+   a. 部署 html/js 文件：将源码中 html 目录下的文件/目录全部拷贝到 /srv/www/htdocs/monitor 目录下   
+   b. 将入口文件 html/index.html 拷贝到根目录下 /srv/www/htdocs   
+   c. 部署 cgi：将部署机 cgi_fcgi 目录下的文件全部拷贝到 /srv/www/cgi-bin 目录下   
+   d. 创建 cgi 本地日志目录：/var/log/mtreport，cgi 调试目录：/srv/www/htdocs/cgi_debug   
+11. 启动 apache，使用内置账号：sadmin, 密码：sadmin 访问控制台，将系统服务器配置的IP 全部改为部署机IP  
+12. 启动所有服务：进入部署目录，cd tools_sh; ./check_proc_monitor.sh 1，约1分钟后即可查看日志和监控点图表  
 
 ### 分布式部署说明
 开源版监控系统包含以下服务器类型：
@@ -91,31 +92,22 @@ mod_fastcgi , 模块源码在 lib 目录下，fastcgi 的配置可参考文件�
 5. 日志服务器，用于接收日志，并提供日志查询功能(可在控制台配置，系统自动调度)   
 6. agent 接入服务器，用于控制 agent 接入以及下发配置到 agent(agent 模块为：slog_mtreport_client)   
 
-监控系统部署的基本包，包含如下模块(关于模块的说明在各模块源码文件的头部，这里不做说明)   
-1. slog_config    
-2. slog_client    
-3. slog_monitor_client   
-4. tools_sh 目录以及其下的全部脚本文件  
-
-监控系统各模块部署时需从模块源码目录中拷贝如下文件(以下使用 slog_config 模块作为示例说明)   
-1. 模块可执行文件 (slog_config)   
-2. 模块配置文件 (slog_config.conf)   
-3. 模块目录下的全部脚本文件 (start.sh,stop.sh等)   
-
 分布式部署推荐部署方式：  
-1. mysql 配置服务/web 控制台服务/agent 接入服务, 同机部署, 需要部署如下模块： <font color='red'>(1台)</font>   
+1. mysql 配置服务/web 控制台服务/agent 接入服务, 同机部署, 需要部署如下模块： (1台)   
 	a: 部署基本包(基本包的内容如上文)   
 	b: 部署 slog_mtreport_server 模块   
-	c: 注意打包文件中需要包含 slog_memached 模块, web 控制台服务依赖该模块
-2. mysql 监控点服务器/监控点服务器, 部署在一台机器上需要部署如下模块： <font color=red>(1台)</font>    
+	c: 注意打包文件中需要包含 slog_memached 模块, web 控制台服务依赖该模块    
+2. mysql 监控点服务器/监控点服务器, 部署在一台机器上需要部署如下模块：(1台)      
 	a: 部署基本包(基本包的内容如上文)   
-	b: 部署 slog_monitor_server/slog_check_warn/slog_deal_warn 模块   
-3. 日志服务器 <font color=red>(1台或多台)</font>    
-	a: 部署基本包(基本包的内容如上文)  
-	b: 部署 slog_server/slog_write 模块   
+	b: 部署 slog_monitor_server/slog_check_warn/slog_deal_warn 模块    
+3. 日志服务器 (1台或多台)   
+	a: 部署基本包(基本包的内容如上文)   
+	b: 部署 slog_server/slog_write 模块    
 	c: 部署 apache 服务，部署 cgi 模块：mt_slog，提供日志查询服务   
-4. 被监控机器 <font color=red>(目前只支持 linux 系统，1台或多台)</font>      
-	a: 只需部署监控系统 agent 模块：slog_mtreport_client   
+
+集中部署或者分布式部署部署完成后，即可以使用自定义监控了，在被监控机器上部署 slog_mtreport_client    
+agent 模块即可，目前 slog_mtreport_client 模块集成了 linux 服务器基础监控(cpu/内存/磁盘/网络)，部署    
+即可使用，被监控机可以部署多台。    
 
 ## 联系我们
 QQ 群 699014295 (加群密码：xrkmonitor):   
@@ -125,4 +117,5 @@ QQ 群 699014295 (加群密码：xrkmonitor):
 ![字符云监控系统微信公众号](http://xrkmonitor.com/monitor/main/img/main_wx_qrcode.jpg)  
 
 邮箱：1820140912@qq.com
+
 
