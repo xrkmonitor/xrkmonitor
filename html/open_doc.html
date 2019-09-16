@@ -3,3 +3,11 @@
 	</iframe>
 </div>
 
+<script language="javascript" type="text/javascript">
+	$(document).ajaxStart();
+	var iframe = document.getElementById("doc_iframeId");
+	iframe.onload = function() {
+		$(document).ajaxStop();
+	};
+</script>
+
