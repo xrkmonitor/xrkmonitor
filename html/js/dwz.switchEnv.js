@@ -13,6 +13,11 @@
 					$box.find("li").removeClass("selected");
 					$a.parent().addClass("selected");
 
+					// ysy -- modify
+					if(!$('#navDocMenu').hasClass('selected') && DWZ.ui.sbar == false) {
+						$("#sidebar_s .toggleCollapse div").trigger("click");
+					}
+
 					// ysy -- modify, 打开首个菜单链接
 					var afirst = $("#sidebar").find("ul li:first").find("a");
 					if(afirst != null) {

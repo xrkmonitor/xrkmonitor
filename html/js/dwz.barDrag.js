@@ -48,6 +48,9 @@
 			});
 
 			$(op.toggleBut, sbar).click(function(){
+				if($('#navDocMenu').hasClass('selected'))
+					return;
+
 				DWZ.ui.sbar = true;
 				sbar.animate({left: -25}, 200, function(){				
 					bar.show();
