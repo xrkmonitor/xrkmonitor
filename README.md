@@ -105,7 +105,7 @@ mod_fastcgi , 模块源码在 lib 目录下，fastcgi 的配置可参考文件�
 13. 部署进程监控脚本到 crontab, cd tools_sh; ./add_crontab.sh，这样监控系统的服务如果异常退出可以通过 crontab 脚本自动拉起
 
 ### 分布式部署说明
-关于分布部署可以登录演示版 web 控制台或者访问文档链接
+关于分布部署可以登录演示版 web 控制台或者访问文档链接  
 在线文档：- [在线文档 http://xrkmonitor.com/monitor/showdoc/showdoc/web/#/4](http://xrkmonitor.com/monitor/showdoc/showdoc/web/#/4)，文档首次加载可能有点慢，请耐心等候
 
 ## 联系我们
