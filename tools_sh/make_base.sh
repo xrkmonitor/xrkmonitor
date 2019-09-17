@@ -1,6 +1,6 @@
 #!/bin/bash
 cd ..
-Name=slog_all
+Name=slog_base
 TarF=${Name}.tar
 TarP=$(pwd)/${TarF}
 BackupDir=release_pack
@@ -8,23 +8,23 @@ BackupDir=release_pack
 tar cvf ${TarP} tools_sh/rm_zero.sh
 tar rvf ${TarP} tools_sh/check_proc_monitor.sh
 tar rvf ${TarP} tools_sh/start_all.sh
-tar rvf ${TarP} tools_sh/stop_all.sh
 tar rvf ${TarP} tools_sh/add_crontab.sh
+tar rvf ${TarP} tools_sh/stop_all.sh
 tar rvf ${TarP} tools_sh/start_comm.sh
 tar rvf ${TarP} tools_sh/stop_comm.sh
-tar rvf ${TarP} tools_sh/install_bin.sh
 
-tar rvf ${TarP} cgi_fcgi/* --exclude *.cpp --exclude Makefile --exclude cgi_debug.txt 
+function make_module()
+{
+	mname=$1
+	tar rvf ${TarP} ${mname}/*.sh
+	tar rvf ${TarP} ${mname}/${mname}.conf
+	tar rvf ${TarP} ${mname}/${mname}
+}
 
-dirlist=`find . -maxdepth 1 -type d`
-for dr in $dirlist
-do 
-        if [ -f $dr/$dr ] ; then
-                tar rvf ${TarP} $dr/*.sh
-                tar rvf ${TarP} $dr/*.conf
-                tar rvf ${TarP} $dr/$dr
-        fi
-done
+
+make_module slog_mtreport_client
+make_module slog_client
+make_module slog_config 
 
 cd tools_sh
 mkdir _tmp
