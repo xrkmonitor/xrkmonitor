@@ -57,7 +57,7 @@
 1. [源码介绍和编译(ubuntu系统) https://www.bilibili.com/video/av66685598](https://www.bilibili.com/video/av66685598)  
 2. [集中部署(ubuntu系统) https://www.bilibili.com/video/av66819048](https://www.bilibili.com/video/av66819048)   
 
-在线说明文档：- [在线文档 http://xrkmonitor.com/monitor/showdoc/showdoc/web/#/4](http://xrkmonitor.com/monitor/showdoc/showdoc/web/#/4)，文档首次加载可能有点慢，请耐心等候
+在线说明文档：- [在线文档 http://xrkmonitor.com/monitor/dmt_open_doc.html](http://xrkmonitor.com/monitor/dmt_open_doc.html)，文档首次加载可能有点慢，请耐心等候
 
 ## 编译说明 
 视频教程：[源码介绍和编译(ubuntu系统) https://www.bilibili.com/video/av66685598](https://www.bilibili.com/video/av66685598)  
@@ -106,7 +106,7 @@ mod_fastcgi , 模块源码在 lib 目录下，fastcgi 的配置可参考文件�
 
 ### 分布式部署说明
 关于分布部署可以登录演示版 web 控制台或者访问文档链接  
-在线文档：- [在线文档 http://xrkmonitor.com/monitor/showdoc/showdoc/web/#/4](http://xrkmonitor.com/monitor/showdoc/showdoc/web/#/4)，文档首次加载可能有点慢，请耐心等候
+在线文档：- [在线文档 http://xrkmonitor.com/monitor/dmt_open_doc.html](http://xrkmonitor.com/monitor/dmt_open_doc.html)，文档首次加载可能有点慢，请耐心等候
 
 ## 联系我们
 QQ 群 699014295 (加群密码：xrkmonitor):   
