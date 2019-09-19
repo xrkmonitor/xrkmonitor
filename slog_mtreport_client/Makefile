@@ -2,8 +2,6 @@ include ../make_env
 COMM_INC = -I../language/c_cpp/
 COMM_LIB = ../language/c_cpp/libmtreport_api.a -ldl
 
-TARGETS_DIR = linux_monitor_agent
-
 CC = g++ 
 CXXFLAGS += $(COMM_INC) 
 
@@ -16,14 +14,7 @@ DEP := $(SRC:.cpp=.d)
 
 $(TARGETS): ${OBJ} 
 	$(CC) -g -Wall -o $@ $^ $(COMM_LIB) -lrt
-
-install:
 	strip $(TARGETS)
-	cp *.sh $(TARGETS_DIR)
-	cp $(TARGETS) $(TARGETS_DIR)
-
-uninstall:
-	rm -f $(TARGETS_DIR)/$(TARGETS)
 
 clean: 
 	rm -f *.o
