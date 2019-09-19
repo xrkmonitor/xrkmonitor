@@ -16,11 +16,16 @@ tar rvf ${TarP} tools_sh/stop_comm.sh
 function make_module()
 {
 	mname=$1
+	
+	if [ ! -f ${mname}/${mname} ]; then
+		echo "check file: ${mname}/${mname} failed !"
+		rm -f ${TarP}
+		exit 2
+	fi
 	tar rvf ${TarP} ${mname}/*.sh
 	tar rvf ${TarP} ${mname}/${mname}.conf
 	tar rvf ${TarP} ${mname}/${mname}
 }
-
 
 make_module slog_mtreport_client
 make_module slog_client

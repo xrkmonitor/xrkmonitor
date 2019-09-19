@@ -1,5 +1,5 @@
 ## 项目简介
-集成自定义监控、日志监控、数据可视化以及监控告警为一体的国产开源监控系统，直接部署即可使用。    
+集监控点监控、日志监控、数据可视化以及监控告警为一体的国产开源监控系统，直接部署即可使用。    
 
 它能为您做什么？   
 1. 通过自定义监控功能，助力您掌握您系统的相关业务指标   
@@ -13,8 +13,6 @@
 3. 通过日志中心，在定位问题时可以方便的查找日志，也可以使用日志做告警   
    以网站系统为例，若您的网站系统有上百台机器，某天某个用户业务出现异常需要定位问题，通过使用它您可以   
    不用登陆机器，直接在日志中心查看，日志中心支持多种方式过滤日志，能轻松的帮您定位到相关日志。   
-
-**字符云监控的目标是助力您更好的掌控您的系统，一切尽在掌握是我们追求的目标！**   
 
 使用的技术方案：   
 1. apache + mysql(监控点数据、配置信息使用 mysql 存储, 支持分布式部署)   
@@ -32,7 +30,7 @@
 4.	支持自动化配置
 5.  监控点 api 接口清晰简单，轻松集成到您的软件系统中   
    
-当前监控点上报API支持的语言如下（更多语言支持在开发中）： 
+当前监控上报API支持的语言如下（更多语言支持在开发中）： 
 1. c/c++ 
 2. php
 
@@ -57,7 +55,7 @@
 1. [源码介绍和编译(ubuntu系统) https://www.bilibili.com/video/av66685598](https://www.bilibili.com/video/av66685598)  
 2. [集中部署(ubuntu系统) https://www.bilibili.com/video/av66819048](https://www.bilibili.com/video/av66819048)   
 
-在线说明文档：- [在线文档 http://xrkmonitor.com/monitor/dmt_open_doc.html](http://xrkmonitor.com/monitor/dmt_open_doc.html)，文档首次加载可能有点慢，请耐心等候
+在线说明文档：- [在线文档 http://xrkmonitor.com/monitor/dmt_open_doc.html](http://xrkmonitor.com/monitor/dmt_open_doc.html)
 
 ## 编译说明 
 视频教程：[源码介绍和编译(ubuntu系统) https://www.bilibili.com/video/av66685598](https://www.bilibili.com/video/av66685598)  
@@ -72,11 +70,8 @@
 如您在编译源码包时遇到问题，请给我们留言或者加入QQ群在QQ群中提出您的问题   
 
 ## 部署说明
-字符云监控系统部署需要安装  memcached，mysql，apache 软件   
-memcached 在编译源码执行 install_dev.sh 的时候会提示是否编译生成 memcached 可执行文件   
-若您没有选择编译生成 memcached 文件，则您需要自行生成 memcached 文件，并将 memcached    
-文件放入 slog_memcached 目录下，并重命名为 slog_memcached，以便能使用监控系统脚本控制   
-memcached 的启停   
+字符云监控系统部署需要安装 memcached，mysql，apache 软件   
+memcached 在编译源码执行 install_dev.sh 的时候会编译生成，并重命名为 slog_memcached   
 
 控制台cgi 在部署时支持普通cgi以及 fastcgi 方式，如需使用 fastcgi 方式部署需要apache导入模块  
 mod_fastcgi , 模块源码在 lib 目录下，fastcgi 的配置可参考文件：cgi_fcgi/fastcgi.conf   
@@ -87,26 +82,24 @@ mod_fastcgi , 模块源码在 lib 目录下，fastcgi 的配置可参考文件�
 
 全部服务部署在一台服务器上的操作步骤：
 1. 在部署机上安装 mysql, apache 软件
-2. 确保目录 slog_memcached 下存在 slog_memcached 可执行文件    
-3. 打完整部署包：cd  tools_sh; ./make_all.sh 生成： slog_all.tar.gz 部署包
-4. 将部署包 slog_all.tar.gz 拷贝到部署机器的部署目录下   
-5. 解压部署包： tar -zxf slog_all.tar.gz 
-6. 初始化 mysql 数据库，将 mtreport_db.sql, attr_db.mysql 导入到 mysql 中(文件在源码 db 目录下)  
-7. 授权 mysql 账号：mtreport 访问密码：mtreport875, 访问操作  mtreport_db,attr_db 数据库
-8. cd slog_mtreport_client, 修改 slog_mtreport_client.conf 的SERVER_MASTER 配置项改为本机IP，./start.sh 启动模块    
-9. 再启动 slog_config 服务: cd slog_config; ./start.sh   
-10. 拷贝 html、cgi 文件到 apache 网站，网站根目录设为： /srv/www/htdocs，按如下方法拷贝文件：   
+2. 打完整部署包：cd  tools_sh; ./make_all.sh 生成： slog_all.tar.gz 部署包
+3. 将部署包 slog_all.tar.gz 拷贝到部署机器的部署目录下，并解压部署包 tar -zxf slog_all.tar.gz   
+4. 初始化 mysql 数据库，将 mtreport_db.sql, attr_db.mysql 导入到 mysql 中(文件在源码 db 目录下)  
+5. 授权 mysql 账号：mtreport 访问密码：mtreport875, 访问操作  mtreport_db,attr_db 数据库
+6. cd slog_mtreport_client, 修改 slog_mtreport_client.conf 的SERVER_MASTER 配置项改为本机IP，./start.sh 启动模块    
+7. 启动 slog_config 服务: cd slog_config; ./start.sh   
+8. 拷贝 html、cgi 文件到 apache 网站，网站根目录设为： /srv/www/htdocs，按如下方法拷贝文件：   
    a. 部署 html/js 文件：将源码中 html 目录下的文件/目录全部拷贝到 /srv/www/htdocs/monitor 目录下   
    b. 将入口文件 html/index.html 拷贝到根目录下 /srv/www/htdocs   
    c. 部署 cgi：将部署机 cgi_fcgi 目录下的文件全部拷贝到 /srv/www/cgi-bin 目录下   
    d. 创建 cgi 本地日志目录：/var/log/mtreport，cgi 调试目录：/srv/www/htdocs/cgi_debug   
-11. 启动 apache，使用内置账号：sadmin, 密码：sadmin 访问控制台，将系统服务器配置的IP 全部改为部署机IP  
-12. 启动所有服务：进入部署目录，cd tools_sh; ./check_proc_monitor.sh 1，约1分钟后即可查看日志和监控点图表  
-13. 部署进程监控脚本到 crontab, cd tools_sh; ./add_crontab.sh，这样监控系统的服务如果异常退出可以通过 crontab 脚本自动拉起
+9. 启动 apache，使用内置账号：sadmin, 密码：sadmin 访问控制台，将系统服务器配置的IP 全部改为部署机IP  
+10. 启动所有服务：进入部署目录，cd tools_sh; ./check_proc_monitor.sh 1，约1分钟后即可查看日志和监控点图表  
+11. 部署进程监控脚本到 crontab, cd tools_sh; ./add_crontab.sh，这样监控系统的服务如果异常退出可以通过 crontab 脚本自动拉起
 
 ### 分布式部署说明
 关于分布部署可以登录演示版 web 控制台或者访问文档链接  
-在线文档：- [在线文档 http://xrkmonitor.com/monitor/dmt_open_doc.html](http://xrkmonitor.com/monitor/dmt_open_doc.html)，文档首次加载可能有点慢，请耐心等候
+在线文档：- [在线文档 http://xrkmonitor.com/monitor/dmt_open_doc.html](http://xrkmonitor.com/monitor/dmt_open_doc.html)  
 
 ## 联系我们
 QQ 群 699014295 (加群密码：xrkmonitor):   
