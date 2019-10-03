@@ -74,6 +74,7 @@
 
 // CGI 调试信息或者coredump 信息输出文件路径
 #define CGI_COREDUMP_DEBUG_OUTPUT_PATH "../htdocs/cgi_debug/" 
+#define CGI_UPLOAD_PATH "../htdocs/monitor/cgi_upload/"
 
 #define CGI_PATH "/cgi-bin/"
 #define DWZ_PATH "/monitor/"
@@ -216,6 +217,11 @@ typedef struct _CGIConfig
 	int16_t wPageCur;
 	SLogConfig *pShmConfig;
 	SLogAppInfo *pAppInfo;
+
+	// cgi upload
+	char szUploadDir[128];
+	int iUnLinkUpload;
+
 }CGIConfig;
 
 #endif

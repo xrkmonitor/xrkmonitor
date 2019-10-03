@@ -1,0 +1,71 @@
+<?cs if:config.result != 0 && config.result != 8 ?>
+<div style='margin-top:20px; margin-left:10px'>
+	<font color='red'>
+		批量导入自定义监控点失败<br /><br />
+		<?cs if:config.result == 1 ?>
+		CGI 请求参数非法
+		<?cs elif:config.result == 2 ?>
+		导入文件大小超过 5K 限制
+		<?cs elif:config.result == 3 ?>
+		服务器错误，请稍后再试
+		<?cs elif:config.result == 4 ?>
+		导入文件内容非法<br />
+		1、请确保监控点名称和监控点描述不超过90个字节<br />
+		2、导入文件编码为 utf8 或者 gbk<br />
+		3、导入文件每行格式为：<br />
+		<div style='margin-left:20px'>
+			监控点类型编号 数据类型ID 监控点名称  监控点描述<br />
+			示例：<br />
+			76 1 cpu使用率监控 批量导入 <br />
+			76 2 cpu22使用率 批量导入 <br />
+		</div><br />
+		非法内容：<?cs var:config.invalid_line ?> <br />
+		<?cs elif:config.result == 5 ?>
+		非法监控点类型：<?cs var:config.invalid_attr_type ?><br />
+		非法内容：<?cs var:config.invalid_line ?> <br />
+		<?cs elif:config.result == 6 ?>
+		非法监控点数据类型：<?cs var:config.invalid_attr_data_type ?><br />
+		非法内容：<?cs var:config.invalid_line ?> <br />
+		<?cs elif:config.result == 7 ?>
+		添加监控点数目超过限制：<?cs var:config.try_add_attr_count ?><br />
+		每次限制最多添加 100 个 <br />
+		<?cs else ?>
+		服务器错误，请稍后再试
+		<?cs /if ?>
+		导入文件名：<?cs var:config.add_file_name ?> <br />
+	</font>
+</div>
+<?cs else ?>
+<div style='padding-left:5px'>
+	<?cs if:config.result == 8 ?>
+	批量导入自定义监控点部分成功 <br />
+	尝试导入量：<?cs var:config.try_add_attr_count ?><br />
+	<?cs else ?>
+	批量导入自定义监控点成功 <br /> 
+	<?cs /if ?>
+	导入成功量：<?cs var:config.add_attr_count ?>，导入结果如下：<br />
+	---------------------------------------------------------------------
+	<table>
+		<thead>
+			<tr>
+				<th>监控点ID</th>
+				<th align='left'>监控点名称</th>
+				<th align='left'>监控点描述</th>
+			</tr>
+		</thead>
+		<tbody>
+		<?cs each:alist=AddInfo.adlist ?>
+		<tr>
+			<td><?cs var:alist.id ?></td>
+			<td><?cs var:alist.name  ?></td>
+			<td><?cs var:alist.desc ?></td>
+		</tr>
+		<?cs /each ?>
+		</tbody>
+	</table>
+</div>
+<script language="javascript" type="text/javascript">
+	setTimeout(function() { parent.navTab.reload() }, 1000);
+</script>
+<?cs /if ?>
+

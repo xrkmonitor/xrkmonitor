@@ -72,6 +72,8 @@
 					<li class="line">line</li>
 					<li><a class="edit" href="#" onclick="return daModAttr();"><span>修改</span></a></li>
 					<li class="line">line</li>
+					<li><a class="add" href="#" onclick="return daAddMultiNewAttr();"><span>批量导入</span></a></li>
+					<li class="line">line</li>
 				</ul>
 			</div>
 
@@ -249,6 +251,13 @@ function daClearSearch()
 	$("input[name=dam_attr_type_name]").val("");
 	$("input[name=da_keyword]").val("");
 	return false;
+}
+
+function daAddMultiNewAttr()
+{
+	var op = {"mask":true,"maxable":false,"height":480,"width":560};
+	$.pdialog.open("<?cs var:config.cgipath?>mt_slog_attr?action=init_add_multi_attr",
+		"da_dlg_add_multi_attr", "批量导入监控点", op); 
 }
 
 function daAddNewAttr()

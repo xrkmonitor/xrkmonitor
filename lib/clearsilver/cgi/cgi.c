@@ -1229,11 +1229,17 @@ NEOERR *cgi_output (CGI *cgi, STRING *str)
   if(do_output && output_f)
   {
 	  // 注意 cgi 必须要有读写 pszToFile 文件权限，否则写失败
-	  FILE *fp = fopen(output_f, "a+");
+	  FILE *fp = fopen(output_f, "w+");
 	  if(fp != NULL)
 	  {
 		  fwrite(str->buf, 1, str->len, fp);
-		  fprintf(fp, "\n");
+		  fprintf(fp, "\n\n");
+
+		  STRING str_dump;
+		  string_init(&str_dump);
+		  hdf_dump_str(cgi->hdf, "", 0, &str_dump);
+		  fprintf(fp, "%s\n", str_dump.buf);
+		  string_clear (&str_dump);
 		  fclose(fp);
 	  }
   }
@@ -1300,12 +1306,6 @@ NEOERR *cgi_display (CGI *cgi, const char *cs_file)
   CSPARSE *cs = NULL;
   STRING str;
 
-  // modify by rock
-  int do_dump = 0;
-  char *output_f = hdf_get_value (cgi->hdf, "Config.DebugOutputFile", NULL);
-  if (output_f != NULL && hdf_get_int_value(cgi->hdf, "Config.DebugDumpHdf", 0))
-	  do_dump = 1;
-
   string_init(&str);
   do
   {
@@ -1315,24 +1315,8 @@ NEOERR *cgi_display (CGI *cgi, const char *cs_file)
     if (err != STATUS_OK) break;
     err = cs_parse_file (cs, cs_file);
     if (err != STATUS_OK) break;
-
-	// modify by rock
-    if (do_dump)
-    {
-	  FILE *fp = fopen(output_f, "a+");
-	  if(fp != NULL) {
-		  STRING str_dump;
-		  string_init(&str_dump);
-		  hdf_dump_str(cgi->hdf, "", 0, &str_dump);
-		  cs_dump(cs, &str_dump, render_cb);
-		  fprintf(fp, "\n\n%s\n\n", str_dump.buf);
-		  string_clear (&str_dump);
-		  fclose(fp);
-	  }
-	}
     err = cs_render (cs, &str, render_cb);
     if (err != STATUS_OK) break;
-
     err = cgi_output(cgi, &str);
     if (err != STATUS_OK) break;
   } while (0);
@@ -1378,10 +1362,10 @@ int cgi_save_env_query_info(CGI *cgi, const char *pszToFile)
   const char *pvalue = NULL;
   FILE *fp = NULL;
 
-  if(0 == cgiwrap_save_env(pszToFile))
+  if(cgiwrap_save_env(pszToFile) < 0)
      return 0;
   
-  if(NULL == (fp=fopen(pszToFile, "w+")))
+  if(NULL == (fp=fopen(pszToFile, "a+")))
     return -1;
 
    x = 0;
@@ -1403,6 +1387,14 @@ int cgi_save_env_query_info(CGI *cgi, const char *pszToFile)
         fprintf(fp, "%s=%s\n", HTTPVars[x].env_name, pvalue);
     x++;
   }
+
+  // add by rock -- request hdf
+  STRING str;
+  string_init(&str); 
+  hdf_dump_str(cgi->hdf, "", 0, &str);
+  fprintf(fp, "\n\n%s\n", str.buf);
+  string_clear (&str);
+
   fclose(fp);
   return 0;
 }

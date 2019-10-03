@@ -5,7 +5,7 @@ TarF=${Name}.tar
 TarP=$(pwd)/${TarF}
 MD5F=slog_all_bin.md5
 SaveDir=tools_sh
-BackupDir=tools_sh/release_pack
+BackupDir=release_pack
 
 tar cvf ${TarP} cgi_fcgi/slog_flogin
 dirlist=`find . -maxdepth 1 -type d`
@@ -22,14 +22,20 @@ do
 	fi
 done
 
+cd tools_sh
+mkdir _tmp
+mv ../${TarF} _tmp
+cd _tmp
+tar -xf ${TarF}
+rm ${TarF}
+tar -czf ${TarF}.gz *
+
+cd ..
+cp _tmp/${TarF}.gz .
+rm -fr _tmp
+if [ ! -d ${BackupDir} ]; then
+	mkdir -p ${BackupDir}
+fi
 CurDate=`date "+%Y%m%d"`
-mkdir -p $BackupDir
-rm -f $BackupDir/$Name.tar.$CurDate
-tar zcvf $Name.tar.gz $Name.tar
-cp $Name.tar.gz $SaveDir
-cp $Name.tar.gz $BackupDir
-cp $Name.tar.gz $BackupDir/$Name.tar.gz.$CurDate
-rm $Name.tar
-rm $Name.tar.gz
-rm $MD5F
+cp ${TarF}.gz ${BackupDir}/${TarF}.gz.$CurDate
 

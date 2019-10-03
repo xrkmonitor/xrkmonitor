@@ -1467,7 +1467,6 @@ typedef struct
 #define MT_CLIENT_KEY_TIMEOUT_MIN 1440 // key 过期时间
 
 // 用于 slog_mtreport_server 与 mtreport_client 交互
-// 对应一个 slog_mtreport_client(dwUserMasterId,iMachineId 为key) 的相关交互信息
 typedef struct 
 {
 	uint32_t dwFirstHelloTime;

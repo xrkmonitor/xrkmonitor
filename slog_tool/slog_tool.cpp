@@ -537,11 +537,6 @@ void ShowTableInfo(int argc, char *argv[])
 	}
 }
 
-inline bool IsNeedCheckTable(const char *ptabName)
-{
-	return true;
-}
-
 int Init(const char *pFile = NULL)
 {
 	const char *pConfFile = NULL;
@@ -593,25 +588,25 @@ int Init(const char *pFile = NULL)
 		return SLOG_ERROR_LINE;
 	}
 
-	if(IsNeedCheckTable("mt_attr") && slog.InitAttrList() < 0)
+	if(slog.InitAttrList() < 0)
 	{
 		FATAL_LOG("init mt_attr shm failed !");
 		return SLOG_ERROR_LINE;
 	}
 
-	if(IsNeedCheckTable("mt_machine") && slog.InitMachineList() < 0)
+	if(slog.InitMachineList() < 0)
 	{
 		ERR_LOG("init machine list shm failed !");
 		return SLOG_ERROR_LINE;
 	}
 
-	if(IsNeedCheckTable("mt_view_bmach") && slog.InitMachineViewConfig() < 0)
+	if(slog.InitMachineViewConfig() < 0)
 	{
 		ERR_LOG("init InitwarnConfig info shm failed !");
 		return SLOG_ERROR_LINE;
 	}
 
-	if(IsNeedCheckTable("mt_view_battr") && slog.InitAttrViewConfig() < 0)
+	if(slog.InitAttrViewConfig() < 0)
 	{
 		ERR_LOG("init InitwarnConfig info shm failed !");
 		return SLOG_ERROR_LINE;

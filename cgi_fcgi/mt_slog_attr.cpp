@@ -48,6 +48,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <tconv_g2u.h>
 #include "Memcache.h"
 
 // 判断属性类型合法性
@@ -688,6 +689,175 @@ static int DealAddAttr()
 	return 0;
 }
 
+typedef struct
+{
+	int iAttrType;
+	int iDataType;
+	std::string strName;
+	std::string strDesc;
+	std::string strLine;
+}TAddMultiAttrInfo;
+
+static int DealAddMultiAttr()
+{
+	const char *pupFile = hdf_get_value(stConfig.cgi->hdf, "Query.ddama_up_file", NULL);
+	const char *ptmpFile = hdf_get_value(stConfig.cgi->hdf, "Query.ddama_up_file.FileName", NULL);
+	int iContLen = hdf_get_int_value(stConfig.cgi->hdf, "CGI.ContentLength", -1);
+	if(pupFile == NULL || ptmpFile == NULL || iContLen < 0) {
+		REQERR_LOG("invalid parameter |%p|%p|%d", pupFile, ptmpFile, iContLen);
+		if(pupFile != NULL)
+			hdf_set_value(stConfig.cgi->hdf, "config.add_file_name", pupFile);
+		return 1;
+	}
+
+	if(iContLen > 5*1024+512) {
+		REQERR_LOG("invalid content length:%d > %d", iContLen, 5*1024+512);
+		return 2;
+	}
+
+	hdf_set_value(stConfig.cgi->hdf, "config.add_file_name", pupFile);
+	FCGI_FILE *fp = FCGI_fopen(ptmpFile, "r");
+	if(fp == NULL) {
+		WARN_LOG("open temp file:%s failed", ptmpFile);
+		return 3;
+	}
+	char sLineBuf[300] = {0}, sAttrName[300], sAttrDesc[300];
+	char sLineStrUtf8[900] = {0}, *pLineStr = NULL;
+	int iLen = 0, iTryAddCount = 0, i = 0;
+	uint32_t tBufLen = 0;
+	TAddMultiAttrInfo stTmpInfo;
+	std::list<TAddMultiAttrInfo> stAttrInfoList;
+	while(FCGI_fgets(sLineBuf, sizeof(sLineBuf), fp) != NULL)
+	{
+		iLen = (int)strlen(sLineBuf);
+
+		// skip 空行
+		for(i=0; i < iLen; i++) {
+			if(isspace(sLineBuf[i]) || sLineBuf[i] == '\r' || sLineBuf[i] == '\n')
+				continue;
+			break;
+		}
+		if(i >= iLen)
+			continue;
+
+		if(IsUtf8Str(sLineBuf) || !IsGbkStr(sLineBuf)) {
+			pLineStr = sLineBuf;
+		}
+		else {
+			tBufLen = sizeof(sLineStrUtf8);
+			tconv_gbk2utf8(sLineBuf, strlen(sLineBuf), sLineStrUtf8, &tBufLen);
+			pLineStr = sLineStrUtf8;
+			iLen = tBufLen;
+			DEBUG_LOG("change gbk to utf8:%s", pLineStr);
+		}
+
+		if(pLineStr[iLen-1] != '\n') {
+			REQERR_LOG("invalid line length, line:%s", pLineStr);
+			FCGI_fclose(fp);
+			hdf_set_value(stConfig.cgi->hdf, "config.invalid_line", pLineStr);
+			return 4;
+		}
+		if(sscanf(pLineStr, "%d%d%s%s", 
+			&stTmpInfo.iAttrType, &stTmpInfo.iDataType, sAttrName, sAttrDesc) != 4)
+		{
+			REQERR_LOG("invalid line info, line:%s", pLineStr);
+			FCGI_fclose(fp);
+			hdf_set_value(stConfig.cgi->hdf, "config.invalid_line", pLineStr);
+			return 4;
+		}
+
+		if(strlen(sAttrName) > 90 || strlen(sAttrDesc) > 90)
+		{
+			REQERR_LOG("invalid attr name/desc, line:%s", pLineStr);
+			FCGI_fclose(fp);
+			hdf_set_value(stConfig.cgi->hdf, "config.invalid_line", pLineStr);
+			return 4;
+		}
+
+		if(!slog.GetAttrTypeInfo(stTmpInfo.iAttrType, NULL))
+		{
+			REQERR_LOG("invalid attrtype:%d, line:%s", stTmpInfo.iAttrType, pLineStr);
+			FCGI_fclose(fp);
+			hdf_set_int_value(stConfig.cgi->hdf, "config.invalid_attr_type", stTmpInfo.iAttrType);
+			hdf_set_value(stConfig.cgi->hdf, "config.invalid_line", pLineStr);
+			return 5;
+		}
+
+		if(INVALID_ATTR_DATA_TYPE(stTmpInfo.iDataType))
+		{
+			REQERR_LOG("invalid attr data type:%d, line:%s", stTmpInfo.iDataType, pLineStr);
+			FCGI_fclose(fp);
+			hdf_set_int_value(stConfig.cgi->hdf, "config.invalid_attr_data_type", stTmpInfo.iDataType);
+			hdf_set_value(stConfig.cgi->hdf, "config.invalid_line", pLineStr);
+			return 6;
+		}
+
+		stTmpInfo.strName = sAttrName;
+		stTmpInfo.strDesc = sAttrDesc;
+		stTmpInfo.strLine = pLineStr;
+		stAttrInfoList.push_back(stTmpInfo);
+		iTryAddCount++;
+	}
+	FCGI_fclose(fp);
+
+	if(iTryAddCount > 100)
+	{
+		REQERR_LOG("over limit:%d", iTryAddCount);
+		hdf_set_int_value(stConfig.cgi->hdf, "config.try_add_attr_count", iTryAddCount);
+		return 7;
+	}
+
+	// 批量导入
+	IM_SQL_PARA* ppara = NULL;
+	std::list<TAddMultiAttrInfo>::iterator it = stAttrInfoList.begin();
+	std::string strSql;
+	Query & qu = *stConfig.qu;
+	int iAddAttrCount = 0, iAddAttrId = 0;
+	char hdf_pex[32], hdf_name[64];
+	for(; it != stAttrInfoList.end(); it++)
+	{
+		InitParameter(&ppara);
+		AddParameter(&ppara, "attr_type", it->iAttrType, "DB_CAL");
+		AddParameter(&ppara, "data_type", it->iDataType, "DB_CAL");
+		AddParameter(&ppara, "attr_name", it->strName.c_str(), NULL);
+		AddParameter(&ppara, "attr_desc", it->strDesc.c_str(), NULL);
+		AddParameter(&ppara, "user_mod_id", stConfig.stUser.puser_info->iUserId, "DB_CAL");
+		AddParameter(&ppara, "user_add", stConfig.stUser.puser, NULL);
+		AddParameter(&ppara, "user_add_id", stConfig.stUser.puser_info->iUserId, "DB_CAL");
+		strSql = "insert into mt_attr";
+		JoinParameter_Insert(&strSql, qu.GetMysql(), ppara);
+		ReleaseParameter(&ppara);
+		if(!qu.execute(strSql))
+		{
+			ERR_LOG("execute sql:%s failed, msg:%s", strSql.c_str(), qu.GetError().c_str());
+			hdf_set_value(stConfig.cgi->hdf, "config.invalid_line", it->strLine.c_str());
+			break;
+		}
+		iAddAttrId = qu.insert_id();
+		sprintf(hdf_pex, "AddInfo.adlist.%d", iAddAttrCount);
+		sprintf(hdf_name, "%s.id", hdf_pex);
+		hdf_set_int_value(stConfig.cgi->hdf, hdf_name, iAddAttrId);
+		sprintf(hdf_name, "%s.name", hdf_pex);
+		hdf_set_value(stConfig.cgi->hdf, hdf_name, it->strName.c_str());
+		sprintf(hdf_name, "%s.desc", hdf_pex);
+		hdf_set_value(stConfig.cgi->hdf, hdf_name, it->strDesc.c_str());
+		iAddAttrCount++;
+		DEBUG_LOG("add multi attr:%d, new attr id:%d, name:%s", iAddAttrCount, iAddAttrId, it->strName.c_str());
+	}
+
+	hdf_set_int_value(stConfig.cgi->hdf, "config.try_add_attr_count", iTryAddCount);
+	hdf_set_int_value(stConfig.cgi->hdf, "config.add_attr_count", iAddAttrCount);
+	if(it != stAttrInfoList.end())
+		return 8;
+
+	char sSaveFile[64+PATH_MAX*2] = {0};
+	snprintf(sSaveFile, sizeof(sSaveFile), "cp %s %s/%s.%d.%d", ptmpFile, 
+		stConfig.szUploadDir, pupFile, stConfig.stUser.puser_info->iUserId, stConfig.dwCurTime);
+	system(sSaveFile);
+	INFO_LOG("add multi attr count:%d, up file info:%s", iAddAttrCount, sSaveFile);
+	return 0;
+}
+
 static int DealAttrSearch()
 {
 	AttrSearchInfo stInfo;
@@ -832,7 +1002,6 @@ int main(int argc, char **argv, char **envp)
 		if(InitFastCgi(stConfig, stConfig.szDebugPath) < 0)
 			break;
 
-		// 
 		iRet=AfterCgiRequestInit(stConfig);
 		if(iRet == 0)
 			continue;
@@ -885,6 +1054,14 @@ int main(int argc, char **argv, char **envp)
 			iRet = DealAttrSearch();
 		else if(!strcmp(pAction, "add_attr"))
 			iRet = DealAddAttr();
+		else if(!strcmp(pAction, "init_add_multi_attr"))
+			iRet = 0;
+		else if(!strcmp(pAction, "add_multi_attr_tip"))
+			iRet = 0;
+		else if(!strcmp(pAction, "add_multi_attr")) {
+			iRet = DealAddMultiAttr();
+			hdf_set_int_value(stConfig.cgi->hdf, "config.result", iRet);
+		}
 		else if(!strcmp(pAction, "mod_attr"))
 			iRet = DealModAttr();
 		else if(!strcmp(pAction, "save_new_attr"))
@@ -916,6 +1093,12 @@ int main(int argc, char **argv, char **envp)
 			pcsTemplate = "dmt_attr.html";
 		else if(!strcmp(pAction, "add_attr") || !strcmp(pAction, "mod_attr"))
 			pcsTemplate = "dmt_attr_manage.html";
+		else if(!strcmp(pAction, "init_add_multi_attr"))
+			pcsTemplate = "dmt_dlg_add_multi_attr.html";
+		else if(!strcmp(pAction, "add_multi_attr_tip"))
+			pcsTemplate = "dmt_dlg_add_multi_tip_info.html";
+		else if(!strcmp(pAction, "add_multi_attr"))
+			pcsTemplate = "dmt_add_multi_attr_result.html";
 		else if(!strcmp(pAction, "list"))
 			pcsTemplate = "dmt_attr_type.html";
 		else if(!strcmp(pAction, "lookUpAttrType") || !strcmp(pAction, "lookUpAttrType4Add"))

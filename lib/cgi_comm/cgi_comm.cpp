@@ -125,11 +125,10 @@ int show_errpage(const char * cs_path, const char * err_msg, CGIConfig &stConfig
 	else
 		cgi = stConfig.cgi;
 
-	if(stConfig.iEnableCgiDebug == DEBUG_MAGIC) {
+	if(stConfig.iEnableCgiDebug == DEBUG_MAGIC)
 		hdf_set_int_value(cgi->hdf, "config.debug", 1);
-		if(stConfig.iDebugDumpHdf)
-			hdf_set_int_value(cgi->hdf, "Config.DebugDumpHdf", 1);
-	}
+	else
+		hdf_set_int_value(cgi->hdf, "config.debug", 0);
 
 	if(stConfig.err != STATUS_OK)
 		WriteCgiErrorLog(stConfig.err);
@@ -208,35 +207,6 @@ int show_errpage(const char * cs_path, const char * err_msg, CGIConfig &stConfig
 	}
     cgi_destroy(&stConfig.cgi);
     return 0;
-}
-
-static void SaveCgiRequest(CGIConfig &myCfg)
-{
-	char sBuf[256] = {0};
-	char sCreateDirCmd[256] = {0};
-	snprintf(sCreateDirCmd, MYSIZEOF(sCreateDirCmd), "mkdir -p %scgi_request", myCfg.szDebugPath); 
-	system(sCreateDirCmd);
-
-	snprintf(sBuf, MYSIZEOF(sBuf)-1, "%scgi_request/%s_req", myCfg.szDebugPath, myCfg.pszCgiName);
-	int iRet = cgi_save_env_query_info(myCfg.cgi, sBuf);
-	if(iRet < 0)
-		ERR_LOG("save requre info to file:%s failed, ret:%d, msg:%s", sBuf, iRet, strerror(errno));
-	else
-		INFO_LOG("save requre info to file:%s success", sBuf);
-}
-
-void SaveCgiOutput(STRING & str)
-{
-	FILE *fp = fopen("/tmp/cgiout", "w+");
-	if(fp != NULL)
-	{
-		fwrite(str.buf, 1, str.len, fp);
-		fclose(fp);
-	}
-	else
-	{
-		ERR_LOG("SaveCgiOutput failed, msg:%s", strerror(errno));
-	}
 }
 
 int GetRecordTotal(const char *szRecordDest, CGIConfig &stConfig)
@@ -936,8 +906,6 @@ NEOERR *my_cgi_display (CGI *cgi, const char *cs_file, bool bSaveOut)
     		if (err != STATUS_OK) break;
   	} while (0);
 
-	if(bSaveOut)
-		SaveCgiOutput(str);
   	cs_destroy(&cs);
   	string_clear (&str);
   	return nerr_pass(err);
@@ -996,6 +964,8 @@ void InitCgiDebug(CGIConfig &myCfg)
 	snprintf(sCreateDirCmd, MYSIZEOF(sCreateDirCmd), "mkdir -p %s%s", myCfg.szDebugPath, myCfg.pszCgiName);
 	system(sCreateDirCmd);
 
+	hdf_set_int_value(myCfg.cgi->hdf, "Config.DebugEnabled", 1);
+
 	struct tm stTm;
 	time_t tmnew = time(NULL);
 	localtime_r(&tmnew, &stTm);
@@ -1042,12 +1012,13 @@ int InitFastCgiStart(CGIConfig &myConf)
 	   "CS_PATH", CFG_STRING, myConf.szCsPath, CS_PATH, MYSIZEOF(myConf.szCsPath),
 	   "DOC_PATH", CFG_STRING, myConf.szDocPath, DOC_PATH, MYSIZEOF(myConf.szDocPath),
 	   "ENABLE_CGI_DEBUG", CFG_INT, &myConf.iEnableCgiDebug, 0,
-	   "DEBUG_DUMP_HDF", CFG_INT, &myConf.iDebugDumpHdf, 0,
 	   "ENABLE_CGI_PAUSE", CFG_INT, &myConf.iEnableCgiPause, 0,
 	   "DISABLE_VMEM_CACHE", CFG_INT, &myConf.iDisableVmemCache, 0,
 	   "DELETE_RECORD_STATUS", CFG_INT, &myConf.iDeleteStatus, 1,
 	   "XRKMONITOR_URL", CFG_STRING, myConf.szXrkmonitorSiteAddr, "http://xrkmonitor.com", MYSIZEOF(myConf.szXrkmonitorSiteAddr),
 	   "SLOW_CGI_TIME_MS", CFG_INT, &myConf.iCgiSlowRunMs, 100,
+	   "UPLOAD_UNLINK", CFG_INT, &myConf.iUnLinkUpload, 0,
+	   "UPLOAD_DIR", CFG_STRING, myConf.szUploadDir, CGI_UPLOAD_PATH, MYSIZEOF(myConf.szUploadDir),
 		NULL) < 0){
 		ERR_LOG("loadconfig failed, from file:%s", myConf.szConfigFile);
 		return SLOG_ERROR_LINE;
@@ -1110,11 +1081,6 @@ int InitFastCgi(CGIConfig &myCfg, const char *pszLogPath)
 		WriteCgiErrorLog(myCfg.err);
 		return SLOG_ERROR_LINE;
 	}
-	if(myCfg.iEnableCgiDebug == DEBUG_MAGIC) {
-		hdf_set_int_value(hdf, "Config.DebugEnabled", 1);
-		if(myCfg.iDebugDumpHdf)
-			hdf_set_int_value(hdf, "Config.DebugDumpHdf", 1);
-	}
 
 	if(myCfg.cgi != NULL) {
 		cgi_destroy(&myCfg.cgi);
@@ -1126,13 +1092,6 @@ int InitFastCgi(CGIConfig &myCfg, const char *pszLogPath)
 		WriteCgiErrorLog(myCfg.err);
 		return -1;
 	}
-	if((myCfg.err=cgi_parse(myCfg.cgi)) != STATUS_OK) {
-		FATAL_LOG("cgi_parse failed !");
-		WriteCgiErrorLog(myCfg.err);
-		return -2;
-	}
-
-	myCfg.remote = hdf_get_value(myCfg.cgi->hdf, "CGI.RemoteAddress", NULL); 
 
 	// 关闭运行时间的统计输出 (json 格式响应需要)
 	hdf_set_int_value(myCfg.cgi->hdf, "Config.TimeFooter", 0);
@@ -1140,12 +1099,19 @@ int InitFastCgi(CGIConfig &myCfg, const char *pszLogPath)
 	hdf_set_value(myCfg.cgi->hdf, "config.cgipath", myCfg.szCgiPath); 
 	hdf_set_value(myCfg.cgi->hdf, "config.cspath", myCfg.szCsPath); 
 	hdf_set_value(myCfg.cgi->hdf, "config.docpath", myCfg.szDocPath); 
+	hdf_set_int_value(myCfg.cgi->hdf, "Config.Upload.Unlink", myCfg.iUnLinkUpload);
+	hdf_set_value(myCfg.cgi->hdf, "Config.Upload.TmpDir", myCfg.szUploadDir);
+
+	if((myCfg.err=cgi_parse(myCfg.cgi)) != STATUS_OK) {
+		FATAL_LOG("cgi_parse failed !");
+		WriteCgiErrorLog(myCfg.err);
+		return -2;
+	}
+
+	myCfg.remote = hdf_get_value(myCfg.cgi->hdf, "CGI.RemoteAddress", NULL); 
 	if(myCfg.iEnableCgiDebug == DEBUG_MAGIC)
 	{
 		InitCgiDebug(myCfg);
-		SaveCgiRequest(myCfg);
-		if(myCfg.iDebugDumpHdf)
-			hdf_set_int_value(myCfg.cgi->hdf, "Config.DebugDumpHdf", 1);
 	}
 
 	if(myCfg.iEnableCgiPause == DEBUG_PAUSE_MAGIC)
