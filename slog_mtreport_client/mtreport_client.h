@@ -33,8 +33,8 @@
 #ifndef _MTREPORT_CLIENT_H_
 #define _MTREPORT_CLIENT_H_  (1)
 
-#ifdef GLIBC_LOWER_VER
-#define PRIu64 "llu"
+#ifndef PRIu64 
+#define PRIu64 "lu"
 #endif 
 
 #include <sys/socket.h>
@@ -52,12 +52,6 @@
 #include "mt_report.h"
 #include "mtreport_protoc.h"
 #include "mtreport_basic_pkg.h"
-#include "cpu.h"
-#include "mem.h"
-#include "disk.h"
-#include "net.h"
-
-//#define AGENT_PLUS 1
 
 #ifndef MYSIZEOF
 #define MYSIZEOF (unsigned)sizeof
@@ -121,17 +115,17 @@
 
 bool LogFreqCheck();
 
-#define ERROR_LOG(fmt, ...) do { if((32&stConfig.iLocalLogType) && stConfig.fpLogFile != NULL) fprintf(stConfig.fpLogFile, "[%s] err: (%s:%s:%d) "fmt"\n", stConfig.szTimeCur, __FILE__, __FUNCTION__, __LINE__, ##__VA_ARGS__); } while(0)                        
+#define ERROR_LOG(fmt, ...) do { if((32&stConfig.iLocalLogType) && stConfig.fpLogFile != NULL) fprintf(stConfig.fpLogFile, "[%s] err: (%s:%s:%d) "fmt"\n", stConfig.szTimeCur, __FILE__, __FUNCTION__, __LINE__, ##__VA_ARGS__); fflush(stConfig.fpLogFile); } while(0)                        
 
-#define FATAL_LOG(fmt, ...) do { if((64&stConfig.iLocalLogType) && stConfig.fpLogFile != NULL) fprintf(stConfig.fpLogFile, "[%s] fatal: (%s:%s:%d) "fmt"\n", stConfig.szTimeCur, __FILE__, __FUNCTION__, __LINE__, ##__VA_ARGS__); } while(0)                        
+#define FATAL_LOG(fmt, ...) do { if((64&stConfig.iLocalLogType) && stConfig.fpLogFile != NULL) fprintf(stConfig.fpLogFile, "[%s] fatal: (%s:%s:%d) "fmt"\n", stConfig.szTimeCur, __FILE__, __FUNCTION__, __LINE__, ##__VA_ARGS__); fflush(stConfig.fpLogFile); } while(0)                        
 
-#define REQERR_LOG(fmt, ...) do { if(LogFreqCheck() && (16&stConfig.iLocalLogType) && stConfig.fpLogFile != NULL) fprintf(stConfig.fpLogFile, "[%s] reqerr: (%s:%s:%d) "fmt"\n", stConfig.szTimeCur, __FILE__, __FUNCTION__, __LINE__, ##__VA_ARGS__); } while(0)                        
+#define REQERR_LOG(fmt, ...) do { if(LogFreqCheck() && (16&stConfig.iLocalLogType) && stConfig.fpLogFile != NULL) fprintf(stConfig.fpLogFile, "[%s] reqerr: (%s:%s:%d) "fmt"\n", stConfig.szTimeCur, __FILE__, __FUNCTION__, __LINE__, ##__VA_ARGS__); fflush(stConfig.fpLogFile); } while(0)                        
 
-#define WARN_LOG(fmt, ...) do { if(LogFreqCheck() && (8&stConfig.iLocalLogType) && stConfig.fpLogFile != NULL) fprintf(stConfig.fpLogFile, "[%s] warn: (%s:%s:%d) "fmt"\n", stConfig.szTimeCur, __FILE__, __FUNCTION__, __LINE__, ##__VA_ARGS__); } while(0)                        
+#define WARN_LOG(fmt, ...) do { if(LogFreqCheck() && (8&stConfig.iLocalLogType) && stConfig.fpLogFile != NULL) fprintf(stConfig.fpLogFile, "[%s] warn: (%s:%s:%d) "fmt"\n", stConfig.szTimeCur, __FILE__, __FUNCTION__, __LINE__, ##__VA_ARGS__); fflush(stConfig.fpLogFile); } while(0)                        
 
-#define INFO_LOG(fmt, ...) do { if(LogFreqCheck() && (4&stConfig.iLocalLogType) && stConfig.fpLogFile != NULL) fprintf(stConfig.fpLogFile, "[%s] info: (%s:%s:%d) "fmt"\n", stConfig.szTimeCur, __FILE__, __FUNCTION__, __LINE__, ##__VA_ARGS__); } while(0)                        
+#define INFO_LOG(fmt, ...) do { if(LogFreqCheck() && (4&stConfig.iLocalLogType) && stConfig.fpLogFile != NULL) fprintf(stConfig.fpLogFile, "[%s] info: (%s:%s:%d) "fmt"\n", stConfig.szTimeCur, __FILE__, __FUNCTION__, __LINE__, ##__VA_ARGS__); fflush(stConfig.fpLogFile); } while(0)                        
 
-#define DEBUG_LOG(fmt, ...) do { if(LogFreqCheck() && (2&stConfig.iLocalLogType) && stConfig.fpLogFile != NULL) fprintf(stConfig.fpLogFile, "[%s] debug: (%s:%s:%d) "fmt"\n", stConfig.szTimeCur, __FILE__, __FUNCTION__, __LINE__, ##__VA_ARGS__); } while(0)                        
+#define DEBUG_LOG(fmt, ...) do { if(LogFreqCheck() && (2&stConfig.iLocalLogType) && stConfig.fpLogFile != NULL) fprintf(stConfig.fpLogFile, "[%s] debug: (%s:%s:%d) "fmt"\n", stConfig.szTimeCur, __FILE__, __FUNCTION__, __LINE__, ##__VA_ARGS__); fflush(stConfig.fpLogFile); } while(0)                        
 
 #define MTREPORT_CONFIG "./slog_mtreport_client.conf"
 #define MTREPORT_CLIENT_CONFIG_ID 57 // monitor 系统中 mtreport_client 的log配置id
@@ -204,6 +198,13 @@ typedef struct
 	char sSessBuf[TIMER_DATA_MAX_LENGTH+sizeof(PKGSESSION)];
 	unsigned uiSessDataLen;
 
+	// 当前工作目录
+	char szCurPath[256];
+
+	// 插件目录
+	char szPlusPath[256];
+	std::map<std::string, void *> mapPlus;
+
 	// 创建新数据包之前需要设置以下值 使用 sSessBuf
 	char *pPkg;
 	int iPkgLen;
@@ -254,9 +255,6 @@ typedef struct
 	int iAttrSocketIndex;
 	int iConfigSocketIndex;
 	int iLogSocketIndex;
-	TcpuUse stCpuUse;
-	TMemInfo stMemInfo;
-	int iMemMaxUsePer;
 
 	// 重启进程更新全部配置标记
 	uint32_t dwRestartFlag;

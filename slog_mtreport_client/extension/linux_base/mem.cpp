@@ -24,13 +24,11 @@
    云版本为开源版提供永久免费告警通道支持，告警通道支持短信、邮件、
    微信等多种方式，欢迎使用
 
-   模块 slog_mtreport_client 功能:
-        用于上报除监控系统本身产生的监控点数据、日志，为减少部署上的依赖
-		未引入任何第三方组件
+   内置监控插件 linux_base 功能:
+   		使用监控系统 api 实现 linux 基础信息监控上报, 包括 cpu/内存/磁盘/网络
 
 ****/
 
-#define __STDC_FORMAT_MACROS
 #include <stdlib.h>
 #include <inttypes.h>
 #include <errno.h>
@@ -38,27 +36,39 @@
 #include <string.h>
 #include <stdio.h>
 #include <sys/shm.h>
-#include <math.h>
 #include "mem.h"
 
-int GetDiskInfo(uint64_t & qwTotalSpace, uint64_t & qwTotalUse, uint32_t &maxUsePer)
+int GetMemInfo(TMemInfo &mem)
 {
-	FILE *fp = popen("df -P -l -x iso9660 -x iso9600 | awk \'{if(NR!=1 && NF==6) print $3\" \"$4 }\'", "r");
+	FILE *fp = popen("/bin/cat /proc/meminfo | awk \'{if(NF==3) print $0 }\'", "r");
 	if(fp == NULL) {
 		return -1;
 	}
 
-	qwTotalSpace = 0;
-	qwTotalUse = 0;
-	maxUsePer = 0;
-	uint64_t qwRemain=0, qwUse=0;
-	uint32_t dwUsePer = 0;
-	while( fscanf(fp, "%" PRIu64 " %" PRIu64 , &qwUse, &qwRemain) == 2) {
-		qwTotalSpace += qwRemain+qwUse;
-		qwTotalUse += qwUse;
-		dwUsePer = (uint32_t)ceil(qwUse*100.0/(qwRemain+qwUse));
-		if(dwUsePer > maxUsePer)
-			maxUsePer = dwUsePer;
+	char sMemField[64] = {0}, sMemUnit[16] = {0};
+	uint32_t dwValue = 0;
+	while( fscanf(fp, "%s%u%s", sMemField, &dwValue, sMemUnit) == 3) {
+		if(0 == strcasecmp(sMemField, "MemTotal:"))
+		{
+			mem.dwMemTotal = dwValue;
+			strncpy(mem.szUnit, sMemUnit, sizeof(mem.szUnit));
+		}
+		else if(0 == strcasecmp(sMemField, "MemFree:"))
+			mem.dwMemFree = dwValue;
+		else if(0 == strcasecmp(sMemField, "Buffers:"))
+			mem.dwBuffers = dwValue;
+		else if(0 == strcasecmp(sMemField, "Cached:"))
+			mem.dwCached = dwValue;
+		else if(0 == strcasecmp(sMemField, "MemAvailable:"))
+			mem.dwMemAvailable = dwValue;
+		else if(0 == strcasecmp(sMemField, "SwapTotal:"))
+			mem.dwSwapTotal = dwValue;
+		else if(0 == strcasecmp(sMemField, "SwapFree:"))
+			mem.dwSwapFree = dwValue;
+		else if(0 == strcasecmp(sMemField, "Dirty:"))
+			mem.dwDirty = dwValue;
+		else if(0 == strcasecmp(sMemField, "Mapped:"))
+			mem.dwMapped = dwValue;
 	}
 	pclose(fp);
 	return 0;

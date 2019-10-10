@@ -24,29 +24,15 @@
    云版本为开源版提供永久免费告警通道支持，告警通道支持短信、邮件、
    微信等多种方式，欢迎使用
 
-   模块 slog_mtreport_client 功能:
-        用于上报除监控系统本身产生的监控点数据、日志，为减少部署上的依赖
-		未引入任何第三方组件
+   内置监控插件 linux_base 功能:
+   		使用监控系统 api 实现 linux 基础信息监控上报, 包括 cpu/内存/磁盘/网络
 
 ****/
 
-#ifndef __MTREPORT_MEM_H__
-#define __MTREPORT_MEM_H__ 1
+#ifndef __MTREPORT_DISK_H__
+#define __MTREPORT_DISK_H__ 1
 
-typedef struct {
-	uint32_t dwMemTotal;
-	uint32_t dwMemFree;
-	uint32_t dwBuffers;
-	uint32_t dwCached;
-	uint32_t dwMemAvailable;
-	uint32_t dwSwapTotal;
-	uint32_t dwSwapFree;
-	uint32_t dwDirty;
-	uint32_t dwMapped;
-	char szUnit[16];
-}TMemInfo;
-
-int GetMemInfo(TMemInfo &mem);
+int GetDiskInfo(uint64_t & qwTotalSpace, uint64_t & qwTotalUse, uint32_t &maxUsePer);
 
 #endif
 

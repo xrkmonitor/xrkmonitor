@@ -67,20 +67,54 @@ extern MtReport g_mtReport;
 std::string g_strCmpTime = __DATE__ " " __TIME__; 
 CONFIG stConfig;
 
-const int g_cpuAttr[] = {163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176,
-	177, 178, 179 };
-const int g_iMemUseAttr = 183;
-const int g_iDiskUseTotalAttr = 184;
-const int g_iDiskUseMaxAttr = 189;
-const int g_iDiskUseOverPer95 = 188;
-const int g_iDiskUseOverPer90 = 187;
-const int g_iDiskUseOverPer80 = 185;
-const int g_iDiskUseOverPer70 = 186;
+typedef struct _TPlusFun {
+	// 插件初始化函数，成功返回 0， 非 0 表示失败
+	int (*pSlogPlusInit)();
+	// agent 会定时调用 SlogPlusOnLoop， 插件可在该函数中实现上报逻辑
+	void (*pSlogPlusOnLoop)(uint32_t dwTimeNow);
+	// agent 程序退出时，调用该函数，可用于插件资源释放
+	void (*pSlogPlusEnd)();
+
+	void *pHandle;
+	int iPlusIndex;
+	std::string strPlusPath;
+
+	_TPlusFun() {
+		pSlogPlusInit = NULL;
+		pSlogPlusOnLoop = NULL;
+		pSlogPlusEnd = NULL;
+		pHandle = NULL;
+		iPlusIndex = -1;
+	}
+}TPlusFun;
 
 int InitReportLog();
-int InitBaseMonitor();
 int InitReportAttr();
 int OnEventTimer(TimerNode *pNodeShm, unsigned uiDataLen, char *pData);
+
+inline int BeforeEnterPlus(TPlusFun *pfun)
+{
+	// 进入插件目录
+	if(chdir(pfun->strPlusPath.c_str()) != 0) {
+		ERROR_LOG("change to plus dir:%s failed, msg:%s", pfun->strPlusPath.c_str(), strerror(errno));
+		return MTREPORT_ERROR_LINE;
+	}
+
+	if(pfun->iPlusIndex < 0 || pfun->iPlusIndex >= MAX_INNER_PLUS_COUNT) {
+		ERROR_LOG("invalid plus index:%d", pfun->iPlusIndex);
+		return MTREPORT_ERROR_LINE;
+	}
+	g_mtReport.iPlusIndex = pfun->iPlusIndex;
+	return 0;
+}
+
+inline void AfterEnterPlus(TPlusFun *pfun)
+{
+	// 重置工作目录
+	if(chdir(stConfig.szCurPath) != 0) {
+		WARN_LOG("reset chdir:%s failed, msg:%s", stConfig.szCurPath, strerror(errno));
+	}
+}
 
 void OnSelectTimeout(time_t uiTime)
 {
@@ -139,12 +173,6 @@ void OnMtreportPkg(struct MtSocket *psock, char * sBuf, int iLen, time_t uiTime)
 
 				if((iRet=InitReportAttr()) < 0) {
 					FATAL_LOG("init report attr failed , ret:%d", iRet);
-					stConfig.pReportShm->cIsAgentRun = 2;
-					return ;
-				}
-
-				if((iRet=InitBaseMonitor()) < 0) {
-					FATAL_LOG("init base monitor failed , ret:%d", iRet);
 					stConfig.pReportShm->cIsAgentRun = 2;
 					return ;
 				}
@@ -333,6 +361,7 @@ static int Init()
 		"SERVER_PORT", CFG_INT, &stConfig.iSrvPort, 27000,
 		"LOG_FREQ_LIMIT_PER_SEC", CFG_INT, &stConfig.iLogLimitPerSec, 5,
 		"AGENT_ACCESS_KEY", CFG_STRING, stConfig.szUserKey, "", MYSIZEOF(stConfig.szUserKey), 
+		"PLUS_PATH", CFG_STRING, stConfig.szPlusPath, "./xrkmonitor_plus", MYSIZEOF(stConfig.szPlusPath),
 		"MTREPORT_SHM_KEY", CFG_INT, &iCfgShmKey, MT_REPORT_DEF_SHM_KEY,
 		"AGENT_CLIENT_IP", CFG_STRING, stConfig.szLocalIP, "", MYSIZEOF(stConfig.szLocalIP),
 		"CUST_ATTR_SRV_IP", CFG_STRING, stConfig.szCustAttrSrvIp, "", MYSIZEOF(stConfig.szCustAttrSrvIp),
@@ -376,18 +405,11 @@ static int Init()
 		return MTREPORT_ERROR_LINE;
 	}
 
-	INFO_LOG("%s shm ok -- size:%u", (iRet==1 ? "create" : "init"), MYSIZEOF(MTREPORT_SHM)); 
+	INFO_LOG("%s shm ok -- size:%u, current path:%s",
+		(iRet==1 ? "create" : "init"), MYSIZEOF(MTREPORT_SHM), stConfig.szCurPath); 
 	INFO_LOG("read config - server:%s:%d ", stConfig.szSrvIp_master, stConfig.iSrvPort);
 	INFO_LOG("local ip:%s, config:%s, cmp time:%s", pip, stConfig.szLocalIP, g_strCmpTime.c_str());
 
-	if(InitGetCpuUse() < 0)
-	{
-		FATAL_LOG("InitGetCpuUse failed !");
-		return MTREPORT_ERROR_LINE;
-	}
-	memset(&(stConfig.stCpuUse), 0, sizeof(stConfig.stCpuUse));
-
-	InitGetNet();
 	return 0;
 }
 
@@ -1040,113 +1062,6 @@ int EnvSendAppLogToServer(TAppLogRead &stAppLog)
 	return 1;
 }
 
-void WriteCpuUse()
-{
-	int iCount = sizeof(g_cpuAttr)/sizeof(int);
-	if(iCount > stConfig.stCpuUse.iCpuCount)
-		iCount = stConfig.stCpuUse.iCpuCount;
-	int iValue = 0;
-	DEBUG_LOG("write use cpu count:%d", iCount);
-	for(int i=0; i < iCount; i++)
-	{
-		iValue = stConfig.stCpuUse.iCpuUse[i]/10;
-		if(stConfig.stCpuUse.iCpuUse[i]%10 > 0)
-			iValue++;
-		DEBUG_LOG("get cpu%d use, attr:%d, use:%%%d(%d)",
-			i, g_cpuAttr[i], iValue, stConfig.stCpuUse.iCpuUse[i]);
-		stConfig.stCpuUse.iCpuUse[i] = 0;
-		MtReport_Attr_Set(g_cpuAttr[i], iValue);
-		if(iCount <= 2)
-			break;
-	}
-	stConfig.stCpuUse.iCpuCount = 0;
-}
-
-void WriteDiskInfo()
-{
-	uint64_t qwTotalSpace = 0, qwTotalUse = 0;
-	uint32_t maxUsePer = 0;
-	if(GetDiskInfo(qwTotalSpace, qwTotalUse, maxUsePer) < 0)
-	{
-		WARN_LOG("GetDiskInfo failed");
-		return;
-	}
-
-	uint32_t dwUsePerTotal = (uint32_t)ceil((qwTotalUse*100.0/qwTotalSpace));
-	MtReport_Attr_Set(g_iDiskUseTotalAttr, dwUsePerTotal);
-	MtReport_Attr_Set(g_iDiskUseMaxAttr, maxUsePer);
-	if(maxUsePer > 95)
-		MtReport_Attr_Add(g_iDiskUseOverPer95, 1);
-	else if(maxUsePer > 90)
-		MtReport_Attr_Add(g_iDiskUseOverPer90, 1);
-	else if(maxUsePer > 80)
-		MtReport_Attr_Add(g_iDiskUseOverPer80, 1);
-	else if(maxUsePer > 70)
-		MtReport_Attr_Add(g_iDiskUseOverPer70, 1);
-	INFO_LOG("get disk use total percent:%%%u, max use percent:%%%u", dwUsePerTotal, maxUsePer);
-}
-
-void GetMemUse()
-{
-	memset(&stConfig.stMemInfo, 0, sizeof(stConfig.stMemInfo));
-	if(GetMemInfo(stConfig.stMemInfo) < 0)
-	{
-		WARN_LOG("GetMemInfo failed !");
-		return;
-	}
-
-	uint32_t dwFree = stConfig.stMemInfo.dwMemFree + stConfig.stMemInfo.dwCached
-		- stConfig.stMemInfo.dwDirty - stConfig.stMemInfo.dwMapped;
-
-	DEBUG_LOG("get meminfo - unit:%s total:%u free:%u buffers:%u cached:%u dirty:%u maped:%u",
-		stConfig.stMemInfo.szUnit, stConfig.stMemInfo.dwMemTotal, 
-		stConfig.stMemInfo.dwMemFree, stConfig.stMemInfo.dwBuffers,
-		stConfig.stMemInfo.dwCached, stConfig.stMemInfo.dwDirty, stConfig.stMemInfo.dwMapped);
-
-	int32_t iUsePer = (int)((stConfig.stMemInfo.dwMemTotal-dwFree)*100/stConfig.stMemInfo.dwMemTotal);
-	if(iUsePer > stConfig.iMemMaxUsePer)
-		stConfig.iMemMaxUsePer = iUsePer;
-	INFO_LOG("get mem use info -- real free:%u total:%u useper:%%%u", 
-		dwFree, stConfig.stMemInfo.dwMemTotal, iUsePer);
-}
-
-void WriteMemInfo()
-{
-	if(stConfig.iMemMaxUsePer > 0)
-	{
-		MtReport_Attr_Set(g_iMemUseAttr, stConfig.iMemMaxUsePer);
-		stConfig.iMemMaxUsePer = 0;
-	}
-}
-
-void ReadCpuUse()
-{
-	static TcpuUse stCpuUse;
-
-	if(GetCpuUse(&stCpuUse) <= 0)
-	{
-		WARN_LOG("GetCpuUse failed !");
-		return;
-	}
-
-	int iCount = sizeof(g_cpuAttr)/sizeof(int);
-	if(iCount > stCpuUse.iCpuCount)
-		iCount = stCpuUse.iCpuCount;
-
-	DEBUG_LOG("use cpu count:%d", iCount);
-
-	stConfig.stCpuUse.iCpuCount = stCpuUse.iCpuCount;
-	for(int i=0; i < iCount; i++) 
-	{
-		if(stCpuUse.iCpuUse[i] > stConfig.stCpuUse.iCpuUse[i])
-			stConfig.stCpuUse.iCpuUse[i]=stCpuUse.iCpuUse[i];
-		DEBUG_LOG("get cpu%d use:%d, now:%d",
-			i, stCpuUse.iCpuUse[i], stConfig.stCpuUse.iCpuUse[i]);
-		if(iCount <= 2)
-			break;
-	}
-}
-
 int OnEventTimer(TimerNode *pNodeShm, unsigned uiDataLen, char *pData)
 {
 	int iRet = 0, i=0, j=0;
@@ -1186,11 +1101,6 @@ int OnEventTimer(TimerNode *pNodeShm, unsigned uiDataLen, char *pData)
 				break;
 			}
 
-			WriteCpuUse();
-			WriteMemInfo();
-			WriteDiskInfo();
-			ReportNetInfo();
-
 			for(i=0; i < COUNT_ATTR_PACKET_SEND_PER; i++) {
 				stConfig.wReadAttrCount = 0;
 				ReadAttr();
@@ -1219,21 +1129,6 @@ int OnEventTimer(TimerNode *pNodeShm, unsigned uiDataLen, char *pData)
 				iSendAttr, iSendStrAttr, pNodeShm->uiTimeOut);
 			break;
 
-		case EVENT_TYPE_BASE_ATTR:
-			iRet = 1;
-			if(!IsHelloValid()) {
-				WARN_LOG("event report base failed -- hello is invalid , wait ...");
-				break;
-			}
-
-			ReadCpuUse();
-			GetMemUse();
-
-			if(stConfig.pReportShm->stSysCfg.bReportCpuUseSec != 0)
-				pNodeShm->uiTimeOut = stConfig.pReportShm->stSysCfg.bReportCpuUseSec*1000;
-			DEBUG_LOG("re add event report base use timer, timeout:%d ms", pNodeShm->uiTimeOut);
-			break;
-
 		default:
 			WARN_LOG("unknow event type:%d", stConfig.pEnvSess->bEventType);
 			return -1;
@@ -1250,34 +1145,6 @@ int OnEventTimer(TimerNode *pNodeShm, unsigned uiDataLen, char *pData)
 		return 1;
 	}
 	return iRet;
-}
-
-int InitBaseMonitor()
-{
-	int iReportTimeSec = 30;
-	stConfig.pEnvSess = (ENVSESSION*)stConfig.sSessBuf;
-
-	if(stConfig.iAttrSocketIndex < 0)
-	{
-		FATAL_LOG("invalid socket index:%d", stConfig.iAttrSocketIndex);
-		return MTREPORT_ERROR_LINE;
-	}
-
-	stConfig.pEnvSess->iSockIndex = stConfig.iAttrSocketIndex;
-	stConfig.pEnvSess->dwEventSetTimeSec = stConfig.stTimeCur.tv_sec;
-	stConfig.pEnvSess->dwEventSetTimeUsec = stConfig.stTimeCur.tv_usec;
-	stConfig.pEnvSess->bEventType = EVENT_TYPE_BASE_ATTR;
-	uint32_t dwReportBaseUseTimerKey = rand();
-	if(stConfig.pReportShm->stSysCfg.bReportCpuUseSec > 0)
-		iReportTimeSec = stConfig.pReportShm->stSysCfg.bReportCpuUseSec;
-	int iRet = AddTimer(dwReportBaseUseTimerKey, iReportTimeSec*1000, 
-		OnEventTimer, stConfig.pEnvSess, MYSIZEOF(ENVSESSION), 0, NULL);
-	if(iRet < 0) {
-		ERROR_LOG("AddTimer (base report) failed, key:%u, ret:%d", dwReportBaseUseTimerKey, iRet);
-		return MTREPORT_ERROR_LINE;
-	}
-	DEBUG_LOG("add report base timer ok, key:%u", dwReportBaseUseTimerKey);
-	return 0;
 }
 
 int InitReportLog()
@@ -1487,9 +1354,6 @@ void ShowGlobal()
 	printf("\n\n--------------  global g_mtReport info as followed : ------------------\n");
 	MtReport *pstr = &g_mtReport;
 	SHOW_FIELD_VALUE_INT(cIsInit);
-	SHOW_FIELD_VALUE_UINT(dwLogCfgId);
-	SHOW_FIELD_VALUE_INT(cIsTest);
-	SHOW_FIELD_VALUE_FUN(stCust, ShowMTLogCust);
 	SHOW_FIELD_VALUE_INT(cIsAttrInit);
 	SHOW_FIELD_VALUE_FUN_COUNT_2(MTATTR_SHM_DEF_COUNT, stAttrHash, ShowSharedHashTable);
 	SHOW_FIELD_VALUE_INT(cIsVmemInit);
@@ -1647,15 +1511,142 @@ void deal_exist_sig(int sig)
 	}    
 }
 
+int LoadAllPlus()
+{
+	DIR* pDir = opendir(stConfig.szPlusPath);
+	if(pDir == NULL)
+	{
+		ERROR_LOG("open plus dir:%s failed, msg:%s", stConfig.szPlusPath, strerror(errno));
+		return MTREPORT_ERROR_LINE;
+	}
+
+	struct dirent *pDirent = NULL;
+	void *pHandle = NULL;
+	std::string sPlusPath(stConfig.szPlusPath);
+	if(*sPlusPath.rbegin() != '/')
+		sPlusPath += "/";
+	std::string sFileName, sFile;
+	int iRet = 0;
+	while(true) 
+	{
+		pDirent = readdir(pDir);
+		if(pDirent != NULL)
+		{
+			DEBUG_LOG("read plus dir:%s type:%d", pDirent->d_name, pDirent->d_type);
+			if(pDirent->d_name[0] != '.')
+			{
+				sFileName = pDirent->d_name;
+				sFileName += ".so";
+				sFile = sPlusPath+pDirent->d_name;
+				sFile += "/";
+				sFile += sFileName;
+				pHandle = dlopen(sFile.c_str(), RTLD_NOW);
+				if(!pHandle)
+				{
+					WARN_LOG("dlopen :%s failed, msg:%s", sFile.c_str(), dlerror());
+					continue;
+				}
+				DEBUG_LOG("dlopen plus file:%s", sFile.c_str());
+				TPlusFun *pfun = new TPlusFun;
+
+				pfun->pSlogPlusInit = (int (*)())dlsym(pHandle, "SlogPlusInit");
+				if (pfun->pSlogPlusInit == NULL)
+				{
+					ERROR_LOG("dlsym(SlogPlusInit) failed, plus:%s, msg:%s", sFile.c_str(), dlerror());
+					dlclose(pHandle);
+					return MTREPORT_ERROR_LINE;
+				}
+				pfun->iPlusIndex = g_mtReport.iPlusIndex;
+				pfun->strPlusPath = sPlusPath+pDirent->d_name;
+
+				BeforeEnterPlus(pfun);
+				if((iRet=(*(pfun->pSlogPlusInit))()) != 0) {
+					ERROR_LOG("init plus:%s failed, ret:%d", sFile.c_str(), iRet);
+					return MTREPORT_ERROR_LINE;
+				}
+				AfterEnterPlus(pfun);
+
+				pfun->pSlogPlusOnLoop = (void (*)(uint32_t dwTimeNow))dlsym(pHandle, "SlogPlusOnLoop");
+				if (dlerror() != NULL)
+				{
+					ERROR_LOG("dlsym(SlogPlusOnLoop) failed, plus:%s, msg:%s", sFile.c_str(), dlerror());
+					dlclose(pHandle);
+					return MTREPORT_ERROR_LINE;
+				}
+
+				pfun->pSlogPlusEnd = (void (*)())dlsym(pHandle, "SlogPlusEnd");
+				if (dlerror() != NULL)
+				{
+					ERROR_LOG("dlsym(SlogPlusEnd) failed, plus:%s, msg:%s", sFile.c_str(), dlerror());
+					dlclose(pHandle);
+					return MTREPORT_ERROR_LINE;
+				}
+				pfun->pHandle = pHandle;
+				stConfig.mapPlus[sFileName] = pfun;
+				INFO_LOG("load plus:%s ok, plus path:%s, index:%d", 
+					sFile.c_str(), pfun->strPlusPath.c_str(), pfun->iPlusIndex);
+			}
+		}
+		else
+			break;
+	}
+	closedir(pDir);
+	return 0;
+}
+
+void FinishAllPlus()
+{
+	std::map<std::string, void *>::iterator it = stConfig.mapPlus.begin();
+	TPlusFun *pfun = NULL;
+	for(; it != stConfig.mapPlus.end(); it++) 
+	{
+		pfun = (TPlusFun *)it->second;
+		if(BeforeEnterPlus(pfun) < 0) {
+			continue;
+		}
+		(*(pfun->pSlogPlusEnd))();
+		AfterEnterPlus(pfun);
+		dlclose(it->second);
+		delete pfun;
+	}
+	stConfig.mapPlus.clear();
+}
+
+void RunAllPlus()
+{
+	std::map<std::string, void *>::iterator it = stConfig.mapPlus.begin();
+	TPlusFun *pfun = NULL;
+	for(; it != stConfig.mapPlus.end(); it++) 
+	{
+		pfun = (TPlusFun *)it->second;
+
+		// 进入插件目录
+		if(BeforeEnterPlus(pfun) < 0) {
+			continue;
+		}
+		(*(pfun->pSlogPlusOnLoop))(stConfig.dwCurTime);
+		AfterEnterPlus(pfun);
+	}
+}
+
 int MonitorBusiProcess(int subPid, int argc)
 {
 	INFO_LOG("start monitor process:%d, self:%d", subPid, getpid());
 	char sCmd[128] = {0};
 	int iKillSubPidCount = 0;
 
+	// 加载插件列表
+	if(LoadAllPlus() < 0) {
+		FinishAllPlus();
+		stConfig.pReportShm->cIsAgentRun = 0;
+		return 0;
+	}
+
 	while(iKillSubPidCount < 10) {
 		usleep(10000);
 		stConfig.dwCurTime = time(NULL);
+		RunAllPlus();
+
 		int iStatus = 0;
 		int iPid = waitpid(-1, &iStatus, WNOHANG);
 		if (iPid > 0)
@@ -1694,6 +1685,7 @@ int MonitorBusiProcess(int subPid, int argc)
 
 	INFO_LOG("PID: [%d] %d exit, kill count:%d, argc:%d, cIsAgentRun:%d", 
 		subPid, getpid(), iKillSubPidCount, argc, stConfig.pReportShm->cIsAgentRun);
+	FinishAllPlus();
 
 	if(argc <= 1 && stConfig.pReportShm->cIsAgentRun != 0)
 		return 1;
@@ -1703,6 +1695,13 @@ int MonitorBusiProcess(int subPid, int argc)
 int main(int argc, char* argv[])
 {
 	int iRet = 0;
+
+	// 保存下当前工作目录
+	if(getcwd(stConfig.szCurPath, sizeof(stConfig.szCurPath)) == NULL){
+		printf("get current path failed, msg:%s\n", strerror(errno));
+		return -1;
+	}
+
 	SetCurTime();
 	if((iRet=Init()) < 0) {
 		ERROR_LOG("Init failed, ret:%d", iRet);

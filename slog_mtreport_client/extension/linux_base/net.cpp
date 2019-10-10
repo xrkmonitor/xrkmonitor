@@ -24,15 +24,10 @@
    云版本为开源版提供永久免费告警通道支持，告警通道支持短信、邮件、
    微信等多种方式，欢迎使用
 
-   模块 slog_mtreport_client 功能:
-        用于上报除监控系统本身产生的监控点数据、日志，为减少部署上的依赖
-		未引入任何第三方组件
+   内置监控插件 linux_base 功能:
+   		使用监控系统 api 实现 linux 基础信息监控上报, 包括 cpu/内存/磁盘/网络
 
 ****/
-
-#ifndef __STDC_FORMAT_MACROS
-#define __STDC_FORMAT_MACROS 1
-#endif
 
 #include <stdlib.h>
 #include <inttypes.h>
@@ -41,7 +36,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <sys/shm.h>
-#include "mtreport_client.h"
+#include <mt_report.h>
 #include "net.h"
 
 static TNetIfInfo s_eth0;
@@ -65,12 +60,12 @@ void InitGetNet()
 	TNetIfInfo stTmp;
 	bool bUseComm0 = false;
 	bool bUseComm1 = false;
-	while( fscanf(fp, "%s%" PRIu64 "%" PRIu64 "%u%" PRIu64 "%" PRIu64 "%u",
+	while( fscanf(fp, "%s%"PRIu64"%"PRIu64"%u%"PRIu64"%"PRIu64"%u",
 		stTmp.szInterName, &stTmp.qwRecvBytes, &stTmp.qwRecvPackets, &stTmp.dwRecvDropPackets, 
 		&stTmp.qwSendBytes, &stTmp.qwSendPackets, &stTmp.dwSendDropPackets) == 7)
 	{
-		DEBUG_LOG("read inter:%s, recv - bytes:%" PRIu64 " packets:%" PRIu64 " drop:%u ; send - "
-			"bytes:%" PRIu64 " packets:%" PRIu64 " drop:%u", 
+		MtReport_Log_Debug("read inter:%s, recv - bytes:%"PRIu64" packets:%"PRIu64" drop:%u ; send - "
+			"bytes:%"PRIu64" packets:%"PRIu64" drop:%u", 
 			stTmp.szInterName, stTmp.qwRecvBytes,  stTmp.qwRecvPackets, stTmp.dwRecvDropPackets,
 			stTmp.qwSendBytes, stTmp.qwSendPackets, stTmp.dwSendDropPackets);
 
@@ -81,7 +76,7 @@ void InitGetNet()
 		else if(strstr(stTmp.szInterName, "lo"))
 			memcpy(&s_lo, &stTmp, sizeof(stTmp));
 		else {
-			INFO_LOG("unknow net interface:%s", stTmp.szInterName);
+			MtReport_Log_Info("unknow net interface:%s", stTmp.szInterName);
 			if(!bUseComm0) {
 				memcpy(&s_eth_comm0, &stTmp, sizeof(stTmp));
 				bUseComm0 = true;
@@ -116,15 +111,15 @@ void ReportNetInfo()
 	TNetIfInfo stTmp;
 	bool bUseComm0 = false;
 	bool bUseComm1 = false;
-	while( fscanf(fp, "%s%" PRIu64 "%" PRIu64 "%u%" PRIu64 "%" PRIu64 "%u",
+	while( fscanf(fp, "%s%"PRIu64"%"PRIu64"%u%"PRIu64"%"PRIu64"%u",
 		stTmp.szInterName, &stTmp.qwRecvBytes, &stTmp.qwRecvPackets, &stTmp.dwRecvDropPackets, 
 		&stTmp.qwSendBytes, &stTmp.qwSendPackets, &stTmp.dwSendDropPackets) == 7)
 	{
-		DEBUG_LOG("read inter:%s, recv - bytes:%" PRIu64 " packets:%" PRIu64 " drop:%u ; send - "
-			"bytes:%" PRIu64 " packets:%" PRIu64 " drop:%u", 
+		MtReport_Log_Debug("read inter:%s, recv - bytes:%"PRIu64" packets:%"PRIu64" drop:%u ; send - "
+			"bytes:%"PRIu64" packets:%"PRIu64" drop:%u", 
 			stTmp.szInterName, stTmp.qwRecvBytes,  stTmp.qwRecvPackets, stTmp.dwRecvDropPackets,
 			stTmp.qwSendBytes, stTmp.qwSendPackets, stTmp.dwSendDropPackets);
-
+	
 		if(strstr(stTmp.szInterName, "eth0"))
 		{
 			MtReport_Attr_Add(ETH0_IN_PACK, stTmp.qwRecvPackets-s_eth0.qwRecvPackets);
@@ -150,7 +145,7 @@ void ReportNetInfo()
 			memcpy(&s_lo, &stTmp, sizeof(stTmp));
 		}
 		else {
-			INFO_LOG("unknow net interface:%s", stTmp.szInterName);
+			MtReport_Log_Info("unknow net interface:%s", stTmp.szInterName);
 			if(!bUseComm0) {
 				MtReport_Attr_Add(ETH_COMM0_IN_PACK, stTmp.qwRecvPackets-s_eth_comm0.qwRecvPackets);
 				MtReport_Attr_Add(ETH_COMM0_IN_BYTES, stTmp.qwRecvBytes-s_eth_comm0.qwRecvBytes);
@@ -184,7 +179,7 @@ void ReportNetInfo()
 	if(stTmp_total.dwSendDropPackets > s_total.dwSendDropPackets
 		|| stTmp_total.dwRecvDropPackets > s_total.dwRecvDropPackets)
 	{
-		INFO_LOG("get drop packet send:%u, recv:%u", stTmp_total.dwSendDropPackets-s_total.dwSendDropPackets,
+		MtReport_Log_Info("get drop packet send:%u, recv:%u", stTmp_total.dwSendDropPackets-s_total.dwSendDropPackets,
 			stTmp_total.dwRecvDropPackets-s_total.dwRecvDropPackets);
 		MtReport_Attr_Add(NETIF_DROP_PACK, 1);
 	}

@@ -24,9 +24,8 @@
    云版本为开源版提供永久免费告警通道支持，告警通道支持短信、邮件、
    微信等多种方式，欢迎使用
 
-   模块 slog_mtreport_client 功能:
-        用于上报除监控系统本身产生的监控点数据、日志，为减少部署上的依赖
-		未引入任何第三方组件
+   内置监控插件 linux_base 功能:
+   		使用监控系统 api 实现 linux 基础信息监控上报, 包括 cpu/内存/磁盘/网络
 
 ****/
 
@@ -38,8 +37,8 @@
 #include <string.h>
 #include <stdio.h>
 #include <sys/shm.h>
+#include <mt_report.h>
 #include "cpu.h"
-#include "mtreport_client.h"
 
 void WriteCpuUse(TcpuUse &stCpuUse, const int *pcpuAttr)
 {
@@ -49,7 +48,7 @@ void WriteCpuUse(TcpuUse &stCpuUse, const int *pcpuAttr)
         iValue = stCpuUse.iCpuUse[i]/10;
         if(stCpuUse.iCpuUse[i]%10 > 0)
             iValue++;
-        DEBUG_LOG("get cpu%d use, attr:%d, use:%%%d(%d)",
+        MtReport_Log_Debug("get cpu%d use, attr:%d, use:%%%d(%d)",
             i, pcpuAttr[i], iValue, stCpuUse.iCpuUse[i]);
         stCpuUse.iCpuUse[i] = 0; 
         MtReport_Attr_Set(pcpuAttr[i], iValue);
@@ -63,15 +62,15 @@ void ReadCpuUse(TcpuUse &cpuUse, int iCpuCountMax)
 
     if(GetCpuUse(&stCpuUse) <= 0)
     {    
-        WARN_LOG("GetCpuUse failed !");
+        MtReport_Log_Warn("GetCpuUse failed !");
         return;
     }    
 
     if(iCpuCountMax > stCpuUse.iCpuCount)
         iCpuCountMax = stCpuUse.iCpuCount;
 	else if(iCpuCountMax < stCpuUse.iCpuCount)
-		WARN_LOG("cpu use not support all, support:%d, now:%d", iCpuCountMax, stCpuUse.iCpuCount);
-    DEBUG_LOG("use cpu count:%d", iCpuCountMax);
+		MtReport_Log_Warn("cpu use not support all, support:%d, now:%d", iCpuCountMax, stCpuUse.iCpuCount);
+    MtReport_Log_Debug("use cpu count:%d", iCpuCountMax);
 
     // 取使用率高的值
     cpuUse.iCpuCount = 0;
@@ -80,7 +79,7 @@ void ReadCpuUse(TcpuUse &cpuUse, int iCpuCountMax)
         if(stCpuUse.iCpuUse[i] > cpuUse.iCpuUse[i])
             cpuUse.iCpuUse[i]=stCpuUse.iCpuUse[i];
 		cpuUse.iCpuCount++;
-        DEBUG_LOG("get cpu%d use:%d, now:%d", i, stCpuUse.iCpuUse[i], cpuUse.iCpuUse[i]);
+        MtReport_Log_Debug("get cpu%d use:%d, now:%d", i, stCpuUse.iCpuUse[i], cpuUse.iCpuUse[i]);
         if(iCpuCountMax <= 2)
             break;
     }    
@@ -89,13 +88,13 @@ void ReadCpuUse(TcpuUse &cpuUse, int iCpuCountMax)
 int GetCpuStatis(TCpuStatic *pcp)
 {
 	TCpuInfo *plast = (TCpuInfo*)pcp->sInfo;
-	FILE *fp = popen("/bin/cat /proc/stat |grep cpu|awk \'{print " CPU_AWK_FMT "}\'", "r");
+	FILE *fp = popen("/bin/cat /proc/stat |grep cpu|awk \'{print "CPU_AWK_FMT"}\'", "r");
 	if(fp == NULL) {
 		return -2;
 	}
 
 	int i=0;
-	while( fscanf(fp, "%" PRIu64 " %" PRIu64 " %" PRIu64 " %" PRIu64 " %" PRIu64 " %" PRIu64 " %" PRIu64 ,
+	while( fscanf(fp, "%"PRIu64" %"PRIu64" %"PRIu64" %"PRIu64" %"PRIu64" %"PRIu64" %"PRIu64,
 		&plast[i].qwUser, &plast[i].qwNice, &plast[i].qwSys, &plast[i].qwIdle,
 		&plast[i].qwIowait, &plast[i].qwIrq, &plast[i].qwSoftIrq) == 7) {
 		plast[i].qwTotal = plast[i].qwUser + plast[i].qwNice + plast[i].qwSys
