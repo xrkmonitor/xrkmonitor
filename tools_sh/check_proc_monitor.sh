@@ -106,14 +106,14 @@ ps auxww >> $TMPFILE
 ipcs >> $TMPFILE
 echo "----------------------------------------------------------------" >> $TMPFILE
 
+restart_process "${MONITORBASEDIR}/slog_mtreport_client" 'slog_mtreport_client$' 2
+sleep 1
 restart_process "${MONITORBASEDIR}/slog_config" 'slog_config$' 1
 while [ ! -f /tmp/_slog_config_read_ok ]  
 do
 	sleep 1
 done
 
-restart_process "${MONITORBASEDIR}/slog_mtreport_client" 'slog_mtreport_client$' 2
-sleep 1
 restart_process "${MONITORBASEDIR}/slog_client" 'slog_client$' 1
 restart_process "${MONITORBASEDIR}/slog_server" 'slog_server$' 1
 restart_process "${MONITORBASEDIR}/slog_check_warn" 'slog_check_warn$' 1
