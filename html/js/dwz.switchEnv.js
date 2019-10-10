@@ -17,6 +17,7 @@
 					if(!$('#navDocMenu').hasClass('selected') && DWZ.ui.sbar == false) {
 						$("#sidebar_s .toggleCollapse div").trigger("click");
 					}
+					navTab.closeAllTab();
 
 					// ysy -- modify, 打开首个菜单链接
 					var afirst = $("#sidebar").find("ul li:first").find("a");
@@ -24,15 +25,14 @@
 						afirst.click();
 						$("#sidebar").find("ul li:first").find("div:first").addClass('selected');
 					}
-
-					// ysy -- modify
-					//navTab.closeAllTab();
 				});
 				return false;
 			});
 		});
 	}
 	
+	// ysy -- modify
+	/*
 	$.fn.switchEnv = function(){
 		var op = {cities$:">ul>li", boxTitle$:">a>span"};
 		return this.each(function(){
@@ -52,14 +52,14 @@
 				$.post($li.find(">a").attr("href"), {}, function(html){
 					_hide($this);
 					$this.find(op.boxTitle$).html($li.find(">a").html());
-					// ysy -- modify
-					//navTab.closeAllTab();
+					navTab.closeAllTab();
 					$("#sidebar").find(".accordion").remove().end().append(html).initUI();
 				});
 				return false;
 			});
 		});
 	}
+	*/
 	
 	function _show($box){
 		$box.addClass("selected");

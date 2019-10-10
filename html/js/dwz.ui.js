@@ -105,7 +105,10 @@ function initEnv() {
 	
 	if ($.taskBar) $.taskBar.init();
 	navTab.init();
-	if ($.fn.switchEnv) $("#switchEnvBox").switchEnv();
+
+	// ysy -- modify
+	//if ($.fn.switchEnv) $("#switchEnvBox").switchEnv();
+
 	if ($.fn.navMenu) $("#navMenu").navMenu();
 		
 	// ysy modify - timeout time
