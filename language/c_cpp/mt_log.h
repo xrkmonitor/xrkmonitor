@@ -272,15 +272,29 @@ typedef struct
 
 #pragma pack()
 
+// 最多支持的内置监控插件数目
+// 内置监控插件在 agent slog_mtreport_client 中运行
+#define MAX_INNER_PLUS_COUNT 100
+
+// 内置监控插件配置信息
+typedef struct _TInnerPlusInfo {
+	char szPlusName[64]; // 插件名称
+	uint32_t dwLogCfgId; // 日志配置 id
+	char cIsTest; // 插件的日志染色标记
+	MTLogCust stCust; // 插件设置的日志自定义值
+	SLogConfig *pCurConfigInfo; // 插件的日志配置信息 
+	char szLocalLogFile[256]; // 插件设置的本地日志文件
+	int iLocalLogType; // 插件本地日志记录类型, 为0表示不写本地日志
+}TInnerPlusInfo;
+
 // log struct 
 typedef struct {
 	char cIsInit;
-	uint32_t dwLogCfgId; // 日志配置 id
-	char cIsTest; // 当前进程的日志染色标记
-	MTLogCust stCust; // 当前进程设置的日志自定义值
 	MTREPORT_SHM *pMtShm;
-	SLogConfig *pCurConfigInfo; // 当前进程的日志配置
-	char szLocalLogFile[256]; // 调用接口时设置的本地日志文件
+
+	int iPlusCount; // 共加载的插件数目
+	int iPlusIndex; // 当前插件信息索引
+	TInnerPlusInfo stPlusInfo[MAX_INNER_PLUS_COUNT];
 
 	char cIsAttrInit;
 	SharedHashTable stAttrHash[MTATTR_SHM_DEF_COUNT];

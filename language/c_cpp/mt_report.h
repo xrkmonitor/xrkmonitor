@@ -62,6 +62,13 @@ extern "C"
 #define MTLOG_TYPE_FATAL 64  // 严重错误 -- 程序不能继续运行时可以使用此日志类型记录日志
 #endif
 
+// 内置监控插件初始化函数, 成功返回码大于等于 0， 失败返回小于 0
+// pPlusName 插件名，长度不超过 64 个字节
+// iConfigId 日志配置id, 如果为0则不上报日志
+// pszLocalLogFile 本地日志文件, 为 NULL 则不写本地日志
+// iLocalLogType 本地日志文件记录的日志类型
+int MtReport_Plus_Init(const char *pPlusName, int iConfigId, const char *pszLocalLogFile, int iLocalLogType);
+
 // 日志和监控点 api 初始化, 成功返回码大于等于 0， 失败返回小于 0
 // iConfigId 日志配置id, 如果为0则不上报日志
 // pszLocalLogFile 本地日志文件, 为 NULL 则不写本地日志
