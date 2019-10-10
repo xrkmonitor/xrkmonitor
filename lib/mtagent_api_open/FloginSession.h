@@ -46,6 +46,8 @@
 #define LOGIN_MAX_EXPIRE_TIME 14*24*60*60 // 最大的登录重验证密码时间
 #define OP_CODE_VALID_TIME 180 // 操作验证码有效期
 
+#pragma pack(1)
+
 typedef struct 
 {
 	uint8_t bLoginType; // bLoginType 值为 1 表示管理员
@@ -82,6 +84,8 @@ typedef struct
 	int32_t iWriteIndex; // 写数组索引，环形: 0 至 FLOGIN_SESSION_NODE_COUNT-1
 	FloginInfo stLoginList[FLOGIN_SESSION_NODE_COUNT];
 }FloginList;
+
+#pragma pack()
 
 #endif
 

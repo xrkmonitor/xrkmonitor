@@ -85,6 +85,7 @@ typedef struct
 	char *pHash; // 指向共享内存
 }SharedHashTable; // 哈希表结构，进程相关
 
+#pragma pack(1)
 typedef struct
 {
 	uint32_t dwNodeStartIndex;
@@ -103,6 +104,7 @@ typedef struct
 	uint32_t dwNodePreIndex;
 	uint32_t dwNodeNextIndex;
 } _HashNodeHead; // 节点头部结构，用于存储链接信息等
+#pragma pack()
 
 #define MTREPORT_SHARED_HASH_CHECK_STR "23k523k5jk@#%#%^#^@"
 

@@ -40,6 +40,8 @@
 #define CONFIG_FILE "./slog_write.conf"
 #define MAX_SLOG_SHM_FILE_PER_PROCESS 1000
 
+#pragma pack(1)
+
 // 用于向子进程新增写 app log 
 typedef struct {
 	int iAppId; // 要新增的 appid
@@ -51,6 +53,8 @@ typedef struct {
 	int iAppWriteTotal; // 总共负责写入的 app 数目
 	int iArrAppIdList[MAX_SLOG_SHM_FILE_PER_PROCESS]; 
 }TAddWriteAppLog;
+
+#pragma pack()
 
 typedef struct
 {

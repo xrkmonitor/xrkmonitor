@@ -998,6 +998,8 @@ int InitFastCgiStart(CGIConfig &myConf)
 
 	if(myConf.argc <= 1)
 		slog.SetLogToStd(false);
+	else
+		slog.SetLogToStd(true);
 
 	if(LoadConfig(myConf.szConfigFile,
 	   "SLOG_SET_TEST", CFG_INT, &myConf.iCfgTestLog, 0,
@@ -1067,6 +1069,8 @@ int InitFastCgi(CGIConfig &myCfg, const char *pszLogPath)
 
 	if(myCfg.argc <= 1)
 		slog.SetLogToStd(false);
+	else
+		slog.SetLogToStd(true);
 
 	if(myCfg.argc > 1)
 	{

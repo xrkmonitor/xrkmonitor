@@ -52,6 +52,7 @@ int MtReport_InitAttr();
 
 uint32_t GetShortKeyByStr(const char *pstr);
 
+#pragma pack(1)
 typedef struct
 {
 	volatile uint8_t bSyncProcess;
@@ -66,6 +67,7 @@ typedef struct
 	int32_t iAttrID;
 	int32_t iCurValue;
 } AttrNode;
+#pragma pack()
 
 
 #ifdef __cplusplus
