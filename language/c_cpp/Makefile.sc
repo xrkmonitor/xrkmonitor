@@ -33,7 +33,7 @@ default: all
 
 all: dist
 
-dist: $(TARGET)
+dist: $(TARGET) $(SHAREDLIB)
 
 dos2unix:
 	@$(DOS2UNIX) $(SRCS) $(INCLS)
@@ -56,6 +56,7 @@ install:
 	install -d $(INCDIR) $(LIBDIR)
 	install -m 644 $(INSTALL_INC) $(INCDIR)
 	install -m 644 $(STATICLIB) $(LIBDIR)
+	cp libmtreport_api-1.1.0.so ../../slog_mtreport_client/libmtreport/libmtreport_api.so.1
 
 clean:
 	rm -f  $(MODULES) $(STATICLIB) $(LIBNAME)

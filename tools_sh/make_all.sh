@@ -14,6 +14,14 @@ function check_module()
 		rm -f ${TarP}
 		exit 2
 	fi
+
+	echo $mname |grep slog_mtreport_client
+	if [ $? -eq 0 ]; then
+		if [ ! -f slog_mtreport_client/libmtreport/libmtreport_api.so.1 ]; then 
+			echo 'have no file: slog_mtreport_client/libmtreport/libmtreport_api.so.1' 
+			exit 2 
+		fi
+	fi
 }
 check_module slog_config
 check_module slog_mtreport_client 
@@ -64,6 +72,11 @@ do
                 tar rvf ${TarP} $dr/*.conf
                 tar rvf ${TarP} $dr/$dr
         fi
+
+		echo $dr|grep slog_mtreport_client
+		if [ $? -eq 0 ]; then
+			tar rvf ${TarP} $dr/libmtreport $dr/xrkmonitor_plus
+		fi
 done
 
 cd tools_sh

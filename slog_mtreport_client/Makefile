@@ -1,6 +1,6 @@
 include ../make_env
-COMM_INC = -I../language/c_cpp/
-COMM_LIB = ../language/c_cpp/libmtreport_api.a -ldl
+COMM_INC = -I${MTLIB_INCLUDE_PATH}/mtreport_api
+COMM_LIB = -lmtreport_api -ldl
 
 CC = g++ 
 CXXFLAGS += $(COMM_INC) 
@@ -13,7 +13,7 @@ OBJ := $(SRC:.cpp=.o)
 DEP := $(SRC:.cpp=.d)
 
 $(TARGETS): ${OBJ} 
-	$(CC) -g -Wall -o $@ $^ $(COMM_LIB) -lrt
+	$(CC) -o $@ $^ $(COMM_LIB) -lrt
 	strip $(TARGETS)
 
 clean: 

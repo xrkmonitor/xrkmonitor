@@ -25,6 +25,11 @@ function make_module()
 	tar rvf ${TarP} ${mname}/*.sh
 	tar rvf ${TarP} ${mname}/${mname}.conf
 	tar rvf ${TarP} ${mname}/${mname}
+
+	echo $mname|grep slog_mtreport_client
+	if [ $? -eq 0 ]; then
+		tar rvf ${TarP} ${mname}/libmtreport ${mname}/xrkmonitor_plus
+	fi
 }
 
 make_module slog_mtreport_client

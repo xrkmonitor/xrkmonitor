@@ -14,7 +14,16 @@ if [ ! -f ${mname}/${mname} ]; then
 	exit 2
 fi
 
-tar czf ${TarF} ${mname}/${mname} ${mname}/*.sh ${mname}/${mname}.conf
+echo $mname |grep slog_mtreport_client
+if [ $? -eq 0 ]; then
+	if [ ! -f slog_mtreport_client/libmtreport/libmtreport_api.so.1 ]; then 
+		echo 'have no file: slog_mtreport_client/libmtreport/libmtreport_api.so.1' 
+		exit 2 
+	fi
+	tar czf ${TarF} ${mname}/${mname} ${mname}/*.sh ${mname}/${mname}.conf ${mname}/libmtreport ${mname}/xrkmonitor_plus
+else
+	tar czf ${TarF} ${mname}/${mname} ${mname}/*.sh ${mname}/${mname}.conf
+fi
 
 cd tools_sh
 mv ../${TarF} .

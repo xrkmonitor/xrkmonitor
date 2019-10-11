@@ -20,6 +20,21 @@ do
 			tar rvf ${TarP} $MD5F
 		fi
 	fi
+
+# 打包内置监控插件以及库
+    echo $dr|grep slog_mtreport_client
+    if [ $? -eq 0 ]; then
+        tar rvf ${TarP} $dr/libmtreport/libmtreport_api.so.1
+        cd $dr/xrkmonitor_plus
+        sdirlist=`find . -maxdepth 1 -type d`
+        cd -
+        for sdr in $sdirlist
+        do  
+            if [ -f $dr/xrkmonitor_plus/$sdr/$sdr.so ]; then
+                tar rvf ${TarP} $dr/xrkmonitor_plus/$sdr/$sdr.so
+            fi  
+        done
+    fi 
 done
 
 cd tools_sh
