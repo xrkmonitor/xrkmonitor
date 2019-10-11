@@ -385,11 +385,16 @@ static int Init()
 	stConfig.dwCurTime = stConfig.stTimeCur.tv_sec;
 	srand(stConfig.dwCurTime);
 	iRet = MtReport_Init_ByKey(0, iCfgShmKey, 0666|IPC_CREAT); 
-	if(iRet < 0) {
+	if(iRet < 0 || g_mtReport.pMtShm == NULL) {
 		FATAL_LOG("get client shm failed key:%d size:%u ret:%d", iCfgShmKey, MYSIZEOF(MTREPORT_SHM), iRet);
 		return -2;
 	}
 	stConfig.pReportShm = g_mtReport.pMtShm;
+
+	// reinit
+	stConfig.pReportShm->iMtClientIndex = -1;
+	stConfig.pReportShm->iMachineId = -1;
+	stConfig.pReportShm->dwPkgSeq = rand();
 
 	const char *pip = GetLocalIP(stConfig.szSrvIp_master);
 	if(pip != NULL && stConfig.szLocalIP[0] == '\0')

@@ -1,7 +1,7 @@
 #!/bin/sh
 
 MYLIB_INCLUDE=`cat ../../make_env |grep MTLIB_INCLUDE_PATH|awk '{print $3}'`
-INCDIRLIST="$MYLIB_INCLUDE/mtagent_api_open $MYLIB_INCLUDE/my_proto  $MYLIB_INCLUDE/Sockets $MYLIB_INCLUDE/cgi $MYLIB_INCLUDE/mtreport_api"
+INCDIRLIST="$MYLIB_INCLUDE/mtagent_api_open $MYLIB_INCLUDE/my_proto  $MYLIB_INCLUDE/Sockets $MYLIB_INCLUDE/cgi $MYLIB_INCLUDE/mtreport_api $MYLIB_INCLUDE/mysqlwrapped"
 
 SRCDIRLIST="."
 INSTALL_INC="*.h"

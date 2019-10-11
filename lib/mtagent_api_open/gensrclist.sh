@@ -1,6 +1,6 @@
 #!/bin/sh
 SELF_INC=`cat ../../make_env |grep MTLIB_INCLUDE_PATH|awk '{print $3}'`
-INCDIRLIST="${SELF_INC}/Sockets ${SELF_INC}/my_proto ${SELF_INC}/mtreport_api"
+INCDIRLIST="${SELF_INC}/Sockets ${SELF_INC}/my_proto ${SELF_INC}/mtreport_api ${SELF_INC}/mysqlwrapped"
 SRCDIRLIST="."
 INSTALL_INC="*.h"
 

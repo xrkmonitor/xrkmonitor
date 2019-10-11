@@ -77,7 +77,7 @@ uint32_t MakeFirstHelloPkg()
 	TSignature *psig = (TSignature*)sSig;
 	MonitorHelloSig stSigInfo;
 	stSigInfo.dwPkgSeq = htonl(pkg.m_dwReqSeq);
-	stSigInfo.dwAgentClientIp = stConfig.dwLocalIp;
+	stSigInfo.dwAgentClientIp = htonl(stConfig.dwLocalIp);
 	OI_RandStrURandom(stSigInfo.sRespEncKey, 16);
 	if(stConfig.iEnableEncryptData) 
 		stSigInfo.bEnableEncryptData = 1;
@@ -322,6 +322,7 @@ static uint32_t MakeHelloPkg(uint32_t dwResponseTimeMs, uint32_t dwHelloTimes)
 	TlvMoniCommInfo stTlvInfo;
 	stTlvInfo.iMtClientIndex = htonl(stConfig.pReportShm->iMtClientIndex);
 	stTlvInfo.iMachineId = htonl(stConfig.pReportShm->iMachineId);
+	stTlvInfo.dwReserved_1 = htonl(stConfig.dwLocalIp);
 	int iTlvBodyLen = MYSIZEOF(TPkgBody);
 	iTlvBodyLen += SetWTlv(
 		pbody->stTlv, TLV_MONI_COMM_INFO, MYSIZEOF(stTlvInfo), (const char*)&stTlvInfo);
@@ -471,8 +472,8 @@ int DealResponseHelloFirst(CBasicPacket &pkg)
 	stConfig.pReportShm->wAttrServerPort = ntohs(presp->wAttrSrvPort);
 	stConfig.pReportShm->dwAttrSrvIp = presp->dwAttrSrvIp;
 
-	INFO_LOG("first hello response ok - client index:%d, enc:%d", 
-		stConfig.pReportShm->iMtClientIndex, stConfig.iEnableEncryptData);
+	INFO_LOG("first hello response ok - client index:%d, machine:%d, enc:%d", 
+		stConfig.pReportShm->iMtClientIndex,  stConfig.pReportShm->iMachineId, stConfig.iEnableEncryptData);
 
 	TConfigItemList list;
 	TConfigItem *pitem = NULL;
@@ -1056,7 +1057,7 @@ uint32_t MakeAppLogPkg(
 	stTlvInfo.iMtClientIndex = htonl(stConfig.pReportShm->iAppLogSrvMtClientIndex);
 	stTlvInfo.iMachineId = htonl(stConfig.pReportShm->iMachineId);
 	stTlvInfo.dwReserved_1 = htonl(app_server.sin_addr.s_addr);
-	stTlvInfo.wReserved_1 = app_server.sin_port;
+	stTlvInfo.wReserved_1 = htons(app_server.sin_port);
 
 	int iTlvBodyLen = MYSIZEOF(TPkgBody);
 	iTlvBodyLen += SetWTlv(
@@ -1104,8 +1105,8 @@ uint32_t MakeAttrPkg(struct sockaddr_in & app_server, char *pContent, int iConte
 	// 这里用 attr 服务器上的相关cache 索引
 	stTlvInfo.iMtClientIndex = htonl(stConfig.pReportShm->iAttrSrvMtClientIndex);
 	stTlvInfo.iMachineId = htonl(stConfig.pReportShm->iMachineId);
-	stTlvInfo.dwReserved_1 = app_server.sin_addr.s_addr;
-	stTlvInfo.wReserved_1 = app_server.sin_port;
+	stTlvInfo.dwReserved_1 = htonl(app_server.sin_addr.s_addr);
+	stTlvInfo.wReserved_1 = htons(app_server.sin_port);
 
 	int iTlvBodyLen = MYSIZEOF(TPkgBody);
 	iTlvBodyLen += SetWTlv(

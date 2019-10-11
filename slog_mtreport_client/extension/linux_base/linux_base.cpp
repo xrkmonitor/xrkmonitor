@@ -44,6 +44,8 @@
 #include "disk.h"
 #include "mem.h"
 
+extern MtReport g_mtReport;
+
 // 基础监控相关监控点 id
 const int g_cpuAttr[] = {163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179 };
 const int g_iMemUseAttr = 183; 
@@ -214,8 +216,15 @@ int SlogPlusInit()
 		return ERROR_LINE;
 	}
 
-	if(MtReport_Plus_Init(szPlusName, iCfgId, szLocalLogFile, iLocalLogType) < 0)
+	if(!g_mtReport.cIsInit)
+	{
 		return ERROR_LINE;
+	}
+
+	if((iRet=MtReport_Plus_Init(szPlusName, iCfgId, szLocalLogFile, iLocalLogType)) < 0)
+	{
+		return ERROR_LINE;
+	}
 
 	// cpu 监控 -- start 
 	if(InitGetCpuUse() < 0)

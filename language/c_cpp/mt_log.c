@@ -129,8 +129,10 @@ int MtReport_Init_ByKey(unsigned int iConfigId, int iConfigShmKey, int iFlag)
 int MtReport_Init(int iConfigId, const char *pLocalLogFile, int iLocalLogType, int iConfigShmKey)
 {
 	int iRet = 0;
+	if(g_mtReport.cIsInit)
+		return 0;
 
-	if(g_mtReport.cIsInit || g_mtReport.iPlusCount != 0 || g_mtReport.iPlusIndex != 0)
+	if(g_mtReport.iPlusCount != 0 || g_mtReport.iPlusIndex != 0)
 		return -1;
 
 	if(iConfigShmKey == 0)

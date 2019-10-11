@@ -97,20 +97,21 @@ function InstallFastcgiDev()
 function InstallMysqlwrap()
 {
 	echo ""
-	if [ ! -f /usr/include/libmysqlwrapped.h ]; then
+	if [ ! -f /usr/include/mysqlwrapped/libmysqlwrapped.h ]; then
 		# clearsilver cgi 模板引擎, 首次运行时需要执行下 configure
 		cd $cdir/lib/clearsilver; ./configure
 	
 		cd $cdir/lib/mysqlwrapped
 		echo "(4/$STEP_TOTAL) preinstall mysqlwrapped ($SUFFIX)"
 		cat IError.h enum_t.h set_t.h Database.h Query.h > libmysqlwrapped.h
-		cp libmysqlwrapped.h /usr/include/
+		mkdir -p /usr/include/mysqlwrapped
+		cp libmysqlwrapped.h /usr/include/mysqlwrapped 
 	else
 		echo "(4/$STEP_TOTAL) mysqlwrapped is already preinstall ($SUFFIX)"
 	fi
 
-	if [ ! -f /usr/include/libmysqlwrapped.h ]; then
-		echo "not find file:/usr/include/libmysqlwrapped.h"
+	if [ ! -f /usr/include/mysqlwrapped/libmysqlwrapped.h ]; then
+		echo "not find file:/usr/include/mysqlwrapped/libmysqlwrapped.h"
 		InstallFailed "mysqlwrapped"
 	fi
 }

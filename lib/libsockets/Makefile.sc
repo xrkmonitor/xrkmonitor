@@ -62,6 +62,7 @@ $(SHAREDLIB): $(MODULES)
 	$(CC) -s -shared -Wl,-soname,$(VERLIBNAME) $(LDFLAGS) -o $@ $(MODULES) $(LIBRARIES)
 
 install:
+	rm -fr $(INCDIR)
 	install -d $(INCDIR) $(LIBDIR)
 	install -m 644 $(INSTALL_INC) $(INCDIR)
 	install -m 644 $(STATICLIB) $(LIBDIR)

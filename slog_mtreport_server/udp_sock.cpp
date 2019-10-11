@@ -164,7 +164,15 @@ int CUdpSock::GetMtClientInfo()
 		return ERR_INVALID_PACKET;
 	}
 
+	if((m_dwReqCmd == CMD_MONI_SEND_HELLO || m_dwReqCmd == CMD_MONI_SEND_HELLO_FIRST)
+		&& m_dwAgentClientIp == 0) 
+	{
+		REQERR_LOG("invalid packet - agent ip is 0");
+		return ERR_INVALID_PACKET;
+	}
+
 	if(m_iRemoteMachineId <= 0) {
+		// first hello
 		pstMachInfo = slog.GetMachineInfo(m_dwAgentClientIp);
 		if(pstMachInfo != NULL) {
 			m_iRemoteMachineId = pstMachInfo->id;
@@ -172,17 +180,13 @@ int CUdpSock::GetMtClientInfo()
 		}
 	}
 	else {
+		// not first hello
 		pstMachInfo = slog.GetMachineInfo(m_iRemoteMachineId, NULL);
-		if(pstMachInfo == NULL) {
-			if(m_bIsFirstHello) {
-				pstMachInfo = slog.GetMachineInfo(m_dwAgentClientIp);
-				if(pstMachInfo != NULL) 
-					m_iRemoteMachineId = pstMachInfo->id;
-			}
-			if(pstMachInfo == NULL) {
-				REQERR_LOG("invalid, have no machine for id:%d", m_iRemoteMachineId);
-				return ERR_NOT_FIND_MACHINE;
-			}
+		if(pstMachInfo == NULL 
+			|| (m_dwReqCmd == CMD_MONI_SEND_HELLO && !slog.IsIpMatchMachine(pstMachInfo, m_dwAgentClientIp))) 
+		{
+			REQERR_LOG("invalid, have no machine for id:%d", m_iRemoteMachineId);
+			return ERR_NOT_FIND_MACHINE;
 		}
 	}
 	
@@ -312,9 +316,9 @@ int CUdpSock::DealCmdHelloFirst()
 		REQERR_LOG("invalid signature info - seq(%u,%u)", ntohl(psigInfo->dwPkgSeq), m_dwReqSeq);
 		return ERR_INVALID_SIGNATURE_INFO;
 	}
+	m_dwAgentClientIp = ntohl(psigInfo->dwAgentClientIp);
 	INFO_LOG("check packet ok remote client ip:%s, conn ip:%s",
-		ipv4_addr_str(psigInfo->dwAgentClientIp), m_addrRemote.Convert().c_str());
-	m_dwAgentClientIp = psigInfo->dwAgentClientIp;
+		ipv4_addr_str(m_dwAgentClientIp), m_addrRemote.Convert().c_str());
 
 	// 获取请求客户端
 	if((iRet=GetMtClientInfo()) != 0)
@@ -380,6 +384,9 @@ int CUdpSock::DealCommInfo()
 	TlvMoniCommInfo *pctinfo = (TlvMoniCommInfo*)pTlv->sValue;
 	m_iMtClientIndex = ntohl(pctinfo->iMtClientIndex);
 	m_iRemoteMachineId = ntohl(pctinfo->iMachineId);
+	if(m_dwReqCmd == CMD_MONI_SEND_HELLO)
+		m_dwAgentClientIp = ntohl(pctinfo->dwReserved_1);
+
 	DEBUG_LOG("get comminfo by tlv MtClientIndex:%d", m_iMtClientIndex);
 
 	// 获取请求客户端
@@ -940,7 +947,9 @@ void CUdpSock::OnRawData(const char *buf, size_t len, struct sockaddr *sa, sockl
 
 	if(iRet != NO_ERROR)
 		AckToReq(iRet);
-	MtReport_Attr_Set(404, m_pMtClient->iServerResponseTimeMs);
+
+	if(m_pMtClient != NULL)
+		MtReport_Attr_Set(404, m_pMtClient->iServerResponseTimeMs);
 }
 
 #undef APPINFO_CHECK_COPY_INFO
