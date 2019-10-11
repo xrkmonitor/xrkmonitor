@@ -229,6 +229,8 @@ int SendPacket(int iSockIdx, struct sockaddr_in *pDestAddr, const char *pdata, i
 		g_socket.onError(&g_socket, time(NULL));
 	}
 	g_socket.socks[iSockIdx].iSendPacks++;
+	DEBUG_LOG("sendpacket to:%s:%d", inet_ntoa(g_socket.socks[iSockIdx].remote.sin_addr),
+		ntohs(g_socket.socks[iSockIdx].remote.sin_port));
 	return iSrcDataLen;
 }
 

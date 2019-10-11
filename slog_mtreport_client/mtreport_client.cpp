@@ -391,11 +391,6 @@ static int Init()
 	}
 	stConfig.pReportShm = g_mtReport.pMtShm;
 
-	// reinit
-	stConfig.pReportShm->iMtClientIndex = -1;
-	stConfig.pReportShm->iMachineId = -1;
-	stConfig.pReportShm->dwPkgSeq = rand();
-
 	const char *pip = GetLocalIP(stConfig.szSrvIp_master);
 	if(pip != NULL && stConfig.szLocalIP[0] == '\0')
 		strncpy(stConfig.szLocalIP, pip, MYSIZEOF(stConfig.szLocalIP)-1);
@@ -465,10 +460,14 @@ int InitHello()
 	}
 	InitSocketComm(iSock);
 
+	// reinit
+	stConfig.pReportShm->iMtClientIndex = -1;
+	stConfig.pReportShm->iMachineId = -1;
+	stConfig.pReportShm->dwPkgSeq = rand();
+
 	struct sockaddr_in addr_server;
 	addr_server.sin_family = PF_INET;
 	addr_server.sin_port = htons(stConfig.iSrvPort);
-
 	addr_server.sin_addr.s_addr = inet_addr(stConfig.szSrvIp_master);
 	iRet = AddSocket(iSock, &addr_server, OnMtreportPkg, NULL);
 	if(iRet < 0) {
@@ -1722,7 +1721,6 @@ int main(int argc, char* argv[])
 	}
 
 	daemon(1, 0);
-
 	do {
 		int iPid = fork();
 		signal(SIGCHLD, SIG_DFL);
