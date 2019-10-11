@@ -38,7 +38,7 @@
 #include <math.h>
 #include <mt_report.h>
 #include <mt_log.h>
-#include <mt_cfg.h>
+#include <sv_cfg.h>
 #include "net.h"
 #include "cpu.h"
 #include "disk.h"
