@@ -156,8 +156,10 @@ int MtReport_Attr_Add(int32_t attr, int32_t iValue)
 	int j=0;
 
 check_again:
-	if(bCheckCount > 100)
+	if(bCheckCount > 100) {
+		MtReport_Attr_Spec(238, 1);
 		return -2;
+	}
 
 	for(j=0; j < MTATTR_SHM_DEF_COUNT; j++)
 	{
@@ -179,7 +181,6 @@ check_again:
 			else
 			{
 				bCheckCount++;
-				MtReport_Attr_Spec(238, 1);
 				goto check_again;
 			}
 		}
@@ -201,11 +202,13 @@ int MtReport_Attr_Set(int32_t attr, int32_t iValue)
 	uint8_t bCheckCount = 0;
 	stRecord.iAttrID = attr;
 	AttrNode *pNode = NULL;
-	int i=0,j=0;
+	int j=0;
 
 check_again:
-	if(bCheckCount > 100)
+	if(bCheckCount > 100) {
+		MtReport_Attr_Spec(238, 1);
 		return -2;
+	}
 
 	for(j=0; j < MTATTR_SHM_DEF_COUNT; j++)
 	{
@@ -227,31 +230,13 @@ check_again:
 			else
 			{
 				bCheckCount++;
-				MtReport_Attr_Spec(238, 1);
 				goto check_again;
 			}
 		}
 	}
 	if(j < MTATTR_SHM_DEF_COUNT)
 		return 0;
-
-	g_mtReport.pMtShm->dwAttrReportBySpecCount++;
-	for(i=0; i < g_mtReport.pMtShm->iAttrSpecialCount; i++) {
-		if(g_mtReport.pMtShm->sArrtListSpec[i].iAttrID == attr)
-			break;
-	}
-	if(i >= g_mtReport.pMtShm->iAttrSpecialCount) {
-		i = g_mtReport.pMtShm->iAttrSpecialCount++;
-		if(i >= MTATTR_SPECIAL_COUNT) {
-			g_mtReport.pMtShm->wAttrReportFailed++;
-			return -3;
-		}
-		g_mtReport.pMtShm->sArrtListSpec[i].iAttrID = attr;
-		g_mtReport.pMtShm->sArrtListSpec[i].iCurValue = iValue;
-	}
-	else 
-		g_mtReport.pMtShm->sArrtListSpec[i].iCurValue = iValue;
-	return 0;
+	return MtReport_Attr_Spec(attr, iValue);
 }
 
 int MtReport_Str_Attr_Add(int32_t attr, const char *pstr, int32_t iValue)
@@ -270,8 +255,10 @@ int MtReport_Str_Attr_Add(int32_t attr, const char *pstr, int32_t iValue)
 	uint32_t dwShortKey = attr+GetShortKeyByStr(stRecord.szStrInfo);
 
 check_again:
-	if(bCheckCount > 100)
+	if(bCheckCount > 100) {
+		MtReport_Attr_Spec(238, 1);
 		return -2;
+	}
 
 	pNode = (StrAttrNode*)HashTableSearchEx(&g_mtReport.stStrAttrHash, &stRecord, dwShortKey, &isFind);
 	if(isFind)
@@ -288,7 +275,6 @@ check_again:
 		else
 		{
 			bCheckCount++;
-			MtReport_Attr_Spec(238, 1);
 			goto check_again;
 		}
 	}
@@ -309,8 +295,10 @@ int MtReport_Str_Attr_Set(int32_t attr, const char *pstr, int32_t iValue)
 	uint32_t dwShortKey = attr+GetShortKeyByStr(stRecord.szStrInfo);
 
 check_again:
-	if(bCheckCount > 100)
+	if(bCheckCount > 100) {
+		MtReport_Attr_Spec(238, 1);
 		return -2;
+	}
 
 	pNode = (StrAttrNode*)HashTableSearchEx(&g_mtReport.stStrAttrHash, &stRecord, dwShortKey, &isFind);
 	if(isFind)
@@ -327,7 +315,6 @@ check_again:
 		else
 		{
 			bCheckCount++;
-			MtReport_Attr_Spec(238, 1);
 			goto check_again;
 		}
 	}
