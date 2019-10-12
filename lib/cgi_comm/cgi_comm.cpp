@@ -1098,7 +1098,6 @@ int InitFastCgi(CGIConfig &myCfg, const char *pszLogPath)
 
 	// 关闭运行时间的统计输出 (json 格式响应需要)
 	hdf_set_int_value(myCfg.cgi->hdf, "Config.TimeFooter", 0);
-	hdf_set_value(myCfg.cgi->hdf, "config.dwzpath", DWZ_PATH); 
 	hdf_set_value(myCfg.cgi->hdf, "config.cgipath", myCfg.szCgiPath); 
 	hdf_set_value(myCfg.cgi->hdf, "config.cspath", myCfg.szCsPath); 
 	hdf_set_value(myCfg.cgi->hdf, "config.docpath", myCfg.szDocPath); 
