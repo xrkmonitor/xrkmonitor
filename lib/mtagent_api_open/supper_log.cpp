@@ -954,13 +954,14 @@ int CSupperLog::InitCommon(const char *pConfFile)
 {
 	int32_t iRet = 0;
 	char szLocalEth[32] = {0};
+	char szLogTypeStr[300] = {0};
 	if((iRet=LoadConfig(pConfFile,
 		"LOCAL_IF_NAME", CFG_STRING, szLocalEth, "eth0", MYSIZEOF(szLocalEth),
 		"SLOG_CONFIG_ID", CFG_INT, &m_dwConfigId, 0,
 		"FAST_CGI_MAX_HITS", CFG_INT, &m_iFastCgiHits, 0,
 		"SLOG_OUT_TYPE", CFG_INT, &m_iLogOutType, 2,
 		"SLOG_EXIT_MAX_WAIT_SEC", CFG_INT, &m_iMaxExitWaitTime, 3,
-		"SLOG_TYPE", CFG_INT, &m_iLocalLogType, 0,
+		"SLOG_TYPE", CFG_STRING, szLogTypeStr, "", MYSIZEOF(szLogTypeStr),
 		"SLOG_EXIT_MAX_WAIT_SEC", CFG_INT, &m_iMaxExitWaitTime, 3,
 		"SLOG_CHECK_PROC_RUN", CFG_INT, &m_iCheckProcExist, 1,
 		"VMEM_SHM_KEY", CFG_INT, &m_iVmemShmKey, VMEM_DEF_SHMKEY,
@@ -970,6 +971,7 @@ int CSupperLog::InitCommon(const char *pConfFile)
 		return SLOG_ERROR_LINE;
 	}
 
+	m_iLocalLogType = GetLogTypeByStr(szLogTypeStr);
 	char szLocalIp[32] = {0};
 	if(GetIpFromIf(szLocalIp, szLocalEth) != 0)
 	{
@@ -997,13 +999,14 @@ int CSupperLog::InitConfigByFile(const char *pszConfigFile, bool bCreateShm)
 	m_strConfigFile = pszConfigFile;
 	int32_t iRet = 0;
 
+	char szLogTypeStr[300] = {0};
 	if((iRet=LoadConfig(pszConfigFile,
 		"SLOG_CONFIG_SHMKEY", CFG_INT, &m_iConfigShmKey, SLOG_CLIENT_CONFIG_DEF_SHMKEY, 
 		"SLOG_APPINFO_SHMKEY", CFG_INT, &m_iAppInfoShmKey, SLOG_APP_INFO_DEF_SHMKEY, 
 		"SLOG_CONFIG_ID", CFG_INT, &m_dwConfigId, 0,
 		"FAST_CGI_MAX_HITS", CFG_INT, &m_iFastCgiHits, 0,
 		"SLOG_OUT_TYPE", CFG_INT, &m_iLogOutType, 2,
-		"SLOG_TYPE", CFG_INT, &m_iLocalLogType, 0,
+		"SLOG_TYPE", CFG_STRING, szLogTypeStr, "", MYSIZEOF(szLogTypeStr),
 		"SLOG_EXIT_MAX_WAIT_SEC", CFG_INT, &m_iMaxExitWaitTime, 3,
 		"SLOG_CHECK_PROC_RUN", CFG_INT, &m_iCheckProcExist, 1,
 		"VMEM_SHM_KEY", CFG_INT, &m_iVmemShmKey, VMEM_DEF_SHMKEY,
@@ -1013,6 +1016,7 @@ int CSupperLog::InitConfigByFile(const char *pszConfigFile, bool bCreateShm)
 		return -1; 
 	}
 
+	m_iLocalLogType = GetLogTypeByStr(szLogTypeStr);
 	int32_t iFlag = 0666;
 	if(bCreateShm)
 		iFlag |= IPC_CREAT;
@@ -2925,6 +2929,7 @@ int CSupperLog::InitForUseLocalLog(const char *pszConfigFile)
 	m_strConfigFile = pszConfigFile;
 	m_iLogOutType = BWORLD_SLOG_TYPE_LOCAL;
 	int iIsLogToStd = 0;
+	char szLogTypeStr[300] = {0};
 	if((iRet=LoadConfig(m_strConfigFile.c_str(),
 		"SLOG_LOG_TO_STD", CFG_INT, &iIsLogToStd, 1,
 		"SLOG_LOG_SIZE", CFG_INT, &m_stParam.dwMax, 10485760,
@@ -2937,7 +2942,7 @@ int CSupperLog::InitForUseLocalLog(const char *pszConfigFile)
 		"SLOG_CONFIG_ID", CFG_INT, &m_dwConfigId, 0,
 		"FAST_CGI_MAX_HITS", CFG_INT, &m_iFastCgiHits, 0,
 		"SLOG_OUT_TYPE", CFG_INT, &m_iLogOutType, 2,
-		"SLOG_TYPE", CFG_INT, &m_iLocalLogType, 0,
+		"SLOG_TYPE", CFG_STRING, szLogTypeStr, "", MYSIZEOF(szLogTypeStr),
 		"SLOG_EXIT_MAX_WAIT_SEC", CFG_INT, &m_iMaxExitWaitTime, 3,
 		"SLOG_CHECK_PROC_RUN", CFG_INT, &m_iCheckProcExist, 1,
 		"VMEM_SHM_KEY", CFG_INT, &m_iVmemShmKey, VMEM_DEF_SHMKEY,
@@ -2947,6 +2952,7 @@ int CSupperLog::InitForUseLocalLog(const char *pszConfigFile)
 		return SLOG_ERROR_LINE;
 	}
 
+	m_iLocalLogType = GetLogTypeByStr(szLogTypeStr);
 	if(m_stParam.iIsLogToStd < 0)
 		m_stParam.iIsLogToStd = iIsLogToStd;
 
@@ -2981,6 +2987,7 @@ int CSupperLog::Init(const char *pszLocalIP)
 	}
 
 	char szLogFile[256] = {0};
+	char szLogTypeStr[300] = {0};
 	int32_t iRet = 0, iIsLogToStd = 0;
 	if((iRet=LoadConfig(m_strConfigFile.c_str(),
 		"REMOTE_LOG_TO_STD", CFG_INT, &m_iRemoteLogToStd, 0,
@@ -2999,7 +3006,7 @@ int CSupperLog::Init(const char *pszLocalIP)
 		"MT_WARN_INFO_SHM_KEY", CFG_INT, &m_iWarnInfoShmKey, DEF_WARN_INFO_SHM_KEY,
 		"SLOG_SET_TEST", CFG_INT, &m_bIsTestLog, 0,
 		"SLOG_OUT_TYPE", CFG_INT, &m_iLogOutType, 2,
-		"SLOG_TYPE", CFG_INT, &m_iLocalLogType, 0,
+		"SLOG_TYPE", CFG_STRING, szLogTypeStr, "", MYSIZEOF(szLogTypeStr),
 		"SLOG_EXIT_MAX_WAIT_SEC", CFG_INT, &m_iMaxExitWaitTime, 3,
 		"SLOG_CHECK_PROC_RUN", CFG_INT, &m_iCheckProcExist, 1,
 		"VMEM_SHM_KEY", CFG_INT, &m_iVmemShmKey, VMEM_DEF_SHMKEY,
@@ -3015,6 +3022,7 @@ int CSupperLog::Init(const char *pszLocalIP)
 		return -1; 
 	}
 
+	m_iLocalLogType = GetLogTypeByStr(szLogTypeStr);
 	SetLogFile(szLogFile);
 	
 	if(m_stParam.iIsLogToStd < 0)
