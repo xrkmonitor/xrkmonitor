@@ -49,16 +49,9 @@
 **微信告警示例:**(支持邮件、短信、微信、PC客户端等告警方式，告警功能无需开发直接可用)  
 ![开源版监控系统告警示例](http://xrkmonitor.com/monitor/images/open_wx_2.png)
 
-## 视频教程列表
-更多视频教程制作中，感谢大家关注   
-
-1. [源码介绍和编译(ubuntu系统) https://www.bilibili.com/video/av66685598](https://www.bilibili.com/video/av66685598)  
-2. [集中部署(ubuntu系统) https://www.bilibili.com/video/av66819048](https://www.bilibili.com/video/av66819048)   
-
-在线说明文档：- [在线文档 http://xrkmonitor.com/monitor/dmt_open_doc.html](http://xrkmonitor.com/monitor/dmt_open_doc.html)
+在线文档：- [在线文档 http://xrkmonitor.com/monitor/dmt_open_doc.html](http://xrkmonitor.com/monitor/dmt_open_doc.html)
 
 ## 编译说明 
-视频教程：[源码介绍和编译(ubuntu系统) https://www.bilibili.com/video/av66685598](https://www.bilibili.com/video/av66685598)  
 
 项目目前只支持在 linux 系统中编译，推荐使用 opensuse 或者 ubuntu 系统   
 项目依赖 mysql 开发库 libmysqlclient、protobuf、fcgi、memcached，其中 protobuf、fcgi memcached 的源  
@@ -78,8 +71,6 @@ mod_fastcgi , 模块源码在 lib 目录下，fastcgi 的配置可参考文件�
 
 部署方式支持集中部署、分布式部署，部署方法如下：
 ### 集中部署
-视频教程：[集中部署(ubuntu系统) https://www.bilibili.com/video/av66819048](https://www.bilibili.com/video/av66819048)   
-
 全部服务部署在一台服务器上的操作步骤：
 1. 在部署机上安装 mysql, apache 软件
 2. 打完整部署包：cd  tools_sh; ./make_all.sh 生成： slog_all.tar.gz 部署包
