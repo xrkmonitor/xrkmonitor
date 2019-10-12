@@ -16,7 +16,7 @@ function dssOnDetail(idx)
 {
 	dss_sel_detail_idx = idx;
 	var op = $.parseJSON('{"mask":true,"maxable":false,"height":420,"width":620}'); 
-	$.pdialog.open("<?cs var:config.dwzpath?>dmt_dlg_detail_syssrv.html", "dss_dlg_detail",
+	$.pdialog.open("<?cs var:config.docpath?>dmt_dlg_detail_syssrv.html", "dss_dlg_detail",
 		"服务器："+dss_syssrv_list.syssrv_list[idx].ip+" 详情", op);
 }
 
