@@ -77,7 +77,6 @@
 #define CGI_UPLOAD_PATH "../htdocs/monitor/cgi_upload/"
 
 #define CGI_PATH "/cgi-bin/"
-#define DWZ_PATH "/monitor/"
 #define DOC_PATH "/monitor/"
 #define CS_PATH "../htdocs/monitor/"
 

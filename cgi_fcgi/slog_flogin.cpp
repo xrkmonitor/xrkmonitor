@@ -59,10 +59,8 @@
 
 CSupperLog slog;
 CGIConfig stConfig;
-char g_szImgPath[128];
-char g_szLocalServerIp[20];
-char g_szJqueryUrl[256];
 int32_t g_iLoginType;
+char g_strRedirectUri[256];
 
 typedef struct {
 	int iLoginType;
@@ -76,20 +74,8 @@ static int InitFastCgi_first(CGIConfig &stConfig)
 		return SLOG_ERROR_LINE;
 	}
 
-	if(LoadConfig(stConfig.szConfigFile,
-	   "IMG_PATH", CFG_STRING, g_szImgPath, "", sizeof(g_szImgPath),
-	   "JQUERY_URL", CFG_STRING, g_szJqueryUrl, "/js/jquery-1.8.3.min.js", sizeof(g_szJqueryUrl),
-		NULL) < 0) 
-	{
-		ERR_LOG("loadconfig failed, from file:%s", stConfig.szConfigFile);
-		return SLOG_ERROR_LINE;
-	}
-
-	if(g_szLocalServerIp[0] == '\0')
-		strncpy(g_szLocalServerIp, stConfig.szLocalIp, sizeof(g_szLocalServerIp));
-
-	int32_t iRet = 0;
-	if((iRet=slog.InitConfigByFile(stConfig.szConfigFile)) < 0 || (iRet=slog.Init(stConfig.szLocalIp)) < 0)
+	snprintf(g_strRedirectUri, sizeof(g_strRedirectUri), "%s/mt_slog_monitor", stConfig.szCgiPath);
+	if(slog.InitConfigByFile(stConfig.szConfigFile) < 0 || slog.Init(stConfig.szLocalIp) < 0)
 		return SLOG_ERROR_LINE;
 	return 0;
 }
@@ -208,13 +194,9 @@ static int PopLoginWindow(CGI *cgi, HDF *hdf)
 		s_page_login_dwz += "dmt_login_dwz.html";
 	}
 
-	uint8_t bLoginType = g_iLoginType;
-	hdf_set_value(hdf, "config.jquery_file", g_szJqueryUrl);
-	hdf_set_value(hdf, "config.img_path", g_szImgPath);
-	if(bLoginType != 0)
-		hdf_set_int_value(hdf, "config.login_type", bLoginType);
-
-	hdf_set_value(hdf, "config.redirect_url", "/cgi-bin/mt_slog_monitor");
+	if(g_iLoginType != 0)
+		hdf_set_int_value(hdf, "config.login_type", g_iLoginType);
+	hdf_set_value(hdf, "config.redirect_url", g_strRedirectUri);
 	hdf_set_value(hdf, "config.dwzpath", stConfig.szDocPath);
 	hdf_set_value(hdf, "config.cgipath", stConfig.szCgiPath);
 
@@ -269,7 +251,7 @@ static int ResponseCheckResult(CGI *cgi, HDF *hdf, int32_t iResultCode)
 	if(pResponseMethod != NULL && !strcmp(pResponseMethod, "json"))
 	{
 		js["code"] = (unsigned int)iResultCode;
-		js["redirect_url"] = "/cgi-bin/mt_slog_monitor";
+		js["redirect_url"] = g_strRedirectUri;
 		string_init(&str);
 		if((err=string_set(&str, js.ToString().c_str())) != STATUS_OK 
 			|| (err=cgi_output(cgi, &str)) != STATUS_OK)
@@ -295,7 +277,7 @@ static int ResponseCheckResult(CGI *cgi, HDF *hdf, int32_t iResultCode)
 		}
 		else
 		{
-			cgi_redirect_uri(cgi, "%s", "/cgi-bin/mt_slog_monitor");
+			cgi_redirect_uri(cgi, "%s", g_strRedirectUri);
 		}
 	}
 	return 0;
@@ -343,7 +325,7 @@ static void AddLoginHistory(FloginInfo *psess)
 	AddParameter(&ppara, "login_time", stConfig.dwCurTime, "DB_CAL");
 	AddParameter(&ppara, "valid_time", stConfig.dwCurTime+psess->iLoginExpireTime, "DB_CAL");
 	AddParameter(&ppara, "login_remote_address", stConfig.remote, NULL);
-	AddParameter(&ppara, "receive_server", g_szLocalServerIp, NULL);
+	AddParameter(&ppara, "receive_server", stConfig.szLocalIp, NULL);
 	const char *ptmp = hdf_get_value(stConfig.cgi->hdf, "HTTP.Referer", NULL);
 	if(ptmp != NULL)
 		AddParameter(&ppara, "referer", ptmp, NULL);
@@ -453,7 +435,7 @@ static int CheckLogin(HDF *hdf)
 				"update flogin_user set last_login_time=%u,last_login_address=\'%s\',login_index=%d"
 				",login_md5=\'%s\',last_login_server=\'%s\' where user_id=%u",
 				psess->dwLoginTime, stConfig.remote, iFreeIndex, ppass, 
-				g_szLocalServerIp, psess->iUserId); 
+				stConfig.szLocalIp, psess->iUserId); 
 			stConfig.qu->free_result();
 			stConfig.qu->execute(sBuf);
 			KickOldLoginInfo(psess, iFreeIndex);

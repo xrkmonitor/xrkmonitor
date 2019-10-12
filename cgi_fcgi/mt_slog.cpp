@@ -2539,7 +2539,6 @@ int main(int argc, char **argv, char **envp)
 			if(CheckLoginEx(stConfig, stConfig.cgi, 
 				stConfig.pshmLoginList, stConfig.remote, stConfig.dwCurTime, &stConfig.stUser) <= 0)
 			{
-				DEBUG_LOG("cros - redirect info %s", stConfig.szRedirectUri);
 				RedirectToFastLogin(stConfig);
 				cgi_destroy(&stConfig.cgi);
 				continue;

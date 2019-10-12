@@ -441,7 +441,6 @@ void RedirectToFastLogin(CGIConfig &stConfig)
 		return;
 	}
 
-
 	Json js;
 	js["ec"] = (unsigned int)111;
 	js["redirect_url"] = stConfig.szRedirectUri;
