@@ -954,7 +954,7 @@ int CSupperLog::InitCommon(const char *pConfFile)
 {
 	int32_t iRet = 0;
 	char szLocalEth[32] = {0};
-	char szLogTypeStr[300] = {0};
+	char szLogTypeStr[200] = {0};
 	if((iRet=LoadConfig(pConfFile,
 		"LOCAL_IF_NAME", CFG_STRING, szLocalEth, "eth0", MYSIZEOF(szLocalEth),
 		"SLOG_CONFIG_ID", CFG_INT, &m_dwConfigId, 0,
@@ -999,7 +999,7 @@ int CSupperLog::InitConfigByFile(const char *pszConfigFile, bool bCreateShm)
 	m_strConfigFile = pszConfigFile;
 	int32_t iRet = 0;
 
-	char szLogTypeStr[300] = {0};
+	char szLogTypeStr[200] = {0};
 	if((iRet=LoadConfig(pszConfigFile,
 		"SLOG_CONFIG_SHMKEY", CFG_INT, &m_iConfigShmKey, SLOG_CLIENT_CONFIG_DEF_SHMKEY, 
 		"SLOG_APPINFO_SHMKEY", CFG_INT, &m_iAppInfoShmKey, SLOG_APP_INFO_DEF_SHMKEY, 
@@ -2929,7 +2929,7 @@ int CSupperLog::InitForUseLocalLog(const char *pszConfigFile)
 	m_strConfigFile = pszConfigFile;
 	m_iLogOutType = BWORLD_SLOG_TYPE_LOCAL;
 	int iIsLogToStd = 0;
-	char szLogTypeStr[300] = {0};
+	char szLogTypeStr[200] = {0};
 	if((iRet=LoadConfig(m_strConfigFile.c_str(),
 		"SLOG_LOG_TO_STD", CFG_INT, &iIsLogToStd, 1,
 		"SLOG_LOG_SIZE", CFG_INT, &m_stParam.dwMax, 10485760,
@@ -2987,7 +2987,7 @@ int CSupperLog::Init(const char *pszLocalIP)
 	}
 
 	char szLogFile[256] = {0};
-	char szLogTypeStr[300] = {0};
+	char szLogTypeStr[200] = {0};
 	int32_t iRet = 0, iIsLogToStd = 0;
 	if((iRet=LoadConfig(m_strConfigFile.c_str(),
 		"REMOTE_LOG_TO_STD", CFG_INT, &m_iRemoteLogToStd, 0,
