@@ -39,6 +39,7 @@
 #include <stdint.h>
 
 #include "sv_cfg.h"
+#include "mt_report.h"
 
 #define MAX_CONFIG_LINE_LEN (1024 - 1)
 
@@ -285,3 +286,22 @@ int LoadConfig(const char *pszConfigFilePath, ...)
 
 	return 0;
 }
+
+int GetLogTypeByStr(const char *pstrType)
+{
+	int iType = 0;
+	if(strstr(pstrType, "debug"))
+		iType += MTLOG_TYPE_DEBUG;
+	if(strstr(pstrType, "info"))
+		iType += MTLOG_TYPE_INFO;
+	if(strstr(pstrType, "warn"))
+		iType += MTLOG_TYPE_WARN;
+	if(strstr(pstrType, "reqerr"))
+		iType += MTLOG_TYPE_REQERR;
+	if(strstr(pstrType, "error"))
+		iType += MTLOG_TYPE_ERROR;
+	if(strstr(pstrType, "fatal"))
+		iType += MTLOG_TYPE_FATAL;
+	return iType;
+}
+

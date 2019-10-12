@@ -38,9 +38,9 @@
 #include <ctype.h>
 #include <stdarg.h>
 #include <stdint.h>
+#include <sv_cfg.h>
 
 #include "sv_errno.h"
-#include "sv_cfg.h"
 #include "mtreport_client.h"
 
 #define MAX_CONFIG_LINE_LEN (5 * 1024 - 1)

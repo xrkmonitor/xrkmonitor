@@ -46,6 +46,7 @@ extern "C" {
 
 int LoadConfig(const char *pszConfigFilePath, ...);
 int GetConfigFile(const char *pAppStr, char **pconfOut);
+int GetLogTypeByStr(const char *pstrType);
 
 #ifdef __cplusplus
 }

@@ -356,6 +356,7 @@ static int Init()
 {
 	int32_t iCfgShmKey = 0;
 	int32_t iRet = 0;
+	char szTypeString[300] = {0};
 	if((iRet=LoadConfig(MTREPORT_CONFIG,
 		"SERVER_MASTER", CFG_STRING, stConfig.szSrvIp_master, "192.168.128.128", MYSIZEOF(stConfig.szSrvIp_master),
 		"SERVER_PORT", CFG_INT, &stConfig.iSrvPort, 27000,
@@ -369,7 +370,7 @@ static int Init()
 		"ENABLE_ENCRYPT_DATA", CFG_INT, &stConfig.iEnableEncryptData, 0,
 		"CLIENT_LOCAL_LOG_FILE", CFG_STRING, stConfig.szLocalLogFile, 
 			"./slog_mtreport_client.log", MYSIZEOF(stConfig.szLocalLogFile),
-		"CLIENT_LOCAL_LOG_TYPE", CFG_INT, &stConfig.iLocalLogType, 104,
+		"CLIENT_LOCAL_LOG_TYPE", CFG_STRING, szTypeString, "warn|error|fatal", MYSIZEOF(szTypeString),
 		"CLIENT_LOCAL_LOG_SIZE", CFG_INT, &stConfig.iMaxLocalLogFileSize, 1024*1024*20,
 		(void*)NULL)) < 0)
 	{   
@@ -377,10 +378,13 @@ static int Init()
 		return -1;
 	} 
 
+	stConfig.iLocalLogType = GetLogTypeByStr(szTypeString);
 	stConfig.fpLogFile = NULL;
 	TryReOpenLocalLogFile();
 
-	INFO_LOG("write log limit per sec:%d, type:%d", stConfig.iLogLimitPerSec, stConfig.iLocalLogType);
+	INFO_LOG("write log limit per sec:%d, type:%d, type str:%s", 
+		stConfig.iLogLimitPerSec, stConfig.iLocalLogType, szTypeString);
+
 	gettimeofday(&stConfig.stTimeCur, NULL);
 	stConfig.dwCurTime = stConfig.stTimeCur.tv_sec;
 	srand(stConfig.dwCurTime);
