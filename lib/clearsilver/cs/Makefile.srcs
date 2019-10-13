@@ -1,0 +1,8 @@
+VER_MAJOR = 1
+VER_MINOR = 1.0
+INSTALL_INC = *.h
+SRCS = csparse.c
+
+INCLS = ./cs.h
+
+INCLUDE = -I. -I..
