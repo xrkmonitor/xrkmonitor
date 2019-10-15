@@ -837,25 +837,25 @@ function dmtShowAttrInfo(attr_list, attr_val_list, ct_div, showtype)
 				myUnMaskWarningData:{
 					show:true,
 					title:'取消屏蔽告警',
-					icon:'image:///monitor/themes/sexybuttons/images/icons/silk/phone_sound.png',
+					icon:'image://'+g_siteInfo.doc_path+'/themes/sexybuttons/images/icons/silk/phone_sound.png',
 					onclick:function(){}
 				},
 				myMaskWarningData:{
 					show:true,
 					title:'屏蔽告警',
-					icon:'image:///monitor/themes/sexybuttons/images/icons/silk/phone_delete.png',
+					icon:'image://'+g_siteInfo.doc_path+'/themes/sexybuttons/images/icons/silk/phone_delete.png',
 					onclick:function(){}
 				},
 				mySetWarningData:{
 					show:true,
 					title:'设置告警',
-					icon:'image:///monitor/themes/sexybuttons/images/icons/silk/phone_edit.png',
+					icon:'image://'+g_siteInfo.doc_path+'/themes/sexybuttons/images/icons/silk/phone_edit.png',
 					onclick:function(){}
 				},
 				myShowSingleData:{
 					show:true,
 					title:'单独显示图表数据',
-					icon:'image:///monitor/themes/sexybuttons/images/icons/silk/arrow_out_longer.png',
+					icon:'image://'+g_siteInfo.doc_path+'/themes/sexybuttons/images/icons/silk/arrow_out_longer.png',
 					onclick:function(){}
 				},
 				restore: { 
