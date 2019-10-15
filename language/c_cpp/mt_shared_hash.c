@@ -776,7 +776,7 @@ int32_t RemoveHashNode(SharedHashTable *phash, void *pNode)
 		GetNextNodeRevers(phash);
 
 	pTableHead->dwNodeUseCount--;
-	if(pTableHead->dwNodeUseCount <= 1)
+	if(pTableHead->dwNodeUseCount <= 0)
 	{
 		pTableHead->dwNodeStartIndex = phash->dwRealNodeCount;
 		pTableHead->dwNodeEndIndex = phash->dwRealNodeCount;
