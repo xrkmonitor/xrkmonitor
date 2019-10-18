@@ -340,6 +340,7 @@ int main(int argc, char* argv[])
 
 	SocketHandler h(&slog);
 	CUdpSock stSock(h);
+	stSock.SetLocalTimeInfo();
 
 	stConfig.pShmConfig = slog.GetSlogConfig();
 
@@ -387,7 +388,6 @@ int main(int argc, char* argv[])
 
 	// 字符型监控点共享内存启动处理 --- start(为避免多进程操作shm，只能在该进程中处理)
 	AttrInfoBin *pInfo = NULL;
-	stSock.SetLocalTimeInfo();
 
 	// 如果清理过共享内存，则需要重新从 DB 读取当天的数据写入到 shm
 	bool bNeedTryInitShmFromDb = true;
