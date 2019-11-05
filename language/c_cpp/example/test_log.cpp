@@ -39,8 +39,7 @@ int main(int argc, char *argv[])
 	uint32_t dwCfgId = strtoul(argv[1], NULL, 10);
 
 	// 本地日志文件记录的日志类型 -- 日志上报的api 能够同时写一份在本地，如不需要 iLogType 设置为0即可
-	int iLogType = MTLOG_TYPE_OHTER+MTLOG_TYPE_DEBUG+MTLOG_TYPE_INFO
-		+MTLOG_TYPE_WARN+MTLOG_TYPE_REQERR+MTLOG_TYPE_ERROR+MTLOG_TYPE_FATAL;
+	int iLogType = 255;
 
 	// 调用初始化接口, 参数见 api 说明
 	if(MtReport_Init(dwCfgId, "./local.log", iLogType, 0) < 0) {

@@ -118,6 +118,7 @@ void ShowHelp()
 	printf("\t show memcache get key \n");
 	printf("\t show memcache machine_attr machine_id\n");
 	printf("\t show memcache machine_attr_val attr_id machine_id\n");
+	printf("\t show str_report_info attr_id machine_id\n");
 	printf("\t show warninfo [warn_id|0]\n");
 	printf("\t show view [view_id|0]\n");
 	printf("\t show vmemval idx\n");
@@ -251,6 +252,34 @@ void ShowTableInfo(int argc, char *argv[])
 		}
 		return ;
 	}
+
+	if(!strcmp(ptabName, "str_report_info")) {
+		if(argc < 5) {
+			printf("use show str_report_info attr_id machine_id\n");
+			return;
+		}
+		TStrAttrReportInfo *pstrShm = slog.GetStrAttrShmInfo(atoi(argv[3]), atoi(argv[4]), NULL);
+		if(pstrShm == NULL) {
+			printf("not find str attr:%d, machine:%d info\n", atoi(argv[3]), atoi(argv[4]));
+			return;
+		}
+		pstrShm->Show();
+		printf("\n");
+		StrAttrNodeValShmInfo *pstrAttrShm = slog.GetStrAttrNodeValShm(false);
+		if(pstrAttrShm == NULL) {
+			printf("GetStrAttrNodeValShm failed\n");
+			return;
+		}
+		pstrAttrShm->Show();
+		printf("\n");
+		int idx = pstrShm->iReportIdx;
+		for(int i=0; i < pstrShm->bStrCount; i++)
+		{
+			pstrAttrShm->stInfo[idx].Show();
+			idx = pstrAttrShm->stInfo[idx].iNextStrAttr;
+		}
+	}
+
 
 	if(!strcmp(ptabName, "vmemval")) {
 		if(argc < 4) {
@@ -591,6 +620,12 @@ int Init(const char *pFile = NULL)
 	if(slog.InitAttrList() < 0)
 	{
 		FATAL_LOG("init mt_attr shm failed !");
+		return SLOG_ERROR_LINE;
+	}
+
+	if(slog.InitStrAttrHash() < 0)
+	{
+		ERR_LOG("InitStrAttrHash failed");
 		return SLOG_ERROR_LINE;
 	}
 

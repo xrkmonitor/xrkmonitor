@@ -769,7 +769,7 @@ typedef struct
 
 
 // 字符串型监控点相关数据结构
-#define MAX_STR_ATTR_ARRY_NODE_VAL_COUNT  1500 // 字符型监控点，字符串最大支持数量
+#define MAX_STR_ATTR_ARRY_NODE_VAL_COUNT  15000 // 字符型监控点，字符串最大支持数量
 #define MAX_STR_ATTR_STR_COUNT 20 // 字符串型监控点，最多保留的字符串数，超过则去掉最小的
 #define STR_ATTR_COUNT_FOR_SELECT_STR 8 // 用于筛选上报字符串的缓冲节点数
 typedef struct
@@ -797,24 +797,34 @@ typedef struct
 }StrAttrNodeValShmInfo;
 
 #define STR_ATTR_NODE_VAL_SHM_DEF_KEY 2019060712 // StrAttrNodeValShmInfo 共享内存默认key
-typedef struct 
+
+// 字符串属性上报存储内存结构
+#define STR_ATTR_HASH_NODE_COUNT 4031 // 单机
+#define DEF_STR_ATTR_SHM_KEY 2019101505
+typedef struct _TStrAttrReportInfo
 {
+	int32_t iAttrId; // 上报属性 id
 	uint8_t bStrAttrStrType; // 字符串型监控点的字符串类型
+	int32_t iMachineId; // 上报机器 id
+	uint32_t dwLastReportIp; // 最后一次上报数据的远程IP
+	uint32_t dwLastReportTime;
 	uint8_t bStrCount; // 字符串数
 	int32_t iReportIdx; // 上报数据索引，指向 StrAttrNodeVal 结构
-	uint32_t dwLastReportTime; // 最后一次上报数据时间
 	uint8_t bLastReportDayOfMonth; // 1-31
 	uint32_t dwLastSaveDbTime; // 最后写入DB 的时间
-	char sReserved[4];
+	char sReserved[8];
 	void Show() {
+		SHOW_FIELD_VALUE_INT(iAttrId);
 		SHOW_FIELD_VALUE_UINT(bStrAttrStrType);
+		SHOW_FIELD_VALUE_INT(iMachineId);
+		SHOW_FIELD_VALUE_UINT_IP(dwLastReportIp);
+		SHOW_FIELD_VALUE_UINT_TIME(dwLastReportTime);
 		SHOW_FIELD_VALUE_UINT(bStrCount);
 		SHOW_FIELD_VALUE_INT(iReportIdx);
-		SHOW_FIELD_VALUE_UINT_TIME(dwLastReportTime);
-		SHOW_FIELD_VALUE_INT(bLastReportDayOfMonth);
+		SHOW_FIELD_VALUE_UINT(bLastReportDayOfMonth);
 		SHOW_FIELD_VALUE_UINT_TIME(dwLastSaveDbTime);
 	}
-}StrAttrInfo; // 字符串型监控点在 AttrInfoBin 中的专有字段
+}TStrAttrReportInfo;
 
 #define ATTR_HASH_NODE_COUNT 20011
 #define DEF_ATTR_SHM_KEY 6633317 
@@ -825,6 +835,7 @@ typedef struct
 	int32_t iDataType;
 	int32_t iNameVmemIdx;
 	uint32_t dwLastModTime; 
+	uint8_t bStrAttrStrType; // 字符串型监控点的字符串类型
 
 	// 用于 MtSystemConfig 中连接相同用户下的 attr
 	int32_t iPreIndex;
@@ -834,29 +845,20 @@ typedef struct
 	int32_t iAttrTypePreIndex;
 	int32_t iAttrTypeNextIndex;
 
-	union {
-		StrAttrInfo strAttr;
-		char sReserved[20];
-	};
-
+	char sReserved[8];
 	void Show() {
 		SHOW_FIELD_VALUE_INT(id);
 		SHOW_FIELD_VALUE_INT(iAttrType);
 		SHOW_FIELD_VALUE_INT(iDataType);
 		SHOW_FIELD_VALUE_INT(iNameVmemIdx);
+		SHOW_FIELD_VALUE_UINT(bStrAttrStrType);
+		SHOW_FIELD_VALUE_UINT_TIME(dwLastModTime);
 		if(iNameVmemIdx > 0)
 			printf("\t name:%s\n", MtReport_GetFromVmem_Local(iNameVmemIdx));
-		SHOW_FIELD_VALUE_UINT_TIME(dwLastModTime);
 		SHOW_FIELD_VALUE_INT(iPreIndex);
 		SHOW_FIELD_VALUE_INT(iNextIndex);
 		SHOW_FIELD_VALUE_INT(iAttrTypePreIndex);
 		SHOW_FIELD_VALUE_INT(iAttrTypeNextIndex);
-		if(iDataType == STR_REPORT_D)
-		{
-			printf("\n\t str attr info:\n");
-			strAttr.Show();
-			printf("\n\n");
-		}
 	}
 }AttrInfoBin;
 
@@ -1723,6 +1725,10 @@ class CSupperLog: public StdLog, public IError
 
 		// 字符串型监控点
 		StrAttrNodeValShmInfo *GetStrAttrNodeValShm(bool bCreate);
+		SharedHashTable & GetStrAttrShmHash() { return m_stStrAttrHash; }
+		int InitStrAttrHash();
+		int InitStrAttrHashForWrite();
+		TStrAttrReportInfo* GetStrAttrShmInfo(int32_t iAttrId, int32_t iMachineId, uint32_t *piIsFind);
 
 		// attr --- attr 操作
 		AttrInfoBin* GetAttrInfo(int32_t id, uint32_t *piIsFind);
@@ -1883,6 +1889,9 @@ class CSupperLog: public StdLog, public IError
 
 		int32_t m_iWarnAttrShmKey;
 		SharedHashTable m_stWarnHashAttr;
+
+		int32_t m_iStrAttrShmKey;
+		SharedHashTable m_stStrAttrHash;
 
 		int32_t m_iMachineViewConfigShmKey;
 		SharedHashTableNoList m_stHashMachineViewConfig;

@@ -82,11 +82,8 @@ class CUdpSock: public UdpSocket, public CBasicPacket
 		void WriteAttrDataToMemcache();
 
 		// 写 db
-		void GetStrAttrInfoFromShm(StrAttrInfo &stAttrInfo, comm::ReportAttr & stAttrInfoPb);
-		int SaveStrAttrInfoToDb(comm::ReportAttr & stAttrInfoPb, Query &qu, int iAttrId);
-		int ReadStrAttrInfoFromDb(StrAttrInfo &stAttrInfo, Query &qu, int iAttrId);
+		int SaveStrAttrInfoToDb(TStrAttrReportInfo* pStrAttrShm, Query &qu);
 		int ReadStrAttrInfoFromDbToShm();
-		int SaveStrAttrFromPbToShm(comm::ReportAttr & stAttrInfoPb, StrAttrInfo &stAttrInfo, int iAttrId);
 
 		void WriteStrAttrToDb();
 		void WriteAttrDataToDb();
@@ -118,8 +115,9 @@ class CUdpSock: public UdpSocket, public CBasicPacket
 		int32_t OnRawDataClientAttr(const char *buf, size_t len);
 		int CheckSignature();
 		int GetDayOfMin(const char *ptime=NULL);
-		void CheckClearStrAttrNodeShm(StrAttrInfo &stAttrInfo, int iAttrId);
+		int CheckClearStrAttrNodeShm(TStrAttrReportInfo* pStrAttrShm);
 		void SetLocalTimeInfo() { localtime_r(&slog.m_stNow.tv_sec, &m_currDateTime); }
+		void DealMachineAttrReport(TStrAttrReportInfo *pAttrShm);
 
 		Database *db;
 		Query *m_qu;
@@ -139,7 +137,8 @@ class CUdpSock: public UdpSocket, public CBasicPacket
 		void DealViewAutoBindMachine(TWarnAttrReportInfo *pRepAttrInfo, Query &qu);
 		TWarnAttrReportInfo * AddReportToWarnAttrShm(
 			uint32_t dwAttrId, int32_t iMachineId, uint32_t dwVal, int32_t iMinIdx, int iDataType);
-		void AddStrAttrReportToShm(StrAttrInfo &stAttrInfo, const ::comm::AttrInfo & reportInfo);
+		TStrAttrReportInfo * AddStrAttrReportToShm(
+			const ::comm::AttrInfo & reportInfo, int32_t iMachineId, uint8_t bStrAttrStrType);
 };
 
 #define MAX_ATTR_PKG_LENGTH 1200 

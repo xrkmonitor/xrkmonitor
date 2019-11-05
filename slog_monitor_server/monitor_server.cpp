@@ -98,6 +98,12 @@ static int Init(const char *papp)
 		return SLOG_ERROR_LINE;
 	}
 
+	if(slog.InitStrAttrHashForWrite() < 0)
+	{
+		FATAL_LOG("init str attr shm failed !");
+		return SLOG_ERROR_LINE;
+	}
+
 	// 由 slog_config 进程创建
 	if(!(stConfig.pstrAttrShm=slog.GetStrAttrNodeValShm(false)))
 	{
@@ -336,6 +342,7 @@ int main(int argc, char* argv[])
 	}
 
 	slog.Daemon(1, 1, 0);
+	slog.TryRun();
 	INFO_LOG("monitor_server start:%d", slog.m_iProcessId);
 
 	SocketHandler h(&slog);
@@ -387,30 +394,18 @@ int main(int argc, char* argv[])
 	h.Add(&stSock);
 
 	// 字符型监控点共享内存启动处理 --- start(为避免多进程操作shm，只能在该进程中处理)
-	AttrInfoBin *pInfo = NULL;
+	SharedHashTable s_stStrAttrHash = slog.GetStrAttrShmHash();
+	bool bReverse = false;
+	_HashTableHead *pTableHead = (_HashTableHead*)s_stStrAttrHash.pHash;
+	TStrAttrReportInfo *pStrAttrShm = (TStrAttrReportInfo*)GetFirstNode(&s_stStrAttrHash);
+	if(pStrAttrShm == NULL && pTableHead->dwNodeUseCount > 0) {
+		bReverse = true;
+		pStrAttrShm = (TStrAttrReportInfo*)GetFirstNodeRevers(&s_stStrAttrHash);
+	}
 
 	// 如果清理过共享内存，则需要重新从 DB 读取当天的数据写入到 shm
-	bool bNeedTryInitShmFromDb = true;
-	int idx = stConfig.psysConfig->iAttrIndexStart;
-	for(int k=0; k < stConfig.psysConfig->wAttrCount && idx >= 0; k++) {
-		pInfo = slog.GetAttrInfo(idx);
-		if(pInfo == NULL)
-			break;
-		if(pInfo->iDataType == STR_REPORT_D && pInfo->strAttr.bStrCount > 0)
-		{
-			bNeedTryInitShmFromDb = false;
-			stSock.CheckClearStrAttrNodeShm(pInfo->strAttr, pInfo->id);
-		}
-		idx = pInfo->iNextIndex;
-	}
-	if(bNeedTryInitShmFromDb)
-	{
-		SLogServer *psrv = slog.GetValidServerByType(SRV_TYPE_ATTR_DB, NULL);
-		if(NULL == psrv) {
-			ERR_LOG("GetValidServerByType failed");
-			return SLOG_ERROR_LINE;
-		}
-		if(!TryUseDbHost(psrv->szIpV4, stSock, true)) {
+	if(pStrAttrShm == NULL) {
+		if(!TryUseDbHost(stConfig.pShmConfig->stSysCfg.szDbHost, stSock, true)) {
 			ERR_LOG("check attr db failed !");
 			return SLOG_ERROR_LINE;
 		}
@@ -421,6 +416,18 @@ int main(int argc, char* argv[])
 		delete stSock.db;
 		stSock.db = NULL;
 		stSock.m_qu = NULL;
+	}
+	while(pStrAttrShm != NULL) 
+	{
+		if(stSock.CheckClearStrAttrNodeShm(pStrAttrShm)) {
+			pStrAttrShm->iMachineId = 0;
+			pStrAttrShm->iAttrId = 0;
+			RemoveHashNode(&s_stStrAttrHash, pStrAttrShm);
+		}
+		if(bReverse)
+			pStrAttrShm = (TStrAttrReportInfo*)GetNextNodeRevers(&s_stStrAttrHash);
+		else 
+			pStrAttrShm = (TStrAttrReportInfo*)GetNextNode(&s_stStrAttrHash);
 	}
 	// 字符型监控点共享内存启动处理 --- end 
 

@@ -1787,19 +1787,19 @@ static int SetViewAttr(int view_id)
 }
 
 void ReadStrAttrInfoFromShm(
-	StrAttrInfo &stAttrInfo, std::map<std::string, int> & stMapStrRepInfo)
+	TStrAttrReportInfo *pstrAttrShm, std::map<std::string, int> & stMapStrRepInfo)
 {
-	static StrAttrNodeValShmInfo *pstrAttrShm = slog.GetStrAttrNodeValShm(false);
-	if(pstrAttrShm == NULL)
+	static StrAttrNodeValShmInfo *pstrAttrArryShm = slog.GetStrAttrNodeValShm(false);
+	if(pstrAttrArryShm == NULL)
 	{
 		ERR_LOG("get GetStrAttrNodeValShm failed");
 		return;
 	}
 
 	StrAttrNodeVal *pNodeShm = NULL;
-	int idx = stAttrInfo.iReportIdx, i = 0;
+	int idx = pstrAttrShm->iReportIdx, i = 0;
 	std::map<std::string, int>::iterator it;
-	for(i=0; i < stAttrInfo.bStrCount; i++)
+	for(i=0; i < pstrAttrShm->bStrCount; i++)
 	{
 	    if(idx < 0 || idx >= MAX_STR_ATTR_ARRY_NODE_VAL_COUNT)
 	    {
@@ -1807,7 +1807,7 @@ void ReadStrAttrInfoFromShm(
 	        return;
 	    }
 	
-	    pNodeShm = pstrAttrShm->stInfo+idx;
+	    pNodeShm = pstrAttrArryShm->stInfo+idx;
 		it = stMapStrRepInfo.find(pNodeShm->szStrInfo);
 		if(it == stMapStrRepInfo.end()) 
 			stMapStrRepInfo[pNodeShm->szStrInfo] = pNodeShm->iStrVal;
@@ -1817,35 +1817,47 @@ void ReadStrAttrInfoFromShm(
 	}
 }
 
-static int GetStrAttrDayVal(std::map<std::string, int> & stMapStrRepInfo,
+static int GetStrAttrDayVal(Json &js_mach, std::map<std::string, int> & stMapStrRepInfo,
 	const Json &js_attr_info, Query &qu, const char *pszDayTableName, bool bIsLocalAttrSrv)		
 {
 	const char *pAttrTableToday = GetAttrTableName(stConfig.dwCurTime);
+	const Json::json_list_t & jslist = js_mach["list"].GetArray();
+	Json::json_list_t::const_iterator it = jslist.begin();
+
 	if(!strcmp(pszDayTableName, pAttrTableToday) && bIsLocalAttrSrv) 
 	{
 		// 查询当天的，直接查 shm 共享内存
-		AttrInfoBin *pAttrInfo = slog.GetAttrInfo((int)js_attr_info["id"], NULL);
-		if(pAttrInfo != NULL)
-			ReadStrAttrInfoFromShm(pAttrInfo->strAttr, stMapStrRepInfo);
-		else
-			ERR_LOG("str attr:%d failed", (int)js_attr_info["id"]);
+		TStrAttrReportInfo* pStrAttrShm = NULL;
+		for(; it != jslist.end(); it++)
+		{
+			pStrAttrShm = slog.GetStrAttrShmInfo((int)js_attr_info["id"], (int)((*it)["id"]), NULL); 
+			if(pStrAttrShm != NULL) {
+				ReadStrAttrInfoFromShm(pStrAttrShm, stMapStrRepInfo);
+			}
+			else {
+				DEBUG_LOG("not find str attr:%d, machine:%d, in shm", (int)js_attr_info["id"], (int)((*it)["id"]));
+			}
+		}
 	}
 	else {
 		// 查询历史或者非本机的数据，从 db 读取
-		char szSql[512] = {0};
-		if(!strcmp(pszDayTableName, pAttrTableToday)) {
-			snprintf(szSql, sizeof(szSql),
-				"select str_val from %s where attr_id=%d and machine_id=0",
-				pszDayTableName, (int)js_attr_info["id"]);
-		}
-		else {
-			snprintf(szSql, sizeof(szSql),
-				"select value from %s_day where attr_id=%d and machine_id=0",
-				pszDayTableName, (int)js_attr_info["id"]);
-		}
-
-		if(qu.get_result(szSql) && qu.num_rows() > 0) 
+		char szSql[256] = {0};
+		for(; it != jslist.end(); it++) 
 		{
+			if(!strcmp(pszDayTableName, pAttrTableToday)) {
+				snprintf(szSql, sizeof(szSql),
+					"select str_val from %s where attr_id=%d and machine_id=%d and value=0",
+					pszDayTableName, (int)js_attr_info["id"], (int)((*it)["id"]));
+			}
+			else {
+				snprintf(szSql, sizeof(szSql),
+					"select value from %s_day where attr_id=%d and machine_id=%d and total=0",
+					pszDayTableName, (int)js_attr_info["id"], (int)((*it)["id"]));
+			}
+
+			if(!qu.get_result(szSql) || qu.num_rows() <= 0) 
+				continue;
+
 			qu.fetch_row();
 			qu.fetch_lengths();
 			unsigned long ulValLen = qu.getlength(0);
@@ -1856,18 +1868,18 @@ static int GetStrAttrDayVal(std::map<std::string, int> & stMapStrRepInfo,
 				ERR_LOG("ParseFromArray failed-%p-%lu", pval, ulValLen);
 				return SLOG_ERROR_LINE;
 			}
-			DEBUG_LOG("read str attr:%d, from db:%s", 
-				(int)js_attr_info["id"], stAttrInfoPb.ShortDebugString().c_str());
-	
-			std::map<std::string, int>::iterator it;
+			DEBUG_LOG("read str attr:%d, machine:%d, from db:%s", 
+				(int)js_attr_info["id"], (int)((*it)["id"]), stAttrInfoPb.ShortDebugString().c_str());
+
+			std::map<std::string, int>::iterator it_str;
 			for(int j=0; j < stAttrInfoPb.msg_attr_info_size(); j++)
 			{
-				it = stMapStrRepInfo.find(stAttrInfoPb.msg_attr_info(j).str());
-				if(it == stMapStrRepInfo.end())
+				it_str = stMapStrRepInfo.find(stAttrInfoPb.msg_attr_info(j).str());
+				if(it_str == stMapStrRepInfo.end())
 					stMapStrRepInfo[stAttrInfoPb.msg_attr_info(j).str()] 
 						= stAttrInfoPb.msg_attr_info(j).uint32_attr_value();
 				else
-					it->second += stAttrInfoPb.msg_attr_info(j).uint32_attr_value();
+					it_str->second += stAttrInfoPb.msg_attr_info(j).uint32_attr_value();
 			}
 		}
 	}
@@ -2037,14 +2049,14 @@ static int ShowAttrMulti(int iShowAttrType)
 				for(int k=0; k < 7; k++) {
 					if(s_aryTableWeekDay[k][0] == '\0')
 						break;
-					if(GetStrAttrDayVal(
+					if(GetStrAttrDayVal(js_mach,
 						stMapStrRepInfo, *it, qu, s_aryTableWeekDay[k], bIsAttrServerLocal) < 0)
 						break;
 				}
 			}
 			else {
 				// 日图
-				if(GetStrAttrDayVal(stMapStrRepInfo, *it, qu, szTableName, bIsAttrServerLocal) < 0)
+				if(GetStrAttrDayVal(js_mach, stMapStrRepInfo, *it, qu, szTableName, bIsAttrServerLocal) < 0)
 					break;
 			}
 
@@ -2243,6 +2255,12 @@ static int InitFastCgi_first(CGIConfig &myConf)
 		FATAL_LOG("InitWarnInfo failed");
 		return SLOG_ERROR_LINE;
 	}
+
+	if(slog.InitStrAttrHashForWrite() < 0)
+	{
+	    ERR_LOG("init str attr shm failed !");
+	    return SLOG_ERROR_LINE;
+	}   
 
 	return 0;
 }

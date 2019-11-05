@@ -1574,8 +1574,7 @@ int32_t ReadTableAttr(Database &db, uint32_t uid=0)
 				pInfo->iDataType = qu.getval("data_type");
 				// 字符串型监控点
 				if(pInfo->iDataType == STR_REPORT_D) {
-					pInfo->strAttr.bStrAttrStrType = qu.getval("str_attr_type");
-					pInfo->strAttr.bStrCount = 0;
+					pInfo->bStrAttrStrType = qu.getval("str_attr_type");
 				}
 
 				if(ptmp != NULL && ptmp[0] != '\0')
@@ -1653,29 +1652,13 @@ int32_t ReadTableAttr(Database &db, uint32_t uid=0)
 
 			if(pInfo->iDataType != qu.getval("data_type"))
 			{
-				if(pInfo->iDataType == STR_REPORT_D) {
-					// 由字符串型监控点改为非字符串型、删除相关数据
-					pInfo->iDataType = qu.getval("data_type");
-					if(pInfo->strAttr.bStrCount > 0) {
-						ClearStrAttrNodeVal(pInfo->strAttr.iReportIdx);
-						INFO_LOG("clear str attr:%d, str node count:%d, first idx:%d",
-							pInfo->id, pInfo->strAttr.bStrCount, pInfo->strAttr.iReportIdx);
-						pInfo->strAttr.bStrCount = 0;
-					}
-				}
-				else {
-					pInfo->iDataType = qu.getval("data_type");
-					if(pInfo->iDataType == STR_REPORT_D)
-					{
-						// 由非字符串型监控点改为字符串型、初始化相关字段
-						pInfo->strAttr.bStrCount = 0;
-					}
-				}
+				pInfo->iDataType = qu.getval("data_type");
 			}
+
 			if(pInfo->iDataType == STR_REPORT_D 
-				&& pInfo->strAttr.bStrAttrStrType != qu.getval("str_attr_type"))
+				&& pInfo->bStrAttrStrType != qu.getval("str_attr_type"))
 			{
-				pInfo->strAttr.bStrAttrStrType = qu.getval("str_attr_type");
+				pInfo->bStrAttrStrType = qu.getval("str_attr_type");
 			}
 
 			const char *pvname = NULL;
@@ -1697,15 +1680,6 @@ int32_t ReadTableAttr(Database &db, uint32_t uid=0)
 			// 从共享内存中删除
 			INFO_LOG("delete attr info id:%d, free name idx:%d", pInfo->id, pInfo->iNameVmemIdx);
 			pInfo->id = 0;
-			if(pInfo->iDataType == STR_REPORT_D) {
-				if(pInfo->strAttr.bStrCount > 0) {
-					ClearStrAttrNodeVal(pInfo->strAttr.iReportIdx);
-					INFO_LOG("clear str attr:%d, str node count:%d, first idx:%d",
-						pInfo->id, pInfo->strAttr.bStrCount, pInfo->strAttr.iReportIdx);
-					pInfo->strAttr.bStrCount = 0;
-				}
-			}
-
 			MtReport_FreeVmem(pInfo->iNameVmemIdx);
 			pInfo->iNameVmemIdx = -1;
 

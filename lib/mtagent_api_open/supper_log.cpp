@@ -54,6 +54,9 @@
 #define TOO_LONG_TRUNC_STR " [log too long truncate, see history log !]"
 #define TOO_LONG_TRUNC_STR_LEN 64
 
+extern "C" {
+	int MtReport_Init_ByKey(unsigned int iConfigId, int iConfigShmKey, int iFlag);
+}
 
 // class CLogTimeCur 
 // ------------------------------------------------------------------------------------------------------
@@ -997,7 +1000,7 @@ int CSupperLog::InitCommon(const char *pConfFile)
 int CSupperLog::InitConfigByFile(const char *pszConfigFile, bool bCreateShm)
 {
 	m_strConfigFile = pszConfigFile;
-	int32_t iRet = 0;
+	int32_t iRet = 0, iCfgShmKey = 0;
 
 	char szLogTypeStr[200] = {0};
 	if((iRet=LoadConfig(pszConfigFile,
@@ -1010,6 +1013,7 @@ int CSupperLog::InitConfigByFile(const char *pszConfigFile, bool bCreateShm)
 		"SLOG_EXIT_MAX_WAIT_SEC", CFG_INT, &m_iMaxExitWaitTime, 3,
 		"SLOG_CHECK_PROC_RUN", CFG_INT, &m_iCheckProcExist, 1,
 		"VMEM_SHM_KEY", CFG_INT, &m_iVmemShmKey, VMEM_DEF_SHMKEY,
+		"MTREPORT_SHM_KEY", CFG_INT, &iCfgShmKey, MT_REPORT_DEF_SHM_KEY,
 		(void*)NULL)) < 0)
 	{   
 		ERR_LOG("LoadConfig:%s failed ! ret:%d", pszConfigFile, iRet);
@@ -1035,7 +1039,7 @@ int CSupperLog::InitConfigByFile(const char *pszConfigFile, bool bCreateShm)
 		return SLOG_ERROR_LINE;
 	}
 
-	if((iRet=MtReport_Init(0, NULL, 0, 0)) < 0)
+	if((iRet=MtReport_Init_ByKey(0, iCfgShmKey, 0666|IPC_CREAT)) < 0)
 	{
 		ERR_LOG("init attr faile, ret:%d", iRet);
 		return SLOG_ERROR_LINE;
@@ -1098,6 +1102,9 @@ CSupperLog::CSupperLog():memcache(s_memcache)
 
 	m_iWarnAttrShmKey = DEF_WARN_ATTR_SHM_KEY;
 	memset(&m_stWarnHashAttr, 0, MYSIZEOF(m_stWarnHashAttr));
+
+	m_iStrAttrShmKey = DEF_STR_ATTR_SHM_KEY;
+	memset(&m_stStrAttrHash, 0, MYSIZEOF(m_stStrAttrHash));
 
 	m_iWarnConfigShmKey = DEF_WARN_CONFIG_SHM_KEY;
 	memset(&m_stHashWarnConfig, 0, MYSIZEOF(m_stHashWarnConfig));
@@ -1524,29 +1531,9 @@ void CSupperLog::ShowAttrList(int32_t id)
 {
 	AttrInfoBin *pInfo = NULL;
 	if(id != 0) {
-		StrAttrNodeValShmInfo *pStrAttrShm = GetStrAttrNodeValShm(false);
 		pInfo = GetAttrInfo(id, (uint32_t*)NULL);
-		if(pInfo != NULL)
-		{
+		if(pInfo != NULL) {
 			pInfo->Show();
-			if(pStrAttrShm == NULL)
-				return;
-			printf("--- str attr shm --\n");
-			pStrAttrShm->Show();
-			int idx = pInfo->strAttr.iReportIdx;
-			for(int i=0; i < pInfo->strAttr.bStrCount; i++) {
-				if(idx >= 0 && idx < MAX_STR_ATTR_ARRY_NODE_VAL_COUNT)
-				{
-					printf("---- str attr report:%d\n", i);
-					pStrAttrShm->stInfo[idx].Show();
-					idx = pStrAttrShm->stInfo[idx].iNextStrAttr;
-					printf("\n");
-				}
-				else {
-					printf("invalid str attr idx:%d (0-%d)\n", idx, MAX_STR_ATTR_ARRY_NODE_VAL_COUNT);
-					break;
-				}
-			}
 		}
 	}
 	else {
@@ -2118,6 +2105,72 @@ int CSupperLog::InitWarnAttrListForWrite()
 		return iRet;
 	}
 	INFO_LOG("init warn attr hash info success key:%d", m_iWarnAttrShmKey);
+	s_bInit = true;
+	return 0;
+}
+
+int StrAttrHashCmp(const void *pKey, const void *pNode)
+{
+	if(((TStrAttrReportInfo*)(pKey))->iAttrId == ((TStrAttrReportInfo*)(pNode))->iAttrId
+		&& ((TStrAttrReportInfo*)(pKey))->iMachineId == ((TStrAttrReportInfo*)(pNode))->iMachineId)
+		return 0;
+	return 1;
+}
+
+int CSupperLog::InitStrAttrHashForWrite()
+{
+	static bool s_bInit = false;
+	if(s_bInit)
+		return 0;
+
+	int iRet = InitHashTableForWrite(&m_stStrAttrHash, MYSIZEOF(TStrAttrReportInfo), 
+		STR_ATTR_HASH_NODE_COUNT, m_iStrAttrShmKey, StrAttrHashCmp, AttrHashWarn);
+	if(iRet < 0)
+	{
+		ERR_LOG("str attr hash shm init failed, key:%d ret:%d", m_iStrAttrShmKey, iRet);
+		return iRet;
+	}
+	INFO_LOG("init str attr hash info success key:%d", m_iStrAttrShmKey);
+	s_bInit = true;
+	return 0;
+}
+
+TStrAttrReportInfo* CSupperLog::GetStrAttrShmInfo(int32_t iAttrId, int32_t iMachineId, uint32_t *piIsFind)
+{
+	TStrAttrReportInfo stKey;
+	stKey.iAttrId = iAttrId;
+	stKey.iMachineId = iMachineId;
+	TStrAttrReportInfo *pNode = NULL;
+	if(piIsFind != NULL) {
+		*piIsFind = 0;
+		pNode = (TStrAttrReportInfo*)HashTableSearchEx(
+			&m_stStrAttrHash, &stKey, iAttrId+iMachineId, piIsFind);
+		if(pNode != NULL && *piIsFind == false)
+		{
+			// 插入新节点
+			if(InsertHashNode(&m_stStrAttrHash, pNode) < 0)
+				return NULL;
+		}
+	}
+	else
+		pNode = (TStrAttrReportInfo*)HashTableSearch(&m_stStrAttrHash, &stKey, iAttrId+iMachineId);
+	return pNode;
+}
+
+int CSupperLog::InitStrAttrHash()
+{
+	static bool s_bInit = false;
+	if(s_bInit)
+		return 0;
+
+	int iRet = InitHashTable(&m_stStrAttrHash, MYSIZEOF(TStrAttrReportInfo), 
+		STR_ATTR_HASH_NODE_COUNT, m_iStrAttrShmKey, StrAttrHashCmp, AttrHashWarn);
+	if(iRet < 0)
+	{
+		ERR_LOG("str attr hash shm init failed, key:%d ret:%d", m_iStrAttrShmKey, iRet);
+		return iRet;
+	}
+	INFO_LOG("init str attr hash info success key:%d", m_iStrAttrShmKey);
 	s_bInit = true;
 	return 0;
 }
@@ -2928,7 +2981,7 @@ int CSupperLog::InitForUseLocalLog(const char *pszConfigFile)
 
 	m_strConfigFile = pszConfigFile;
 	m_iLogOutType = BWORLD_SLOG_TYPE_LOCAL;
-	int iIsLogToStd = 0;
+	int iIsLogToStd = 0, iCfgShmKey = 0;
 	char szLogTypeStr[200] = {0};
 	if((iRet=LoadConfig(m_strConfigFile.c_str(),
 		"SLOG_LOG_TO_STD", CFG_INT, &iIsLogToStd, 1,
@@ -2946,6 +2999,7 @@ int CSupperLog::InitForUseLocalLog(const char *pszConfigFile)
 		"SLOG_EXIT_MAX_WAIT_SEC", CFG_INT, &m_iMaxExitWaitTime, 3,
 		"SLOG_CHECK_PROC_RUN", CFG_INT, &m_iCheckProcExist, 1,
 		"VMEM_SHM_KEY", CFG_INT, &m_iVmemShmKey, VMEM_DEF_SHMKEY,
+		"MTREPORT_SHM_KEY", CFG_INT, &iCfgShmKey, MT_REPORT_DEF_SHM_KEY,
 		(void*)NULL)) < 0)
 	{   
 		ERR_LOG("LoadConfig:%s failed ! ret:%d", m_strConfigFile.c_str(), iRet);
@@ -2963,7 +3017,7 @@ int CSupperLog::InitForUseLocalLog(const char *pszConfigFile)
 	if(m_iLocalLogType != 0)
 		m_iLogType = m_iLocalLogType;
 
-	if((iRet=MtReport_Init(0, NULL, 0, 0)) < 0)
+	if((iRet=MtReport_Init_ByKey(0, iCfgShmKey, 0666|IPC_CREAT)) < 0)
 	{
 		ERR_LOG("init attr faile, ret:%d", iRet);
 		return SLOG_ERROR_LINE;
