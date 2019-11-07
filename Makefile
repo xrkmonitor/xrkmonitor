@@ -1,4 +1,5 @@
 all:
+	./install_dev_check.sh
 	make -C language/c_cpp
 	make install -C language/c_cpp
 	make -C lib/my_proto 

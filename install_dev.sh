@@ -158,3 +158,5 @@ InstallFastcgiDev
 InstallMysqlwrap
 InstallMemcached
 
+touch _install_dev_run_
+
