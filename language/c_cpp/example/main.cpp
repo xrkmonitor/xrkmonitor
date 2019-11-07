@@ -21,7 +21,6 @@
 #include <inttypes.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
-#include <curl/curl.h>
 
 #include "mt_report.h" // 监控系统 api 头文件
 #include <iostream>
@@ -39,7 +38,7 @@ int main(int argc, char *argv[])
 	uint32_t dwCfgId = strtoul(argv[1], NULL, 10);
 
 	// 本地日志文件记录的日志类型
-	int iLogType = MTLOG_TYPE_OHTER+MTLOG_TYPE_DEBUG+MTLOG_TYPE_INFO+MTLOG_TYPE_WARN+MTLOG_TYPE_REQERR+MTLOG_TYPE_ERROR+MTLOG_TYPE_FATAL;
+	int iLogType = 255;
 
 	// 调用初始化接口
 	if(MtReport_Init(dwCfgId, "./local.log", iLogType, 0) < 0) {
