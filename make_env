@@ -1,11 +1,16 @@
 # mysql 编译环境，头、库文件路径
 # mysql lib 路径一般为 /usr/lib64，ubuntu 的为 /usr/lib/x86_64-linux-gnu
 MYSQL_INCLUDE = /usr/include
+#MYSQL_LIB = /usr/lib64
 MYSQL_LIB = /usr/lib/x86_64-linux-gnu
 
 # 监控系统公共库安装路径，请勿在路径后加空格, = 符号两边需要空格
 MTLIB_INCLUDE_PATH = /usr/include
 MTLIB_LIB_PATH = /usr/lib64
+
+# 监控系统公共库是否使用动态链接方式, 默认不使用动态库
+#USE_DLL_COMM_LIB = yes
+USE_DLL_COMM_LIB = no 
 
 # 编译库 - gcc/g++ 编译通用选项
 # - debug 模式编译库代码选项

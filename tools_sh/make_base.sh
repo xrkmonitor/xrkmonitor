@@ -1,4 +1,5 @@
 #!/bin/bash
+USE_DLL_COMM_LIB=`cat ../make_env |grep ^USE_DLL_COMM_LIB|awk '{print $3}'`
 cd ..
 Name=slog_base
 TarF=${Name}.tar
@@ -12,6 +13,10 @@ tar rvf ${TarP} tools_sh/add_crontab.sh
 tar rvf ${TarP} tools_sh/stop_all.sh
 tar rvf ${TarP} tools_sh/start_comm.sh
 tar rvf ${TarP} tools_sh/stop_comm.sh
+
+if [ "${USE_DLL_COMM_LIB}" == 'yes' ]; then
+	tar rvf ${TarP} tools_sh/xrkmonitor_lib/*
+fi
 
 function make_module()
 {

@@ -54,7 +54,6 @@ install:
 	install -m 755 $(SHAREDLIB) $(LIBDIR)
 	ln -sf $(SHAREDLIB) $(LIBDIR)/$(VERLIBNAME)
 	ln -sf $(VERLIBNAME) $(LIBDIR)/$(LIBNAME)	
-#	ldconfig
 
 clean:
 	rm -f $(MODULES) $(STATICLIB) $(SHAREDLIB) $(LIBNAME)

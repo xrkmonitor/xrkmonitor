@@ -125,6 +125,28 @@ int MtReport_Init_ByKey(unsigned int iConfigId, int iConfigShmKey, int iFlag)
 	return iRet;
 }
 
+int MtReport_Init_Local(const char *pLocalLogFile, int iLocalLogType)
+{
+	if(g_mtReport.cIsInit)
+		return 0;
+
+	if(g_mtReport.iPlusCount != 0 || g_mtReport.iPlusIndex != 0)
+		return -1;
+
+	if(pLocalLogFile != NULL && iLocalLogType != 0)
+	{
+		strncpy(g_mtReport.stPlusInfo[0].szLocalLogFile, pLocalLogFile, sizeof(g_mtReport.stPlusInfo[0].szLocalLogFile));
+		g_mtReport.stPlusInfo[0].iLocalLogType = iLocalLogType;
+	}
+	else
+	{
+		g_mtReport.stPlusInfo[0].szLocalLogFile[0] = '\0';
+		g_mtReport.stPlusInfo[0].iLocalLogType = 0;
+	}
+	g_mtReport.cIsInit = 1;
+	return 0;
+}
+
 // 外置监控插件或者用户程序调用
 int MtReport_Init(int iConfigId, const char *pLocalLogFile, int iLocalLogType, int iConfigShmKey)
 {
@@ -384,6 +406,14 @@ static void MtReport_Log_To_Local(int iLogType, const char *pszFmt, va_list ap)
 	gettimeofday(&stNow, 0);
 	localtime_r(&stNow.tv_sec, &stTm);
 	strftime(sBuf, MYSIZEOF(sBuf), "%Y-%m-%d %H:%M:%S", &stTm);
+
+	if(!strcmp(g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].szLocalLogFile, "stdout")) {
+		printf("%s.%06u - %s - ", sBuf, (uint32_t)stNow.tv_usec, sTypeStr);
+		vprintf(pszFmt, ap);
+		printf("\n");
+		return;
+	}
+
 	fp = fopen(g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].szLocalLogFile, "a+");
 	if(fp != NULL)
 	{

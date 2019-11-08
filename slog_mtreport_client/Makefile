@@ -14,6 +14,9 @@ DEP := $(SRC:.cpp=.d)
 
 $(TARGETS): ${OBJ} 
 	$(CC) -o $@ $^ $(COMM_LIB) -lrt
+ifeq ($(USE_DLL_COMM_LIB), yes) 
+	strip $(TARGETS)
+endif
 
 clean: 
 	rm -f *.o

@@ -6,7 +6,8 @@ function start_proc()
 		echo "use start_proc proc";
 		exit -1
 	fi
-	
+
+	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:../tools_sh/xrkmonitor_lib
 	./$1
 	
 	pid=`ps -ef |grep $1$|grep -v tail|grep -v grep|awk '{print $2;}'`
