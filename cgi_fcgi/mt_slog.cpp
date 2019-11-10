@@ -2628,6 +2628,14 @@ int main(int argc, char **argv, char **envp)
 			iRet = DealSaveConfig(stConfig.cgi, false);
 		else if(!strcmp(pAction, "delete_config"))
 			iRet = DealDelConfig(stConfig.cgi);
+
+		// monitor plus 
+
+		else {
+			ERR_LOG("unknow action:%s", pAction);
+			iRet = -1;
+		}
+
 		if(iRet < 0)
 		{
 			show_errpage(NULL, CGI_REQERR, stConfig);
