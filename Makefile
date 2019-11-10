@@ -10,7 +10,7 @@ all:
 	make install -C lib/mtagent_api_open
 	make -C lib/mysqlwrapped
 	make install -C lib/mysqlwrapped
-	cd lib/clearsilver/;./gen.sh; make; make install
+	cd lib/clearsilver/; ./configure; ./gen.sh; make; make install
 	cd ../../
 	make -C lib/cgi_comm
 	make install -C lib/cgi_comm
