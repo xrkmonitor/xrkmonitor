@@ -1,7 +1,6 @@
 # mysql 编译环境，头、库文件路径
 # mysql lib 路径一般为 /usr/lib64，ubuntu 的为 /usr/lib/x86_64-linux-gnu
 MYSQL_INCLUDE = /usr/include
-#MYSQL_LIB = /usr/lib64
 MYSQL_LIB = /usr/lib/x86_64-linux-gnu
 
 # 监控系统公共库安装路径，请勿在路径后加空格, = 符号两边需要空格
