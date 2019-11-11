@@ -6,8 +6,8 @@ cdir=`pwd`
 STEP_TOTAL=5
 
 # mysql 开发环境 check
-MYSQL_INCLUDE=`cat make_env |grep MYSQL_INCLUDE|awk '{print $3}'`
-MYSQL_LIB=`cat make_env |grep MYSQL_LIB|awk '{print $3}'`
+MYSQL_INCLUDE=`cat make_env |grep ^MYSQL_INCLUDE|awk '{print $3}'`
+MYSQL_LIB=`cat make_env |grep ^MYSQL_LIB|awk '{print $3}'`
 # check mysql 头文件路径是否 OK
 if [ ! -f ${MYSQL_INCLUDE}/mysql/mysql.h ]; then
 	echo "(1/$STEP_TOTAL) not find file:${MYSQL_INCLUDE}/mysql/mysql.h, check mysql include path failed !"
