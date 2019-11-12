@@ -77,6 +77,7 @@ mod_fastcgi , 模块源码在 lib 目录下，fastcgi 的配置可参考文件�
 3. 将部署包 slog_all.tar.gz 拷贝到部署机器的部署目录下，并解压部署包 tar -zxf slog_all.tar.gz   
 4. 初始化 mysql 数据库，将 mtreport_db.sql, attr_db.mysql 导入到 mysql 中(文件在源码 db 目录下)  
 5. 授权 mysql 账号：mtreport 访问密码：mtreport875, 访问操作  mtreport_db,attr_db 数据库
+   通过控制台访问: mysql -umtreport -pmtreport875 -h127.0.0.1 mtreport_db, 确保是否成功
 6. cd slog_mtreport_client, 修改 slog_mtreport_client.conf 的SERVER_MASTER 配置项改为本机IP，./start.sh 启动模块    
 7. 启动 slog_config 服务: cd slog_config; ./start.sh   
 8. 拷贝 html、cgi 文件到 apache 网站，网站根目录设为： /srv/www/htdocs，按如下方法拷贝文件：   
