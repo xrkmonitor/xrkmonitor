@@ -166,9 +166,9 @@
 		</form>
 	</div>
 
-	<!-- 以下代码为演示版所需，您可以删除掉 -->
-	<?cs if:config.isdaemon == 1 ?>
 	<div align='center' style='margin-left:-50px'>
+		<!-- 以下代码为演示版所需，您可以删除掉 -->
+		<?cs if:config.isdaemon == 1 ?>
 		<font style='font-size:16px;margin-left:-40px'>当前可用的演示账号:</font> <br>
 		<br>
 		<table border='1'>
@@ -189,6 +189,8 @@
 			</tr>
 		<?cs /each ?>
 		</table>
+		<?cs /if ?>
+
 		<div style='margin-left:-60px;'> 
 			<ul> 
 				<li>
@@ -209,7 +211,6 @@
 			</ul>
 		</div>
 	</div>
-	<?cs /if ?>
 </div>
 </body>
 </html>
