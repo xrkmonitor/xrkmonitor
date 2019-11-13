@@ -2483,6 +2483,12 @@ int DealInitLogReportTest(CGI *cgi)
 	return 0;
 }
 
+static int DealListPlugin(CGI *cgi)
+{
+	hdf_set_value(cgi->hdf, "config.xrkmonitor_url", stConfig.szXrkmonitorSiteAddr);
+	return 0;
+}
+
 int main(int argc, char **argv, char **envp)
 {
 	int32_t iRet = 0;
@@ -2630,12 +2636,14 @@ int main(int argc, char **argv, char **envp)
 			iRet = DealDelConfig(stConfig.cgi);
 
 		// monitor plus 
+		else if(!strcmp(pAction, "sys_plugin") 
+			|| !strcmp(pAction, "app_plugin") || !strcmp(pAction, "other_plugin"))
+			iRet = DealListPlugin(stConfig.cgi);
 
 		else {
 			ERR_LOG("unknow action:%s", pAction);
 			iRet = -1;
 		}
-
 		if(iRet < 0)
 		{
 			show_errpage(NULL, CGI_REQERR, stConfig);
@@ -2670,6 +2678,13 @@ int main(int argc, char **argv, char **envp)
 			pcsTemplate = "dmt_log_files.html";
 		else if(!strcmp(pAction, "init_log_report_test"))
 			pcsTemplate = "dmt_dlg_log_report_test.html";
+		else if(!strcmp(pAction, "sys_plugin"))
+			pcsTemplate = "dmt_sys_plugin.html";
+		else if(!strcmp(pAction, "app_plugin"))
+			pcsTemplate = "dmt_app_plugin.html";
+		else if(!strcmp(pAction, "other_plugin"))
+			pcsTemplate = "dmt_other_plugin.html";
+
 		if(pcsTemplate != NULL)
 		{
 			std::string strCsFile(stConfig.szCsPath);
