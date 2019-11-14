@@ -2486,6 +2486,13 @@ int DealInitLogReportTest(CGI *cgi)
 static int DealListPlugin(CGI *cgi)
 {
 	hdf_set_value(cgi->hdf, "config.xrkmonitor_url", stConfig.szXrkmonitorSiteAddr);
+
+	int type = hdf_get_int_value(cgi->hdf, "Query.plugin_type", -1);
+	hdf_set_int_value(cgi->hdf, "config.plugin_type", type);
+	hdf_set_valuef(stConfig.cgi->hdf, "config.plugin_pre=dp%d", type);
+	hdf_set_int_value(stConfig.cgi->hdf, "config.plugin_type", type);
+	hdf_set_value(stConfig.cgi->hdf, "config.str_plugin_type", stConfig.pAction);
+	hdf_set_valuef(stConfig.cgi->hdf, "config.navTabId=dmt_plugin_%d", type);
 	return 0;
 }
 
@@ -2678,12 +2685,11 @@ int main(int argc, char **argv, char **envp)
 			pcsTemplate = "dmt_log_files.html";
 		else if(!strcmp(pAction, "init_log_report_test"))
 			pcsTemplate = "dmt_dlg_log_report_test.html";
-		else if(!strcmp(pAction, "sys_plugin"))
-			pcsTemplate = "dmt_sys_plugin.html";
-		else if(!strcmp(pAction, "app_plugin"))
-			pcsTemplate = "dmt_app_plugin.html";
-		else if(!strcmp(pAction, "other_plugin"))
-			pcsTemplate = "dmt_other_plugin.html";
+		else if(!strcmp(pAction, "sys_plugin") || !strcmp(pAction, "app_plugin")
+			|| !strcmp(pAction, "other_plugin"))
+		{
+			pcsTemplate = "dmt_plugin.html";
+		}
 
 		if(pcsTemplate != NULL)
 		{
