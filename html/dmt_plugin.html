@@ -1,0 +1,369 @@
+<script language="javascript" type="text/javascript">
+var <?cs var:config.plugin_pre ?>_plugin_list = $.parseJSON('<?cs var:config.plugin_list ?>');
+var <?cs var:config.plugin_pre ?>_sel_plugin = "null";
+var <?cs var:config.plugin_pre ?>_sel_detail_idx = ""; // 用于弹出详情对话框时设置数据
+
+function <?cs var:config.plugin_pre ?>Search()
+{
+	var requrl = '<?cs var:config.xrkmonitor_url ?>/cgi-bin/mt_slog_open';
+	var reqdata = new Object();
+	reqdata.action = 'open_get_plugins';
+	reqdata.rhost = location.host;
+	reqdata.plugin_type = '<?cs var:config.plugin_type ?>';
+	reqdata.dev_language = $('#<?cs var:config.plugin_pre ?>_dev_language').val();
+	reqdata.dest_os = $('#<?cs var:config.plugin_pre ?>_dest_os').val();
+	reqdata.open_src = $('#<?cs var:config.plugin_pre ?>_open_src').val();
+	reqdata.set_method = $('#<?cs var:config.plugin_pre ?>_set_method').val();
+	$.ajax({
+		type:'post',
+		url: requrl,
+		data: reqdata,
+		global: false,
+		dataType: 'json',
+		success: function(js) {
+			if(js.ret != 0) {
+				alertMsg.warn("系统监控插件信息获取失败:" + js.errmsg);
+				return;
+			}
+			$("#<?cs var:config.plugin_pre ?>_plugin_list_tbody").html('');
+			if(js.count > 0) {
+				<?cs var:config.plugin_pre ?>_plugin_list = js;
+				var ulist = <?cs var:config.plugin_pre ?>SetpluginList();
+				$("#<?cs var:config.plugin_pre ?>_plugin_list_tbody").html(ulist);
+			}
+		}
+	});
+	return false;
+}
+
+function <?cs var:config.plugin_pre ?>ClearSearch()
+{
+	$("#<?cs var:config.plugin_pre ?>_SearchBar select[name=dev_language] option").each(function(){
+		if(this.value == 'all')
+			$(this).attr("selected", true);
+		else
+			$(this).attr("selected", false);
+	});
+
+	$("#<?cs var:config.plugin_pre ?>_SearchBar select[name=dest_os] option").each(function(){
+		if(this.value == 'all')
+			$(this).attr("selected", true);
+		else
+			$(this).attr("selected", false);
+	});
+
+	$("#<?cs var:config.plugin_pre ?>_SearchBar select[name=open_src] option").each(function(){
+		if(this.value == 999)
+			$(this).attr("selected", true);
+		else
+			$(this).attr("selected", false);
+	});
+
+	$("#<?cs var:config.plugin_pre ?>_SearchBar select[name=set_method] option").each(function(){
+		if(this.value == 999)
+			$(this).attr("selected", true);
+		else
+			$(this).attr("selected", false);
+	});
+}
+
+function <?cs var:config.plugin_pre ?>SetSelplugin(selIndex)
+{
+	<?cs var:config.plugin_pre ?>_sel_plugin = <?cs var:config.plugin_pre ?>_plugin_list.list[selIndex];
+}
+
+function <?cs var:config.plugin_pre ?>OnDetail(idx)
+{
+	<?cs var:config.plugin_pre ?>_sel_detail_idx = idx;
+	$('#<?cs var:config.plugin_pre ?>_plugin_name').text(<?cs var:config.plugin_pre ?>_plugin_list.list[idx].plugin_name);
+	$('#<?cs var:config.plugin_pre ?>_plugin_id').text(<?cs var:config.plugin_pre ?>_plugin_list.list[idx].show_id);
+	$('#<?cs var:config.plugin_pre ?>_add_time').text(<?cs var:config.plugin_pre ?>_plugin_list.list[idx].create_time);
+	$('#<?cs var:config.plugin_pre ?>_mod_time').text(<?cs var:config.plugin_pre ?>_plugin_list.list[idx].update_time);
+	$('#<?cs var:config.plugin_pre ?>_ver').text(<?cs var:config.plugin_pre ?>_plugin_list.list[idx].ver);
+	$('#<?cs var:config.plugin_pre ?>_auth').text(<?cs var:config.plugin_pre ?>_plugin_list.list[idx].auth);
+
+	if(<?cs var:config.plugin_pre ?>_plugin_list.list[idx].open_src == 0)
+		$('#<?cs var:config.plugin_pre ?>_open').text('开源');
+	else
+		$('#<?cs var:config.plugin_pre ?>_open').text('闭源');
+	if(<?cs var:config.plugin_pre ?>_plugin_list.list[idx].set_method == 0)
+		$('#<?cs var:config.plugin_pre ?>_set_method').text('内置');
+	else
+		$('#<?cs var:config.plugin_pre ?>_set_method').text('外置');
+	$('#<?cs var:config.plugin_pre ?>_language').text(<?cs var:config.plugin_pre ?>_plugin_list.list[idx].dev_language);
+	$('#<?cs var:config.plugin_pre ?>_dest_os').text(<?cs var:config.plugin_pre ?>_plugin_list.list[idx].dest_os);
+
+	// 换行符有转码，需要转换回来
+	var dc = <?cs var:config.plugin_pre ?>_plugin_list.list[idx].desc;
+	$('#<?cs var:config.plugin_pre ?>_plugin_desc').html(dc.replace(/&br/g, "\r\n"));
+	var op = { mask:true, maxable:false, height:320, width:520, resizable:false, drawable:true};
+	$.pdialog.openLocal(
+		'<?cs var:config.plugin_pre ?>_show_detail', 'dlg_<?cs var:config.plugin_pre ?>_show_detail', '查看监控插件详情', op);
+}
+
+function <?cs var:config.plugin_pre ?>SetpluginList()
+{
+	if(<?cs var:config.plugin_pre ?>_plugin_list == null || <?cs var:config.plugin_pre ?>_plugin_list.count <= 0)
+		return "";
+
+	var ulist = <?cs var:config.plugin_pre ?>_plugin_list.list;
+	var uhtml = "";
+	for(var i=0, j=1; i < ulist.length; i++,j++)
+	{
+		uhtml += "<tr onclick='<?cs var:config.plugin_pre ?>SetSelplugin(" + i + ")'>";
+		uhtml += "<td>" + j + "</td>";
+		uhtml += "<td>" + ulist[i].plugin_name + "</td>";
+		uhtml += "<td>" + ulist[i].show_id + "</td>";
+
+		uhtml += "<td>" + ulist[i].desc.replace(/&br/g, "<br />") + "</td>";
+
+		if(ulist[i].open_src == 0)
+			uhtml += "<td>开源</td>";
+		else
+			uhtml += "<td>闭源</td>";
+		uhtml += "<td>" + ulist[i].dev_language + "</td>";
+		uhtml += "<td>" + ulist[i].ver + "</td>";
+		uhtml += "<td>" + ulist[i].dest_os + "</td>";
+		if(ulist[i].set_method == 0)
+			uhtml += "<td>内置</td>";
+		else
+			uhtml += "<td>外置</td>";
+		uhtml += "<td>" + ulist[i].auth + "</td>";
+		var detail = "<a class='detail' href='#' onclick='return <?cs var:config.plugin_pre ?>OnDetail("+i+");'>详情</a>";
+		uhtml += "<td>"+detail+"</td>";
+
+		var dm = "<a class='detail' href='#' onclick='return <?cs var:config.plugin_pre ?>OnDaemon("+i+");'>查看</a>";
+		uhtml += "<td>"+dm+"</td>";
+	
+		var dw = "<a class='detail' href='#' onclick='return <?cs var:config.plugin_pre ?>OnDownLoad("+i+");'>下载</a>";
+		uhtml += "<td>"+dw+"</td>";
+
+		uhtml += "</tr>";
+	}
+	return uhtml;
+}
+
+function <?cs var:config.plugin_pre ?>AddPlugin()
+{
+	var url = "<?cs var:config.cgipath?>mt_slog?action=add_mt_plugin&type=<?cs var:config.plugin_type ?>";
+	var op = $.parseJSON('{"mask":true,"maxable":false,"height":480,"width":520}'); 
+	$.pdialog.open(url, "<?cs var:config.plugin_pre ?>_dlg_add_sys_plugin", "添加监控插件", op); 
+}
+
+function <?cs var:config.plugin_pre ?>DeletePlugin()
+{
+	if(<?cs var:config.plugin_pre ?>_sel_plugin == "null")
+	{
+		alertMsg.info("请先点击插件列表选择一个要删除的插件");
+		return;
+	}
+
+	var msg="确认删除插件：" + <?cs var:config.plugin_pre ?>_sel_plugin.plugin_name + " (id:" + <?cs var:config.plugin_pre ?>_sel_plugin.show_id + ") 吗？";
+	msg += "<br /> (注意: 插件相关的监控点以及模块等配置也将被删除)";
+
+	alertMsg.confirm(msg, {
+		okCall: function(){
+			var url = "<?cs var:config.cgipath?>mt_slog?action=delete_mt_plugin"+"&id="+<?cs var:config.plugin_pre ?>_sel_plugin.plugin_id ;
+			$.get(url, function(js){
+				if(dmtFirstDealAjaxResponse(js))
+					return;
+
+				if(js.statusCode==200){
+					alertMsg.info("删除成功。");
+					return navTab.reload();
+				}
+				else if(js.msg)
+					alertMsg.error(js.msg);
+				else
+					alertMsg.error("删除失败！");
+			}, "json"); 
+		}
+	});
+	return;
+}
+
+function <?cs var:config.plugin_pre ?>ModPlugin()
+{
+	if(<?cs var:config.plugin_pre ?>_sel_plugin == "null")
+	{
+		alertMsg.info("请先点击插件列表选择一个要修改的插件");
+		return;
+	}
+
+	var url = "<?cs var:config.cgipath?>mt_slog?action=mod_mt_plugin&type=<?cs var:config.plugin_type ?>";
+	url += "&plugin_id=" + <?cs var:config.plugin_pre ?>_sel_plugin.plugin_id; 
+
+	var op = $.parseJSON('{"mask":true,"maxable":false,"height":480,"width":520}'); 
+	$.pdialog.open(url, "<?cs var:config.plugin_pre ?>_dlg_mod_plugin", "修改监控插件", op); 
+}
+
+$(document).ready(function(){
+	<?cs var:config.plugin_pre ?>Search();
+});
+
+</script>
+
+<style type="text/css">
+.pageContent .pageHeader table td label { width:60px}
+</style>
+
+<div class="pageContent">
+	<div class="unitBox" style="margin-left:1px;"> 
+		<div class="accountInfo" style='display:block;height:30px;'>
+			<div class='note-text' style='text-align:left; font-size:13px; margin-top:8px;'>
+				说明：监控插件无需开发,下载部署后即可生成相关监控数据; 我们欢迎自行开发插件, 如您开发了插件且有意愿开源, 我们可以免费为您发布到插件市场.
+			</div>
+		</div>
+
+		<div class="pageHeader" style="border:1px #B8D0D6 solid">
+			<form> 
+			<div class="searchBar">
+				<table class="searchContent" id='<?cs var:config.plugin_pre ?>_SearchBar'>
+					<tr>
+						<td>
+							<label>开发语言：</label>
+							<select name="dev_language" id='<?cs var:config.plugin_pre ?>_dev_language'>
+								<option value="all">-全部-</option>
+								<option value="c/c++">c/c++</option>
+								<option value="php">php</option>
+								<option value="linux shell">linux shell</option>
+								<option value="javascript">javascript</option>
+								<option value="java">java</option>
+								<option value="python">python</option>
+							</select>
+						</td>
+
+						<td>
+							<label>运行平台：</label>
+							<select name="dest_os" id='<?cs var:config.plugin_pre ?>_dest_os'> 
+								<option value="all">-全部-</option>
+								<option value="Linux">Linux</option>
+								<option value="Windows">Windows</option>
+							</select>
+						</td>
+	
+						<td>
+							<label>是否开源：</label>
+							<select name="open_src" id='<?cs var:config.plugin_pre ?>_open_src'> 
+								<option value="999">-全部-</option>
+								<option value="0">开 源</option>
+								<option value="1">闭 源</option>
+							</select>
+						</td>
+
+						<td>
+							<label>部署方式：</label>
+							<select name="set_method" id='<?cs var:config.plugin_pre ?>_set_method'>
+								<option value="999">-全部-</option>
+								<option value="0">内 置</option>
+								<option value="1">外 置</option>
+							</select>
+						</td>
+						<td>
+							<button type="submit" class="sexybutton" onclick="return <?cs var:config.plugin_pre ?>Search();"><span><span><span class="search">查找</span></span></span></button>
+							<button type="button" class="sexybutton" onclick="return <?cs var:config.plugin_pre ?>ClearSearch();"><span><span><span class="erase">重填</span></span></span></button>
+						</td>
+					</tr>
+				</table>
+			</div>
+			</form>
+		</div>
+
+		<div class="pageContent" style="border-left:1px #B8D0D6 solid;border-right:1px #B8D0D6 solid">
+			<?cs if:comm.user_type == 4 || comm.user_type == 1 ?>
+			<div class="panelBar">
+				<ul class="toolBar">
+					<li><a class="add" href="#" onclick="return <?cs var:config.plugin_pre ?>AddPlugin();"><span>添加</span></a></li>
+					<li class="line">line</li>
+					<li><a class="delete" href="#" onclick="return <?cs var:config.plugin_pre ?>DeletePlugin();"><span>删除</span></a></li>
+					<li class="line">line</li>
+					<li><a class="edit" href="#" onclick="return <?cs var:config.plugin_pre ?>ModPlugin();"><span>修改</span></a></li>
+					<li class="line">line</li>
+				</ul>
+			</div>
+			<?cs /if ?>
+
+			<div>
+				<?cs if:comm.user_type == 4 || comm.user_type == 1 ?>
+				<table class="list" width="100%" layoutH="98"> 
+				<?cs else ?>
+				<table class="list" width="100%" layoutH="68"> 
+				<?cs /if ?>
+					<thead>
+						<tr>
+							<th width="40">序号</th>
+							<th width="120">插件名称</th>
+							<th width="50">插件ID</th>
+							<th width="200">插件描述</th>
+							<th width="50">开源情况</th>
+							<th width="50">开发语言</th>
+							<th width="40">版本</th>
+							<th width="50">运行平台</th>
+							<th width="40">部署</th>
+							<th width="60">开发者</th>
+							<th width="30">详情</th>
+							<th width="30">演示</th>
+							<th width="40">下载</th>
+						</tr>
+					</thead>
+					<tbody id="<?cs var:config.plugin_pre ?>_plugin_list_tbody">
+					</tbody>
+				</table>
+			</div> 
+		</div>
+	</div> <!-- unitBox -->
+</div>
+
+<div id='<?cs var:config.plugin_pre ?>_show_detail' style='display:none'>
+	<div layoutH="36">
+		<table> 
+			<tr height="25">
+				<td width="120" align="right">插件名称：</td>
+				<td width="140" id="<?cs var:config.plugin_pre ?>_plugin_name"></td>
+				<td width="120" align="right">插件 id：</td>
+				<td width="180" id="<?cs var:config.plugin_pre ?>_plugin_id"></td>
+			</tr>
+
+			<tr height="25">
+				<td  align="right">更新时间：</td>
+				<td id="<?cs var:config.plugin_pre ?>_mod_time"></td>
+				<td  align="right">创建时间：</td>
+				<td id="<?cs var:config.plugin_pre ?>_add_time"></td>
+			</tr>
+
+			<tr height="25">
+				<td  align="right">当前版本：</td>
+				<td id="<?cs var:config.plugin_pre ?>_ver"></td>
+				<td  align="right">开发者：</td>
+				<td id="<?cs var:config.plugin_pre ?>_auth"></td>
+			</tr>
+
+			<tr height="25">
+				<td  align="right">开源情况：</td>
+				<td id="<?cs var:config.plugin_pre ?>_open"></td>
+				<td  align="right">部署方式：</td>
+				<td id="<?cs var:config.plugin_pre ?>_set_method"></td>
+			</tr>
+
+			<tr height="25">
+				<td  align="right">开发语言：</td>
+				<td id="<?cs var:config.plugin_pre ?>_language"></td>
+				<td  align="right">运行平台：</td>
+				<td id="<?cs var:config.plugin_pre ?>_dest_os"></td>
+			</tr>
+
+			<tr height="28">
+				<td align="right">插件描述：</td>
+				<td colspan="3">
+				<textarea rows="4" cols="50" id='<?cs var:config.plugin_pre ?>_plugin_desc' readonly></textarea>
+				</td>
+			</tr>
+		</table>
+	</div>
+
+	<div class="formBar">
+		<ul> <li><div class="button"><div class="buttonContent"><button type="button" class="close">&nbsp;&nbsp;关&nbsp;闭&nbsp;&nbsp;</button></div></div></li>
+		</ul>
+	</div>
+</div>
+
