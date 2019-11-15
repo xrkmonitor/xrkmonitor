@@ -92,6 +92,3 @@ strip libmtreport_api-1.1.0.so
 ln -s libmtreport_api-1.1.0.so libmtreport_api.so.1
 ln -s libmtreport_api.so.1 libmtreport_api.so
 
-
-
-
