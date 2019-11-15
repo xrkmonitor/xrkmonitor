@@ -99,7 +99,7 @@ function InstallMysqlwrap()
 	echo ""
 	if [ ! -f /usr/include/mysqlwrapped/libmysqlwrapped.h ]; then
 		# clearsilver cgi 模板引擎, 首次运行时需要执行下 configure
-		cd $cdir/lib/clearsilver; ./configure
+		cd $cdir/lib/clearsilver; ./configure ; touch _configure_check_
 	
 		cd $cdir/lib/mysqlwrapped
 		echo "(4/$STEP_TOTAL) preinstall mysqlwrapped ($SUFFIX)"
