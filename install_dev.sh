@@ -14,7 +14,7 @@ if [ ! -f ${MYSQL_INCLUDE}/mysql/mysql.h ]; then
 	exit 1
 fi
 # check mysql 库文件路径是否 OK
-if [ ! -f ${MYSQL_LIB}/libmysqlclient.so ]; then
+if [ ! -f /usr/lib64libmysqlclient.so -a ! /usr/lib/x86_64-linux-gnu/lib64libmysqlclient.so -a ! -f ${MYSQL_LIB}/libmysqlclient.so ]; then
 	echo "(1/$STEP_TOTAL) not find file:${MYSQL_LIB}/libmysqlclient.so, check mysql lib path failed !"
 	exit 2
 fi
