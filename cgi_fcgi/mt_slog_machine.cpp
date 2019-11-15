@@ -844,15 +844,16 @@ static int SaveMachine(bool bIsMod=false)
 			const char *pvtmp = NULL;
 			if(pInfo->iNameVmemIdx > 0)
 				pvtmp = MtReport_GetFromVmem_Local(pInfo->iNameVmemIdx);
-			if(strcmp(pvtmp, pname))
+			if(pvtmp == NULL || strcmp(pvtmp, pname))
 			{
 				MtReport_FreeVmem(pInfo->iNameVmemIdx);
 				pInfo->iNameVmemIdx = MtReport_SaveToVmem(pname, strlen(pname)+1);
 			}
 
+			pvtmp = NULL;
 			if(pInfo->iDescVmemIdx > 0)
 				pvtmp = MtReport_GetFromVmem_Local(pInfo->iDescVmemIdx);
-			if(pdesc == NULL || strcmp(pdesc, pvtmp))
+			if(pdesc != NULL && (pvtmp==NULL || strcmp(pdesc, pvtmp)))
 			{
 				MtReport_FreeVmem(pInfo->iDescVmemIdx);
 				pInfo->iDescVmemIdx = MtReport_SaveToVmem(pdesc, strlen(pdesc)+1);

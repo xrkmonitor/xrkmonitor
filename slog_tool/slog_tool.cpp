@@ -653,6 +653,10 @@ int Init(const char *pFile = NULL)
 
 int main(int argc, char *argv[])
 {
+	if(argc >= 2 && !strcmp(argv[1], "run_test")) {
+		return 0;
+	}
+
 	if(Init(NULL) < 0)
 	{
 		printf("init failed !\n");
