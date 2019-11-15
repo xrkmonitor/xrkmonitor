@@ -58,6 +58,7 @@ if [ ! -f xrkmonitor.tar.gz ]; then
 else
 	echo "xrkmonitor.tar.gz 文件已存在"
 fi
+check_file xrkmonitor.tar.gz 6
 
 echo "恭喜您, 自动安装完成, 现在您可以在浏览器中访问控制台了"
 
