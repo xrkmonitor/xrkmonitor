@@ -11,7 +11,7 @@ PATH=/bin:/sbin:/usr/bin/:/usr/sbin:/usr/local/bin:/usr/local/sbin:/usr/local/my
 # ---------------- 字符云监控系统 安装环境配置 ----------------------- start -
 
 # apache 网站根目录
-APACHE_DOCUMENT_ROOT=/srv/www/htdocs2
+APACHE_DOCUMENT_ROOT=/srv/www/htdocs
 
 # 字符云监控 html/js 文件安装路径, 相对网站根目录, 绝对路径为: $APACHE_DOCUMENT_ROOT/$XRKMONITOR_HTML_PATH
 XRKMONITOR_HTML_PATH=xrkmonitor
@@ -41,6 +41,13 @@ STEP_TOTAL=5
 CUR_STEP=1
 XRKMONITOR_HTTP=http://open.xrkmonitor.com/xrkmonitor_down
 cur_path=`pwd`
+
+cp online_install.sh online_install.sh_bk
+
+sed -i "/^XRKMONITOR_HTML_PATH=/cXRKMONITOR_HTML_PATH=${XRKMONITOR_HTML_PATH}" uninstall_xrkmonitor.sh
+sed -i "/^XRKMONITOR_CGI_LOG_PATH=/cXRKMONITOR_CGI_LOG_PATH=${XRKMONITOR_CGI_LOG_PATH}" uninstall_xrkmonitor.sh 
+sed -i "/^MYSQL_USER=/cMYSQL_USER=${MYSQL_USER}" uninstall_xrkmonitor.sh
+sed -i "/^MYSQL_PASS=/cMYSQL_PASS=${MYSQL_PASS}" uninstall_xrkmonitor.sh
 
 if [ $# -eq 1 -a "$1" == "new" ]; then 
 	rm xrkmonitor_lib.tar.gz
@@ -85,6 +92,8 @@ function auto_detect_apache_doc_root()
 		failed_my_exit $LINENO 
 	fi
 	echo "成功探测到 apache 网站根: $APACHE_DOCUMENT_ROOT"
+	sed -i "/^APACHE_DOCUMENT_ROOT=/cAPACHE_DOCUMENT_ROOT=${APACHE_DOCUMENT_ROOT}" uninstall_xrkmonitor.sh 
+	sed -i "/^APACHE_DOCUMENT_ROOT=/cAPACHE_DOCUMENT_ROOT=${APACHE_DOCUMENT_ROOT}" online_install.sh_bk 
 }
 
 function auto_detect_apache_cgi_path()
@@ -114,7 +123,7 @@ if [ ! -d "$APACHE_DOCUMENT_ROOT/$XRKMONITOR_HTML_PATH" ]; then
 fi
 
 if [ ! -d "$XRKMONITOR_CGI_LOG_PATH" ]; then
-	yn_exit "cgi 本地日志文件路径不存在, 是否新建(y/n)?" $LINENO
+	yn_exit "cgi 本地日志文件路径: $XRKMONITOR_CGI_LOG_PATH 不存在, 是否新建(y/n)?" $LINENO
 	mkdir -p "$XRKMONITOR_CGI_LOG_PATH"
 	if [ ! -d "$XRKMONITOR_CGI_LOG_PATH" ]; then
 		echo "新建目录: $XRKMONITOR_CGI_LOG_PATH 失败"
@@ -123,6 +132,12 @@ if [ ! -d "$XRKMONITOR_CGI_LOG_PATH" ]; then
 	chmod 777 "$XRKMONITOR_CGI_LOG_PATH"
 	if [ $? -ne 0 ]; then
 		yn_exit "修改 cgi 日志目录权限失败, 请确保cgi 可写日志目录, 是否继续(y/n)" $LINENO 
+	fi
+
+	CUR_LOG_PAHT=`cat cgi_fcgi/slog_flogin.conf |grep SLOG_LOG_FILE|awk '{print $2}'|xargs dirname`
+	if [ "$CUR_LOG_PAHT" != "$XRKMONITOR_CGI_LOG_PATH" ]; then
+		echo "更新 CGI 配置文件日志文件路径"
+		exit 0
 	fi
 fi
 
@@ -158,9 +173,12 @@ if [ ! -f /etc/ld.so.conf ]; then
 	echo "动态链接库配置文件: /etc/ld.so.conf 不存在!"
 	failed_my_exit $LINENO
 else
-	cp /etc/ld.so.conf /etc/ld.so.conf_xrkmonitor_bk
-	echo ${cur_path}/xrkmonitor_lib >> /etc/ld.so.conf
-	ldconfig
+	cat /etc/ld.so.conf |grep xrkmonitor_lib > /dev/null 2>&1
+	if [ $? -ne 0 ]; then
+		cp /etc/ld.so.conf /etc/ld.so.conf_xrkmonitor_bk
+		echo ${cur_path}/xrkmonitor_lib >> /etc/ld.so.conf
+		ldconfig
+	fi
 fi
 CUR_STEP=`expr 1 + $CUR_STEP`
 
