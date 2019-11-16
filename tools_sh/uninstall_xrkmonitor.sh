@@ -1,17 +1,19 @@
 #!/bin/bash
-PATH=/bin:/sbin:/usr/bin/:/usr/sbin:/usr/local/bin:/usr/local/sbin:/usr/local/mysql/bin
 
+PATH=/bin:/sbin:/usr/bin/:/usr/sbin:/usr/local/bin:/usr/local/sbin:/usr/local/mysql/bin
 APACHE_DOCUMENT_ROOT=/srv/www/htdocs
-XRKMONITOR_HTML_PATH=xrkmonitor
-XRKMONITOR_CGI_PATH=/srv/www/cgi-bin
-XRKMONITOR_CGI_LOG_PATH=/var/log/mtreport/
+XRKMONITOR_HTML_PATH=monitor
+APACHE_CGI_PATH=/srv/www/cgi-bin/
+XRKMONITOR_CGI_LOG_PATH=/var/log/mtreport22
 MYSQL_USER=
 MYSQL_PASS=
 
-if [ -f tools_sh/stop_all.sh -a -f tools_sh/rm_zero.sh ]; then
+ls -l /tmp/pid*slog*pid >/dev/null 2>&1
+if [ $? -eq 0 -a -f tools_sh/stop_all.sh -a -f tools_sh/rm_zero.sh ]; then
 	echo "开始停止字符云监控系统服务"
 	cd tools_sh; ./stop_all.sh; sleep 1; ./rm_zero.sh
 	cd ..
+	rm /tmp/pid*slog*pid > /dev/null 2>&1
 fi
 
 if [ -f $APACHE_DOCUMENT_ROOT/index.html ]; then
@@ -27,7 +29,12 @@ if [ -f $APACHE_DOCUMENT_ROOT/$XRKMONITOR_HTML_PATH/dmt_login.html ]; then
 	rm -fr $APACHE_DOCUMENT_ROOT/$XRKMONITOR_HTML_PATH
 fi
 
-[ -d "$XRKMONITOR_CGI_LOG_PATH" ] && (echo "删除目录: $XRKMONITOR_CGI_LOG_PATH"; rm -fr "$XRKMONITOR_CGI_LOG_PATH")
+if [ -f "$APACHE_CGI_PATH/mt_slog" ]; then
+	echo "删除 cgi 文件"
+	rm $APACHE_CGI_PATH/mt_slog*
+fi
+
+[ -d "$XRKMONITOR_CGI_LOG_PATH" ] && (echo "删除 cgi 日志目录: $XRKMONITOR_CGI_LOG_PATH"; rm -fr "$XRKMONITOR_CGI_LOG_PATH")
 [ -d slog_check_proc ] && (echo "删除目录: slog_check_proc"; rm -fr slog_check_proc)
 [ -d xrkmonitor_lib ] && (echo "删除目录: xrkmonitor_lib"; rm -fr xrkmonitor_lib)
 [ -d cgi_fcgi ] && (echo "删除目录: cgi_fcgi"; rm -fr cgi_fcgi)
@@ -84,11 +91,6 @@ if [ $? -eq 0 ]; then
 	echo "drop user mtreport@\'%\'" | ${MYSQL_CONTEXT}
 fi
 
-if [ -f /tmp/pid.slog_config.pid ]; then
-	echo "删除运行时 pid 文件"
-	rm /tmp/pid*slog*pid > /dev/null 2>&1
-fi
-
 echo "已为您清理干净字符云监控系统安装记录, 感谢您的关注."
-
+echo ""
 

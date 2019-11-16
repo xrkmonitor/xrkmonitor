@@ -13,14 +13,17 @@ PATH=/bin:/sbin:/usr/bin/:/usr/sbin:/usr/local/bin:/usr/local/sbin:/usr/local/my
 # apache 网站根目录
 APACHE_DOCUMENT_ROOT=/srv/www/htdocs
 
+# apache cgi 绝对路径
+APACHE_CGI_PATH=/srv/www/cgi-bin/
+
+# apache cgi 访问路径, apache 中使用: ScriptAlias 指定
+APACHE_CGI_ACCESS_PATH=/cgi-bin/
+
 # 字符云监控 html/js 文件安装路径, 相对网站根目录, 绝对路径为: $APACHE_DOCUMENT_ROOT/$XRKMONITOR_HTML_PATH
 XRKMONITOR_HTML_PATH=xrkmonitor
 
-# 字符云监控 cgi 文件安装路径
-XRKMONITOR_CGI_PATH=/srv/www/cgi-bin
-
 # 字符云监控 cgi 本地日志文件路径, 用于调试, 正常运行时您可以关闭本地日志使用日志中心
-XRKMONITOR_CGI_LOG_PATH=/var/log/mtreport/
+XRKMONITOR_CGI_LOG_PATH=/var/log/mtreport22
 
 # 指定本机IP 网卡名,用于获取本机IP, 不指定时自动获取
 LOCAL_IP_ETHNAME=
@@ -42,12 +45,16 @@ CUR_STEP=1
 XRKMONITOR_HTTP=http://open.xrkmonitor.com/xrkmonitor_down
 cur_path=`pwd`
 
-cp online_install.sh online_install.sh_bk
-
-sed -i "/^XRKMONITOR_HTML_PATH=/cXRKMONITOR_HTML_PATH=${XRKMONITOR_HTML_PATH}" uninstall_xrkmonitor.sh
-sed -i "/^XRKMONITOR_CGI_LOG_PATH=/cXRKMONITOR_CGI_LOG_PATH=${XRKMONITOR_CGI_LOG_PATH}" uninstall_xrkmonitor.sh 
-sed -i "/^MYSQL_USER=/cMYSQL_USER=${MYSQL_USER}" uninstall_xrkmonitor.sh
-sed -i "/^MYSQL_PASS=/cMYSQL_PASS=${MYSQL_PASS}" uninstall_xrkmonitor.sh
+function update_config() 
+{
+	sed -i "/^APACHE_DOCUMENT_ROOT=/cAPACHE_DOCUMENT_ROOT=${APACHE_DOCUMENT_ROOT}"  $1 
+	sed -i "/^XRKMONITOR_HTML_PATH=/cXRKMONITOR_HTML_PATH=${XRKMONITOR_HTML_PATH}" $1 
+	sed -i "/^APACHE_CGI_PATH=/cAPACHE_CGI_PATH=${APACHE_CGI_PATH}" $1 
+	sed -i "/^XRKMONITOR_CGI_LOG_PATH=/cXRKMONITOR_CGI_LOG_PATH=${XRKMONITOR_CGI_LOG_PATH}" $1 
+	sed -i "/^MYSQL_USER=/cMYSQL_USER=${MYSQL_USER}" $1 
+	sed -i "/^MYSQL_PASS=/cMYSQL_PASS=${MYSQL_PASS}" $1 
+}
+update_config uninstall_xrkmonitor.sh
 
 if [ $# -eq 1 -a "$1" == "new" ]; then 
 	rm xrkmonitor_lib.tar.gz
@@ -93,12 +100,28 @@ function auto_detect_apache_doc_root()
 	fi
 	echo "成功探测到 apache 网站根: $APACHE_DOCUMENT_ROOT"
 	sed -i "/^APACHE_DOCUMENT_ROOT=/cAPACHE_DOCUMENT_ROOT=${APACHE_DOCUMENT_ROOT}" uninstall_xrkmonitor.sh 
-	sed -i "/^APACHE_DOCUMENT_ROOT=/cAPACHE_DOCUMENT_ROOT=${APACHE_DOCUMENT_ROOT}" online_install.sh_bk 
 }
 
 function auto_detect_apache_cgi_path()
 {
-	failed_my_exit $LINENO 
+	if [ -d /etc/apache2 ]; then
+		sCgiPath=`cat /etc/apache2/*.conf|grep ^ScriptAlias|awk '{print $3}'`
+		APACHE_CGI_PATH=${sCgiPath//\"/}
+		sCgiAccessPath=`cat /etc/apache2/*.conf|grep ^ScriptAlias|awk '{print $2}'`
+		APACHE_CGI_ACCESS_PATH=${sCgiAccessPath//\"/}		
+		if [ $? -ne 0 -o ! -d "$APACHE_CGI_PATH" -o -z "$APACHE_CGI_ACCESS_PATH" ]; then
+			echo "尝试自动探测 cgi 目录失败, 请手动指定安装配置: APACHE_CGI_PATH/APACHE_CGI_ACCESS_PATH 后再试"
+			failed_my_exit $LINENO
+		fi
+	else
+		echo "尝试自动探测 cgi 目录失败, 请手动指定安装配置: APACHE_CGI_PATH 后再试"
+		failed_my_exit $LINENO
+	fi
+
+	echo "成功探测到 cgi 绝对路径目录: $APACHE_CGI_PATH"
+	sed -i "/^APACHE_CGI_PATH=/cAPACHE_CGI_PATH=${APACHE_CGI_PATH}" uninstall_xrkmonitor.sh
+	echo "成功探测到 cgi 访问路径: $APACHE_CGI_ACCESS_PATH"
+	sed -i "/^APACHE_CGI_ACCESS_PATH=/cAPACHE_CGI_ACCESS_PATH=${APACHE_CGI_ACCESS_PATH}" uninstall_xrkmonitor.sh
 }
 
 echo ""
@@ -108,8 +131,8 @@ if [ ! -d "$APACHE_DOCUMENT_ROOT" ]; then
 	auto_detect_apache_doc_root
 fi
 
-if [ ! -d "$XRKMONITOR_CGI_PATH" ]; then
-	echo "apache 网站 cgi 目录: $XRKMONITOR_CGI_PATH 不存在, 尝试自动探测"
+if [ ! -d "$APACHE_CGI_PATH" ]; then
+	echo "apache 网站 cgi 目录: $APACHE_CGI_PATH 不存在, 尝试自动探测"
 	auto_detect_apache_cgi_path	
 fi
 
@@ -133,12 +156,6 @@ if [ ! -d "$XRKMONITOR_CGI_LOG_PATH" ]; then
 	if [ $? -ne 0 ]; then
 		yn_exit "修改 cgi 日志目录权限失败, 请确保cgi 可写日志目录, 是否继续(y/n)" $LINENO 
 	fi
-
-	CUR_LOG_PAHT=`cat cgi_fcgi/slog_flogin.conf |grep SLOG_LOG_FILE|awk '{print $2}'|xargs dirname`
-	if [ "$CUR_LOG_PAHT" != "$XRKMONITOR_CGI_LOG_PATH" ]; then
-		echo "更新 CGI 配置文件日志文件路径"
-		exit 0
-	fi
 fi
 
 if [ ! -z "$LOCAL_IP_ETHNAME" ]; then
@@ -156,8 +173,8 @@ if [ $? -ne 0 -o -z "$LOCAL_IP" ]; then
 	fi
 fi
 echo "本机IP 获取成功: $LOCAL_IP"
-
 CUR_STEP=`expr 1 + $CUR_STEP`
+
 
 echo ""
 echo "($CUR_STEP/$STEP_TOTAL) 下载并解压库文件: xrkmonitor_lib.tar.gz"
@@ -245,6 +262,24 @@ echo ""
 echo "($CUR_STEP/$STEP_TOTAL) 修改字符云监控服务相关配置"
 sed -i '/SERVER_MASTER/d' slog_mtreport_client/slog_mtreport_client.conf
 echo "SERVER_MASTER $LOCAL_IP" >> slog_mtreport_client/slog_mtreport_client.conf
+
+CUR_CGI_LOG_PATH=`cat cgi_fcgi/slog_flogin.conf |grep SLOG_LOG_FILE|awk '{print $2}'|xargs dirname`
+if [ "$CUR_CGI_LOG_PATH" != "$XRKMONITOR_CGI_LOG_PATH" ]; then
+	echo "更新 CGI 配置文件日志文件路径"
+	OLD_CGI_LOG_PATH=${CUR_CGI_LOG_PATH//\//\\\/}
+	NEW_CGI_LOG_PATH=${XRKMONITOR_CGI_LOG_PATH//\//\\\/}
+	sed -i "s/${OLD_CGI_LOG_PATH}/${NEW_CGI_LOG_PATH}/g" `ls cgi_fcgi/*.conf -1`
+fi
+if [ "$XRKMONITOR_HTML_PATH" != "xrkmonitor" ]; then
+	sXrkmonitorHtmlPath=${XRKMONITOR_HTML_PATH//\//\\\/}
+	sed -i "s/\/xrkmonitor/$sXrkmonitorHtmlPath/g" `ls cgi_fcgi/*.conf -1`
+	sed -i "s/\/xrkmonitor/$sXrkmonitorHtmlPath/g" html/index.html
+fi
+if [ "$APACHE_CGI_ACCESS_PATH" != "/cgi-bin/" ]; then
+	sCgiAccessPath=${APACHE_CGI_ACCESS_PATH//\//\\\/}
+	sed -i "s/\/cgi-bin\//$sCgiAccessPath/g" `ls cgi_fcgi/*.conf -1`
+	sed -i "s/\/cgi-bin\//$sCgiAccessPath/g" html/index.html
+fi
 CUR_STEP=`expr 1 + $CUR_STEP`
 
 echo ""
@@ -253,15 +288,19 @@ cp html/* $APACHE_DOCUMENT_ROOT/$XRKMONITOR_HTML_PATH -fr
 check_file $APACHE_DOCUMENT_ROOT/$XRKMONITOR_HTML_PATH/dmt_login.html $LINENO 
 cp $APACHE_DOCUMENT_ROOT/$XRKMONITOR_HTML_PATH/index.html $APACHE_DOCUMENT_ROOT
 check_file $APACHE_DOCUMENT_ROOT/index.html $LINENO 
-cp cgi_fcgi/* $XRKMONITOR_CGI_PATH -fr
-check_file $XRKMONITOR_CGI_PATH/mt_slog_monitor $LINENO 
+cp cgi_fcgi/* $APACHE_CGI_PATH -fr
+check_file $APACHE_CGI_PATH/mt_slog_monitor $LINENO 
 CUR_STEP=`expr 1 + $CUR_STEP`
 
 echo ""
 echo "($CUR_STEP/$STEP_TOTAL) 开始启动字符云监控后台服务, 请您耐心等待..."
 cd tools_sh
-./stop_all.sh
+ls -l /tmp/pid*slog*pid >/dev/null 2>&1
+if [ $? -eq 0 ]; then
+	./stop_all.sh
+fi
 ./check_proc_monitor.sh 1
+cd ..
 sleep 1
 echo "开始检测确认字符云监控后台服务运行是否正常"
 check_file /tmp/pid.slog_config.pid $LINENO
@@ -280,6 +319,10 @@ echo "安装字符云监控后台服务自动拉起脚本: add_crontab.sh 到 cr
 CUR_STEP=`expr 1 + $CUR_STEP`
 
 echo ""
-echo "恭喜您, 自动安装完成, 现在您可以在浏览器中访问控制台了"
+echo "恭喜您, 自动安装完成, 现在您可以在浏览器中访问控制台, 可能的网址: http://$LOCAL_IP"
+echo ""
 
+cp online_install.sh online_install.sh_bk
+update_config online_install.sh_bk
+mv online_install.sh_bk online_install.sh
 
