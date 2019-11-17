@@ -1,8 +1,8 @@
--- MySQL dump 10.13  Distrib 5.6.12, for Linux (x86_64)
+-- MySQL dump 10.16  Distrib 10.2.22-MariaDB, for Linux (x86_64)
 --
 -- Host: localhost    Database: attr_db
 -- ------------------------------------------------------
--- Server version	5.6.12
+-- Server version	10.2.22-MariaDB
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -15,6 +15,9 @@
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
+--
+-- Current Database: `attr_db`
+--
 
 CREATE DATABASE /*!32312 IF NOT EXISTS*/ `attr_db` /*!40100 DEFAULT CHARACTER SET utf8 */;
 
@@ -30,10 +33,19 @@ DROP TABLE IF EXISTS `table_info`;
 CREATE TABLE `table_info` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `table_name` varchar(256) NOT NULL,
-  `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `create_time` timestamp NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`)
 ) ENGINE=MyISAM AUTO_INCREMENT=734 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `table_info`
+--
+
+LOCK TABLES `table_info` WRITE;
+/*!40000 ALTER TABLE `table_info` DISABLE KEYS */;
+/*!40000 ALTER TABLE `table_info` ENABLE KEYS */;
+UNLOCK TABLES;
 
 --
 -- Table structure for table `table_info_day`
@@ -45,10 +57,19 @@ DROP TABLE IF EXISTS `table_info_day`;
 CREATE TABLE `table_info_day` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `table_name` varchar(256) NOT NULL,
-  `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `create_time` timestamp NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`)
 ) ENGINE=MyISAM AUTO_INCREMENT=1092 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `table_info_day`
+--
+
+LOCK TABLES `table_info_day` WRITE;
+/*!40000 ALTER TABLE `table_info_day` DISABLE KEYS */;
+/*!40000 ALTER TABLE `table_info_day` ENABLE KEYS */;
+UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
@@ -59,4 +80,4 @@ CREATE TABLE `table_info_day` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2018-12-13 18:28:28
+-- Dump completed on 2019-11-17 19:46:24

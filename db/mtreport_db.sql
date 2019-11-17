@@ -1,8 +1,8 @@
--- MySQL dump 10.13  Distrib 5.7.27, for Linux (x86_64)
+-- MySQL dump 10.16  Distrib 10.2.22-MariaDB, for Linux (x86_64)
 --
 -- Host: localhost    Database: mtreport_db
 -- ------------------------------------------------------
--- Server version	5.7.27-0ubuntu0.18.04.1
+-- Server version	10.2.22-MariaDB
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -33,12 +33,12 @@ DROP TABLE IF EXISTS `flogin_history`;
 CREATE TABLE `flogin_history` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `user_id` int(11) unsigned NOT NULL,
-  `login_time` int(12) unsigned DEFAULT '0',
+  `login_time` int(12) unsigned DEFAULT 0,
   `login_remote_address` char(16) DEFAULT '0.0.0.0',
   `receive_server` char(16) DEFAULT '0.0.0.0',
   `referer` varchar(1024) DEFAULT NULL,
   `user_agent` varchar(1024) DEFAULT NULL,
-  `method` int(10) DEFAULT '0',
+  `method` int(10) DEFAULT 0,
   `valid_time` int(11) unsigned DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `user_id` (`user_id`)
@@ -65,25 +65,25 @@ CREATE TABLE `flogin_user` (
   `user_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `user_name` varchar(64) NOT NULL,
   `user_pass_md5` varchar(128) NOT NULL,
-  `login_type` int(11) NOT NULL DEFAULT '0',
-  `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `login_type` int(11) NOT NULL DEFAULT 0,
+  `update_time` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `rmark` varchar(128) DEFAULT NULL,
-  `dwReserved1` int(11) unsigned DEFAULT '0',
-  `dwReserved2` int(11) unsigned DEFAULT '0',
+  `dwReserved1` int(11) unsigned DEFAULT 0,
+  `dwReserved2` int(11) unsigned DEFAULT 0,
   `strReserved1` varchar(64) DEFAULT NULL,
   `strReserved2` varchar(64) DEFAULT NULL,
-  `user_flag_1` int(12) unsigned DEFAULT '0',
-  `last_login_time` int(12) unsigned DEFAULT '0',
-  `register_time` int(12) unsigned DEFAULT '0',
+  `user_flag_1` int(12) unsigned DEFAULT 0,
+  `last_login_time` int(12) unsigned DEFAULT 0,
+  `register_time` int(12) unsigned DEFAULT 0,
   `last_login_address` char(16) DEFAULT '0.0.0.0',
-  `user_add_id` int(11) unsigned DEFAULT '1',
-  `user_mod_id` int(11) unsigned DEFAULT '1',
-  `status` int(11) DEFAULT '0',
+  `user_add_id` int(11) unsigned DEFAULT 1,
+  `user_mod_id` int(11) unsigned DEFAULT 1,
+  `status` int(11) DEFAULT 0,
   `email` varchar(64) DEFAULT NULL,
-  `login_index` int(11) DEFAULT '0',
+  `login_index` int(11) DEFAULT 0,
   `login_md5` varchar(32) DEFAULT '',
   `last_login_server` char(16) DEFAULT '0.0.0.0',
-  `bind_xrkmonitor_uid` int(11) unsigned DEFAULT '0',
+  `bind_xrkmonitor_uid` int(11) unsigned DEFAULT 0,
   PRIMARY KEY (`user_id`),
   KEY `idx_name` (`user_name`)
 ) ENGINE=InnoDB AUTO_INCREMENT=357 DEFAULT CHARSET=utf8;
@@ -125,14 +125,14 @@ CREATE TABLE `mt_app_info` (
   `app_name` varchar(32) NOT NULL,
   `app_desc` varchar(128) NOT NULL,
   `app_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
-  `create_time` int(12) unsigned DEFAULT '0',
-  `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `create_time` int(12) unsigned DEFAULT 0,
+  `update_time` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `user_add` varchar(64) NOT NULL,
   `user_mod` varchar(64) NOT NULL,
-  `status` tinyint(4) DEFAULT '0',
-  `app_type` int(10) unsigned DEFAULT '2',
-  `user_mod_id` int(11) unsigned DEFAULT '1',
-  `user_add_id` int(11) unsigned DEFAULT '1',
+  `status` tinyint(4) DEFAULT 0,
+  `app_type` int(10) unsigned DEFAULT 2,
+  `user_mod_id` int(11) unsigned DEFAULT 1,
+  `user_add_id` int(11) unsigned DEFAULT 1,
   PRIMARY KEY (`app_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=119 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -186,18 +186,18 @@ DROP TABLE IF EXISTS `mt_attr`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `mt_attr` (
   `id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'å±žæ€§ç¼–å·',
-  `attr_type` int(8) DEFAULT '0' COMMENT 'å±žæ€§ç±»åž‹',
-  `data_type` int(6) DEFAULT '0' COMMENT 'æ•°æ®ç±»åž‹',
+  `attr_type` int(8) DEFAULT 0 COMMENT 'å±žæ€§ç±»åž‹',
+  `data_type` int(6) DEFAULT 0 COMMENT 'æ•°æ®ç±»åž‹',
   `user_add` varchar(64) DEFAULT 'rock' COMMENT 'æ·»åŠ ç”¨æˆ·',
-  `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'æ·»åŠ æ—¶é—´',
+  `create_time` timestamp NOT NULL DEFAULT current_timestamp() COMMENT 'æ·»åŠ æ—¶é—´',
   `attr_name` varchar(64) NOT NULL COMMENT 'å±žæ€§åç§°',
   `attr_desc` varchar(256) DEFAULT NULL COMMENT 'å±žæ€§æè¿°',
-  `status` tinyint(4) DEFAULT '0' COMMENT 'çŠ¶æ€ç  0-æ­£å¸¸ä½¿ç”¨ 1-åˆ é™¤æ ‡å¿—',
-  `user_add_id` int(11) unsigned DEFAULT '0',
-  `user_mod_id` int(11) unsigned DEFAULT '0',
-  `excep_attr_mask` tinyint(4) DEFAULT '0',
-  `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `str_attr_type` tinyint(4) DEFAULT '0',
+  `status` tinyint(4) DEFAULT 0 COMMENT 'çŠ¶æ€ç  0-æ­£å¸¸ä½¿ç”¨ 1-åˆ é™¤æ ‡å¿—',
+  `user_add_id` int(11) unsigned DEFAULT 0,
+  `user_mod_id` int(11) unsigned DEFAULT 0,
+  `excep_attr_mask` tinyint(4) DEFAULT 0,
+  `update_time` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `str_attr_type` tinyint(4) DEFAULT 0,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=357 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -251,17 +251,17 @@ DROP TABLE IF EXISTS `mt_attr_type`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `mt_attr_type` (
   `type` int(11) unsigned NOT NULL AUTO_INCREMENT,
-  `parent_type` int(11) unsigned DEFAULT '0',
+  `parent_type` int(11) unsigned DEFAULT 0,
   `type_pos` varchar(128) DEFAULT '0' COMMENT 'ç±»åž‹ä½ç½®',
   `name` varchar(64) NOT NULL COMMENT 'ç±»åž‹åç§°',
   `attr_desc` varchar(256) DEFAULT NULL COMMENT 'ç±»åž‹æè¿°',
-  `status` tinyint(4) DEFAULT '0' COMMENT 'çŠ¶æ€ç  0-æ­£å¸¸ä½¿ç”¨ 1-åˆ é™¤æ ‡å¿—',
+  `status` tinyint(4) DEFAULT 0 COMMENT 'çŠ¶æ€ç  0-æ­£å¸¸ä½¿ç”¨ 1-åˆ é™¤æ ‡å¿—',
   `create_user` varchar(64) DEFAULT NULL,
   `mod_user` varchar(64) DEFAULT NULL,
-  `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `user_add_id` int(11) unsigned DEFAULT '0',
-  `user_mod_id` int(11) unsigned DEFAULT '0',
+  `update_time` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `create_time` timestamp NOT NULL DEFAULT current_timestamp(),
+  `user_add_id` int(11) unsigned DEFAULT 0,
+  `user_mod_id` int(11) unsigned DEFAULT 0,
   PRIMARY KEY (`type`)
 ) ENGINE=InnoDB AUTO_INCREMENT=84 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -314,20 +314,20 @@ DROP TABLE IF EXISTS `mt_log_config`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `mt_log_config` (
-  `app_id` int(11) unsigned DEFAULT '0',
-  `module_id` int(11) unsigned DEFAULT '0',
-  `log_types` int(10) unsigned DEFAULT '0',
+  `app_id` int(11) unsigned DEFAULT 0,
+  `module_id` int(11) unsigned DEFAULT 0,
+  `log_types` int(10) unsigned DEFAULT 0,
   `config_name` varchar(32) NOT NULL,
   `config_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
-  `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `create_time` int(12) unsigned DEFAULT '0',
+  `update_time` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `create_time` int(12) unsigned DEFAULT 0,
   `user_add` varchar(64) NOT NULL,
   `user_mod` varchar(64) NOT NULL,
-  `status` tinyint(4) DEFAULT '0',
+  `status` tinyint(4) DEFAULT 0,
   `config_desc` varchar(128) DEFAULT NULL,
-  `user_add_id` int(11) unsigned DEFAULT '1',
-  `user_mod_id` int(11) unsigned DEFAULT '1',
-  `write_speed` int(10) unsigned DEFAULT '0',
+  `user_add_id` int(11) unsigned DEFAULT 1,
+  `user_mod_id` int(11) unsigned DEFAULT 1,
+  `write_speed` int(10) unsigned DEFAULT 0,
   PRIMARY KEY (`config_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=178 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -387,18 +387,18 @@ CREATE TABLE `mt_machine` (
   `ip3` int(12) unsigned DEFAULT NULL,
   `ip4` int(12) unsigned DEFAULT NULL,
   `user_add` varchar(64) DEFAULT 'rock' COMMENT 'æ·»åŠ ç”¨æˆ·',
-  `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'æ·»åŠ æ—¶é—´',
+  `create_time` timestamp NOT NULL DEFAULT current_timestamp() COMMENT 'æ·»åŠ æ—¶é—´',
   `user_mod` varchar(64) DEFAULT 'rock' COMMENT 'æœ€åŽæ›´æ–°ç”¨æˆ·',
-  `mod_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'æ›´æ–°æ—¶é—´',
+  `mod_time` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp() COMMENT 'æ›´æ–°æ—¶é—´',
   `machine_desc` varchar(256) DEFAULT NULL COMMENT 'æœºå™¨æè¿°',
-  `status` tinyint(4) DEFAULT '0' COMMENT 'çŠ¶æ€ç  0-æ­£å¸¸ä½¿ç”¨ 1-åˆ é™¤æ ‡å¿— 2-åœç”¨',
-  `warn_flag` int(8) DEFAULT '0' COMMENT 'å‘Šè­¦æ ‡è®°',
-  `model_id` int(8) DEFAULT '0' COMMENT 'æœºå™¨åž‹å·',
-  `user_mod_id` int(11) unsigned DEFAULT '1',
-  `user_add_id` int(11) unsigned DEFAULT '1',
+  `status` tinyint(4) DEFAULT 0 COMMENT 'çŠ¶æ€ç  0-æ­£å¸¸ä½¿ç”¨ 1-åˆ é™¤æ ‡å¿— 2-åœç”¨',
+  `warn_flag` int(8) DEFAULT 0 COMMENT 'å‘Šè­¦æ ‡è®°',
+  `model_id` int(8) DEFAULT 0 COMMENT 'æœºå™¨åž‹å·',
+  `user_mod_id` int(11) unsigned DEFAULT 1,
+  `user_add_id` int(11) unsigned DEFAULT 1,
   PRIMARY KEY (`id`),
   KEY `ip1` (`ip1`)
-) ENGINE=InnoDB AUTO_INCREMENT=116 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=117 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -407,7 +407,6 @@ CREATE TABLE `mt_machine` (
 
 LOCK TABLES `mt_machine` WRITE;
 /*!40000 ALTER TABLE `mt_machine` DISABLE KEYS */;
-INSERT INTO `mt_machine` VALUES (114,'172.18.67.243',4081259180,3113897848,0,0,'rock','2019-09-03 08:43:52','sadmin','2019-09-03 09:40:05','ç³»ç»Ÿè‡ªåŠ¨æ·»åŠ ',0,1,2,1,1),(115,'172.16.0.109',1828720812,NULL,NULL,NULL,'rock','2019-09-05 07:20:20','rock','2019-09-05 07:20:20','ç³»ç»Ÿè‡ªåŠ¨æ·»åŠ ',0,0,0,1,1);
 /*!40000 ALTER TABLE `mt_machine` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
@@ -451,15 +450,15 @@ DROP TABLE IF EXISTS `mt_module_info`;
 CREATE TABLE `mt_module_info` (
   `module_name` varchar(32) NOT NULL,
   `module_desc` varchar(128) NOT NULL,
-  `app_id` int(11) unsigned DEFAULT '0',
+  `app_id` int(11) unsigned DEFAULT 0,
   `module_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
-  `status` tinyint(4) DEFAULT '0',
+  `status` tinyint(4) DEFAULT 0,
   `user_add` varchar(32) NOT NULL,
   `user_mod` varchar(32) NOT NULL,
-  `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `mod_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `user_mod_id` int(11) unsigned DEFAULT '1',
-  `user_add_id` int(11) unsigned DEFAULT '1',
+  `create_time` timestamp NOT NULL DEFAULT current_timestamp(),
+  `mod_time` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `user_mod_id` int(11) unsigned DEFAULT 1,
+  `user_add_id` int(11) unsigned DEFAULT 1,
   PRIMARY KEY (`module_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=150 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -470,7 +469,7 @@ CREATE TABLE `mt_module_info` (
 
 LOCK TABLES `mt_module_info` WRITE;
 /*!40000 ALTER TABLE `mt_module_info` DISABLE KEYS */;
-INSERT INTO `mt_module_info` VALUES ('slog_config','å¤„ç†ç›‘æŽ§ç³»ç»Ÿç›¸å…³é…ç½®ï¼Œæœ‰æ›´æ–°æ—¶å°†é…ç½®ä»Žæ•°æ®åº“æ›´æ–°åˆ°å…±äº«å†…å­˜',30,21,0,'rockdeng','sadmin','0000-00-00 00:00:00','2019-08-26 12:50:24',1,1),('slog_server','æ—¥å¿—æœåŠ¡ï¼ŒæŽ¥æ”¶è¿œç¨‹logå¹¶å†™å…¥æœåŠ¡å™¨å…±äº«å†…å­˜ä¸­',30,22,0,'rockdeng','sadmin','0000-00-00 00:00:00','2019-08-26 12:50:17',1,1),('slog_write','æ—¥å¿—å†™å…¥ç£ç›˜æœåŠ¡',30,23,0,'rockdeng','sadmin','0000-00-00 00:00:00','2019-08-26 12:50:12',1,1),('slog_client','ç”¨äºŽæ”¶é›†å¤šæœºéƒ¨ç½²æ—¶ï¼Œç›‘æŽ§ç³»ç»Ÿè‡ªèº«äº§ç”Ÿçš„æ—¥å¿—',30,24,0,'rockdeng','sadmin','0000-00-00 00:00:00','2019-08-26 12:50:07',1,1),('fcgi_slog_flogin','ç”¨äºŽå¤„ç†ç”¨æˆ·ç™»å½•æŽˆæƒ',30,25,0,'rockdeng','rockdeng','0000-00-00 00:00:00','2017-07-28 01:19:56',1,1),('fcgi_mt_slog','ç”¨äºŽå¤„ç†ç³»ç»Ÿæ—¥å¿—å±•ç¤ºï¼Œåº”ç”¨æ¨¡å—é…ç½®ç­‰',30,26,0,'rockdeng','rockdeng','0000-00-00 00:00:00','2014-12-14 04:04:29',1,1),('slog_mtreport_server','ç®¡ç†ç›‘æŽ§ agent slog_mtreport_client çš„æŽ¥å…¥ï¼Œä»¥åŠä¸‹å‘é…ç½®',30,27,0,'rockdeng','sadmin','0000-00-00 00:00:00','2019-08-26 12:44:40',1,1),('fcgi_mt_slog_monitor','ç›‘æŽ§ç³»ç»Ÿä¸»é¡µ',30,28,0,'rockdeng','sadmin','0000-00-00 00:00:00','2019-07-02 07:53:44',1,1),('fcgi_mt_slog_attr','ç”¨äºŽç®¡ç†ç›‘æŽ§ç‚¹å’Œç›‘æŽ§ç‚¹ç±»åž‹',30,29,0,'rockdeng','sadmin','0000-00-00 00:00:00','2019-08-26 12:43:33',1,1),('fcgi_mt_slog_machine','ç”¨äºŽç®¡ç†ç³»ç»Ÿæœºå™¨é…ç½®',30,30,0,'rockdeng','sadmin','0000-00-00 00:00:00','2019-07-02 07:51:56',1,1),('fcgi_mt_slog_view','ç”¨äºŽå¤„ç†è§†å›¾é…ç½®',30,31,0,'rockdeng','sadmin','0000-00-00 00:00:00','2019-07-02 07:51:44',1,1),('slog_monitor_server','ç”¨äºŽå¤„ç†ç›‘æŽ§ç‚¹ä¸ŠæŠ¥',30,33,0,'rockdeng','sadmin','0000-00-00 00:00:00','2019-08-26 12:12:09',1,1),('fcgi_mt_slog_showview','å¤„ç†webç³»ç»Ÿè§†å›¾å±•ç¤º',30,34,0,'rockdeng','rockdeng','0000-00-00 00:00:00','2018-05-23 11:11:49',1,1),('fcgi_mt_slog_warn','å‘Šè­¦é…ç½®',30,35,0,'rockdeng','sadmin','0000-00-00 00:00:00','2019-08-31 11:07:39',1,1),('fcgi_mt_slog_user','ç›‘æŽ§ç³»ç»Ÿç”¨æˆ·ç®¡ç†cgi',30,39,0,'rockdeng','sadmin','0000-00-00 00:00:00','2019-08-31 11:07:26',1,1),('slog_monitor_client','ç›‘æŽ§ç³»ç»Ÿæœ¬èº«çš„ç›‘æŽ§ç‚¹ä¸ŠæŠ¥æœåŠ¡',30,47,0,'rockdeng','sadmin','2017-07-28 01:14:27','2019-08-26 12:11:46',1,1),('slog_deal_warn','ç›‘æŽ§å‘Šè­¦å¤„ç†æ¨¡å—',30,48,0,'rockdeng','sadmin','2017-08-06 13:30:20','2019-08-26 12:11:00',1,1),('slog_check_warn','å‘Šè­¦æ£€æŸ¥æ¨¡å—',30,59,0,'rockdeng','sadmin','2018-08-04 04:18:14','2019-08-26 12:11:26',1,1),('é»˜è®¤æ¨¡å—','ç³»ç»Ÿä¸ºæ‚¨åˆ›å»ºçš„åˆå§‹æ¨¡å—ï¼Œæ‚¨å¯ä»¥ä¿®æ”¹',38,69,0,'ç³»ç»Ÿ','ç³»ç»Ÿ','2018-12-24 15:24:13','2018-12-24 15:24:13',1,1),('dddd','',39,70,0,'testapp','testapp','2018-12-26 11:20:14','2018-12-26 11:20:14',25,25),('å¤–ç½‘','',42,71,0,'testapp2','testapp2','2018-12-26 13:23:42','2018-12-26 13:23:42',28,28);
+INSERT INTO `mt_module_info` VALUES ('slog_config','å¤„ç†ç›‘æŽ§ç³»ç»Ÿç›¸å…³é…ç½®ï¼Œæœ‰æ›´æ–°æ—¶å°†é…ç½®ä»Žæ•°æ®åº“æ›´æ–°åˆ°å…±äº«å†…å­˜',30,21,0,'rockdeng','sadmin','0000-00-00 00:00:00','2019-08-26 12:50:24',1,1),('slog_server','æ—¥å¿—æœåŠ¡ï¼ŒæŽ¥æ”¶è¿œç¨‹logå¹¶å†™å…¥æœåŠ¡å™¨å…±äº«å†…å­˜ä¸­',30,22,0,'rockdeng','sadmin','0000-00-00 00:00:00','2019-08-26 12:50:17',1,1),('slog_write','æ—¥å¿—å†™å…¥ç£ç›˜æœåŠ¡',30,23,0,'rockdeng','sadmin','0000-00-00 00:00:00','2019-08-26 12:50:12',1,1),('slog_client','ç”¨äºŽæ”¶é›†å¤šæœºéƒ¨ç½²æ—¶ï¼Œç›‘æŽ§ç³»ç»Ÿè‡ªèº«äº§ç”Ÿçš„æ—¥å¿—',30,24,0,'rockdeng','sadmin','0000-00-00 00:00:00','2019-08-26 12:50:07',1,1),('fcgi_slog_flogin','ç”¨äºŽå¤„ç†ç”¨æˆ·ç™»å½•æŽˆæƒ',30,25,0,'rockdeng','rockdeng','0000-00-00 00:00:00','2017-07-28 01:19:56',1,1),('fcgi_mt_slog','ç”¨äºŽå¤„ç†ç³»ç»Ÿæ—¥å¿—å±•ç¤ºï¼Œåº”ç”¨æ¨¡å—é…ç½®ç­‰',30,26,0,'rockdeng','rockdeng','0000-00-00 00:00:00','2014-12-14 04:04:29',1,1),('slog_mtreport_server','ç®¡ç†ç›‘æŽ§ agent slog_mtreport_client çš„æŽ¥å…¥ï¼Œä»¥åŠä¸‹å‘é…ç½®',30,27,0,'rockdeng','sadmin','0000-00-00 00:00:00','2019-08-26 12:44:40',1,1),('fcgi_mt_slog_monitor','ç›‘æŽ§ç³»ç»Ÿä¸»é¡µ',30,28,0,'rockdeng','sadmin','0000-00-00 00:00:00','2019-07-02 07:53:44',1,1),('fcgi_mt_slog_attr','ç”¨äºŽç®¡ç†ç›‘æŽ§ç‚¹å’Œç›‘æŽ§ç‚¹ç±»åž‹',30,29,0,'rockdeng','sadmin','0000-00-00 00:00:00','2019-08-26 12:43:33',1,1),('fcgi_mt_slog_machine','ç”¨äºŽç®¡ç†ç³»ç»Ÿæœºå™¨é…ç½®',30,30,0,'rockdeng','sadmin','0000-00-00 00:00:00','2019-07-02 07:51:56',1,1),('fcgi_mt_slog_view','ç”¨äºŽå¤„ç†è§†å›¾é…ç½®',30,31,0,'rockdeng','sadmin','0000-00-00 00:00:00','2019-07-02 07:51:44',1,1),('slog_monitor_server','ç”¨äºŽå¤„ç†ç›‘æŽ§ç‚¹ä¸ŠæŠ¥',30,33,0,'rockdeng','sadmin','0000-00-00 00:00:00','2019-08-26 12:12:09',1,1),('fcgi_mt_slog_showview','å¤„ç†webç³»ç»Ÿè§†å›¾å±•ç¤º',30,34,0,'rockdeng','rockdeng','0000-00-00 00:00:00','2018-05-23 11:11:49',1,1),('fcgi_mt_slog_warn','å‘Šè­¦é…ç½®',30,35,0,'rockdeng','sadmin','0000-00-00 00:00:00','2019-08-31 11:07:39',1,1),('fcgi_mt_slog_user','ç›‘æŽ§ç³»ç»Ÿç”¨æˆ·ç®¡ç†cgi',30,39,0,'rockdeng','sadmin','0000-00-00 00:00:00','2019-08-31 11:07:26',1,1),('slog_monitor_client','ç›‘æŽ§ç³»ç»Ÿæœ¬èº«çš„ç›‘æŽ§ç‚¹ä¸ŠæŠ¥æœåŠ¡',30,47,0,'rockdeng','sadmin','2017-07-28 01:14:27','2019-08-26 12:11:46',1,1),('slog_deal_warn','ç›‘æŽ§å‘Šè­¦å¤„ç†æ¨¡å—',30,48,0,'rockdeng','sadmin','2017-08-06 13:30:20','2019-08-26 12:11:00',1,1),('slog_check_warn','å‘Šè­¦æ£€æŸ¥æ¨¡å—',30,59,0,'rockdeng','sadmin','2018-08-04 04:18:14','2019-08-26 12:11:26',1,1);
 /*!40000 ALTER TABLE `mt_module_info` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
@@ -513,20 +512,20 @@ DROP TABLE IF EXISTS `mt_server`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `mt_server` (
   `ip` char(20) NOT NULL,
-  `port` int(11) unsigned NOT NULL DEFAULT '12345',
-  `type` int(8) unsigned NOT NULL DEFAULT '0',
+  `port` int(11) unsigned NOT NULL DEFAULT 12345,
+  `type` int(8) unsigned NOT NULL DEFAULT 0,
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
-  `sand_box` int(8) unsigned DEFAULT '0',
-  `region` int(8) unsigned DEFAULT '0',
-  `idc` int(8) unsigned DEFAULT '0',
-  `status` int(8) DEFAULT '0',
-  `srv_for` text,
-  `weight` int(11) unsigned DEFAULT '60000',
-  `cfg_seq` int(11) unsigned DEFAULT '1',
+  `sand_box` int(8) unsigned DEFAULT 0,
+  `region` int(8) unsigned DEFAULT 0,
+  `idc` int(8) unsigned DEFAULT 0,
+  `status` int(8) DEFAULT 0,
+  `srv_for` text DEFAULT NULL,
+  `weight` int(11) unsigned DEFAULT 60000,
+  `cfg_seq` int(11) unsigned DEFAULT 1,
   `user_add` varchar(64) NOT NULL,
   `user_mod` varchar(64) NOT NULL,
-  `create_time` int(12) unsigned DEFAULT '0',
-  `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `create_time` int(12) unsigned DEFAULT 0,
+  `update_time` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `m_desc` varchar(256) DEFAULT NULL,
   PRIMARY KEY (`ip`,`type`),
   KEY `id` (`id`)
@@ -539,7 +538,7 @@ CREATE TABLE `mt_server` (
 
 LOCK TABLES `mt_server` WRITE;
 /*!40000 ALTER TABLE `mt_server` DISABLE KEYS */;
-INSERT INTO `mt_server` VALUES ('120.79.154.185',28080,1,3,0,0,0,0,'30,117,118',1000,1567504649,'rockdeng','sadmin',1474811820,'2019-09-03 09:57:29','ç»‘å®šåº”ç”¨idï¼Œå¤„ç†æ—¥å¿—ä¸ŠæŠ¥ï¼Œå¯éƒ¨ç½²å¤šå°'),('172.18.67.243',38080,2,6,0,0,0,0,'',1000,1567504630,'rockdeng','sadmin',1475408172,'2019-09-03 09:57:10','å¤„ç†ç›‘æŽ§ç‚¹æ•°æ®ä¸ŠæŠ¥ã€å¯éƒ¨ç½²å¤šå°'),('172.18.67.243',3306,3,4,0,0,0,0,'',1000,1567577833,'rockdeng','sadmin',1475152894,'2019-09-04 06:17:13','mysql ç›‘æŽ§ç‚¹æœåŠ¡å™¨ï¼Œéƒ¨ç½²1å°'),('172.18.67.243',12121,11,23,0,0,0,0,'',1000,1567504613,'sadmin','sadmin',1561962711,'2019-09-03 09:56:53','web æŽ§åˆ¶å°æœåŠ¡å™¨ï¼Œéƒ¨ç½²1å°');
+INSERT INTO `mt_server` VALUES ('192.168.128.210',28080,1,3,0,0,0,0,'30',1000,1567504649,'sadmin','sadmin',1474811820,'2019-11-17 11:33:18','ç»‘å®šåº”ç”¨idï¼Œå¤„ç†æ—¥å¿—ä¸ŠæŠ¥ï¼Œå¯éƒ¨ç½²å¤šå°'),('192.168.128.210',38080,2,6,0,0,0,0,'',1000,1567504630,'sadmin','sadmin',1475408172,'2019-11-17 11:32:40','å¤„ç†ç›‘æŽ§ç‚¹æ•°æ®ä¸ŠæŠ¥ã€å¯éƒ¨ç½²å¤šå°'),('192.168.128.210',3306,3,4,0,0,0,0,'',1000,1567577833,'sadmin','sadmin',1475152894,'2019-11-17 11:32:40','mysql ç›‘æŽ§ç‚¹æœåŠ¡å™¨ï¼Œéƒ¨ç½²1å°'),('192.168.128.210',12121,11,23,0,0,0,0,'',1000,1567504613,'sadmin','sadmin',1561962711,'2019-11-17 11:28:26','web æŽ§åˆ¶å°æœåŠ¡å™¨ï¼Œéƒ¨ç½²1å°');
 /*!40000 ALTER TABLE `mt_server` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
@@ -582,12 +581,12 @@ DROP TABLE IF EXISTS `mt_table_upate_monitor`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `mt_table_upate_monitor` (
   `u_table_name` varchar(32) NOT NULL,
-  `r_primary_id` int(11) unsigned DEFAULT '0',
-  `r_primary_id_2` int(11) unsigned DEFAULT '0',
-  `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `r_primary_id` int(11) unsigned DEFAULT 0,
+  `r_primary_id_2` int(11) unsigned DEFAULT 0,
+  `create_time` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `r_change_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   PRIMARY KEY (`r_change_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=39770 DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM AUTO_INCREMENT=39856 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -596,7 +595,7 @@ CREATE TABLE `mt_table_upate_monitor` (
 
 LOCK TABLES `mt_table_upate_monitor` WRITE;
 /*!40000 ALTER TABLE `mt_table_upate_monitor` DISABLE KEYS */;
-INSERT INTO `mt_table_upate_monitor` VALUES ('flogin_user',1,0,'2019-09-05 09:02:50',39769),('flogin_user',1,0,'2019-09-05 09:01:16',39768),('mt_machine',115,0,'2019-09-05 07:20:20',39767);
+INSERT INTO `mt_table_upate_monitor` VALUES ('mt_view_battr',21,62,'2019-11-17 11:34:44',39780),('mt_view_battr',21,74,'2019-11-17 11:34:44',39781),('mt_view_battr',21,63,'2019-11-17 11:34:44',39782),('mt_view_battr',21,56,'2019-11-17 11:34:44',39783),('mt_view_battr',21,55,'2019-11-17 11:34:44',39784),('mt_view_battr',21,57,'2019-11-17 11:34:44',39785),('mt_view_battr',21,64,'2019-11-17 11:34:44',39786),('mt_view_battr',21,71,'2019-11-17 11:34:44',39787),('mt_view_battr',21,73,'2019-11-17 11:34:44',39788),('mt_view_battr',21,58,'2019-11-17 11:34:44',39789),('mt_view_battr',21,65,'2019-11-17 11:34:44',39790),('mt_view_battr',23,70,'2019-11-17 11:34:44',39791),('mt_view_battr',26,113,'2019-11-17 11:34:44',39792),('mt_view_battr',23,65,'2019-11-17 11:34:44',39793),('mt_view_battr',23,93,'2019-11-17 11:34:44',39794),('mt_view_battr',21,67,'2019-11-17 11:34:44',39795),('mt_view_battr',21,75,'2019-11-17 11:34:44',39796),('mt_view_battr',21,59,'2019-11-17 11:34:44',39797),('mt_view_battr',21,60,'2019-11-17 11:34:44',39798),('mt_view_battr',21,70,'2019-11-17 11:34:44',39799),('mt_view_battr',23,73,'2019-11-17 11:34:44',39800),('mt_view_battr',23,75,'2019-11-17 11:34:44',39801),('mt_view_battr',21,61,'2019-11-17 11:34:44',39802),('mt_view_battr',21,66,'2019-11-17 11:34:44',39803),('mt_view_battr',21,68,'2019-11-17 11:34:44',39804),('mt_view_battr',21,69,'2019-11-17 11:34:44',39805),('mt_view_battr',21,72,'2019-11-17 11:34:44',39806),('mt_view_battr',21,76,'2019-11-17 11:34:44',39807),('mt_view_battr',23,67,'2019-11-17 11:34:44',39808),('mt_view_battr',21,77,'2019-11-17 11:34:44',39809),('mt_view_battr',21,78,'2019-11-17 11:34:44',39810),('mt_view_battr',21,79,'2019-11-17 11:34:44',39811),('mt_view_battr',21,80,'2019-11-17 11:34:44',39812),('mt_view_battr',21,81,'2019-11-17 11:34:44',39813),('mt_view_battr',21,82,'2019-11-17 11:34:44',39814),('mt_view_battr',21,83,'2019-11-17 11:34:44',39815),('mt_view_battr',26,143,'2019-11-17 11:34:44',39816),('mt_view_battr',26,112,'2019-11-17 11:34:44',39817),('mt_view_battr',26,111,'2019-11-17 11:34:44',39818),('mt_view_battr',26,110,'2019-11-17 11:34:44',39819),('mt_view_battr',26,146,'2019-11-17 11:34:44',39820),('mt_view_battr',26,147,'2019-11-17 11:34:44',39821),('mt_view_battr',26,145,'2019-11-17 11:34:44',39822),('mt_view_battr',26,108,'2019-11-17 11:34:44',39823),('mt_view_battr',26,144,'2019-11-17 11:34:44',39824),('mt_view_battr',26,142,'2019-11-17 11:34:44',39825),('mt_view_battr',23,62,'2019-11-17 11:34:44',39826),('mt_view_battr',23,94,'2019-11-17 11:34:44',39827),('mt_view_battr',22,67,'2019-11-17 11:34:44',39828),('mt_view_battr',22,73,'2019-11-17 11:34:44',39829),('mt_view_bmach',21,6,'2019-11-17 11:35:13',39830),('mt_view_bmach',22,47,'2019-11-17 11:35:13',39831),('mt_view_bmach',21,18,'2019-11-17 11:35:13',39832),('mt_view_bmach',21,20,'2019-11-17 11:35:13',39833),('mt_view_bmach',26,52,'2019-11-17 11:35:13',39834),('mt_view_bmach',23,46,'2019-11-17 11:35:13',39835),('mt_view_bmach',23,47,'2019-11-17 11:35:13',39836),('mt_view_bmach',23,51,'2019-11-17 11:35:13',39837),('mt_view_bmach',23,52,'2019-11-17 11:35:13',39838),('mt_view_bmach',22,51,'2019-11-17 11:35:13',39839),('mt_view_bmach',22,52,'2019-11-17 11:35:13',39840),('mt_view_bmach',26,51,'2019-11-17 11:35:13',39841),('mt_view_bmach',26,46,'2019-11-17 11:35:13',39842),('mt_view_bmach',23,58,'2019-11-17 11:35:13',39843),('mt_view_bmach',23,59,'2019-11-17 11:35:13',39844),('mt_view_bmach',22,58,'2019-11-17 11:35:13',39845),('mt_view_bmach',22,59,'2019-11-17 11:35:13',39846),('mt_view_bmach',22,60,'2019-11-17 11:35:13',39847),('mt_view_bmach',23,60,'2019-11-17 11:35:13',39848),('mt_view_bmach',23,61,'2019-11-17 11:35:13',39849),('mt_view_bmach',22,61,'2019-11-17 11:35:13',39850),('mt_view_bmach',22,46,'2019-11-17 11:35:13',39851),('mt_view_bmach',22,84,'2019-11-17 11:35:13',39852),('mt_view_bmach',23,114,'2019-11-17 11:35:13',39853),('mt_view_bmach',22,114,'2019-11-17 11:35:13',39854),('mt_view_bmach',26,114,'2019-11-17 11:35:13',39855);
 /*!40000 ALTER TABLE `mt_table_upate_monitor` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -611,14 +610,14 @@ CREATE TABLE `mt_view` (
   `id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'è§†å›¾ç¼–å·',
   `name` varchar(64) NOT NULL COMMENT 'è§†å›¾åç§°',
   `user_add` varchar(64) DEFAULT 'rock' COMMENT 'æ·»åŠ ç”¨æˆ·',
-  `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'æ·»åŠ æ—¶é—´',
+  `create_time` timestamp NOT NULL DEFAULT current_timestamp() COMMENT 'æ·»åŠ æ—¶é—´',
   `user_mod` varchar(64) DEFAULT 'rock' COMMENT 'æœ€åŽæ›´æ–°ç”¨æˆ·',
-  `mod_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'æ›´æ–°æ—¶é—´',
+  `mod_time` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp() COMMENT 'æ›´æ–°æ—¶é—´',
   `view_desc` varchar(256) DEFAULT NULL COMMENT 'è§†å›¾æè¿°',
-  `status` tinyint(4) DEFAULT '0' COMMENT 'çŠ¶æ€ç  0-æ­£å¸¸ä½¿ç”¨ 1-åˆ é™¤æ ‡å¿—',
-  `view_flag` int(8) DEFAULT '0' COMMENT 'å‘Šè­¦æ ‡è®°',
-  `user_mod_id` int(11) unsigned DEFAULT '1',
-  `user_add_id` int(11) unsigned DEFAULT '1',
+  `status` tinyint(4) DEFAULT 0 COMMENT 'çŠ¶æ€ç  0-æ­£å¸¸ä½¿ç”¨ 1-åˆ é™¤æ ‡å¿—',
+  `view_flag` int(8) DEFAULT 0 COMMENT 'å‘Šè­¦æ ‡è®°',
+  `user_mod_id` int(11) unsigned DEFAULT 1,
+  `user_add_id` int(11) unsigned DEFAULT 1,
   PRIMARY KEY (`id`)
 ) ENGINE=MyISAM AUTO_INCREMENT=1000032 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -671,10 +670,10 @@ DROP TABLE IF EXISTS `mt_view_battr`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `mt_view_battr` (
-  `view_id` int(11) NOT NULL DEFAULT '0' COMMENT 'è§†å›¾ç¼–å·',
-  `attr_id` int(11) NOT NULL DEFAULT '0' COMMENT 'å±žæ€§ç¼–å·',
-  `status` tinyint(4) DEFAULT '0' COMMENT 'çŠ¶æ€ç  0-æ­£å¸¸ä½¿ç”¨ 1-åˆ é™¤æ ‡å¿—',
-  `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `view_id` int(11) NOT NULL DEFAULT 0 COMMENT 'è§†å›¾ç¼–å·',
+  `attr_id` int(11) NOT NULL DEFAULT 0 COMMENT 'å±žæ€§ç¼–å·',
+  `status` tinyint(4) DEFAULT 0 COMMENT 'çŠ¶æ€ç  0-æ­£å¸¸ä½¿ç”¨ 1-åˆ é™¤æ ‡å¿—',
+  `update_time` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`view_id`,`attr_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -685,7 +684,7 @@ CREATE TABLE `mt_view_battr` (
 
 LOCK TABLES `mt_view_battr` WRITE;
 /*!40000 ALTER TABLE `mt_view_battr` DISABLE KEYS */;
-INSERT INTO `mt_view_battr` VALUES (21,62,0,'0000-00-00 00:00:00'),(21,74,0,'0000-00-00 00:00:00'),(21,63,0,'0000-00-00 00:00:00'),(21,56,0,'0000-00-00 00:00:00'),(21,55,0,'0000-00-00 00:00:00'),(21,57,0,'0000-00-00 00:00:00'),(21,64,0,'0000-00-00 00:00:00'),(21,71,0,'0000-00-00 00:00:00'),(21,73,0,'0000-00-00 00:00:00'),(21,58,0,'0000-00-00 00:00:00'),(21,65,0,'0000-00-00 00:00:00'),(23,70,0,'0000-00-00 00:00:00'),(26,113,0,'0000-00-00 00:00:00'),(23,65,0,'0000-00-00 00:00:00'),(23,93,0,'0000-00-00 00:00:00'),(21,67,0,'0000-00-00 00:00:00'),(21,75,0,'0000-00-00 00:00:00'),(21,59,0,'0000-00-00 00:00:00'),(21,60,0,'0000-00-00 00:00:00'),(21,70,0,'0000-00-00 00:00:00'),(23,73,0,'0000-00-00 00:00:00'),(23,75,0,'0000-00-00 00:00:00'),(21,61,0,'0000-00-00 00:00:00'),(21,66,0,'0000-00-00 00:00:00'),(21,68,0,'0000-00-00 00:00:00'),(21,69,0,'0000-00-00 00:00:00'),(21,72,0,'0000-00-00 00:00:00'),(21,76,0,'0000-00-00 00:00:00'),(23,67,0,'0000-00-00 00:00:00'),(21,77,0,'0000-00-00 00:00:00'),(21,78,0,'0000-00-00 00:00:00'),(21,79,0,'0000-00-00 00:00:00'),(21,80,0,'0000-00-00 00:00:00'),(21,81,0,'0000-00-00 00:00:00'),(21,82,0,'0000-00-00 00:00:00'),(21,83,0,'0000-00-00 00:00:00'),(26,143,0,'0000-00-00 00:00:00'),(26,112,0,'0000-00-00 00:00:00'),(26,111,0,'0000-00-00 00:00:00'),(26,110,0,'0000-00-00 00:00:00'),(26,146,0,'0000-00-00 00:00:00'),(26,147,0,'0000-00-00 00:00:00'),(26,145,0,'0000-00-00 00:00:00'),(26,108,0,'0000-00-00 00:00:00'),(26,144,0,'0000-00-00 00:00:00'),(26,142,0,'0000-00-00 00:00:00'),(23,62,0,'0000-00-00 00:00:00'),(23,94,0,'0000-00-00 00:00:00'),(22,67,0,'0000-00-00 00:00:00'),(22,73,0,'0000-00-00 00:00:00');
+INSERT INTO `mt_view_battr` VALUES (21,62,0,'2019-11-17 11:34:44'),(21,74,0,'2019-11-17 11:34:44'),(21,63,0,'2019-11-17 11:34:44'),(21,56,0,'2019-11-17 11:34:44'),(21,55,0,'2019-11-17 11:34:44'),(21,57,0,'2019-11-17 11:34:44'),(21,64,0,'2019-11-17 11:34:44'),(21,71,0,'2019-11-17 11:34:44'),(21,73,0,'2019-11-17 11:34:44'),(21,58,0,'2019-11-17 11:34:44'),(21,65,0,'2019-11-17 11:34:44'),(23,70,0,'2019-11-17 11:34:44'),(26,113,0,'2019-11-17 11:34:44'),(23,65,0,'2019-11-17 11:34:44'),(23,93,0,'2019-11-17 11:34:44'),(21,67,0,'2019-11-17 11:34:44'),(21,75,0,'2019-11-17 11:34:44'),(21,59,0,'2019-11-17 11:34:44'),(21,60,0,'2019-11-17 11:34:44'),(21,70,0,'2019-11-17 11:34:44'),(23,73,0,'2019-11-17 11:34:44'),(23,75,0,'2019-11-17 11:34:44'),(21,61,0,'2019-11-17 11:34:44'),(21,66,0,'2019-11-17 11:34:44'),(21,68,0,'2019-11-17 11:34:44'),(21,69,0,'2019-11-17 11:34:44'),(21,72,0,'2019-11-17 11:34:44'),(21,76,0,'2019-11-17 11:34:44'),(23,67,0,'2019-11-17 11:34:44'),(21,77,0,'2019-11-17 11:34:44'),(21,78,0,'2019-11-17 11:34:44'),(21,79,0,'2019-11-17 11:34:44'),(21,80,0,'2019-11-17 11:34:44'),(21,81,0,'2019-11-17 11:34:44'),(21,82,0,'2019-11-17 11:34:44'),(21,83,0,'2019-11-17 11:34:44'),(26,143,0,'2019-11-17 11:34:44'),(26,112,0,'2019-11-17 11:34:44'),(26,111,0,'2019-11-17 11:34:44'),(26,110,0,'2019-11-17 11:34:44'),(26,146,0,'2019-11-17 11:34:44'),(26,147,0,'2019-11-17 11:34:44'),(26,145,0,'2019-11-17 11:34:44'),(26,108,0,'2019-11-17 11:34:44'),(26,144,0,'2019-11-17 11:34:44'),(26,142,0,'2019-11-17 11:34:44'),(23,62,0,'2019-11-17 11:34:44'),(23,94,0,'2019-11-17 11:34:44'),(22,67,0,'2019-11-17 11:34:44'),(22,73,0,'2019-11-17 11:34:44');
 /*!40000 ALTER TABLE `mt_view_battr` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
@@ -727,11 +726,11 @@ DROP TABLE IF EXISTS `mt_view_bmach`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `mt_view_bmach` (
-  `view_id` int(11) NOT NULL DEFAULT '0' COMMENT 'è§†å›¾ç¼–å·',
-  `machine_id` int(11) NOT NULL DEFAULT '0' COMMENT 'æœºå™¨ç¼–å·',
-  `status` tinyint(4) DEFAULT '0' COMMENT 'çŠ¶æ€ç  0-æ­£å¸¸ä½¿ç”¨ 1-åˆ é™¤æ ‡å¿—',
-  `user_master` int(11) unsigned DEFAULT '1',
-  `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `view_id` int(11) NOT NULL DEFAULT 0 COMMENT 'è§†å›¾ç¼–å·',
+  `machine_id` int(11) NOT NULL DEFAULT 0 COMMENT 'æœºå™¨ç¼–å·',
+  `status` tinyint(4) DEFAULT 0 COMMENT 'çŠ¶æ€ç  0-æ­£å¸¸ä½¿ç”¨ 1-åˆ é™¤æ ‡å¿—',
+  `user_master` int(11) unsigned DEFAULT 1,
+  `update_time` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`view_id`,`machine_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -742,7 +741,7 @@ CREATE TABLE `mt_view_bmach` (
 
 LOCK TABLES `mt_view_bmach` WRITE;
 /*!40000 ALTER TABLE `mt_view_bmach` DISABLE KEYS */;
-INSERT INTO `mt_view_bmach` VALUES (21,6,0,1,'0000-00-00 00:00:00'),(22,47,0,1,'0000-00-00 00:00:00'),(21,18,0,1,'0000-00-00 00:00:00'),(21,20,0,1,'0000-00-00 00:00:00'),(26,52,0,1,'0000-00-00 00:00:00'),(23,46,0,1,'0000-00-00 00:00:00'),(23,47,0,1,'0000-00-00 00:00:00'),(23,51,0,1,'0000-00-00 00:00:00'),(23,52,0,1,'0000-00-00 00:00:00'),(22,51,0,1,'0000-00-00 00:00:00'),(22,52,0,1,'0000-00-00 00:00:00'),(26,51,0,1,'0000-00-00 00:00:00'),(26,46,0,1,'0000-00-00 00:00:00'),(23,58,0,1,'0000-00-00 00:00:00'),(23,59,0,1,'0000-00-00 00:00:00'),(22,58,0,1,'0000-00-00 00:00:00'),(22,59,0,1,'0000-00-00 00:00:00'),(22,60,0,1,'0000-00-00 00:00:00'),(23,60,0,1,'0000-00-00 00:00:00'),(23,61,0,1,'0000-00-00 00:00:00'),(22,61,0,1,'0000-00-00 00:00:00'),(22,46,0,1,'0000-00-00 00:00:00'),(22,84,0,1,'0000-00-00 00:00:00'),(23,114,0,1,'2019-09-03 08:54:00'),(22,114,0,1,'2019-09-03 08:54:00'),(26,114,0,1,'2019-09-03 08:54:00');
+INSERT INTO `mt_view_bmach` VALUES (21,6,0,1,'2019-11-17 11:35:13'),(22,47,0,1,'2019-11-17 11:35:13'),(21,18,0,1,'2019-11-17 11:35:13'),(21,20,0,1,'2019-11-17 11:35:13'),(26,52,0,1,'2019-11-17 11:35:13'),(23,46,0,1,'2019-11-17 11:35:13'),(23,47,0,1,'2019-11-17 11:35:13'),(23,51,0,1,'2019-11-17 11:35:13'),(23,52,0,1,'2019-11-17 11:35:13'),(22,51,0,1,'2019-11-17 11:35:13'),(22,52,0,1,'2019-11-17 11:35:13'),(26,51,0,1,'2019-11-17 11:35:13'),(26,46,0,1,'2019-11-17 11:35:13'),(23,58,0,1,'2019-11-17 11:35:13'),(23,59,0,1,'2019-11-17 11:35:13'),(22,58,0,1,'2019-11-17 11:35:13'),(22,59,0,1,'2019-11-17 11:35:13'),(22,60,0,1,'2019-11-17 11:35:13'),(23,60,0,1,'2019-11-17 11:35:13'),(23,61,0,1,'2019-11-17 11:35:13'),(22,61,0,1,'2019-11-17 11:35:13'),(22,46,0,1,'2019-11-17 11:35:13'),(22,84,0,1,'2019-11-17 11:35:13'),(23,114,0,1,'2019-11-17 11:35:13'),(22,114,0,1,'2019-11-17 11:35:13'),(26,114,0,1,'2019-11-17 11:35:13');
 /*!40000 ALTER TABLE `mt_view_bmach` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
@@ -786,21 +785,21 @@ DROP TABLE IF EXISTS `mt_warn_config`;
 CREATE TABLE `mt_warn_config` (
   `warn_config_id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'å‘Šè­¦é…ç½®ç¼–å·',
   `attr_id` int(11) DEFAULT NULL COMMENT 'å±žæ€§ç¼–å·',
-  `warn_flag` int(11) DEFAULT '0' COMMENT 'å‘Šè­¦æ ‡è®°',
-  `max_value` int(11) DEFAULT '0' COMMENT 'æœ€å¤§å€¼',
-  `min_value` int(11) DEFAULT '0' COMMENT 'æœ€å°å€¼',
-  `wave_value` int(11) DEFAULT '0' COMMENT 'æ³¢åŠ¨å€¼',
-  `warn_type_value` int(11) DEFAULT '0' COMMENT 'å‘Šè­¦ç±»åž‹å€¼',
+  `warn_flag` int(11) DEFAULT 0 COMMENT 'å‘Šè­¦æ ‡è®°',
+  `max_value` int(11) DEFAULT 0 COMMENT 'æœ€å¤§å€¼',
+  `min_value` int(11) DEFAULT 0 COMMENT 'æœ€å°å€¼',
+  `wave_value` int(11) DEFAULT 0 COMMENT 'æ³¢åŠ¨å€¼',
+  `warn_type_value` int(11) DEFAULT 0 COMMENT 'å‘Šè­¦ç±»åž‹å€¼',
   `user_add` varchar(64) DEFAULT 'rock' COMMENT 'æ·»åŠ ç”¨æˆ·',
-  `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'æ·»åŠ æ—¶é—´',
-  `reserved1` int(11) DEFAULT '0' COMMENT 'æœºå™¨id æˆ–è€… è§†å›¾id',
-  `reserved2` int(11) DEFAULT '0' COMMENT 'ä¿ç•™',
+  `create_time` timestamp NOT NULL DEFAULT current_timestamp() COMMENT 'æ·»åŠ æ—¶é—´',
+  `reserved1` int(11) DEFAULT 0 COMMENT 'æœºå™¨id æˆ–è€… è§†å›¾id',
+  `reserved2` int(11) DEFAULT 0 COMMENT 'ä¿ç•™',
   `reserved3` varchar(32) DEFAULT NULL COMMENT 'ä¿ç•™',
   `reserved4` varchar(32) DEFAULT NULL COMMENT 'ä¿ç•™',
-  `status` tinyint(4) DEFAULT '0' COMMENT 'çŠ¶æ€ç  0-æ­£å¸¸ä½¿ç”¨ 1-åˆ é™¤æ ‡å¿—',
-  `user_add_id` int(11) unsigned DEFAULT '1',
-  `user_mod_id` int(11) unsigned DEFAULT '1',
-  `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `status` tinyint(4) DEFAULT 0 COMMENT 'çŠ¶æ€ç  0-æ­£å¸¸ä½¿ç”¨ 1-åˆ é™¤æ ‡å¿—',
+  `user_add_id` int(11) unsigned DEFAULT 1,
+  `user_mod_id` int(11) unsigned DEFAULT 1,
+  `update_time` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`warn_config_id`)
 ) ENGINE=MyISAM AUTO_INCREMENT=120 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -811,7 +810,6 @@ CREATE TABLE `mt_warn_config` (
 
 LOCK TABLES `mt_warn_config` WRITE;
 /*!40000 ALTER TABLE `mt_warn_config` DISABLE KEYS */;
-INSERT INTO `mt_warn_config` VALUES (119,202,17,1,0,0,22,'sadmin','2019-08-28 09:16:58',0,0,NULL,NULL,0,1,1,'0000-00-00 00:00:00');
 /*!40000 ALTER TABLE `mt_warn_config` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
@@ -854,20 +852,20 @@ DROP TABLE IF EXISTS `mt_warn_info`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `mt_warn_info` (
   `wid` int(11) NOT NULL AUTO_INCREMENT,
-  `warn_id` int(11) DEFAULT '0',
-  `attr_id` int(11) DEFAULT '0',
-  `warn_config_val` int(11) DEFAULT '0',
-  `warn_val` int(11) DEFAULT '0',
+  `warn_id` int(11) DEFAULT 0,
+  `attr_id` int(11) DEFAULT 0,
+  `warn_config_val` int(11) DEFAULT 0,
+  `warn_val` int(11) DEFAULT 0,
   `warn_time_utc` int(11) unsigned DEFAULT NULL,
-  `warn_flag` int(11) DEFAULT '0',
-  `deal_status` int(11) DEFAULT '0',
+  `warn_flag` int(11) DEFAULT 0,
+  `deal_status` int(11) DEFAULT 0,
   `last_warn_time_utc` int(11) unsigned DEFAULT NULL,
-  `warn_times` int(11) DEFAULT '0',
-  `send_warn_times` int(11) DEFAULT '0',
+  `warn_times` int(11) DEFAULT 0,
+  `send_warn_times` int(11) DEFAULT 0,
   `start_deal_time_utc` int(11) unsigned DEFAULT NULL,
   `end_deal_time_utc` int(11) unsigned DEFAULT NULL,
-  `status` tinyint(4) DEFAULT '0',
-  `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `status` tinyint(4) DEFAULT 0,
+  `update_time` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`wid`)
 ) ENGINE=InnoDB AUTO_INCREMENT=6656 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -878,7 +876,6 @@ CREATE TABLE `mt_warn_info` (
 
 LOCK TABLES `mt_warn_info` WRITE;
 /*!40000 ALTER TABLE `mt_warn_info` DISABLE KEYS */;
-INSERT INTO `mt_warn_info` VALUES (6053,51,93,5,10,1538644422,9,2,1538661122,280,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6054,23,93,20,10,1538644422,18,2,1538661122,280,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6055,52,98,0,1,1538644442,72,2,1538645342,3,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6056,52,97,0,4,1538644442,72,2,1538645342,3,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6057,23,82,2000,1547,1538644442,18,2,1538661122,264,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6058,52,90,0,3,1538644502,72,2,1538661122,63,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6059,51,98,0,7,1538645102,72,2,1538648342,12,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6060,51,97,0,28,1538645102,72,2,1538648342,12,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6061,51,110,0,2,1538645642,72,2,1538647382,3,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6062,52,189,70,80,1538647262,9,2,1538659862,21,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6063,52,189,70,80,1538660282,41,2,1538660282,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6064,51,93,5,10,1538661182,9,2,1538662622,25,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6065,23,82,2000,780,1538661182,18,2,1538662622,23,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6066,23,93,20,10,1538661182,18,2,1538662622,25,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6067,52,90,0,1,1538661422,72,2,1538662622,4,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6068,52,189,70,80,1538661722,9,2,1538662562,3,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6069,23,82,80,100,1538662622,20,2,1538711104,4,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6070,52,189,70,120,1538662682,9,2,1538726340,256,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6071,51,93,5,11,1538662682,9,2,1538732280,1124,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6072,52,90,0,3,1538662682,72,2,1538732160,204,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6073,51,98,0,1,1538662682,72,2,1538732160,7,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6074,51,97,0,4,1538662682,72,2,1538732160,7,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6075,23,93,20,11,1538662682,18,2,1538732280,1124,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6076,23,82,2000,1534,1538662742,18,2,1538732280,1106,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6077,51,110,0,1,1538703362,72,2,1538703362,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6078,52,98,0,2,1538710742,72,2,1538731860,26,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6079,52,97,0,8,1538710742,72,2,1538731860,26,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6080,52,165,80,81,1538711042,9,2,1538711099,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6081,52,183,80,99,1538711042,9,2,1538726340,219,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6082,52,184,70,93,1538711042,9,2,1538726340,219,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6083,51,93,5,8,1538732340,9,2,1538732760,8,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6084,23,82,2000,1421,1538732340,18,2,1538732760,8,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6085,23,93,20,8,1538732340,18,2,1538732760,8,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6086,52,90,0,2,1538732400,72,2,1538732820,4,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6087,51,98,0,5,1538732580,72,2,1538732700,3,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6088,51,97,0,20,1538732580,72,2,1538732700,3,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6089,52,90,0,1,1538733240,72,2,1538818502,246,0,1538814013,1538818611,0,'0000-00-00 00:00:00'),(6090,52,98,0,1,1538733240,72,2,1538814362,17,0,1538814013,1538818611,0,'0000-00-00 00:00:00'),(6091,52,97,0,4,1538733240,72,2,1538814362,17,0,1538814013,1538818611,0,'0000-00-00 00:00:00'),(6092,51,98,0,2,1538733900,72,2,1538803500,13,0,1538814013,1538818611,0,'0000-00-00 00:00:00'),(6093,51,97,0,8,1538733900,72,2,1538803500,13,0,1538814013,1538818611,0,'0000-00-00 00:00:00'),(6094,52,103,0,1,1538798581,72,2,1538798581,1,0,1538814013,1538818611,0,'0000-00-00 00:00:00'),(6095,52,90,0,3,1538818862,72,2,1538887803,68,0,1538819470,1538887811,0,'0000-00-00 00:00:00'),(6096,52,98,0,2,1538819222,72,2,1538887803,5,0,1538819470,1538887811,0,'0000-00-00 00:00:00'),(6097,52,97,0,8,1538819222,72,2,1538887803,5,0,1538819470,1538887811,0,'0000-00-00 00:00:00'),(6098,51,98,0,5,1538821622,72,2,1538884204,5,0,1538826793,1538887811,0,'0000-00-00 00:00:00'),(6099,51,97,0,20,1538821622,72,2,1538884204,5,0,1538826793,1538887811,0,'0000-00-00 00:00:00'),(6100,51,110,0,1,1538823362,72,2,1538823362,1,0,1538826793,1538887811,0,'0000-00-00 00:00:00'),(6101,46,98,0,1,1538826602,72,2,1538884204,37,0,1538826793,1538887811,0,'0000-00-00 00:00:00'),(6102,46,97,0,4,1538826602,72,2,1538884204,38,0,1538826793,1538887811,0,'0000-00-00 00:00:00'),(6103,46,116,0,25,1538826602,72,2,1538826602,1,0,1538826793,1538887811,0,'0000-00-00 00:00:00'),(6104,46,110,0,44,1538826602,72,2,1538826602,1,0,1538826793,1538887811,0,'0000-00-00 00:00:00'),(6105,46,86,0,4,1538826602,72,2,1538826602,1,0,1538826793,1538887811,0,'0000-00-00 00:00:00'),(6106,22,163,2,10,1538831220,17,2,1538831460,5,0,1538832086,1538832111,0,'0000-00-00 00:00:00'),(6107,22,163,2,9,1538831520,49,2,1538832064,11,0,1538832086,1538832111,0,'0000-00-00 00:00:00'),(6108,22,163,2,10,1538832124,17,2,1538832124,1,0,1538887824,1538888706,0,'0000-00-00 00:00:00'),(6109,22,163,2,10,1538832184,49,3,1538887684,926,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6111,52,90,0,8,1538887863,72,2,1538887983,2,0,1538888016,1538888768,0,'0000-00-00 00:00:00'),(6112,46,98,0,6,1538887923,72,2,1538887983,2,0,1538888016,1538888211,0,'0000-00-00 00:00:00'),(6113,46,97,0,12,1538887923,72,2,1538888343,3,0,1538888016,1538888471,0,'0000-00-00 00:00:00'),(6114,52,98,0,1,1538888223,72,2,1538888403,3,0,1538890892,1538890923,0,'0000-00-00 00:00:00'),(6117,52,97,0,4,1538888343,72,2,1538888403,2,0,1538890892,1538890923,0,'0000-00-00 00:00:00'),(6118,46,98,0,3,1538888343,72,2,1538888343,1,0,1538890892,1538890923,0,'0000-00-00 00:00:00'),(6121,22,163,2,8,1538889003,17,2,1538889603,11,0,1538889117,1538889647,0,'0000-00-00 00:00:00'),(6122,22,163,2,8,1538889663,17,2,1538889663,1,0,1538890877,1538890923,0,'0000-00-00 00:00:00'),(6128,22,163,2,101,1538890820,17,2,1539219003,96,0,1539218930,1542290512,0,'0000-00-00 00:00:00'),(6129,52,90,0,1,1538890860,72,3,1538891940,10,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6130,52,98,0,1,1538890860,72,3,1538890860,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6131,52,97,0,4,1538890860,72,3,1538891940,3,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6132,46,98,0,3,1538890980,72,3,1538891885,8,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6133,46,97,0,12,1538890980,72,3,1538891885,8,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6134,52,98,0,1,1538891822,72,3,1538891940,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6135,52,90,0,2,1538892660,72,3,1538892720,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6136,52,90,0,2,1538893560,72,3,1538893620,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6137,52,90,0,2,1538894460,72,3,1538894520,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6138,52,90,0,2,1538895360,72,3,1538895420,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6139,52,90,0,2,1538896260,72,3,1538896320,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6140,52,90,0,1,1538897160,72,3,1538897280,3,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6141,52,90,0,16,1538898060,72,3,1538902260,22,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6142,46,98,0,1,1538899680,72,3,1538900280,11,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6143,46,97,0,4,1538899680,72,3,1538900280,11,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6144,46,86,0,1,1538899800,72,2,1539403801,2,0,1540984893,1540984901,0,'0000-00-00 00:00:00'),(6145,51,98,0,1,1538900820,72,3,1538900820,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6146,51,97,0,4,1538900820,72,3,1538900820,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6147,52,90,0,3,1538903160,72,3,1538903220,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6148,52,90,0,2,1538904060,72,3,1538904120,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6149,52,90,0,1,1538904840,72,3,1538904840,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6150,52,90,0,2,1538905560,72,3,1538905800,3,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6151,52,90,0,2,1538906460,72,3,1538907960,7,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6152,52,90,0,4,1538908620,72,3,1538912041,18,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6153,52,98,0,2,1538909102,72,3,1538909521,5,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6154,52,97,0,8,1538909102,72,3,1538909521,5,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6155,46,98,0,2,1538909402,72,3,1538909641,3,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6156,46,97,0,8,1538909402,72,3,1538909641,3,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6157,52,98,0,1,1538910961,72,3,1538910961,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6158,52,97,0,4,1538910961,72,3,1538910961,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6159,46,98,0,3,1538910961,72,3,1538911141,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6160,46,97,0,12,1538910961,72,3,1538911141,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6161,52,163,2,84,1538911981,9,2,1542285000,15,0,1541961046,1542290493,0,'0000-00-00 00:00:00'),(6162,52,98,0,4,1538911981,72,3,1538912883,7,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6163,52,97,0,16,1538911981,72,3,1538912883,7,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6164,46,98,0,4,1538911981,72,3,1538912701,3,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6165,46,97,0,16,1538911981,72,3,1538912701,3,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6166,52,90,0,1,1538912701,72,3,1538913723,6,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6167,52,90,0,1,1538914563,72,3,1538914683,3,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6168,52,90,0,2,1538915463,72,3,1538915523,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6169,52,90,0,2,1538916363,72,3,1538916423,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6170,52,90,0,2,1538917263,72,3,1538917323,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6171,52,90,0,2,1538918163,72,3,1538918223,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6172,52,90,0,2,1538919063,72,3,1538919123,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6173,52,90,0,2,1538919963,72,3,1538920023,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6174,52,90,0,2,1538920863,72,3,1538920923,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6175,52,90,0,2,1538921763,72,3,1538921823,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6176,52,90,0,2,1538922663,72,3,1538922723,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6177,52,90,0,2,1538923563,72,3,1538923623,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6178,52,90,0,2,1538924463,72,3,1538924523,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6179,52,90,0,2,1538925363,72,3,1538925423,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6180,52,90,0,2,1538926263,72,3,1538926323,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6181,52,90,0,2,1538927163,72,3,1538927223,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6182,52,90,0,1,1538928063,72,3,1538929023,5,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6183,52,90,0,2,1538929863,72,3,1538929923,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6184,52,90,0,1,1538930763,72,3,1538930943,3,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6185,52,90,0,2,1538931663,72,3,1538932563,5,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6186,52,90,0,1,1538933463,72,3,1538935143,8,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6187,52,90,0,2,1538935863,72,3,1538935923,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6188,52,90,0,1,1538936763,72,3,1538936943,3,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6189,52,90,0,2,1538937663,72,3,1538937723,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6190,52,90,0,3,1538938563,72,3,1538940063,5,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6191,52,90,0,2,1538940963,72,3,1538941023,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6192,52,90,0,2,1538941863,72,3,1538942763,5,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6193,52,90,0,2,1538943663,72,3,1538944563,4,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6194,52,90,0,2,1538945463,72,3,1538946363,5,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6195,52,90,0,2,1538947263,72,3,1538947323,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6196,52,90,0,2,1538948163,72,3,1538949063,5,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6197,52,90,0,1,1538949963,72,3,1538951283,5,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6198,52,90,0,2,1538952063,72,3,1538952963,4,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6199,52,90,0,2,1538953863,72,3,1538953923,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6200,52,90,0,2,1538954763,72,3,1538954823,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6201,52,90,0,1,1538955663,72,3,1538955783,3,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6202,52,90,0,2,1538956563,72,3,1538956623,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6203,52,90,0,2,1538957463,72,3,1538957523,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6204,52,90,0,2,1538958363,72,3,1538958423,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6205,52,90,0,1,1538959263,72,3,1538960823,7,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6206,52,90,0,1,1538961543,72,3,1538963043,7,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6207,52,90,0,3,1538963763,72,3,1538963823,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6208,52,90,0,2,1538964663,72,3,1538964723,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6209,52,90,0,1,1538965563,72,3,1538965743,3,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6210,52,90,0,2,1538966463,72,3,1538967963,6,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6211,52,90,0,2,1538968863,72,3,1538968923,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6212,52,90,0,1,1538969763,72,3,1538971323,7,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6213,52,90,0,2,1538972163,72,3,1538972223,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6214,52,90,0,2,1538973063,72,3,1538974563,5,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6215,52,90,0,3,1538975463,72,3,1538976363,5,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6216,52,90,0,2,1538977263,72,3,1538977323,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6217,52,90,0,15,1538977983,72,3,1538979063,7,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6218,51,98,0,5,1538977983,72,3,1538978163,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6219,51,97,0,20,1538977983,72,3,1538978163,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6220,51,110,0,1,1538977983,72,2,1540610521,42,0,1540984893,1540984901,0,'0000-00-00 00:00:00'),(6221,52,90,0,2,1538979963,72,3,1538980023,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6222,52,90,0,2,1538980863,72,3,1538980923,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6223,52,90,0,1,1538981763,72,3,1538983503,6,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6224,52,90,0,2,1538984163,72,3,1538984223,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6225,52,90,0,2,1538985063,72,3,1538985123,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6226,52,90,0,1,1538985903,72,3,1538985903,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6227,52,90,0,2,1538986563,72,3,1538986623,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6228,52,90,0,2,1538987463,72,3,1538987523,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6229,52,90,0,2,1538988363,72,3,1538988423,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6230,52,90,0,2,1538989263,72,3,1538991063,7,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6231,51,98,0,5,1538989743,72,3,1538989743,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6232,51,97,0,20,1538989743,72,3,1538989743,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6233,52,90,0,2,1538991963,72,3,1538992023,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6234,52,90,0,1,1538992863,72,3,1538993043,3,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6235,52,90,0,2,1538993763,72,3,1538993823,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6236,52,90,0,2,1538994663,72,3,1538996223,7,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6237,52,90,0,2,1538997063,72,3,1538997123,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6238,52,90,0,2,1538997963,72,3,1538998023,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6239,52,90,0,2,1538998863,72,3,1538998923,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6240,52,90,0,1,1538999583,72,3,1538999583,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6241,52,90,0,2,1539000363,72,3,1539007564,37,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6242,52,98,0,1,1539001144,72,3,1539002644,9,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6243,52,97,0,4,1539001144,72,3,1539002644,9,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6244,52,183,2,33,1539001744,9,2,1539002584,15,0,1541961046,1542290512,0,'0000-00-00 00:00:00'),(6245,51,98,0,3,1539001744,72,3,1539002464,3,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6246,51,97,0,12,1539001744,72,3,1539002464,3,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6247,46,98,0,2,1539002644,72,3,1539002704,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6248,46,97,0,8,1539002644,72,3,1539002704,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6249,46,98,0,3,1539003784,72,3,1539003844,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6250,46,97,0,12,1539003784,72,3,1539003844,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6251,52,98,0,3,1539005164,72,3,1542117483,59,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6252,52,97,0,12,1539005164,72,3,1542117483,58,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6253,52,90,0,6,1539008464,72,3,1539008464,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6254,52,90,0,2,1539009364,72,3,1539009364,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6255,52,90,0,2,1539010264,72,3,1539010264,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6256,52,90,0,4,1539011164,72,3,1539011164,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6257,52,90,0,6,1539012064,72,3,1539012064,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6258,52,90,0,4,1539012964,72,3,1539012964,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6259,52,90,0,2,1539013864,72,3,1539016084,6,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6260,52,90,0,2,1539016864,72,3,1539018124,4,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6261,52,90,0,4,1539018964,72,3,1539018964,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6262,52,90,0,5,1539019864,72,3,1539019864,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6263,52,90,0,1,1539020524,72,3,1539020524,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6264,52,90,0,1,1539021364,72,3,1539021724,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6265,52,90,0,4,1539022564,72,3,1539022564,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6266,52,90,0,2,1539023464,72,3,1539023464,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6267,52,90,0,5,1539024364,72,3,1539024364,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6268,52,90,0,5,1539025264,72,3,1539025264,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6269,52,90,0,1,1539025924,72,3,1539025924,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6270,52,90,0,5,1539026764,72,3,1539026764,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6271,52,90,0,1,1539027664,72,3,1539028384,3,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6272,52,90,0,1,1539029164,72,3,1539029224,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6273,52,90,0,4,1539030064,72,3,1539030064,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6274,52,90,0,4,1539030964,72,3,1539030964,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6275,52,90,0,4,1539031864,72,3,1539031864,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6276,52,90,0,1,1539032764,72,3,1539032824,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6277,52,90,0,1,1539033664,72,3,1539034144,3,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6278,52,90,0,5,1539034864,72,3,1539034864,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6279,52,90,0,1,1539035524,72,3,1539035524,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6280,52,90,0,4,1539036364,72,3,1539036364,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6281,52,90,0,4,1539037264,72,3,1539037264,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6282,52,90,0,4,1539038164,72,3,1539038164,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6283,52,90,0,2,1539039064,72,3,1539039064,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6284,52,90,0,1,1539039964,72,3,1539040024,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6285,52,90,0,4,1539040864,72,3,1539040864,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6286,52,90,0,3,1539041764,72,3,1539041764,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6287,52,90,0,5,1539042664,72,3,1539042664,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6288,52,90,0,1,1539043564,72,3,1539044044,3,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6289,52,90,0,4,1539044764,72,3,1539044764,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6290,52,90,0,4,1539045664,72,3,1539045664,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6291,52,90,0,1,1539046564,72,3,1539046924,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6292,52,90,0,1,1539047764,72,3,1539047884,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6293,52,90,0,2,1539048664,72,3,1539050464,7,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6294,51,98,0,8,1539049084,72,3,1539049144,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6295,51,97,0,32,1539049084,72,3,1539049144,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6296,52,90,0,4,1539051364,72,3,1539051364,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6297,52,90,0,4,1539052264,72,3,1539052264,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6298,52,90,0,4,1539053164,72,3,1539053164,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6299,52,90,0,4,1539054064,72,3,1539054064,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6300,52,90,0,4,1539054964,72,3,1539054964,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6301,52,90,0,4,1539055864,72,3,1539055864,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6302,52,90,0,1,1539056644,72,3,1539058864,9,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6303,51,98,0,1,1539056764,72,3,1539056944,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6304,51,97,0,4,1539056764,72,3,1539056944,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6305,52,90,0,1,1539059584,72,3,1539060004,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6306,52,90,0,3,1539060664,72,3,1539060664,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6307,52,90,0,4,1539061564,72,3,1539061564,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6308,52,90,0,1,1539062464,72,3,1539062524,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6309,52,90,0,1,1539063364,72,3,1539063664,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6310,52,90,0,14,1539064564,72,3,1539064924,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6311,51,98,0,1,1539064924,72,3,1539064924,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6312,51,97,0,4,1539064924,72,3,1539064924,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6313,52,90,0,1,1539065584,72,3,1539067084,7,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6314,51,98,0,1,1539065584,72,3,1539065584,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6315,51,97,0,4,1539065584,72,3,1539065584,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6316,52,90,0,2,1539067864,72,3,1539069064,4,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6317,52,90,0,2,1539069724,72,3,1539069724,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6318,52,90,0,1,1539070564,72,3,1539070804,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6319,52,90,0,5,1539071464,72,3,1539071464,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6320,52,90,0,4,1539072364,72,3,1539072364,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6321,52,90,0,5,1539073264,72,3,1539073264,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6322,52,90,0,1,1539074104,72,3,1539074104,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6323,52,90,0,1,1539074764,72,3,1539075964,3,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6324,52,90,0,4,1539076864,72,3,1539076864,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6325,52,90,0,1,1539077764,72,3,1539077944,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6326,52,90,0,1,1539078664,72,3,1539079804,4,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6327,52,90,0,2,1539080464,72,3,1539080524,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6328,52,90,0,1,1539081364,72,2,1542429180,7,0,1542429552,1542429557,0,'0000-00-00 00:00:00'),(6329,52,90,0,1,1539082924,72,2,1542428520,6,0,1542428549,1542428554,0,'0000-00-00 00:00:00'),(6330,52,90,0,1,1539084724,72,2,1542428340,6,0,1542428388,1542428393,0,'0000-00-00 00:00:00'),(6331,52,90,0,1,1539085624,72,2,1542426600,5,0,1542426755,1542426760,0,'0000-00-00 00:00:00'),(6332,52,90,0,1,1539086524,72,2,1542424320,44,0,1542424264,1542424808,0,'0000-00-00 00:00:00'),(6333,52,90,0,1,1539088924,72,2,1542415560,40,0,1542409873,1542417722,0,'0000-00-00 00:00:00'),(6334,52,90,0,2,1539089824,72,2,1542286320,7656,0,1542290485,1542290493,0,'0000-00-00 00:00:00'),(6335,46,98,0,56,1539089824,72,0,1556066160,56,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6336,46,97,0,1,1539089824,72,1,1556000100,72,0,1550401355,NULL,0,'0000-00-00 00:00:00'),(6337,51,98,0,4,1539091204,72,2,1542201360,136,0,1542290485,1542290493,0,'0000-00-00 00:00:00'),(6338,51,97,0,16,1539091204,72,2,1542201360,136,0,1542290485,1542290493,0,'0000-00-00 00:00:00'),(6339,52,88,0,2,1539150663,72,2,1540379461,19,0,1540984893,1540984901,0,'0000-00-00 00:00:00'),(6341,46,219,0,3,1539173103,72,2,1539266462,6,0,1541961046,1542290512,0,'0000-00-00 00:00:00'),(6342,46,116,0,1,1539176943,72,2,1539176943,1,0,1541961046,1542290512,0,'0000-00-00 00:00:00'),(6343,46,110,0,2,1539178143,72,2,1539266522,2,0,1541961046,1542290512,0,'0000-00-00 00:00:00'),(6344,51,219,0,3,1539178623,72,2,1539220504,5,0,1541961046,1542290512,0,'0000-00-00 00:00:00'),(6346,52,55,0,3,1539180663,72,2,1539180663,1,0,1541961046,1542290512,0,'0000-00-00 00:00:00'),(6347,51,163,80,92,1539217563,9,2,1540862160,7,0,1539218930,1540984901,0,'0000-00-00 00:00:00'),(6348,51,79,0,1,1539270722,72,2,1539270722,1,0,1540984893,1540984901,0,'0000-00-00 00:00:00'),(6349,58,98,0,3,1539271082,72,2,1542203580,46,0,1542290485,1542290493,0,'0000-00-00 00:00:00'),(6350,58,97,0,12,1539271082,72,2,1542203580,46,0,1542290485,1542290493,0,'0000-00-00 00:00:00'),(6351,52,74,0,1,1539304802,72,2,1540835940,5,0,1540984893,1540984901,0,'0000-00-00 00:00:00'),(6352,58,55,0,1,1539325622,72,2,1539325622,1,0,1540984893,1540984901,0,'0000-00-00 00:00:00'),(6353,58,116,0,10,1539327542,72,2,1539406441,20,0,1540984893,1540984901,0,'0000-00-00 00:00:00'),(6354,52,116,0,2,1539401101,72,2,1539422220,7,0,1540984893,1540984901,0,'0000-00-00 00:00:00'),(6355,60,108,0,31,1539607741,72,2,1539607741,1,0,1540984893,1540984901,0,'0000-00-00 00:00:00'),(6356,51,183,70,70,1540839660,9,2,1540862100,114,0,1540984893,1540984901,0,'0000-00-00 00:00:00'),(6357,51,163,90,97,1541035560,9,2,1541082420,4,0,1541961046,1542290512,0,'0000-00-00 00:00:00'),(6358,51,55,0,1,1541082300,72,2,1541082300,1,0,1541961046,1542290512,0,'0000-00-00 00:00:00'),(6359,58,163,80,86,1541216520,9,2,1541216520,1,0,1541961046,1542290512,0,'0000-00-00 00:00:00'),(6360,58,55,0,1,1541217000,72,2,1541217000,1,0,1541961046,1542290512,0,'0000-00-00 00:00:00'),(6361,59,164,80,80,1541299560,9,2,1542211620,2,0,1541961046,1542290493,0,'0000-00-00 00:00:00'),(6362,52,74,0,1,1541585940,72,2,1541585940,1,0,1541961046,1542290512,0,'0000-00-00 00:00:00'),(6363,61,55,0,1,1541942220,72,2,1541942220,1,0,1541961046,1542290512,0,'0000-00-00 00:00:00'),(6364,52,86,0,38,1541947080,72,2,1541959560,3,0,1541961046,1542290512,0,'0000-00-00 00:00:00'),(6365,52,164,80,100,1541959560,9,2,1542286440,3,0,1541961046,1542290493,0,'0000-00-00 00:00:00'),(6366,58,86,0,1,1542135242,72,2,1542190082,2,0,1542290485,1542290493,0,'0000-00-00 00:00:00'),(6367,61,86,0,1,1542159662,72,2,1542232200,2,0,1542290485,1542290493,0,'0000-00-00 00:00:00'),(6368,52,239,0,1,1542192542,72,2,1542192542,1,0,1542290485,1542290493,0,'0000-00-00 00:00:00'),(6369,52,236,0,1,1542200280,72,2,1542290400,9,0,1542290485,1542290493,0,'0000-00-00 00:00:00'),(6370,52,165,80,100,1542200400,9,2,1542286440,3,0,1542290485,1542290493,0,'0000-00-00 00:00:00'),(6371,58,116,0,8,1542204060,72,2,1542204780,8,0,1542290485,1542290493,0,'0000-00-00 00:00:00'),(6372,58,236,0,1,1542208680,72,2,1542289080,31,0,1542290485,1542290493,0,'0000-00-00 00:00:00'),(6373,58,90,0,1,1542243660,72,2,1542262080,2,0,1542290485,1542290493,0,'0000-00-00 00:00:00'),(6374,58,239,0,1,1542243660,72,2,1542262080,2,0,1542290485,1542290493,0,'0000-00-00 00:00:00'),(6375,59,86,0,1,1542249780,72,2,1542251400,2,0,1542290485,1542290493,0,'0000-00-00 00:00:00'),(6376,52,236,0,1,1542291360,72,2,1542293460,4,0,1542293660,1542293670,0,'0000-00-00 00:00:00'),(6377,58,236,0,1,1542291840,72,2,1542291840,1,0,1542293660,1542293670,0,'0000-00-00 00:00:00'),(6378,58,116,0,2,1542292380,72,2,1542293280,4,0,1542293660,1542293670,0,'0000-00-00 00:00:00'),(6379,59,55,0,3,1542294180,72,2,1542294180,1,0,1542330871,1542332516,0,'0000-00-00 00:00:00'),(6380,52,236,0,1,1542294480,72,2,1542332220,29,0,1542330871,1542332516,0,'0000-00-00 00:00:00'),(6381,59,236,0,1,1542298380,72,2,1542323460,3,0,1542330871,1542332516,0,'0000-00-00 00:00:00'),(6382,58,236,0,1,1542327180,72,2,1542329280,2,0,1542330871,1542332516,0,'0000-00-00 00:00:00'),(6383,61,86,0,1,1542327300,72,2,1542327300,1,0,1542330871,1542332516,0,'0000-00-00 00:00:00'),(6384,59,71,0,2,1542331920,72,2,1542331920,1,0,1542332521,1542332587,0,'0000-00-00 00:00:00'),(6385,52,236,0,4,1542332700,72,2,1542411240,37,0,1542413325,1542413335,0,'0000-00-00 00:00:00'),(6386,59,236,0,1,1542338760,72,2,1542414600,4,0,1542417717,1542417722,0,'0000-00-00 00:00:00'),(6387,52,164,80,100,1542409677,9,2,1542410700,16,0,1542409873,1542413229,0,'0000-00-00 00:00:00'),(6388,52,165,80,100,1542409677,9,2,1542410760,19,0,1542410194,1542413229,0,'0000-00-00 00:00:00'),(6389,52,116,0,1,1542409677,72,2,1542409680,2,0,1542409873,1542413229,0,'0000-00-00 00:00:00'),(6390,52,236,0,2,1542418500,72,2,1542420240,2,0,1542424264,1542424808,0,'0000-00-00 00:00:00'),(6391,61,86,0,1,1542422040,72,2,1542422220,2,0,1542424264,1542424808,0,'0000-00-00 00:00:00'),(6392,52,86,0,1164,1542424740,72,2,1542424740,1,0,1542424803,1542424808,0,'0000-00-00 00:00:00'),(6393,52,67,1,0,1542426280,10,2,1542426280,1,0,1542426396,1542426403,0,'0000-00-00 00:00:00'),(6394,52,86,0,1163,1542426300,72,2,1542426300,1,0,1542426396,1542426403,0,'0000-00-00 00:00:00'),(6395,52,236,0,1,1542426300,72,2,1542426300,1,0,1542426396,1542426403,0,'0000-00-00 00:00:00'),(6396,52,67,1,0,1542429360,10,2,1542429360,1,0,1542429552,1542429557,0,'0000-00-00 00:00:00'),(6397,52,67,1,0,1542429600,10,2,1542429780,2,0,1542429778,1542429783,0,'0000-00-00 00:00:00'),(6398,52,67,1,0,1542429840,10,2,1542431340,25,0,1542429931,1542432012,0,'0000-00-00 00:00:00'),(6399,59,236,0,1,1542432660,72,2,1542433320,2,0,1542436042,1542436048,0,'0000-00-00 00:00:00'),(6400,52,236,0,1,1542432660,72,2,1542432660,1,0,1542436042,1542436048,0,'0000-00-00 00:00:00'),(6401,61,86,0,1,1542432720,72,2,1542432720,1,0,1542436042,1542436048,0,'0000-00-00 00:00:00'),(6402,52,236,0,1,1542440400,72,3,1544639820,735,0,1542446395,NULL,0,'0000-00-00 00:00:00'),(6403,59,236,0,1,1542449820,72,3,1544610060,99,0,1542452227,NULL,0,'0000-00-00 00:00:00'),(6404,61,86,0,1,1542481620,72,2,1542510960,3,0,1542539500,1542539505,0,'0000-00-00 00:00:00'),(6405,61,116,0,1,1542538380,72,2,1542538380,1,0,1542539500,1542539505,0,'0000-00-00 00:00:00'),(6406,61,78,0,1,1542538380,72,2,1542538380,1,0,1542539500,1542539505,0,'0000-00-00 00:00:00'),(6407,61,77,0,1,1542538380,72,2,1542538380,1,0,1542539500,1542539505,0,'0000-00-00 00:00:00'),(6408,61,79,0,2,1542538380,72,2,1542538380,1,0,1542539500,1542539505,0,'0000-00-00 00:00:00'),(6409,61,55,0,6,1542538380,72,2,1542538380,1,0,1542539500,1542539505,0,'0000-00-00 00:00:00'),(6410,61,71,0,2,1542538380,72,2,1542538380,1,0,1542539500,1542539505,0,'0000-00-00 00:00:00'),(6411,61,76,0,1,1542538380,72,2,1542539460,2,0,1542539500,1542539505,0,'0000-00-00 00:00:00'),(6412,61,71,0,1,1542539760,72,2,1542539760,1,0,1542554074,1542554084,0,'0000-00-00 00:00:00'),(6413,61,116,0,1,1542543480,72,2,1542543480,1,0,1542554074,1542554084,0,'0000-00-00 00:00:00'),(6414,61,55,0,1,1542551100,72,2,1542551100,1,0,1542554074,1542554084,0,'0000-00-00 00:00:00'),(6415,61,236,0,1,1542552240,72,3,1544193720,348,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6416,52,74,0,1,1542595260,72,3,1544609100,4402,0,1542762037,NULL,0,'0000-00-00 00:00:00'),(6417,61,79,0,1,1542630480,72,2,1543064700,3,0,1542771729,1543100693,0,'0000-00-00 00:00:00'),(6418,61,116,0,1,1542633120,72,2,1542633420,3,0,1542771729,1543100705,0,'0000-00-00 00:00:00'),(6419,52,85,0,1,1542653160,72,2,1542653160,1,0,1542771729,1543100705,0,'0000-00-00 00:00:00'),(6420,59,86,0,3273,1542667860,72,2,1543100640,722,0,1542771729,1543100693,0,'0000-00-00 00:00:00'),(6421,61,252,0,1,1542700380,72,3,1543408560,1702,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6422,52,164,80,85,1542716160,9,2,1543052400,2,0,1542771729,1543100693,0,'0000-00-00 00:00:00'),(6423,52,165,80,90,1542716160,9,2,1543099620,5,0,1542771729,1543100693,0,'0000-00-00 00:00:00'),(6424,61,260,0,1,1542719940,72,3,1543100160,1057,0,1542762037,NULL,0,'0000-00-00 00:00:00'),(6425,61,71,0,1,1542726240,72,2,1542726240,1,0,1542771729,1543100705,0,'0000-00-00 00:00:00'),(6426,61,86,0,2348,1542891060,72,2,1543100640,145,0,1543100682,1543100693,0,'0000-00-00 00:00:00'),(6427,61,235,0,1,1542985200,72,2,1542985200,1,0,1543100682,1543100705,0,'0000-00-00 00:00:00'),(6428,61,103,0,1,1543027980,72,2,1543027980,1,0,1543100682,1543100693,0,'0000-00-00 00:00:00'),(6429,61,234,0,1,1543027980,72,2,1543027980,1,0,1543100682,1543100693,0,'0000-00-00 00:00:00'),(6430,52,86,0,31492,1543049520,72,2,1543068720,34,0,1543100682,1543100693,0,'0000-00-00 00:00:00'),(6431,52,71,0,1,1543049520,72,2,1543053540,68,0,1543100682,1543100693,0,'0000-00-00 00:00:00'),(6432,59,164,80,100,1543049580,9,2,1543050060,8,0,1543100682,1543100693,0,'0000-00-00 00:00:00'),(6433,52,252,0,3,1543053600,72,3,1543738620,3,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6434,61,98,0,1,1543064700,72,2,1543064700,1,0,1543100682,1543100693,0,'0000-00-00 00:00:00'),(6435,61,77,0,1,1543064700,72,2,1543064700,1,0,1543100682,1543100693,0,'0000-00-00 00:00:00'),(6436,58,55,0,1,1543066140,72,2,1543066140,1,0,1543100682,1543100693,0,'0000-00-00 00:00:00'),(6437,58,103,0,1,1543066740,72,2,1543066740,1,0,1543100682,1543100693,0,'0000-00-00 00:00:00'),(6438,58,234,0,1,1543066740,72,2,1543066740,1,0,1543100682,1543100693,0,'0000-00-00 00:00:00'),(6439,52,67,1,0,1543066860,10,2,1543067520,12,0,1543100682,1543100693,0,'0000-00-00 00:00:00'),(6440,52,222,0,1,1543068840,72,2,1543068840,1,0,1543100682,1543100693,0,'0000-00-00 00:00:00'),(6441,52,189,70,71,1543096920,9,2,1543100640,63,0,1543100682,1543100693,0,'0000-00-00 00:00:00'),(6442,52,186,0,5,1543098540,72,2,1543100640,36,0,1543100682,1543100693,0,'0000-00-00 00:00:00'),(6443,52,163,80,80,1543099620,9,2,1543099620,1,0,1543100682,1543100693,0,'0000-00-00 00:00:00'),(6444,59,86,0,3639,1543100700,72,2,1543140000,636,0,1543100717,1543140015,0,'0000-00-00 00:00:00'),(6445,52,189,70,70,1543100700,9,2,1543109400,126,0,1543100717,1543140015,0,'0000-00-00 00:00:00'),(6446,52,186,0,3,1543100700,72,2,1543109220,123,0,1543100717,1543140015,0,'0000-00-00 00:00:00'),(6447,61,86,0,229148,1543100700,72,2,1543140000,395,0,1543100717,1543140015,0,'0000-00-00 00:00:00'),(6448,52,163,80,96,1543106400,9,2,1543106460,2,0,1543140005,1543140015,0,'0000-00-00 00:00:00'),(6449,52,164,80,94,1543106400,9,2,1543106460,2,0,1543140005,1543140015,0,'0000-00-00 00:00:00'),(6450,52,165,80,100,1543106400,9,2,1543106460,2,0,1543140005,1543140015,0,'0000-00-00 00:00:00'),(6451,51,183,80,80,1543109460,9,2,1543112340,11,0,1543140005,1543140015,0,'0000-00-00 00:00:00'),(6452,58,236,0,1,1543115280,72,3,1544612520,262,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6453,61,79,0,1,1543121580,72,2,1543122600,3,0,1543140005,1543140015,0,'0000-00-00 00:00:00'),(6454,61,103,0,1,1543121580,72,2,1543121580,1,0,1543140005,1543140015,0,'0000-00-00 00:00:00'),(6455,61,234,0,1,1543121580,72,2,1543121580,1,0,1543140005,1543140015,0,'0000-00-00 00:00:00'),(6456,52,67,1,0,1543121640,10,2,1543122180,10,0,1543140005,1543140015,0,'0000-00-00 00:00:00'),(6457,52,86,0,1132,1543121640,72,2,1543130460,148,0,1543140005,1543140015,0,'0000-00-00 00:00:00'),(6458,60,79,0,1,1543135080,72,2,1543135080,1,0,1543140005,1543140015,0,'0000-00-00 00:00:00'),(6459,60,55,0,2,1543135140,72,2,1543135140,1,0,1543140005,1543140015,0,'0000-00-00 00:00:00'),(6460,60,86,0,816211,1543139580,72,2,1543140000,8,0,1543140005,1543140015,0,'0000-00-00 00:00:00'),(6461,59,86,0,2642,1543140060,72,2,1543150980,183,0,1543150901,1543154870,0,'0000-00-00 00:00:00'),(6462,60,86,0,12473,1543140060,72,2,1543143000,50,0,1543150901,1543154870,0,'0000-00-00 00:00:00'),(6463,61,86,0,1,1543140060,72,2,1543144920,51,0,1543150901,1543154870,0,'0000-00-00 00:00:00'),(6464,52,86,0,1536,1543143120,72,2,1543143120,1,0,1543150901,1543154870,0,'0000-00-00 00:00:00'),(6465,52,235,0,1,1543143180,72,2,1543148700,2,0,1543150901,1543154870,0,'0000-00-00 00:00:00'),(6466,51,183,80,80,1543146840,9,2,1543148400,2,0,1543150901,1543154870,0,'0000-00-00 00:00:00'),(6467,60,55,0,1,1543150560,72,2,1543150560,1,0,1543150901,1543154870,0,'0000-00-00 00:00:00'),(6468,59,79,0,1,1543151160,72,2,1543151160,1,0,1543154852,1543154870,0,'0000-00-00 00:00:00'),(6469,61,86,0,1,1543163100,72,2,1543304760,16,0,1543195760,1543328404,0,'0000-00-00 00:00:00'),(6470,59,86,0,1,1543168260,72,2,1543299360,9,0,1543195760,1543328404,0,'0000-00-00 00:00:00'),(6471,59,183,70,71,1543195500,9,2,1543195860,7,0,1543195760,1543328404,0,'0000-00-00 00:00:00'),(6472,51,183,80,80,1543202640,9,2,1543244040,122,0,1543202709,1543328404,0,'0000-00-00 00:00:00'),(6473,52,260,0,16,1543217340,72,3,1543218180,6,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6474,52,164,80,85,1543239840,9,2,1543240500,2,0,1543328394,1543328404,0,'0000-00-00 00:00:00'),(6475,51,87,0,1,1543245900,72,3,1543327440,1360,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6476,51,234,0,5,1543245900,72,2,1543245900,1,0,1543328394,1543328404,0,'0000-00-00 00:00:00'),(6477,58,86,0,1,1543278000,72,2,1543278000,1,0,1543328394,1543328404,0,'0000-00-00 00:00:00'),(6478,61,79,0,1,1543327740,72,2,1543327740,1,0,1543328394,1543328404,0,'0000-00-00 00:00:00'),(6479,52,67,1,0,1543327920,10,2,1543327980,2,0,1543328394,1543328404,0,'0000-00-00 00:00:00'),(6480,52,86,0,41325,1543327920,72,2,1543327980,2,0,1543328394,1543328404,0,'0000-00-00 00:00:00'),(6481,59,71,0,2,1543328580,72,2,1543328580,1,0,1543454162,1543454174,0,'0000-00-00 00:00:00'),(6482,59,79,0,1,1543328580,72,2,1543328640,2,0,1543454162,1543454174,0,'0000-00-00 00:00:00'),(6483,59,76,0,1,1543328580,72,2,1543328580,1,0,1543454162,1543454174,0,'0000-00-00 00:00:00'),(6484,59,103,0,2,1543328640,72,2,1543328700,2,0,1543454162,1543454174,0,'0000-00-00 00:00:00'),(6485,59,234,0,2,1543328640,72,2,1543328700,2,0,1543454162,1543454174,0,'0000-00-00 00:00:00'),(6486,60,55,0,1,1543329660,72,2,1543410120,3,0,1543454162,1543454174,0,'0000-00-00 00:00:00'),(6487,52,163,80,95,1543332300,9,2,1543332300,1,0,1543454162,1543454174,0,'0000-00-00 00:00:00'),(6488,52,164,80,82,1543332300,9,2,1543417200,3,0,1543454162,1543454174,0,'0000-00-00 00:00:00'),(6489,52,165,80,87,1543332300,9,2,1543366140,2,0,1543454162,1543454174,0,'0000-00-00 00:00:00'),(6490,52,235,0,1,1543366020,72,2,1543366020,1,0,1543454162,1543454174,0,'0000-00-00 00:00:00'),(6491,52,222,0,1,1543408680,72,2,1543408680,1,0,1543454162,1543454174,0,'0000-00-00 00:00:00'),(6492,52,86,0,7480,1543408680,72,2,1543408800,5,0,1543454162,1543454174,0,'0000-00-00 00:00:00'),(6493,61,79,0,1,1543409820,72,2,1543409820,1,0,1543454162,1543454174,0,'0000-00-00 00:00:00'),(6494,61,98,0,1,1543409820,72,2,1543409820,1,0,1543454162,1543454174,0,'0000-00-00 00:00:00'),(6495,61,55,0,1,1543409820,72,2,1543409820,1,0,1543454162,1543454174,0,'0000-00-00 00:00:00'),(6496,61,103,0,1,1543409940,72,2,1543409940,1,0,1543454162,1543454174,0,'0000-00-00 00:00:00'),(6497,61,234,0,1,1543409940,72,2,1543409940,1,0,1543454162,1543454174,0,'0000-00-00 00:00:00'),(6498,52,103,0,8,1543410720,72,2,1543410720,1,0,1543454162,1543454174,0,'0000-00-00 00:00:00'),(6499,52,234,0,8,1543410720,72,2,1543410720,1,0,1543454162,1543454174,0,'0000-00-00 00:00:00'),(6500,61,109,0,1,1543454280,72,2,1543454280,1,0,1543754462,1544010024,0,'0000-00-00 00:00:00'),(6501,52,164,80,88,1543487160,9,2,1543500540,5,0,1543754462,1544010024,0,'0000-00-00 00:00:00'),(6502,58,86,0,1,1543502820,72,2,1543502820,1,0,1543754462,1544010024,0,'0000-00-00 00:00:00'),(6503,61,235,0,1,1543541700,72,2,1543994160,6,0,1543754462,1544010024,0,'0000-00-00 00:00:00'),(6504,52,85,0,1,1543621620,72,2,1543691940,2,0,1543754462,1544010024,0,'0000-00-00 00:00:00'),(6505,59,183,70,70,1543659900,9,2,1543661520,23,0,1543754462,1544010024,0,'0000-00-00 00:00:00'),(6506,52,189,70,70,1543735980,9,2,1543736100,3,0,1543754462,1544010024,0,'0000-00-00 00:00:00'),(6507,61,116,0,8,1543755240,72,2,1543931520,5,0,1544009985,1544010024,0,'0000-00-00 00:00:00'),(6508,61,79,0,1,1543755420,72,2,1543755420,1,0,1544009985,1544010024,0,'0000-00-00 00:00:00'),(6509,61,103,0,1,1543755420,72,2,1543776660,3,0,1544009985,1544010024,0,'0000-00-00 00:00:00'),(6510,61,234,0,1,1543755420,72,2,1543776660,3,0,1544009985,1544010024,0,'0000-00-00 00:00:00'),(6511,59,164,80,100,1543762080,9,2,1543933620,3,0,1544009985,1544010024,0,'0000-00-00 00:00:00'),(6512,60,55,0,1,1543832880,72,2,1543832880,1,0,1544009985,1544010024,0,'0000-00-00 00:00:00'),(6513,52,165,80,100,1543905660,9,2,1544010000,10,0,1543905760,1544010024,0,'0000-00-00 00:00:00'),(6514,52,86,0,4543,1543905720,72,2,1543905720,1,0,1543905760,1544010024,0,'0000-00-00 00:00:00'),(6515,61,78,0,1,1543927440,72,2,1543927440,1,0,1544009985,1544010024,0,'0000-00-00 00:00:00'),(6516,61,77,0,1,1543927440,72,2,1543927440,1,0,1544009985,1544010024,0,'0000-00-00 00:00:00'),(6517,61,83,0,7,1543931460,72,2,1543931520,2,0,1544009985,1544010024,0,'0000-00-00 00:00:00'),(6518,61,55,0,1,1543931520,72,2,1543931520,1,0,1544009985,1544010024,0,'0000-00-00 00:00:00'),(6519,52,165,80,100,1544010060,9,2,1544405880,29,0,1544010274,1544406269,0,'0000-00-00 00:00:00'),(6520,59,164,80,96,1544013960,9,2,1544155500,5,0,1544406261,1544406269,0,'0000-00-00 00:00:00'),(6521,61,116,0,1,1544019960,72,2,1544194020,59,0,1544406261,1544406269,0,'0000-00-00 00:00:00'),(6522,61,83,0,12,1544019960,72,2,1544020020,2,0,1544406261,1544406269,0,'0000-00-00 00:00:00'),(6523,61,55,0,1,1544020020,72,2,1544020020,1,0,1544406261,1544406269,0,'0000-00-00 00:00:00'),(6524,52,235,0,1,1544060820,72,2,1544191740,4,0,1544406261,1544406269,0,'0000-00-00 00:00:00'),(6525,52,86,0,16257,1544104380,72,2,1544104440,2,0,1544406261,1544406269,0,'0000-00-00 00:00:00'),(6526,58,86,0,2687,1544106060,72,2,1544406120,8,0,1544406261,1544406269,0,'0000-00-00 00:00:00'),(6527,52,103,0,1,1544137860,72,2,1544137860,1,0,1544406261,1544406269,0,'0000-00-00 00:00:00'),(6528,52,234,0,1,1544137860,72,2,1544137860,1,0,1544406261,1544406269,0,'0000-00-00 00:00:00'),(6529,59,260,0,1280,1544190480,72,3,1544194020,60,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6530,59,252,0,2,1544191860,72,3,1544493300,3,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6531,52,116,0,2,1544405780,72,3,1544619960,7,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6532,58,79,0,1,1544406180,72,2,1544406180,1,0,1544406261,1544406269,0,'0000-00-00 00:00:00'),(6533,59,86,0,1,1544412960,72,3,1544599920,5,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6534,52,83,0,10,1544426880,72,0,1544531160,3,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6535,59,83,0,1,1544426880,72,0,1544619780,5,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6536,59,116,0,1,1544426880,72,3,1544619780,4,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6537,61,83,0,20,1544426880,72,0,1544619960,5,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6538,61,116,0,22,1544426880,72,3,1544619960,10,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6539,58,83,0,1,1544426880,72,0,1544619600,5,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6540,58,116,0,10,1544426880,72,3,1544619540,4,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6541,51,83,0,26,1544426880,72,0,1544619960,5,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6542,51,116,0,24,1544426880,72,3,1544619960,5,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6543,60,83,0,10,1544426880,72,0,1544531160,3,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6544,60,116,0,1,1544426880,72,3,1544619780,4,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6545,58,86,0,746,1544433060,72,3,1544613840,3009,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6546,52,186,0,2,1544446800,72,0,1544448780,34,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6547,59,79,0,1,1544448600,72,0,1544493300,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6548,59,103,0,2,1544448660,72,0,1544493300,3,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6549,59,234,0,2,1544448660,72,0,1544493300,3,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6550,59,163,80,90,1544459520,9,0,1544632560,9,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6551,59,164,80,92,1544459520,9,1,1544641440,18,0,1550401355,NULL,0,'0000-00-00 00:00:00'),(6552,52,235,0,1,1544488080,72,0,1544613300,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6554,52,67,1,0,1544530920,10,0,1544531040,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6556,61,219,0,1,1544536380,72,0,1544577420,34,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6558,61,108,0,4,1544577180,72,0,1544577240,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6560,52,222,0,1,1544590620,72,0,1544628180,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6562,58,55,0,2,1544617320,72,0,1544617380,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6564,60,78,0,1,1544619780,72,0,1544619780,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6566,52,78,0,1,1544619780,72,0,1544619780,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6568,59,78,0,2,1544619780,72,0,1544619780,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6570,60,77,0,1,1544619780,72,0,1544619780,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6572,60,55,0,1,1544619780,72,0,1544619840,2,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6574,52,77,0,1,1544619780,72,0,1544619780,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6576,59,77,0,1,1544619780,72,0,1544619780,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6577,46,252,0,3,1548337500,72,3,1549025520,990,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6578,46,108,0,2,1548463500,72,1,1548463500,1,0,1550401355,NULL,0,'0000-00-00 00:00:00'),(6579,46,236,0,1,1548467820,72,3,1559102100,2406,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6586,79,188,0,7199,1548558540,72,1,1548558540,1,0,1550401355,NULL,0,'0000-00-00 00:00:00'),(6587,79,185,0,6388,1548563580,72,1,1548563580,1,0,1550401355,NULL,0,'0000-00-00 00:00:00'),(6588,79,202,0,8017,1548573360,72,1,1548573360,1,0,1550401355,NULL,0,'0000-00-00 00:00:00'),(6589,81,185,0,2345,1548595380,72,1,1548595380,1,0,1550401355,NULL,0,'0000-00-00 00:00:00'),(6590,81,186,0,1074,1548595560,72,1,1548595560,1,0,1550401355,NULL,0,'0000-00-00 00:00:00'),(6591,82,164,1,2,1548848520,9,2,1549030020,215,0,1549026450,1549030055,0,'0000-00-00 00:00:00'),(6593,82,164,1,2,1549030080,9,2,1549108260,32,0,1549031115,1549108319,0,'0000-00-00 00:00:00'),(6594,82,166,1,1,1549030140,9,3,1549162200,387,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6596,82,183,2,19,1549030800,9,2,1549108260,20,0,1549031115,1549108319,0,'0000-00-00 00:00:00'),(6597,82,163,2,3,1549031040,9,2,1549108020,11,0,1549031115,1549108319,0,'0000-00-00 00:00:00'),(6598,82,163,2,2,1549108320,9,1,1549161720,65,0,1549108341,NULL,0,'0000-00-00 00:00:00'),(6599,82,164,1,2,1549108320,9,1,1549162200,356,0,1549108341,NULL,0,'0000-00-00 00:00:00'),(6600,82,183,2,19,1549108320,9,1,1549162200,356,0,1549108341,NULL,0,'0000-00-00 00:00:00'),(6602,46,180,0,3,1549108380,72,1,1549108380,1,0,1550401355,NULL,0,'0000-00-00 00:00:00'),(6603,46,86,0,716,1549238400,72,3,1555469880,253,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6606,46,234,0,2,1550971800,72,2,1558410060,1090,0,1562116802,1562116809,0,'0000-00-00 00:00:00'),(6609,85,188,0,12,1552465020,72,0,1552644480,1350,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6610,46,188,0,1,1552465080,72,0,1553088840,1350,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6611,46,80,0,26,1552744260,72,0,1552822620,28,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6612,46,78,0,1,1552904700,72,0,1552904700,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6613,46,222,0,5,1553081940,72,2,1558312380,25,0,1562116802,1562116809,0,'0000-00-00 00:00:00'),(6614,46,103,0,51,1553404680,72,0,1554212820,726,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6615,46,104,0,41,1553605140,72,0,1554212820,668,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6616,46,235,0,1,1553995620,72,0,1556437920,53,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6617,46,83,0,5,1554553680,72,0,1554553680,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6618,46,116,0,4,1554553680,72,3,1554553680,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6620,46,55,0,1,1555307400,72,0,1556417880,3,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6621,46,71,0,1,1555999920,72,2,1557466620,17,0,1562116802,1562116809,0,'0000-00-00 00:00:00'),(6622,46,163,2,66,1556264160,9,2,1558486800,818,0,1562116802,1562116809,0,'0000-00-00 00:00:00'),(6623,46,94,20,10,1556590200,10,0,1556606580,151,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6624,22,82,30,50,1556590200,17,0,1556606280,140,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6625,22,67,1000,698,1556602426,18,0,1556604840,6,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6626,22,67,1000,2581,1556607600,17,0,1556609100,22,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6627,46,93,2,11,1556608680,9,2,1556609100,8,0,1562116802,1562116809,0,'0000-00-00 00:00:00'),(6628,46,236,0,1,1559549340,72,3,1559728200,11,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6629,46,116,0,3,1559696100,72,3,1559696220,3,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6630,46,236,0,1,1559914020,72,3,1559914020,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6631,46,236,0,1,1560130260,72,3,1560323580,17,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6632,46,163,60,95,1560214380,9,2,1560214380,1,0,1562116802,1562116809,0,'0000-00-00 00:00:00'),(6633,46,236,0,1,1560412020,72,3,1560497100,10,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6634,46,163,60,62,1560482820,9,2,1560482820,1,0,1562116802,1562116809,0,'0000-00-00 00:00:00'),(6635,46,189,70,100,1560502560,9,2,1560503580,18,0,1562116802,1562116809,0,'0000-00-00 00:00:00'),(6636,46,188,0,16,1560502560,72,2,1560503580,18,0,1562116802,1562116809,0,'0000-00-00 00:00:00'),(6637,46,189,70,100,1560682440,9,2,1560682680,5,0,1562116802,1562116809,0,'0000-00-00 00:00:00'),(6638,46,188,0,14,1560682440,72,2,1560682680,5,0,1562116802,1562116809,0,'0000-00-00 00:00:00'),(6639,46,189,70,100,1560819300,9,2,1560939360,600,0,1562116802,1562116809,0,'0000-00-00 00:00:00'),(6640,46,188,0,16,1560819300,72,2,1560939360,600,0,1562116802,1562116809,0,'0000-00-00 00:00:00'),(6641,46,163,60,62,1560819300,9,2,1560842280,2,0,1562116802,1562116809,0,'0000-00-00 00:00:00'),(6642,46,236,0,1,1560820620,72,3,1560937740,11,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6643,22,67,50000,882,1560928080,18,2,1560939360,189,0,1562116802,1562116809,0,'0000-00-00 00:00:00'),(6644,22,82,10000,46,1560931140,18,2,1560939360,138,0,1562116802,1562116809,0,'0000-00-00 00:00:00'),(6645,22,82,50,56,1560931620,20,2,1560931860,3,0,1562116802,1562116809,0,'0000-00-00 00:00:00'),(6646,23,93,100,10,1560933780,18,2,1560937680,20,0,1562116802,1562116809,0,'0000-00-00 00:00:00'),(6647,23,67,80,1074,1560933840,17,2,1560934440,11,0,1562116802,1562116809,0,'0000-00-00 00:00:00'),(6648,23,94,50,10,1560934260,18,2,1560939360,67,0,1562116802,1562116809,0,'0000-00-00 00:00:00'),(6653,114,236,0,101,1567441920,72,3,1567441920,1,0,NULL,NULL,0,'0000-00-00 00:00:00'),(6654,114,260,0,48,1567500840,72,3,1567503660,48,0,NULL,NULL,0,'2019-09-03 09:41:00'),(6655,114,236,0,101,1567546320,72,3,1567580220,4,0,NULL,NULL,0,'2019-09-04 06:57:00');
 /*!40000 ALTER TABLE `mt_warn_info` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
@@ -920,12 +917,12 @@ DROP TABLE IF EXISTS `test_key_list`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `test_key_list` (
-  `config_id` int(10) unsigned NOT NULL DEFAULT '0',
+  `config_id` int(10) unsigned NOT NULL DEFAULT 0,
   `test_key` varchar(128) NOT NULL,
-  `test_key_type` int(10) unsigned DEFAULT '0',
-  `status` tinyint(4) DEFAULT '0',
+  `test_key_type` int(10) unsigned DEFAULT 0,
+  `status` tinyint(4) DEFAULT 0,
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `update_time` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`),
   KEY `config_id` (`config_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=40 DEFAULT CHARSET=utf8;
@@ -937,7 +934,6 @@ CREATE TABLE `test_key_list` (
 
 LOCK TABLES `test_key_list` WRITE;
 /*!40000 ALTER TABLE `test_key_list` DISABLE KEYS */;
-INSERT INTO `test_key_list` VALUES (168,'ddddddddddddgggg',22,0,15,'0000-00-00 00:00:00'),(168,'sdds',250,0,26,'0000-00-00 00:00:00'),(63,'351',103,0,38,'0000-00-00 00:00:00'),(52,'3535',33,0,39,'0000-00-00 00:00:00');
 /*!40000 ALTER TABLE `test_key_list` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
@@ -980,4 +976,4 @@ DELIMITER ;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2019-09-05 17:07:12
+-- Dump completed on 2019-11-17 19:45:42
