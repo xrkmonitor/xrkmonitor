@@ -1,10 +1,10 @@
 #!/bin/bash
 
 PATH=/bin:/sbin:/usr/bin/:/usr/sbin:/usr/local/bin:/usr/local/sbin:/usr/local/mysql/bin
-APACHE_DOCUMENT_ROOT=/srv/www/htdocs22
+APACHE_DOCUMENT_ROOT=/srv/www/htdocs
 APACHE_CGI_PATH=/srv/www/cgi-bin
-XRKMONITOR_HTML_PATH=xrkmonitor22
-XRKMONITOR_CGI_LOG_PATH=/var/log/mtreport22
+XRKMONITOR_HTML_PATH=xrkmonitor
+XRKMONITOR_CGI_LOG_PATH=/var/log/mtreport
 MYSQL_USER=
 MYSQL_PASS=
 

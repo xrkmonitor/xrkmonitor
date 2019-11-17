@@ -1,6 +1,5 @@
 #!/bin/bash
 PATH=/bin:/sbin:/usr/bin/:/usr/sbin:/usr/local/bin:/usr/local/sbin:/usr/local/mysql/bin
-
 #
 #
 # 字符云监控系统 -- 免费/开源的国产监控系统
@@ -13,33 +12,62 @@ PATH=/bin:/sbin:/usr/bin/:/usr/sbin:/usr/local/bin:/usr/local/sbin:/usr/local/my
 # 如果您的服务器是云服务器, 请通过以下配置指定外网 IP
 SERVER_OUT_IP=
 
-# apache 网站根目录
-APACHE_DOCUMENT_ROOT=/srv/www/htdocs22
+# mysql 数据库操作账号,默认使用匿名账号,如您已禁止匿名账号请在此配置可用操作账号
+MYSQL_USER=
+MYSQL_PASS=
 
-# apache cgi 绝对路径, 字符云监控 cgi 将安装在该目录下
+
+# apache 网站默认根目录, 不存在时会自动探测
+APACHE_DOCUMENT_ROOT=/srv/www/htdocs
+
+# apache cgi 绝对路径, 字符云监控 cgi 将安装在该目录下, 不存在时会自动探测
 APACHE_CGI_PATH=/srv/www/cgi-bin
 
 # apache cgi 访问路径, apache 中使用: ScriptAlias 指定, 注意末尾带上路径符: / 
 APACHE_CGI_ACCESS_PATH=/cgi-bin/
 
 # 字符云监控 html/js 文件安装路径, 相对网站根目录, 绝对路径为: $APACHE_DOCUMENT_ROOT/$XRKMONITOR_HTML_PATH
-XRKMONITOR_HTML_PATH=xrkmonitor22
+XRKMONITOR_HTML_PATH=xrkmonitor
 
 # 字符云监控 cgi 本地日志文件路径, 用于调试, 正常运行时您可以关闭本地日志使用日志中心
-XRKMONITOR_CGI_LOG_PATH=/var/log/mtreport22
+XRKMONITOR_CGI_LOG_PATH=/var/log/mtreport
 
 # 指定本机IP 网卡名, 用于获取本机IP, 不指定时自动获取第一个IP 作为本机IP
 LOCAL_IP_ETHNAME=
 
-# mysql 数据库操作账号,默认使用匿名账号,如您已禁止匿名账号请在此配置可用操作账号
-MYSQL_USER=
-MYSQL_PASS=
-
 # ---------------- 字符云监控系统 安装环境配置 ----------------------- end -
-#
-#
-#
-#
+
+
+
+function yn_continue()
+{
+	read -p "$1" op
+	while [ $op != "Y" -a $op != "y" -a $op != "N" -a $op != "n" ]; do
+		read -p "请输入 (y/n): " op
+	done
+	if [ "$op" != "y" -a "$op" != "Y" ];then
+		echo "no" 
+	else
+		echo "yes"
+	fi
+}
+
+if [ -z "$SERVER_OUT_IP" ]; then
+	echo "外网IP未指定, 您可通过脚本中的配置: SERVER_OUT_IP 指定"
+	isyes=$(yn_continue "如果您需要在外网访问您的服务器, 外网IP必须指定, 是否继续安装(y/n)?")
+	if [ "$isyes" != "yes" ];then
+		exit 0
+	fi
+fi
+
+if [ -z "$MYSQL_USER" ]; then
+	echo ""
+	echo "数据库操作账号未指定, 您可通过脚本中的配置: MYSQL_USER, MYSQL_PASS 指定"
+	isyes=$(yn_continue "将使用本地匿名账号操作 mysql 数据库, 是否继续安装(y/n)?")
+	if [ "$isyes" != "yes" ];then
+		exit 0
+	fi
+fi
 
 STEP_TOTAL=8
 CUR_STEP=1
@@ -65,18 +93,6 @@ else
 	echo "开始自动安装: 字符云监控系统, 共 $STEP_TOTAL 步"
 fi
 
-function yn_continue()
-{
-	read -p "$1" op
-	while [ $op != "Y" -a $op != "y" -a $op != "N" -a $op != "n" ]; do
-		read -p "请输入 (y/n): " op
-	done
-	if [ "$op" != "y" -a "$op" != "Y" ];then
-		echo "no" 
-	else
-		echo "yes"
-	fi
-}
 
 function failed_my_exit()
 {
@@ -143,7 +159,7 @@ function auto_detect_apache_cgi_path()
 }
 
 echo ""
-echo "($CUR_STEP/$STEP_TOTAL) 安装环境检测"
+echo "STEP: ($CUR_STEP/$STEP_TOTAL) 安装环境检测"
 if [ ! -d "$APACHE_DOCUMENT_ROOT" ]; then
 	echo "apache 网站根目录: $APACHE_DOCUMENT_ROOT 不存在, 尝试自动探测"
 	auto_detect_apache_doc_root
@@ -195,7 +211,7 @@ CUR_STEP=`expr 1 + $CUR_STEP`
 
 
 echo ""
-echo "($CUR_STEP/$STEP_TOTAL) 下载并解压库文件: xrkmonitor_lib.tar.gz"
+echo "STEP: ($CUR_STEP/$STEP_TOTAL) 下载并解压库文件: xrkmonitor_lib.tar.gz"
 if [ ! -f xrkmonitor_lib.tar.gz ]; then
 	wget ${XRKMONITOR_HTTP}/xrkmonitor_lib.tar.gz 
 else
@@ -219,7 +235,7 @@ CUR_STEP=`expr 1 + $CUR_STEP`
 
 
 echo ""
-echo "($CUR_STEP/$STEP_TOTAL) 下载运行测试文件: slog_tool(slog_run_test)"
+echo "STEP: ($CUR_STEP/$STEP_TOTAL) 下载运行测试文件: slog_tool(slog_run_test)"
 if [ ! -f slog_run_test ]; then
 	wget ${XRKMONITOR_HTTP}/slog_tool
 	chmod +x slog_tool
@@ -234,11 +250,23 @@ if [ $? -ne 0 ]; then
 	failed_my_exit $LINENO
 fi
 XRKMONITOR_LIBS="libmysqlwrapped|libmtreport_api_open|libSockets|libmyproto|libmtreport_api"
-THIRD_LIBS=`ldd slog_run_test |grep xrkmonitor_lib|awk '{print $1}'|awk -F "." -v mylib="$XRKMONITOR_LIBS" '{if(!match(mylib, $1)) print $1; }'`
+THIRD_LIBS=`ldd slog_run_test |grep xrkmonitor_lib|awk '{print $1}'|awk -F "." -v mylib="$XRKMONITOR_LIBS" '{if(!match(mylib, $1)) print $0; }'`
 if [ ! -z "$THIRD_LIBS" ]; then
+	NEW_THIRD_LIBS=''
+	for third_lib in $THIRD_LIBS
+	do
+		ldconfig -p |grep $third_lib |grep -v xrkmonitor_lib  > /dev/null 2>&1
+		if [ $? -eq 0 ]; then
+			third_lib_base=`echo $third_lib|awk -F "." '{print $1}'`
+			rm xrkmonitor_lib/$third_lib_base*
+		else
+			NEW_THIRD_LIBS="$NEW_THIRD_LIBS $third_lib"
+		fi
+	done
+
 	echo ""
-	echo "您的系统缺少以下第三方库:" 
-	echo "$THIRD_LIBS"
+	echo "在您的系统中未检测到以下第三方库:" 
+	echo "$NEW_THIRD_LIBS"
 	usexrk=$(yn_continue "我们已提供这些库且可使用但不保证跟您的系统完全兼容, 是否继续(y/n)?")
 	if [ "$usexrk" != "yes" ]; then
 		echo "您可以在安装这些依赖库后继续执行字符云监控系统安装, 感谢您的使用."
@@ -249,7 +277,7 @@ CUR_STEP=`expr 1 + $CUR_STEP`
 
 
 echo ""
-echo "($CUR_STEP/$STEP_TOTAL) 下载并解压安装包文件: slog_all.tar.gz, 请您耐心等待..."
+echo "STEP: ($CUR_STEP/$STEP_TOTAL) 下载并解压安装包文件: slog_all.tar.gz, 请您耐心等待..."
 if [ ! -f slog_all.tar.gz ]; then
 	wget ${XRKMONITOR_HTTP}/slog_all.tar.gz
 else
@@ -260,12 +288,13 @@ tar -zxf slog_all.tar.gz
 check_file db/mtreport_db.sql $LINENO 
 CUR_STEP=`expr 1 + $CUR_STEP`
 
+
 echo ""
 if [ -z "$MYSQL_USER" -o -z "$MYSQL_PASS" ]; then
-	echo "($CUR_STEP/$STEP_TOTAL) 开始尝试使用匿名账号初始化 mysql 数据库"
+	echo "STEP: ($CUR_STEP/$STEP_TOTAL) 开始尝试使用匿名账号初始化 mysql 数据库"
 	MYSQL_CONTEXT="mysql -B "
 else 
-	echo "($CUR_STEP/$STEP_TOTAL) 开始使用指定账号($MYSQL_USER|$MYSQL_PASS)初始化 mysql 数据库"
+	echo "STEP: ($CUR_STEP/$STEP_TOTAL) 开始使用指定账号($MYSQL_USER|$MYSQL_PASS)初始化 mysql 数据库"
 	MYSQL_CONTEXT="mysql -B -u$MYSQL_USER -p$MYSQL_PASS"
 fi
 ${MYSQL_CONTEXT} < db/mtreport_db.sql
@@ -285,23 +314,31 @@ if [ $? -ne 0 ]; then
 	failed_my_exit $LINENO 
 fi
 
+echo "数据库 mtreport_db 重新初始化"
 XRK_MYSQL_CONTEXT="mysql -B -umtreport -pmtreport875 mtreport_db "
-if [ -z "$SERVER_OUT_IP" ]; then
-	echo "update mt_server set ip='$LOCAL_IP'" | $XRK_MYSQL_CONTEXT > /dev/null 2>&1
+echo "update mt_server set ip = '$LOCAL_IP'" | $XRK_MYSQL_CONTEXT > /dev/null 2>&1
+LOCAL_IP_DEC=`./slog_run_test show ips2d $LOCAL_IP |awk '{if(NF==3) print $1}'`
+if [ ! -z "$SERVER_OUT_IP" ]; then
+	LOCAL_IP_DEC_OUT=`./slog_run_test show ips2d $SERVER_OUT_IP|awk '{if(NF==3) print $1}'`
+	echo "update mt_server set ip = '$SERVER_OUT_IP' where type=1" | $XRK_MYSQL_CONTEXT > /dev/null 2>&1
+fi
+if [ "$LOCAL_IP_DEC" != "$LOCAL_IP_DEC_OUT" -a ! -z "$LOCAL_IP_DEC_OUT" ]; then
+	echo "insert into mt_machine set name='$LOCAL_IP',ip1=$LOCAL_IP_DEC,ip2=$LOCAL_IP_DEC_OUT,create_time=now(),mod_time=now(),machine_desc='在线安装脚本自动添加'" | $XRK_MYSQL_CONTEXT > /dev/null 2>&1
 else
-	
+	echo "insert into mt_machine set name='$LOCAL_IP',ip1=$LOCAL_IP_DEC,create_time=now(),mod_time=now(),machine_desc='在线安装脚本自动添加'" | $XRK_MYSQL_CONTEXT > /dev/null 2>&1
 fi
 
+echo "select id from mt_machine where ip1=$LOCAL_IP_DEC" | $XRK_MYSQL_CONTEXT > /dev/null 2>&1
 if [ $? -ne 0 ]; then
-	echo "初始化字符云监控系统服务器IP失败, mysql update 数据库失败"
+	echo "初始化字符云监控数据库失败"
 	failed_my_exit $LINENO
 fi
 CUR_STEP=`expr 1 + $CUR_STEP`
 
-echo ""
-echo "($CUR_STEP/$STEP_TOTAL) 修改字符云监控服务相关配置"
-sed -i "/^SERVER_MASTER/cSERVER_MASTER $LOCAL_IP" slog_mtreport_client/slog_mtreport_client.conf
 
+echo ""
+echo "STEP: ($CUR_STEP/$STEP_TOTAL) 修改字符云监控服务相关配置"
+sed -i "/^SERVER_MASTER/cSERVER_MASTER $LOCAL_IP" slog_mtreport_client/slog_mtreport_client.conf
 CUR_CGI_LOG_PATH=`cat cgi_fcgi/slog_flogin.conf |grep SLOG_LOG_FILE|awk '{print $2}'|xargs dirname`
 if [ "$CUR_CGI_LOG_PATH" != "$XRKMONITOR_CGI_LOG_PATH" ]; then
 	echo "更新 CGI 文件日志文件路径"
@@ -324,8 +361,9 @@ if [ "$APACHE_CGI_ACCESS_PATH" != "/cgi-bin/" ]; then
 fi
 CUR_STEP=`expr 1 + $CUR_STEP`
 
+
 echo ""
-echo "($CUR_STEP/$STEP_TOTAL) 开始安装字符云监控 web 控制台"
+echo "STEP: ($CUR_STEP/$STEP_TOTAL) 开始安装字符云监控 web 控制台"
 cp html/* $APACHE_DOCUMENT_ROOT/$XRKMONITOR_HTML_PATH -fr
 check_file $APACHE_DOCUMENT_ROOT/$XRKMONITOR_HTML_PATH/dmt_login.html $LINENO 
 cp $APACHE_DOCUMENT_ROOT/$XRKMONITOR_HTML_PATH/index.html $APACHE_DOCUMENT_ROOT
@@ -334,8 +372,9 @@ cp cgi_fcgi/* $APACHE_CGI_PATH -fr
 check_file $APACHE_CGI_PATH/mt_slog_monitor $LINENO 
 CUR_STEP=`expr 1 + $CUR_STEP`
 
+
 echo ""
-echo "($CUR_STEP/$STEP_TOTAL) 开始启动字符云监控后台服务, 请您耐心等待..."
+echo "STEP: ($CUR_STEP/$STEP_TOTAL) 开始启动字符云监控后台服务, 请您耐心等待..."
 cd tools_sh
 ls -l /tmp/pid*slog*pid >/dev/null 2>&1
 if [ $? -eq 0 ]; then
@@ -365,16 +404,18 @@ echo ""
 
 if [ -z "$SERVER_OUT_IP" ]; then
 	echo "恭喜您, 在线安装完成, 现在您可以在浏览器中访问控制台了, 访问网址: http://$LOCAL_IP"
+	echo "约 1 分钟左右, 您可以在字符云监控系统 web 控制台上查看监控系统本身的数据上报"
 	echo " ---------------------------------------------------------------------------------"
 	echo "特别提示: 如果您的服务器是云服务器, 且不能通过网址: http://$LOCAL_IP 访问web控制台"
-	echo "请使用: xrkmonitor_add_out_ip.sh 脚本将外网IP添加到字符云监控系统配置中"
-	echo "使用方式: ./xrkmonitor_add_out_ip.sh ip , ip 为您云服务器的外网 ip "
+	echo "您可以通过本脚本中的配置: SERVER_OUT_IP 指定后, 再次执行本脚本"
 	echo ""
 else
 	echo "恭喜您, 在线安装完成, 现在您可以在浏览器中访问控制台了, 访问网址: http://$SERVER_OUT_IP"
+	echo "约 1 分钟左右, 您可以在字符云监控系统 web 控制台上查看监控系统本身的数据上报"
 fi
 
 cp online_install.sh online_install.sh_bk
 update_config online_install.sh_bk
 mv online_install.sh_bk online_install.sh
+
 
