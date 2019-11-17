@@ -11,7 +11,7 @@ PATH=/bin:/sbin:/usr/bin/:/usr/sbin:/usr/local/bin:/usr/local/sbin:/usr/local/my
 # ---------------- 字符云监控系统 安装环境配置 ----------------------- start -
 
 # apache 网站根目录
-APACHE_DOCUMENT_ROOT=/srv/www/htdocs
+APACHE_DOCUMENT_ROOT=/srv/www/htdocs22
 
 # apache cgi 绝对路径
 APACHE_CGI_PATH=/srv/www/cgi-bin/
@@ -20,7 +20,7 @@ APACHE_CGI_PATH=/srv/www/cgi-bin/
 APACHE_CGI_ACCESS_PATH=/cgi-bin/
 
 # 字符云监控 html/js 文件安装路径, 相对网站根目录, 绝对路径为: $APACHE_DOCUMENT_ROOT/$XRKMONITOR_HTML_PATH
-XRKMONITOR_HTML_PATH=xrkmonitor
+XRKMONITOR_HTML_PATH=xrkmonitor22
 
 # 字符云监控 cgi 本地日志文件路径, 用于调试, 正常运行时您可以关闭本地日志使用日志中心
 XRKMONITOR_CGI_LOG_PATH=/var/log/mtreport22
@@ -37,10 +37,8 @@ MYSQL_PASS=
 #
 #
 #
-#
-#
 
-STEP_TOTAL=5
+STEP_TOTAL=8
 CUR_STEP=1
 XRKMONITOR_HTTP=http://open.xrkmonitor.com/xrkmonitor_down
 cur_path=`pwd`
@@ -64,10 +62,27 @@ else
 	echo "开始自动安装: 字符云监控系统, 共 $STEP_TOTAL 步"
 fi
 
+function yn_continue()
+{
+	read -p "$1" op
+	while [ $op != "Y" -a $op != "y" -a $op != "N" -a $op != "n" ]; do
+		read -p "请输入 (y/n): " op
+	done
+	if [ "$op" != "y" -a "$op" != "Y" ];then
+		echo "no" 
+	else
+		echo "yes"
+	fi
+}
+
 function failed_my_exit()
 {
 	echo ""
 	echo "在线安装字符云监控失败,错误码:$1, 您可以下载源码编译安装或者加入Q群(699014295)获得支持."
+	isunin=$(yn_continue "是否清理安装记录(y/n)?")
+	if [ $isunin == "yes" ]; then
+		./uninstall_xrkmonitor.sh
+	fi
 	exit $1
 }
 
@@ -85,7 +100,7 @@ function yn_exit()
 	while [ $op != "Y" -a $op != "y" -a $op != "N" -a $op != "n" ]; do
 		read -p "请输入 (y/n): " op
 	done
-	if [ $op != "y" -a $op != "Y" ];then
+	if [ "$op" != "y" -a "$op" != "Y" ];then
 		failed_my_exit $2
 	fi
 }
@@ -200,10 +215,11 @@ fi
 CUR_STEP=`expr 1 + $CUR_STEP`
 
 echo ""
-echo "($CUR_STEP/$STEP_TOTAL) 下载运行测试文件: slog_run_test"
+echo "($CUR_STEP/$STEP_TOTAL) 下载运行测试文件: slog_tool(slog_run_test)"
 if [ ! -f slog_run_test ]; then
-	wget ${XRKMONITOR_HTTP}/slog_run_test
-	chmod +x slog_run_test 
+	wget ${XRKMONITOR_HTTP}/slog_tool
+	chmod +x slog_tool
+	mv slog_tool slog_run_test
 	check_file slog_run_test $LINENO 
 else
 	echo "slog_run_test 文件已存在"
@@ -216,14 +232,14 @@ fi
 CUR_STEP=`expr 1 + $CUR_STEP`
 
 echo ""
-echo "($CUR_STEP/$STEP_TOTAL) 下载并解压安装包文件: xrkmonitor.tar.gz, 请您耐心等待..."
-if [ ! -f xrkmonitor.tar.gz ]; then
-	wget ${XRKMONITOR_HTTP}/xrkmonitor.tar.gz
+echo "($CUR_STEP/$STEP_TOTAL) 下载并解压安装包文件: slog_all.tar.gz, 请您耐心等待..."
+if [ ! -f slog_all.tar.gz ]; then
+	wget ${XRKMONITOR_HTTP}/slog_all.tar.gz
 else
-	echo "xrkmonitor.tar.gz 文件已存在"
+	echo "slog_all.tar.gz 文件已存在"
 fi
-check_file xrkmonitor.tar.gz $LINENO 
-tar -zxf xrkmonitor.tar.gz 
+check_file slog_all.tar.gz $LINENO 
+tar -zxf slog_all.tar.gz 
 check_file db/mtreport_db.sql $LINENO 
 CUR_STEP=`expr 1 + $CUR_STEP`
 
@@ -265,15 +281,16 @@ echo "SERVER_MASTER $LOCAL_IP" >> slog_mtreport_client/slog_mtreport_client.conf
 
 CUR_CGI_LOG_PATH=`cat cgi_fcgi/slog_flogin.conf |grep SLOG_LOG_FILE|awk '{print $2}'|xargs dirname`
 if [ "$CUR_CGI_LOG_PATH" != "$XRKMONITOR_CGI_LOG_PATH" ]; then
-	echo "更新 CGI 配置文件日志文件路径"
+	echo "更新 CGI 文件日志文件路径"
 	OLD_CGI_LOG_PATH=${CUR_CGI_LOG_PATH//\//\\\/}
 	NEW_CGI_LOG_PATH=${XRKMONITOR_CGI_LOG_PATH//\//\\\/}
 	sed -i "s/${OLD_CGI_LOG_PATH}/${NEW_CGI_LOG_PATH}/g" `ls cgi_fcgi/*.conf -1`
 fi
-if [ "$XRKMONITOR_HTML_PATH" != "xrkmonitor" ]; then
+CUR_CS_PATH=`cat cgi_fcgi/slog_flogin.conf |grep CS_PATH|awk '{print $2}'`
+if [ "$CUR_CS_PATH" != "$APACHE_DOCUMENT_ROOT/$XRKMONITOR_HTML_PATH" ]; then
 	sXrkmonitorHtmlPath=${XRKMONITOR_HTML_PATH//\//\\\/}
-	sed -i "s/\/xrkmonitor/$sXrkmonitorHtmlPath/g" `ls cgi_fcgi/*.conf -1`
-	sed -i "s/\/xrkmonitor/$sXrkmonitorHtmlPath/g" html/index.html
+	sed -i "s/\/xrkmonitor/\/$sXrkmonitorHtmlPath/g" `ls cgi_fcgi/*.conf -1`
+	sed -i "s/\/xrkmonitor/\/$sXrkmonitorHtmlPath/g" html/index.html
 fi
 if [ "$APACHE_CGI_ACCESS_PATH" != "/cgi-bin/" ]; then
 	sCgiAccessPath=${APACHE_CGI_ACCESS_PATH//\//\\\/}
@@ -311,6 +328,7 @@ check_file /tmp/pid.slog_monitor_server.pid $LINENO
 check_file /tmp/pid.slog_mtreport_server.pid $LINENO 
 check_file /tmp/pid.slog_server.pid $LINENO 
 check_file /tmp/pid.slog_write.pid $LINENO 
+
 ./add_crontab.sh > /dev/null 2>&1
 if [ $? -ne 0 ]; then
 	echo "安装字符云监控后台服务自动拉起脚本:add_crontab.sh 到 crontab 失败,请您手动安装"

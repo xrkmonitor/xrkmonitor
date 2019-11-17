@@ -1,8 +1,8 @@
 #!/bin/bash
 
 PATH=/bin:/sbin:/usr/bin/:/usr/sbin:/usr/local/bin:/usr/local/sbin:/usr/local/mysql/bin
-APACHE_DOCUMENT_ROOT=/srv/www/htdocs
-XRKMONITOR_HTML_PATH=monitor
+APACHE_DOCUMENT_ROOT=/srv/www/htdocs22
+XRKMONITOR_HTML_PATH=xrkmonitor22
 APACHE_CGI_PATH=/srv/www/cgi-bin/
 XRKMONITOR_CGI_LOG_PATH=/var/log/mtreport22
 MYSQL_USER=
@@ -17,7 +17,7 @@ if [ $? -eq 0 -a -f tools_sh/stop_all.sh -a -f tools_sh/rm_zero.sh ]; then
 fi
 
 if [ -f $APACHE_DOCUMENT_ROOT/index.html ]; then
-	cat $APACHE_DOCUMENT_ROOT/index.html |grep xrkmonitor > /dev/null 2>&1
+	cat $APACHE_DOCUMENT_ROOT/index.html |grep "$XRKMONITOR_HTML_PATH" > /dev/null 2>&1
 	if [ $? -eq 0 ]; then
 		echo "删除文件: $APACHE_DOCUMENT_ROOT/index.html"
 		rm $APACHE_DOCUMENT_ROOT/index.html
@@ -52,7 +52,6 @@ fi
 [ -d slog_tool ] && (echo "删除目录: slog_tool"; rm -fr slog_tool)
 [ -d slog_write ] && (echo "删除目录: slog_write"; rm -fr slog_write)
 [ -d tools_sh ] && (echo "删除目录: tools_sh"; rm -fr tools_sh)
-[ -d xrkmonitor.tar.gz ] && (echo "删除目录: xrkmonitor.tar.gz"; rm -fr xrkmonitor.tar.gz)
 
 if [ -f xrkmonitor_lib.tar.gz ]; then
 	echo "删除文件: xrkmonitor_lib.tar.gz"
@@ -70,9 +69,9 @@ if [ -f slog_run_test ]; then
 	rm slog_run_test
 fi
 
-if [ -f xrkmonitor.tar.gz ]; then
-	echo "删除安装包文件: xrkmonitor.tar.gz"
-	rm xrkmonitor.tar.gz
+if [ -f slog_all.tar.gz ]; then
+	echo "删除安装包文件: slog_all.tar.gz"
+	rm slog_all.tar.gz
 fi
 
 echo ""
@@ -88,7 +87,7 @@ if [ $? -eq 0 ]; then
 	echo "drop database mtreport_db" | ${MYSQL_CONTEXT}
 	echo "drop database attr_db" | ${MYSQL_CONTEXT}
 	echo "删除默认 mysql 账号 mtreport"
-	echo "drop user mtreport@\'%\'" | ${MYSQL_CONTEXT}
+	echo "drop user mtreport@localhost" | ${MYSQL_CONTEXT}
 fi
 
 echo "已为您清理干净字符云监控系统安装记录, 感谢您的关注."
