@@ -106,6 +106,7 @@ ps auxww >> $TMPFILE
 ipcs >> $TMPFILE
 echo "----------------------------------------------------------------" >> $TMPFILE
 
+restart_process "${MONITORBASEDIR}/slog_memcached" 'slog_memcached' 1
 restart_process "${MONITORBASEDIR}/slog_config" 'slog_config$' 1
 while [ ! -f /tmp/_slog_config_read_ok ]  
 do
@@ -119,7 +120,6 @@ restart_process "${MONITORBASEDIR}/slog_write" 'slog_write$' 5
 restart_process "${MONITORBASEDIR}/slog_monitor_server" 'slog_monitor_server$' 2
 restart_process "${MONITORBASEDIR}/slog_mtreport_server" 'slog_mtreport_server$' 1
 restart_process_ex "${MONITORBASEDIR}/slog_deal_warn" 'slog_deal_warn$' 1 8
-restart_process "${MONITORBASEDIR}/slog_memcached" 'slog_memcached' 1
 restart_process "${MONITORBASEDIR}/slog_mtreport_client" 'slog_mtreport_client$' 2
 
 if [ $ACTION -eq 1 ] ; then
