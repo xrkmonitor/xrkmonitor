@@ -24,14 +24,18 @@ function check_lib_exit()
 check_lib_exit ${MTLIB_LIB_PATH}/libmysqlclient.so.18.0.0
 check_lib_exit /lib64/libssl.so.1.0.0 
 check_lib_exit /lib64/libcrypto.so.1.0.0
+check_lib_exit /lib64/libz.so.1
+check_lib_exit /lib64/libdl.so.2
 
 cp ${MTLIB_LIB_PATH}/libmysqlclient.so.18.0.0 . 
 strip libmysqlclient.so.18.0.0
 ln -s libmysqlclient.so.18.0.0 libmysqlclient.so.18
 ln -s libmysqlclient.so.18 libmysqlclient.so
-
-cp  /lib64/libssl.so.1.0.0 .
+cp /lib64/libssl.so.1.0.0 .
 cp /lib64/libcrypto.so.1.0.0 .
+cp /lib64/libz.so.1 .
+cp /lib64/libdl.so.2 .
+
 
 # xrkmonitor 公共库
 check_lib_exit ${MTLIB_LIB_PATH}/libmysqlwrapped-1.1.0.so
