@@ -55,7 +55,7 @@ function restart_process()
 	Count=`pgrep -f "${pname}"|wc -l`
 	if [ $Count -eq $pnum ] ; then return ; fi
 
-	cd ${pdir}; ./stop.sh ; rm _manual_stop_; ./start.sh > /dev/null; cd - > /dev/null 
+	cd ${pdir}; ./stop.sh ; rm _manual_stop_ > /dev/null 2>&1; ./start.sh > /dev/null; cd - > /dev/null 
 	echo "=========== log =========" >> $TMPFILE
 	echo "${pname} restarted, Count is $Count, need $pnum." >> $TMPFILE
 	RESTARTINFO="${RESTARTINFO}; ${pname} restarted, Count is $Count, need $pnum."
