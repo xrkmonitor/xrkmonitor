@@ -326,6 +326,8 @@ static int SaveBindMachine(int view_id)
 	InitParameter(&ppara);
 	AddParameter(&ppara, "view_id", view_id, "DB_CAL");
 	AddParameter(&ppara, "machine_id", machine_id, "DB_CAL");
+	AddParameter(&ppara, "status", (uint32_t)0, "DB_CAL");
+	AddParameter(&ppara, "update_time", uitodate(stConfig.dwCurTime), NULL);
 	std::string strSql;
 	strSql = "replace into mt_view_bmach";
 	JoinParameter_Insert(&strSql, qu.GetMysql(), ppara);
@@ -982,7 +984,8 @@ static int SaveBindAttr(int view_id)
 		pattr_id = strtok_r(pattr_list, ",", &psave);
 		if(pattr_id == NULL)
 			break;
-		sprintf(sSqlBuf, "replace into mt_view_battr set view_id=%d,attr_id=%s", view_id, pattr_id);
+		sprintf(sSqlBuf, "replace into mt_view_battr set view_id=%d,attr_id=%s,status=0,update_time=''%s\'",
+			view_id, pattr_id, uitodate(stConfig.dwCurTime));
 		if(!qu.execute(sSqlBuf))
 		{
 			ERR_LOG("execute sql:%s failed, msg:%s", sSqlBuf, qu.GetError().c_str());
