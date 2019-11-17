@@ -412,6 +412,7 @@ if [ -z "$SERVER_OUT_IP" ]; then
 else
 	echo "恭喜您, 在线安装完成, 现在您可以在浏览器中访问控制台了, 访问网址: http://$SERVER_OUT_IP"
 	echo "约 1 分钟左右, 您可以在字符云监控系统 web 控制台上查看监控系统本身的数据上报"
+	echo ""
 fi
 
 cp online_install.sh online_install.sh_bk
