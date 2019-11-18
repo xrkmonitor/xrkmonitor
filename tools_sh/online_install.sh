@@ -37,6 +37,17 @@ LOCAL_IP_ETHNAME=
 
 # ---------------- 字符云监控系统 安装环境配置 ----------------------- end -
 
+# 监控系统私有的动态链接库
+XRKMONITOR_LIBS="libmysqlwrapped libmtreport_api_open libSockets libmyproto libmtreport_api libcgicomm"
+XRKMONITOR_LIBS_VER=""
+
+# 监控系统生成的第三方库
+SELF_CMP_THIRD_LIBS="libfcgi libneo_cgi libneo_cs libneo_utl libprotobuf"
+SELF_CMP_THIRD_LIBS_VER=""
+
+# 非监控系统编译生成的第三方动态链接
+THIRD_LIBS="libmysqlclient libssl libcrypto libz libdl"
+THIRD_LIBS_VER=""
 
 
 function yn_continue()
@@ -52,9 +63,26 @@ function yn_continue()
 	fi
 }
 
+MYSQL_PROC_COUNT=`ps -elf |grep mysql|wc -l`
+APACHE_PROC_COUNT=`ps -elf |grep apache|wc -l`
+if [ $MYSQL_PROC_COUNT -lt 2 -o $APACHE_PROC_COUNT -lt 2 ]; then
+	promt_msg="未检测到依赖的第三方服务: "
+	if [ $MYSQL_PROC_COUNT -lt 2 ]; then
+		promt_msg="$promt_msg mysql"
+	fi
+	if [ $APACHE_PROC_COUNT -lt 2 ]; then
+		promt_msg="$promt_msg apache"
+	fi
+	promt_msg="$promt_msg, 请确保已安装并运行了这些依赖服务, 是否继续安装(y/n) ?"
+	isyes=$(yn_continue "$promt_msg")
+	if [ "$isyes" != "yes" ];then
+		exit 0
+	fi
+fi
+
 if [ -z "$SERVER_OUT_IP" ]; then
 	echo "外网IP未指定, 您可通过脚本中的配置: SERVER_OUT_IP 指定"
-	isyes=$(yn_continue "如果您需要在外网访问您的服务器, 外网IP必须指定, 是否继续安装(y/n)?")
+	isyes=$(yn_continue "如果您需要在外网访问监控系统web控制台, 外网IP必须指定, 是否继续安装(y/n)?")
 	if [ "$isyes" != "yes" ];then
 		exit 0
 	fi
@@ -63,7 +91,7 @@ fi
 if [ -z "$MYSQL_USER" ]; then
 	echo ""
 	echo "数据库操作账号未指定, 您可通过脚本中的配置: MYSQL_USER, MYSQL_PASS 指定"
-	isyes=$(yn_continue "将使用本地匿名账号操作 mysql 数据库, 是否继续安装(y/n)?")
+	isyes=$(yn_continue "如不指定将使用本地匿名账号操作 mysql 数据库, 是否继续安装(y/n)?")
 	if [ "$isyes" != "yes" ];then
 		exit 0
 	fi
@@ -86,8 +114,9 @@ function update_config()
 update_config uninstall_xrkmonitor.sh
 
 if [ $# -eq 1 -a "$1" == "new" ]; then 
-	rm xrkmonitor_lib.tar.gz
-	rm slog_run_test
+	rm xrkmonitor_lib.tar.gz > /dev/null 2>&1
+	rm slog_all.tar.gz > /dev/null 2>&1
+	rm slog_run_test > /dev/null 2>&1
 	echo "开始全新安装: 字符云监控系统, 共 $STEP_TOTAL 步"
 else
 	echo "开始自动安装: 字符云监控系统, 共 $STEP_TOTAL 步"
@@ -214,43 +243,23 @@ echo ""
 echo "STEP: ($CUR_STEP/$STEP_TOTAL) 下载并解压库文件: xrkmonitor_lib.tar.gz"
 if [ ! -f xrkmonitor_lib.tar.gz ]; then
 	wget ${XRKMONITOR_HTTP}/xrkmonitor_lib.tar.gz 
+	if [ $? -ne 0 ]; then
+		echo "wget ${XRKMONITOR_HTTP}/xrkmonitor_lib.tar.gz 执行失败!"
+		failed_my_exit $LINENO
+	fi
 else
 	echo "xrkmonitor_lib.tar.gz 文件已存在"
 fi
 check_file xrkmonitor_lib.tar.gz $LINENO
 tar -zxf xrkmonitor_lib.tar.gz
+check_file xrkmonitor_lib/slog_tool $LINENO
 check_file xrkmonitor_lib/libmtreport_api-1.1.0.so $LINENO
-if [ ! -f /etc/ld.so.conf ]; then
-	echo "动态链接库配置文件: /etc/ld.so.conf 不存在!"
-	failed_my_exit $LINENO
-else
-	cat /etc/ld.so.conf |grep xrkmonitor_lib > /dev/null 2>&1
-	if [ $? -ne 0 ]; then
-		cp /etc/ld.so.conf /etc/ld.so.conf_xrkmonitor_bk
-		echo ${cur_path}/xrkmonitor_lib >> /etc/ld.so.conf
-		ldconfig
-	fi
-fi
-CUR_STEP=`expr 1 + $CUR_STEP`
 
+echo "运行测试文件: slog_tool(slog_run_test)"
+cp xrkmonitor_lib/slog_tool slog_run_test
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:xrkmonitor_lib
+chmod +x slog_run_test
 
-echo ""
-echo "STEP: ($CUR_STEP/$STEP_TOTAL) 下载运行测试文件: slog_tool(slog_run_test)"
-if [ ! -f slog_run_test ]; then
-	wget ${XRKMONITOR_HTTP}/slog_tool
-	chmod +x slog_tool
-	mv slog_tool slog_run_test
-	check_file slog_run_test $LINENO 
-else
-	echo "slog_run_test 文件已存在"
-fi
-./slog_run_test run_test 
-if [ $? -ne 0 ]; then
-	echo "运行测试文件失败"
-	failed_my_exit $LINENO
-fi
-XRKMONITOR_LIBS="libmysqlwrapped|libmtreport_api_open|libSockets|libmyproto|libmtreport_api"
-THIRD_LIBS=`ldd slog_run_test |grep xrkmonitor_lib|awk '{print $1}'|awk -F "." -v mylib="$XRKMONITOR_LIBS" '{if(!match(mylib, $1)) print $0; }'`
 if [ ! -z "$THIRD_LIBS" ]; then
 	NEW_THIRD_LIBS=''
 	for third_lib in $THIRD_LIBS
@@ -263,7 +272,17 @@ if [ ! -z "$THIRD_LIBS" ]; then
 			NEW_THIRD_LIBS="$NEW_THIRD_LIBS $third_lib"
 		fi
 	done
-
+fi
+./slog_run_test run_test 
+if [ $? -ne 0 ]; then
+	echo "运行测试文件:./slog_run_test run_test 失败"
+	if [ ! -z "$NEW_THIRD_LIBS" ]; then
+		echo "依赖以下第三方库文件, 您可以在安装相应库后重试"
+		echo "$NEW_THIRD_LIBS"
+	fi
+	failed_my_exit $LINENO
+fi
+if [ ! -z "$NEW_THIRD_LIBS" ]; then
 	echo ""
 	echo "在您的系统中未检测到以下第三方库:" 
 	echo "$NEW_THIRD_LIBS"
@@ -275,6 +294,7 @@ if [ ! -z "$THIRD_LIBS" ]; then
 fi
 CUR_STEP=`expr 1 + $CUR_STEP`
 
+exit 0
 
 echo ""
 echo "STEP: ($CUR_STEP/$STEP_TOTAL) 下载并解压安装包文件: slog_all.tar.gz, 请您耐心等待..."
@@ -407,7 +427,7 @@ if [ -z "$SERVER_OUT_IP" ]; then
 	echo "约 1 分钟左右, 您可以在字符云监控系统 web 控制台上查看监控系统本身的数据上报"
 	echo " ---------------------------------------------------------------------------------"
 	echo "特别提示: 如果您的服务器是云服务器, 且不能通过网址: http://$LOCAL_IP 访问web控制台"
-	echo "您可以通过本脚本中的配置: SERVER_OUT_IP 指定后, 再次执行本脚本"
+	echo "您可以在本脚本中的配置: SERVER_OUT_IP 指定外网IP后, 再次执行本脚本"
 	echo ""
 else
 	echo "恭喜您, 在线安装完成, 现在您可以在浏览器中访问控制台了, 访问网址: http://$SERVER_OUT_IP"

@@ -58,11 +58,20 @@ if [ -f xrkmonitor_lib.tar.gz ]; then
 	rm xrkmonitor_lib.tar.gz
 fi
 
-if [ -f /etc/ld.so.conf_xrkmonitor_bk ]; then
-	echo "回退动态链接库配置文件: /etc/ld.so.conf"
-	cp /etc/ld.so.conf_xrkmonitor_bk /etc/ld.so.conf
-	rm /etc/ld.so.conf_xrkmonitor_bk
-fi
+XRKMONITOR_LIBS="libmysqlwrapped libmtreport_api_open libSockets libmyproto libmtreport_api"
+echo "删除监控系统动态链接库文件:${XRKMONITOR_LIBS}"
+for xrk_lib in $XRKMONITOR_LIBS
+do
+	rm -fr /usr/lib64/${xrk_lib}* > /dev/null 2>&1
+done
+
+THIRD_LIBS=""
+echo "删除依赖的第三方动态链接库文件:"
+for xrk_lib in $XRKMONITOR_LIBS
+do
+	rm -fr /usr/lib64/${xrk_lib}* > /dev/null 2>&1
+done
+
 
 if [ -f slog_run_test ]; then
 	echo "删除运行测试文件: slog_run_test"
