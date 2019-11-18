@@ -87,6 +87,17 @@ if [ -f slog_all.tar.gz ]; then
 	rm slog_all.tar.gz
 fi
 
+if [ ! -f /etc/ld.so.conf ]; then
+	echo "动态链接库配置文件: /etc/ld.so.conf 不存在!"
+else
+	cat /etc/ld.so.conf |grep xrkmonitor_lib > /dev/null 2>&1
+	if [ $? -ne 0 ]; then
+		sed -i '/xrkmonitor_lib/d' /etc/ld.so.conf
+	fi
+	ldconfig
+fi
+
+
 echo ""
 if [ -z "$MYSQL_USER" -o -z "$MYSQL_PASS" ]; then
 	MYSQL_CONTEXT="mysql -B "

@@ -41,6 +41,51 @@ LOCAL_IP_ETHNAME=
 
 
 
+install_sh_home=`pwd`
+
+function failed_my_exit()
+{
+	echo ""
+	echo "在线安装字符云监控失败,错误码:$1, 您可以下载源码编译安装或者加入Q群(699014295)获得支持."
+	isunin=$(yn_continue "是否清理安装记录(y/n)?")
+	if [ "$isunin" == "yes" ]; then
+		./uninstall_xrkmonitor.sh
+	fi
+	exit $1
+}
+
+function check_file()
+{
+	if [ ! -f $1 ]; then
+		echo "安装文件检查失败, 文件:$1 不存在!"
+		failed_my_exit $2 
+	fi
+}
+
+function yn_exit()
+{
+	read -p "$1" op
+	while [ $op != "Y" -a $op != "y" -a $op != "N" -a $op != "n" ]; do
+		read -p "请输入 (y/n): " op
+	done
+	if [ "$op" != "y" -a "$op" != "Y" ];then
+		failed_my_exit $2
+	fi
+}
+
+function yn_continue()
+{
+	read -p "$1" op
+	while [ $op != "Y" -a $op != "y" -a $op != "N" -a $op != "n" ]; do
+		read -p "请输入 (y/n): " op
+	done
+	if [ "$op" != "y" -a "$op" != "Y" ];then
+		echo "no" 
+	else
+		echo "yes"
+	fi
+}
+
 MYSQL_PROC_COUNT=`ps -elf |grep mysql|wc -l`
 APACHE_PROC_COUNT=`ps -elf |grep apache|wc -l`
 if [ $MYSQL_PROC_COUNT -lt 2 -o $APACHE_PROC_COUNT -lt 2 ]; then
@@ -57,22 +102,6 @@ if [ $MYSQL_PROC_COUNT -lt 2 -o $APACHE_PROC_COUNT -lt 2 ]; then
 		exit 0
 	fi
 fi
-
-CUR_PATH_INFO=``
-
-
-function yn_continue()
-{
-	read -p "$1" op
-	while [ $op != "Y" -a $op != "y" -a $op != "N" -a $op != "n" ]; do
-		read -p "请输入 (y/n): " op
-	done
-	if [ "$op" != "y" -a "$op" != "Y" ];then
-		echo "no" 
-	else
-		echo "yes"
-	fi
-}
 
 MYSQL_PROC_COUNT=`ps -elf |grep mysql|wc -l`
 APACHE_PROC_COUNT=`ps -elf |grep apache|wc -l`
@@ -136,7 +165,7 @@ echo ""
 echo "STEP: ($CUR_STEP/$STEP_TOTAL) 下载卸载脚本: uninstall_xrkmonitor.sh"
 if [ ! -f uninstall_xrkmonitor.sh ];then
 	wget ${XRKMONITOR_HTTP}/uninstall_xrkmonitor.sh
-	if [ $? -ne 0 ]; then
+	if [ ! -f uninstall_xrkmonitor.sh ]; then
 		echo "wget ${XRKMONITOR_HTTP}/uninstall_xrkmonitor.sh 执行失败!"
 		failed_my_exit $LINENO
 	fi
@@ -147,36 +176,6 @@ fi
 CUR_STEP=`expr 1 + $CUR_STEP`
 update_config uninstall_xrkmonitor.sh
 
-
-function failed_my_exit()
-{
-	echo ""
-	echo "在线安装字符云监控失败,错误码:$1, 您可以下载源码编译安装或者加入Q群(699014295)获得支持."
-	isunin=$(yn_continue "是否清理安装记录(y/n)?")
-	if [ "$isunin" == "yes" ]; then
-		./uninstall_xrkmonitor.sh
-	fi
-	exit $1
-}
-
-function check_file()
-{
-	if [ ! -f $1 ]; then
-		echo "安装文件检查失败, 文件:$1 不存在!"
-		failed_my_exit $2 
-	fi
-}
-
-function yn_exit()
-{
-	read -p "$1" op
-	while [ $op != "Y" -a $op != "y" -a $op != "N" -a $op != "n" ]; do
-		read -p "请输入 (y/n): " op
-	done
-	if [ "$op" != "y" -a "$op" != "Y" ];then
-		failed_my_exit $2
-	fi
-}
 
 function auto_detect_apache_doc_root()
 {
@@ -281,11 +280,28 @@ tar -zxf xrkmonitor_lib.tar.gz
 check_file xrkmonitor_lib/slog_tool $LINENO
 check_file xrkmonitor_lib/libmtreport_api-1.1.0.so $LINENO
 
+if [ ! -f /etc/ld.so.conf ]; then
+	echo "动态链接库配置文件: /etc/ld.so.conf 不存在!"
+	failed_my_exit $LINENO
+else
+	cur_xrkmonitor_lib=`cat /etc/ld.so.conf |grep xrkmonitor_lib`
+	if [ $? -ne 0 -o "$cur_xrkmonitor_lib" != "${install_sh_home}/xrkmonitor_lib" ]; then
+		if [ ! -z "$cur_xrkmonitor_lib" ]; then
+			sed -i '/xrkmonitor_lib/d' /etc/ld.so.conf
+		fi
+		echo ${install_sh_home}/xrkmonitor_lib >> /etc/ld.so.conf
+	fi
+	ldconfig
+fi
+
+
 echo "运行测试文件: slog_tool(slog_run_test)"
 cp xrkmonitor_lib/slog_tool slog_run_test
 chmod +x slog_run_test
 XRKMONITOR_LIBS="libneo_utl libneo_cgi libneo_cs libcgicomm libmysqlwrapped libmtreport_api_open libSockets libmyproto libmtreport_api"
 THIRD_LIBS=`ldd slog_run_test |grep xrkmonitor_lib|awk '{print $1}'|awk -F "." -v mylib="$XRKMONITOR_LIBS" '{if(!match(mylib, $1)) print $0; }'`
+THIRD_LIBS_OTHER=`ldd slog_run_test  |grep "not found"|awk '{print $1}'`
+THIRD_LIBS="$THIRD_LIBS $THIRD_LIBS_OTHER"
 
 if [ ! -z "$THIRD_LIBS" ]; then
 	NEW_THIRD_LIBS=''
