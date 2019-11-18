@@ -7,6 +7,7 @@ XRKMONITOR_HTML_PATH=xrkmonitor
 XRKMONITOR_CGI_LOG_PATH=/var/log/mtreport
 MYSQL_USER=
 MYSQL_PASS=
+SLOG_SERVER_FILE_PATH=/home/mtreport/slog/
 
 ls -l /tmp/pid*slog*pid >/dev/null 2>&1
 if [ $? -eq 0 -a -f tools_sh/stop_all.sh -a -f tools_sh/rm_zero.sh ]; then
@@ -35,9 +36,11 @@ fi
 if [ -f "$APACHE_CGI_PATH/mt_slog" ]; then
 	echo "删除 cgi 文件"
 	rm $APACHE_CGI_PATH/mt_slog*
+	rm $APACHE_CGI_PATH/slog_flogin*
 fi
 
 [ -d "$XRKMONITOR_CGI_LOG_PATH" ] && (echo "删除 cgi 日志目录: $XRKMONITOR_CGI_LOG_PATH"; rm -fr "$XRKMONITOR_CGI_LOG_PATH")
+[ -d slog_core ] && (echo "删除目录: slog_core"; rm -fr slog_core)
 [ -d slog_check_proc ] && (echo "删除目录: slog_check_proc"; rm -fr slog_check_proc)
 [ -d xrkmonitor_lib ] && (echo "删除目录: xrkmonitor_lib"; rm -fr xrkmonitor_lib)
 [ -d cgi_fcgi ] && (echo "删除目录: cgi_fcgi"; rm -fr cgi_fcgi)
@@ -61,14 +64,18 @@ if [ -f xrkmonitor_lib.tar.gz ]; then
 	rm xrkmonitor_lib.tar.gz
 fi
 
-if [ -f /etc/ld.so.conf ]; then
-	cat /etc/ld.so.conf |grep xrkmonitor_lib > /dev/null 2>&1
-	if [ $? -eq 0 ]; then
-		echo "移除动态链接库配置文件: /etc/ld.so.conf 的修改"
-		sed -i '/xrkmonitor_lib/d' /etc/ld.so.conf
+function yn_continue()
+{
+	read -p "$1" op
+	while [ $op != "Y" -a $op != "y" -a $op != "N" -a $op != "n" ]; do
+		read -p "请输入 (y/n): " op
+	done
+	if [ "$op" != "y" -a "$op" != "Y" ];then
+		echo "no" 
+	else
+		echo "yes"
 	fi
-	ldconfig
-fi
+}
 
 if [ -f slog_run_test ]; then
 	echo "删除运行测试文件: slog_run_test"
@@ -89,13 +96,35 @@ fi
 
 echo "show databases" | ${MYSQL_CONTEXT} |grep mtreport_db > /dev/null 2>&1
 if [ $? -eq 0 ]; then
-	echo "删除 mysql 数据库 mtreport_db/attr_db"
-	echo "drop database mtreport_db" | ${MYSQL_CONTEXT}
-	echo "drop database attr_db" | ${MYSQL_CONTEXT}
-	echo "删除默认 mysql 账号 mtreport"
-	echo "drop user mtreport@localhost" | ${MYSQL_CONTEXT}
+	isyes=$(yn_continue "是否清理 mysql 数据库 mtreport_db/attr_db(y/n)?")
+	if [ "$isyes" == "yes" ]; then
+		echo "删除 mysql 数据库 mtreport_db/attr_db"
+		echo "drop database mtreport_db" | ${MYSQL_CONTEXT}
+		echo "drop database attr_db" | ${MYSQL_CONTEXT}
+		echo "删除默认 mysql 账号 mtreport"
+		echo "drop user mtreport@localhost" | ${MYSQL_CONTEXT}
+	fi
+else
+	echo "未检测到 mysql 数据库: mtreport_db/attr_db, 跳过清理"	
 fi
+
+if [ -d "$SLOG_SERVER_FILE_PATH" ]; then
+	isyes=$(yn_continue "是否删除日志目录以及日志文件 (y/n)?")
+	if [ "$isyes" == "yes" ]; then
+		rm -fr $SLOG_SERVER_FILE_PATH
+	fi
+else
+	echo "未检测到日志目录: $SLOG_PATH, 跳过日志清理"
+fi
+
+isyes=$(yn_continue "是否删除安装/卸载脚本 (y/n)?")
+if [ "$isyes" == "yes" ]; then
+	rm online_install.sh 
+	rm uninstall_xrkmonitor.sh
+fi
+
 
 echo "已为您清理干净字符云监控系统安装记录, 感谢您的关注."
 echo ""
+
 

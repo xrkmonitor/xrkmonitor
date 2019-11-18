@@ -16,6 +16,8 @@ SERVER_OUT_IP=
 MYSQL_USER=
 MYSQL_PASS=
 
+# 日志中心日志目录, cgi 搜索日志时要读取该目录, 请确保 cgi 的访问权限
+SLOG_SERVER_FILE_PATH=/home/mtreport/slog/
 
 # apache 网站默认根目录, 不存在时会自动探测
 APACHE_DOCUMENT_ROOT=/srv/www/htdocs
@@ -36,6 +38,8 @@ XRKMONITOR_CGI_LOG_PATH=/var/log/mtreport
 LOCAL_IP_ETHNAME=
 
 # ---------------- 字符云监控系统 安装环境配置 ----------------------- end -
+
+
 
 MYSQL_PROC_COUNT=`ps -elf |grep mysql|wc -l`
 APACHE_PROC_COUNT=`ps -elf |grep apache|wc -l`
@@ -107,7 +111,6 @@ fi
 STEP_TOTAL=8
 CUR_STEP=1
 XRKMONITOR_HTTP=http://open.xrkmonitor.com/xrkmonitor_down
-cur_path=`pwd`
 
 function update_config() 
 {
@@ -118,7 +121,6 @@ function update_config()
 	sed -i "/^MYSQL_USER=/cMYSQL_USER=${MYSQL_USER}" $1 
 	sed -i "/^MYSQL_PASS=/cMYSQL_PASS=${MYSQL_PASS}" $1 
 }
-update_config uninstall_xrkmonitor.sh
 
 if [ $# -eq 1 -a "$1" == "new" ]; then 
 	rm xrkmonitor_lib.tar.gz > /dev/null 2>&1
@@ -128,6 +130,22 @@ if [ $# -eq 1 -a "$1" == "new" ]; then
 else
 	echo "开始自动安装: 字符云监控系统, 共 $STEP_TOTAL 步"
 fi
+
+
+echo ""
+echo "STEP: ($CUR_STEP/$STEP_TOTAL) 下载卸载脚本: uninstall_xrkmonitor.sh"
+if [ ! -f uninstall_xrkmonitor.sh ];then
+	wget ${XRKMONITOR_HTTP}/uninstall_xrkmonitor.sh
+	if [ $? -ne 0 ]; then
+		echo "wget ${XRKMONITOR_HTTP}/uninstall_xrkmonitor.sh 执行失败!"
+		failed_my_exit $LINENO
+	fi
+	chmod +x uninstall_xrkmonitor.sh
+else
+	echo "卸载脚本: uninstall_xrkmonitor.sh 已存在"	
+fi
+CUR_STEP=`expr 1 + $CUR_STEP`
+update_config uninstall_xrkmonitor.sh
 
 
 function failed_my_exit()
@@ -193,6 +211,7 @@ function auto_detect_apache_cgi_path()
 	echo "成功探测到 cgi 访问路径: $APACHE_CGI_ACCESS_PATH"
 	sed -i "/^APACHE_CGI_ACCESS_PATH=/cAPACHE_CGI_ACCESS_PATH=${APACHE_CGI_ACCESS_PATH}" uninstall_xrkmonitor.sh
 }
+
 
 echo ""
 echo "STEP: ($CUR_STEP/$STEP_TOTAL) 安装环境检测"
@@ -261,8 +280,6 @@ check_file xrkmonitor_lib.tar.gz $LINENO
 tar -zxf xrkmonitor_lib.tar.gz
 check_file xrkmonitor_lib/slog_tool $LINENO
 check_file xrkmonitor_lib/libmtreport_api-1.1.0.so $LINENO
-CUR_STEP=`expr 1 + $CUR_STEP`
-
 
 echo "运行测试文件: slog_tool(slog_run_test)"
 cp xrkmonitor_lib/slog_tool slog_run_test
@@ -303,6 +320,7 @@ if [ ! -z "$NEW_THIRD_LIBS" ]; then
 	fi
 fi
 CUR_STEP=`expr 1 + $CUR_STEP`
+
 
 echo ""
 echo "STEP: ($CUR_STEP/$STEP_TOTAL) 下载并解压安装包文件: slog_all.tar.gz, 请您耐心等待..."
@@ -403,6 +421,13 @@ CUR_STEP=`expr 1 + $CUR_STEP`
 
 echo ""
 echo "STEP: ($CUR_STEP/$STEP_TOTAL) 开始启动字符云监控后台服务, 请您耐心等待..."
+check_file slog_write/slog_write.conf $LINENO
+if [ "$SLOG_SERVER_FILE_PATH" != "/home/mtreport/slog/" ]; then
+	sCurLogServerPath=${SLOG_SERVER_FILE_PATH//\//\\\/}
+	sed -i "/^SLOG_SERVER_FILE_PATH=/cSLOG_SERVER_FILE_PATH ${sCurLogServerPath}" uninstall_xrkmonitor.sh
+	sed -i "/^SLOG_SERVER_FILE_PATH/cSLOG_SERVER_FILE_PATH ${sCurLogServerPath}" slog_write/slog_write.conf
+fi
+
 cd tools_sh
 ls -l /tmp/pid*slog*pid >/dev/null 2>&1
 if [ $? -eq 0 ]; then
