@@ -37,17 +37,22 @@ LOCAL_IP_ETHNAME=
 
 # ---------------- 字符云监控系统 安装环境配置 ----------------------- end -
 
-# 监控系统私有的动态链接库
-XRKMONITOR_LIBS="libmysqlwrapped libmtreport_api_open libSockets libmyproto libmtreport_api libcgicomm"
-XRKMONITOR_LIBS_VER=""
-
-# 监控系统生成的第三方库
-SELF_CMP_THIRD_LIBS="libfcgi libneo_cgi libneo_cs libneo_utl libprotobuf"
-SELF_CMP_THIRD_LIBS_VER=""
-
-# 非监控系统编译生成的第三方动态链接
-THIRD_LIBS="libmysqlclient libssl libcrypto libz libdl"
-THIRD_LIBS_VER=""
+MYSQL_PROC_COUNT=`ps -elf |grep mysql|wc -l`
+APACHE_PROC_COUNT=`ps -elf |grep apache|wc -l`
+if [ $MYSQL_PROC_COUNT -lt 2 -o $APACHE_PROC_COUNT -lt 2 ]; then
+	promt_msg="未检测到依赖的第三方服务: "
+	if [ $MYSQL_PROC_COUNT -lt 2 ]; then
+		promt_msg="$promt_msg mysql"
+	fi
+	if [ $APACHE_PROC_COUNT -lt 2 ]; then
+		promt_msg="$promt_msg apache"
+	fi
+	promt_msg="$promt_msg, 请确保已安装并运行了这些依赖服务, 是否继续安装(y/n) ?"
+	isyes=$(yn_continue "$promt_msg")
+	if [ "$isyes" != "yes" ];then
+		exit 0
+	fi
+fi
 
 
 function yn_continue()
@@ -255,10 +260,26 @@ tar -zxf xrkmonitor_lib.tar.gz
 check_file xrkmonitor_lib/slog_tool $LINENO
 check_file xrkmonitor_lib/libmtreport_api-1.1.0.so $LINENO
 
+if [ ! -f /etc/ld.so.conf ]; then
+	echo "动态链接库配置文件: /etc/ld.so.conf 不存在!"
+	failed_my_exit $LINENO
+else
+	cat /etc/ld.so.conf |grep xrkmonitor_lib > /dev/null 2>&1
+	if [ $? -ne 0 ]; then
+		echo "修改动态链接库配置文件: /etc/ld.so.conf "
+		echo ${cur_path}/xrkmonitor_lib >> /etc/ld.so.conf
+	fi
+	ldconfig
+fi
+CUR_STEP=`expr 1 + $CUR_STEP`
+
+
 echo "运行测试文件: slog_tool(slog_run_test)"
 cp xrkmonitor_lib/slog_tool slog_run_test
-export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:xrkmonitor_lib
 chmod +x slog_run_test
+
+XRKMONITOR_LIBS="libneo_utl libneo_cgi libneo_cs libcgicomm libmysqlwrapped libmtreport_api_open libSockets libmyproto libmtreport_api"
+THIRD_LIBS=`ldd slog_run_test |grep xrkmonitor_lib|awk '{print $1}'|awk -F "." -v mylib="$XRKMONITOR_LIBS" '{if(!match(mylib, $1)) print $0; }'`
 
 if [ ! -z "$THIRD_LIBS" ]; then
 	NEW_THIRD_LIBS=''
@@ -293,8 +314,6 @@ if [ ! -z "$NEW_THIRD_LIBS" ]; then
 	fi
 fi
 CUR_STEP=`expr 1 + $CUR_STEP`
-
-exit 0
 
 echo ""
 echo "STEP: ($CUR_STEP/$STEP_TOTAL) 下载并解压安装包文件: slog_all.tar.gz, 请您耐心等待..."

@@ -10,8 +10,11 @@ MYSQL_PASS=
 
 ls -l /tmp/pid*slog*pid >/dev/null 2>&1
 if [ $? -eq 0 -a -f tools_sh/stop_all.sh -a -f tools_sh/rm_zero.sh ]; then
-	echo "开始停止字符云监控系统服务"
-	cd tools_sh; ./stop_all.sh; sleep 1; ./rm_zero.sh
+	echo "开始停止字符云监控系统服务, 请耐心等待..."
+	cd tools_sh; ./stop_all.sh; 
+	echo "开始清理共享内存"
+	sleep 1;
+	./rm_zero.sh
 	cd ..
 	rm /tmp/pid*slog*pid > /dev/null 2>&1
 fi
@@ -58,20 +61,14 @@ if [ -f xrkmonitor_lib.tar.gz ]; then
 	rm xrkmonitor_lib.tar.gz
 fi
 
-XRKMONITOR_LIBS="libmysqlwrapped libmtreport_api_open libSockets libmyproto libmtreport_api"
-echo "删除监控系统动态链接库文件:${XRKMONITOR_LIBS}"
-for xrk_lib in $XRKMONITOR_LIBS
-do
-	rm -fr /usr/lib64/${xrk_lib}* > /dev/null 2>&1
-done
-
-THIRD_LIBS=""
-echo "删除依赖的第三方动态链接库文件:"
-for xrk_lib in $XRKMONITOR_LIBS
-do
-	rm -fr /usr/lib64/${xrk_lib}* > /dev/null 2>&1
-done
-
+if [ -f /etc/ld.so.conf ]; then
+	cat /etc/ld.so.conf |grep xrkmonitor_lib > /dev/null 2>&1
+	if [ $? -eq 0 ]; then
+		echo "移除动态链接库配置文件: /etc/ld.so.conf 的修改"
+		sed -i '/xrkmonitor_lib/d' /etc/ld.so.conf
+	fi
+	ldconfig
+fi
 
 if [ -f slog_run_test ]; then
 	echo "删除运行测试文件: slog_run_test"
