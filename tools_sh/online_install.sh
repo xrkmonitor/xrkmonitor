@@ -54,6 +54,8 @@ if [ $MYSQL_PROC_COUNT -lt 2 -o $APACHE_PROC_COUNT -lt 2 ]; then
 	fi
 fi
 
+CUR_PATH_INFO=``
+
 
 function yn_continue()
 {
@@ -259,25 +261,12 @@ check_file xrkmonitor_lib.tar.gz $LINENO
 tar -zxf xrkmonitor_lib.tar.gz
 check_file xrkmonitor_lib/slog_tool $LINENO
 check_file xrkmonitor_lib/libmtreport_api-1.1.0.so $LINENO
-
-if [ ! -f /etc/ld.so.conf ]; then
-	echo "动态链接库配置文件: /etc/ld.so.conf 不存在!"
-	failed_my_exit $LINENO
-else
-	cat /etc/ld.so.conf |grep xrkmonitor_lib > /dev/null 2>&1
-	if [ $? -ne 0 ]; then
-		echo "修改动态链接库配置文件: /etc/ld.so.conf "
-		echo ${cur_path}/xrkmonitor_lib >> /etc/ld.so.conf
-	fi
-	ldconfig
-fi
 CUR_STEP=`expr 1 + $CUR_STEP`
 
 
 echo "运行测试文件: slog_tool(slog_run_test)"
 cp xrkmonitor_lib/slog_tool slog_run_test
 chmod +x slog_run_test
-
 XRKMONITOR_LIBS="libneo_utl libneo_cgi libneo_cs libcgicomm libmysqlwrapped libmtreport_api_open libSockets libmyproto libmtreport_api"
 THIRD_LIBS=`ldd slog_run_test |grep xrkmonitor_lib|awk '{print $1}'|awk -F "." -v mylib="$XRKMONITOR_LIBS" '{if(!match(mylib, $1)) print $0; }'`
 
