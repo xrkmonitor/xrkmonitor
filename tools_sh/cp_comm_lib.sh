@@ -5,20 +5,29 @@ if [ "${USE_DLL_COMM_LIB}" != 'yes' ]; then
 fi
 MTLIB_LIB_PATH=`cat ../make_env |grep MTLIB_LIB_PATH|awk '{print $3}'`
 LIB_DEST_PATH=./xrkmonitor_lib
+cdir=`pwd`
+
+# 运行测试文件
+if [ ! -f ../slog_tool/slog_tool ]; then
+	echo "file : ../slog_tool/slog_tool  not exist"
+	exit 2
+fi
 
 if [ ! -d ${LIB_DEST_PATH} ]; then
 	mkdir -p ${LIB_DEST_PATH}
 fi
+rm -fr ${LIB_DEST_PATH}/*
+cp ../slog_tool/slog_tool ${LIB_DEST_PATH}
 cd ${LIB_DEST_PATH}
-rm -fr *
 
 function check_lib_exit()
 {
 	if [ ! -f $1 ]; then
-		echo "copy lib failed, file:$1 not exit"
+		echo "copy lib failed, file:$1 not exist"
 		exit 1
 	fi
 }
+
 
 # 系统库
 check_lib_exit ${MTLIB_LIB_PATH}/libmysqlclient.so.18.0.0
@@ -104,4 +113,7 @@ cp ${MTLIB_LIB_PATH}/libmtreport_api-1.1.0.so .
 strip libmtreport_api-1.1.0.so
 ln -s libmtreport_api-1.1.0.so libmtreport_api.so.1
 ln -s libmtreport_api.so.1 libmtreport_api.so
+
+cd $cdir
+tar -czf xrkmonitor_lib.tar.gz $LIB_DEST_PATH
 
