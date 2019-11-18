@@ -27,6 +27,7 @@ all:
 	make install -C slog_mtreport_client/extension/linux_base
 	make -C slog_mtreport_client
 	make -C slog_mtreport_server 
+	make -C slog_tool
 
 clean:
 	make clean -C language/c_cpp
@@ -47,4 +48,5 @@ clean:
 	make clean -C slog_mtreport_client
 	make clean -C slog_mtreport_client/extension/linux_base
 	make clean -C slog_mtreport_server
+	make clean -C slog_tool
 

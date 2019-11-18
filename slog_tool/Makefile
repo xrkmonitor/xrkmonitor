@@ -4,7 +4,7 @@ COMM_INC = -I$(MTLIB_INCLUDE_PATH)/my_proto -I$(MTLIB_INCLUDE_PATH)/mtagent_api_
 ifneq ($(USE_DLL_COMM_LIB), yes)
 COMM_LIB = $(MTLIB_LIB_PATH)/libmysqlwrapped.a $(MTLIB_LIB_PATH)/libmtreport_api_open.a $(MTLIB_LIB_PATH)/libSockets.a -L$(MYSQL_LIB) -lmysqlclient $(MTLIB_LIB_PATH)/libmyproto.a $(MTLIB_LIB_PATH)/libprotobuf.a $(MTLIB_LIB_PATH)/libmtreport_api.a -lz -lpthread 
 else
-COMM_LIB = -L$(MTLIB_LIB_PATH) -lmysqlwrapped -lmtreport_api_open -lSockets -L$(MYSQL_LIB) -lmysqlclient -L$(MTLIB_LIB_PATH) -lmyproto -lprotobuf -lmtreport_api -lz -lpthread 
+COMM_LIB = -L$(MTLIB_LIB_PATH) -lmysqlwrapped -lmtreport_api_open -lSockets -L$(MYSQL_LIB) -lmysqlclient -L$(MTLIB_LIB_PATH) -lmyproto -lprotobuf -lmtreport_api -lz -lpthread  -lfcgi -lneo_cgi -lneo_cs -lneo_utl -lcgicomm
 endif
 
 CC = g++ 
@@ -18,7 +18,7 @@ OBJ := $(SRC:.cpp=.o)
 DEP := $(SRC:.cpp=.d)
 
 $(TARGETS): ${OBJ}
-	$(CC) -g -Wall -o $@ $^ $(COMM_LIB) 
+	$(CC) $(CXXFLAGS) -o $@ $^ $(COMM_LIB)  
 ifeq ($(USE_DLL_COMM_LIB), yes)
 	strip $(TARGETS)
 endif
