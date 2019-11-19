@@ -315,9 +315,11 @@ echo "运行测试文件: slog_tool(slog_run_test)"
 cp xrkmonitor_lib/slog_tool slog_run_test
 chmod +x slog_run_test
 XRKMONITOR_LIBS="libneo_utl libneo_cgi libneo_cs libcgicomm libmysqlwrapped libmtreport_api_open libSockets libmyproto libmtreport_api"
-THIRD_LIBS=`ldd slog_run_test |grep xrkmonitor_lib|awk '{print $1}'|awk -F "." -v mylib="$XRKMONITOR_LIBS" '{if(!match(mylib, $1)) print $0; }'`
-THIRD_LIBS_OTHER=`ldd slog_run_test  |grep "not found"|awk '{print $1}'`
+ldd slog_run_test > _ldd_slog_run_test 2>&1
+THIRD_LIBS=`grep -v GLIBC _ldd_slog_run_test |grep xrkmonitor_lib|awk '{print $1}'|awk -F "." -v mylib="$XRKMONITOR_LIBS" '{if(!match(mylib, $1)) print $0; }'`
+THIRD_LIBS_OTHER=`grep -v GLIBC _ldd_slog_run_test |grep "not found"|awk '{print $1}'`
 THIRD_LIBS="$THIRD_LIBS $THIRD_LIBS_OTHER"
+rm _ldd_slog_run_test >/dev/null 2>&1
 
 if [ ! -z "$THIRD_LIBS" ]; then
 	NEW_THIRD_LIBS=''
@@ -332,7 +334,8 @@ if [ ! -z "$THIRD_LIBS" ]; then
 		fi
 	done
 fi
-./slog_run_test run_test > _run_test_tmp
+./slog_run_test run_test > _run_test_tmp 2>&1
+cat _run_test_tmp
 if [ $? -ne 0 ]; then
 	echo "运行测试文件:./slog_run_test run_test 失败"
 	grep "GLIBC" _run_test_tmp|grep "not found" > /dev/null 2>&1
