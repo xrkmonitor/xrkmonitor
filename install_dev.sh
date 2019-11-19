@@ -14,9 +14,15 @@ if [ ! -f ${MYSQL_INCLUDE}/mysql/mysql.h ]; then
 	exit 1
 fi
 # check mysql 库文件路径是否 OK
-if [ ! -f /usr/lib64libmysqlclient.so -a ! /usr/lib/x86_64-linux-gnu/lib64libmysqlclient.so -a ! -f ${MYSQL_LIB}/libmysqlclient.so ]; then
-	echo "(1/$STEP_TOTAL) not find file:${MYSQL_LIB}/libmysqlclient.so, check mysql lib path failed !"
-	exit 2
+if [ ! -f ${MYSQL_LIB}/libmysqlclient.so ]; then
+	if [ -f /usr/lib64/libmysqlclient.so ]; then
+		sed -i '/^MYSQL_LIB/cMYSQL_LIB = \/usr\/lib64' make_env
+	elif [ -f /usr/lib/x86_64-linux-gnu/libmysqlclient.so ]; then
+		sed -i '/^MYSQL_LIB/cMYSQL_LIB = \/usr\/lib\/x86_64-linux-gnu' make_env
+	else
+		echo "(1/$STEP_TOTAL) not find file:${MYSQL_LIB}/libmysqlclient.so, check mysql lib path failed !"
+		exit 2
+	fi
 fi
 echo "(1/$STEP_TOTAL) mysql devel check ok"
 
