@@ -107,23 +107,6 @@ if [ $APACHE_PROC_COUNT -lt 2 -a $APACHE_PROC_COUNT_2 -lt 2 ]; then
 	fi
 fi
 
-MYSQL_PROC_COUNT=`ps -elf |grep mysql|wc -l`
-APACHE_PROC_COUNT=`ps -elf |grep apache|wc -l`
-if [ $MYSQL_PROC_COUNT -lt 2 -o $APACHE_PROC_COUNT -lt 2 ]; then
-	promt_msg="未检测到依赖的第三方服务: "
-	if [ $MYSQL_PROC_COUNT -lt 2 ]; then
-		promt_msg="$promt_msg mysql"
-	fi
-	if [ $APACHE_PROC_COUNT -lt 2 ]; then
-		promt_msg="$promt_msg apache"
-	fi
-	promt_msg="$promt_msg, 请确保已安装并运行了这些依赖服务, 是否继续安装(y/n) ?"
-	isyes=$(yn_continue "$promt_msg")
-	if [ "$isyes" != "yes" ];then
-		exit 0
-	fi
-fi
-
 if [ -z "$SERVER_OUT_IP" ]; then
 	echo "外网IP未指定, 您可通过脚本中的配置: SERVER_OUT_IP 指定"
 	isyes=$(yn_continue "如果您需要在外网访问监控系统web控制台, 外网IP必须指定, 是否继续安装(y/n)?")
