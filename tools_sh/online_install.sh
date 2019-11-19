@@ -56,16 +56,16 @@ function failed_my_exit()
 
 function check_file()
 {
-	if [ ! -f $1 ]; then
+	if [ ! -f "$1" ]; then
 		echo "安装文件检查失败, 文件:$1 不存在!"
-		failed_my_exit $2 
+		failed_my_exit "$2" 
 	fi
 }
 
 function yn_exit()
 {
 	read -p "$1" op
-	while [ $op != "Y" -a $op != "y" -a $op != "N" -a $op != "n" ]; do
+	while [ "$op" != "Y" -a "$op" != "y" -a "$op" != "N" -a "$op" != "n" ]; do
 		read -p "请输入 (y/n): " op
 	done
 	if [ "$op" != "y" -a "$op" != "Y" ];then
@@ -76,7 +76,7 @@ function yn_exit()
 function yn_continue()
 {
 	read -p "$1" op
-	while [ $op != "Y" -a $op != "y" -a $op != "N" -a $op != "n" ]; do
+	while [ "$op" != "Y" -a "$op" != "y" -a "$op" != "N" -a "$op" != "n" ]; do
 		read -p "请输入 (y/n): " op
 	done
 	if [ "$op" != "y" -a "$op" != "Y" ];then

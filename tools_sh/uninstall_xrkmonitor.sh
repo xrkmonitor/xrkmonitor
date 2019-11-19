@@ -20,6 +20,10 @@ if [ $? -eq 0 -a -f tools_sh/stop_all.sh -a -f tools_sh/rm_zero.sh ]; then
 	rm /tmp/pid*slog*pid > /dev/null 2>&1
 fi
 
+if [ -f /tmp/_slog_config_read_ok ]; then
+	rm -f /tmp/_slog_config_read_ok
+fi
+
 if [ -f $APACHE_DOCUMENT_ROOT/index.html ]; then
 	cat $APACHE_DOCUMENT_ROOT/index.html |grep "$XRKMONITOR_HTML_PATH" > /dev/null 2>&1
 	if [ $? -eq 0 ]; then
