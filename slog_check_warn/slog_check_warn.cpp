@@ -295,6 +295,11 @@ void CheckViewWarn(TWarnConfig *pWarnConfig, list<TAttrWarnInfo> &listWarn, uint
 	}
 }
 
+inline bool IsBasicAttr(int iAttrId)
+{
+    return false;
+}
+
 void CheckMachineWarn(TWarnConfig *pWarnConfig, 
 	TWarnAttrReportInfo *pNode, list<TAttrWarnInfo> &listWarn, uint32_t now, int iDayMinIdx)
 {
