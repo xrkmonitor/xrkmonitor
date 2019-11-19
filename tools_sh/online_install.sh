@@ -86,17 +86,21 @@ function yn_continue()
 	fi
 }
 
+CUR_OS_INFO=`cat /etc/issue`
+
 MYSQL_PROC_COUNT=`ps -elf |grep mysql|wc -l`
+if [ $MYSQL_PROC_COUNT -lt 2 ]; then
+	promt_msg="未检测到依赖的第三方服务 mysql, 是否继续安装(y/n) ?"
+	isyes=$(yn_continue "$promt_msg")
+	if [ "$isyes" != "yes" ];then
+		exit 0
+	fi
+fi
+
 APACHE_PROC_COUNT=`ps -elf |grep apache|wc -l`
-if [ $MYSQL_PROC_COUNT -lt 2 -o $APACHE_PROC_COUNT -lt 2 ]; then
-	promt_msg="未检测到依赖的第三方服务: "
-	if [ $MYSQL_PROC_COUNT -lt 2 ]; then
-		promt_msg="$promt_msg mysql"
-	fi
-	if [ $APACHE_PROC_COUNT -lt 2 ]; then
-		promt_msg="$promt_msg apache"
-	fi
-	promt_msg="$promt_msg, 请确保已安装并运行了这些依赖服务, 是否继续安装(y/n) ?"
+APACHE_PROC_COUNT_2=`ps -elf |grep httpd|wc -l`
+if [ $APACHE_PROC_COUNT -lt 2 -a $APACHE_PROC_COUNT_2 -lt 2 ]; then
+	promt_msg="未检测到依赖的第三方服务 apache, 是否继续安装(y/n) ?"
 	isyes=$(yn_continue "$promt_msg")
 	if [ "$isyes" != "yes" ];then
 		exit 0
@@ -179,9 +183,25 @@ update_config uninstall_xrkmonitor.sh
 
 function auto_detect_apache_doc_root()
 {
-	sDocRoot=`apachectl -t -D DUMP_RUN_CFG 2>/dev/null |grep "Main DocumentRoot"|awk '{print $3}'`
-	APACHE_DOCUMENT_ROOT=${sDocRoot//\"/}
-	if [ $? -ne 0 -o ! -d "$APACHE_DOCUMENT_ROOT" ]; then
+	sAphServerCfgFile=`apachectl -V|grep SERVER_CONFIG_FILE|awk -F "=" '{print $2}'`
+	APH_SERVER_CONFIG_FILE=${sAphServerCfgFile//\"/}
+	if [ ! -f "$APH_SERVER_CONFIG_FILE" ]; then
+		sAphServerCfgFile=`apachectl -V|grep HTTPD_ROOT|awk -F "=" '{print $2}'`
+		APH_SERVER_CONFIG_PATH=${sAphServerCfgFile//\"/}
+	else
+		APH_SERVER_CONFIG_PATH=`dirname $APH_SERVER_CONFIG_PATH`
+	fi
+
+	if [ -d "$APH_SERVER_CONFIG_PATH" ]; then
+		sAphConfList=`find $APH_SERVER_CONFIG_PATH -name *.conf`
+		sDocRoot=`grep -v "^#" $sAphConfList |grep DocumentRoot |awk '{print $2 }'`
+		APACHE_DOCUMENT_ROOT=${sDocRoot//\"/}
+	else
+		sDocRoot=`apachectl -t -D DUMP_RUN_CFG 2>/dev/null |grep "Main DocumentRoot"|awk '{print $3}'`
+		APACHE_DOCUMENT_ROOT=${sDocRoot//\"/}
+	fi
+
+	if [ ! -d "$APACHE_DOCUMENT_ROOT" ]; then
 		echo "尝试自动探测 apache 网站根目录失败, 请手动指定安装配置: APACHE_DOCUMENT_ROOT 后再试"
 		failed_my_exit $LINENO 
 	fi
