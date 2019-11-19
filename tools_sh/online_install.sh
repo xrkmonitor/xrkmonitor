@@ -172,7 +172,7 @@ function auto_detect_apache_doc_root()
 		sAphServerCfgFile=`apachectl -V|grep HTTPD_ROOT|awk -F "=" '{print $2}'`
 		APH_SERVER_CONFIG_PATH=${sAphServerCfgFile//\"/}
 	else
-		APH_SERVER_CONFIG_PATH=`dirname $APH_SERVER_CONFIG_PATH`
+		APH_SERVER_CONFIG_PATH=`dirname $APH_SERVER_CONFIG_FILE`
 	fi
 
 	if [ -d "$APH_SERVER_CONFIG_PATH" ]; then
@@ -188,23 +188,36 @@ function auto_detect_apache_doc_root()
 		echo "尝试自动探测 apache 网站根目录失败, 请手动指定安装配置: APACHE_DOCUMENT_ROOT 后再试"
 		failed_my_exit $LINENO 
 	fi
-	echo "成功探测到 apache 网站根: $APACHE_DOCUMENT_ROOT"
+	echo "成功探测到 apache 网站根目录: $APACHE_DOCUMENT_ROOT"
 	sed -i "/^APACHE_DOCUMENT_ROOT=/cAPACHE_DOCUMENT_ROOT=${APACHE_DOCUMENT_ROOT}" uninstall_xrkmonitor.sh 
 }
 
 function auto_detect_apache_cgi_path()
 {
-	if [ -d /etc/apache2 ]; then
-		sCgiPath=`cat /etc/apache2/*.conf|grep ^ScriptAlias|awk '{print $3}'`
+	sAphServerCfgFile=`apachectl -V|grep SERVER_CONFIG_FILE|awk -F "=" '{print $2}'`
+	APH_SERVER_CONFIG_FILE=${sAphServerCfgFile//\"/}
+	if [ ! -f "$APH_SERVER_CONFIG_FILE" ]; then
+		sAphServerCfgFile=`apachectl -V|grep HTTPD_ROOT|awk -F "=" '{print $2}'`
+		APH_SERVER_CONFIG_PATH=${sAphServerCfgFile//\"/}
+	else
+		APH_SERVER_CONFIG_PATH=`dirname $APH_SERVER_CONFIG_FILE`
+	fi
+
+	if [ -d "$APH_SERVER_CONFIG_PATH" ]; then
+		sAphConfList=`find $APH_SERVER_CONFIG_PATH -name *.conf`
+		sCgiPathInfo=`grep -v "^#" $sAphConfList |grep ScriptAlias`
+
+		sCgiPath=`echo "$sCgiPathInfo" |awk '{print $3}'`
 		APACHE_CGI_PATH=${sCgiPath//\"/}
-		sCgiAccessPath=`cat /etc/apache2/*.conf|grep ^ScriptAlias|awk '{print $2}'`
-		APACHE_CGI_ACCESS_PATH=${sCgiAccessPath//\"/}		
-		if [ $? -ne 0 -o ! -d "$APACHE_CGI_PATH" -o -z "$APACHE_CGI_ACCESS_PATH" ]; then
-			echo "尝试自动探测 cgi 目录失败, 请手动指定安装配置: APACHE_CGI_PATH/APACHE_CGI_ACCESS_PATH 后再试"
+		sCgiAccessPath=`echo "$sCgiPathInfo" |awk '{print $2}'`
+		APACHE_CGI_ACCESS_PATH=${sCgiAccessPath//\"/}
+
+		if [ ! -d "$APACHE_CGI_PATH" -o -z "$APACHE_CGI_ACCESS_PATH" ]; then
+			echo "尝试探测 cgi 目录失败, 请手动指定配置: APACHE_CGI_PATH/APACHE_CGI_ACCESS_PATH 后再试"
 			failed_my_exit $LINENO
 		fi
 	else
-		echo "尝试自动探测 cgi 目录失败, 请手动指定安装配置: APACHE_CGI_PATH 后再试"
+		echo "尝试自动探测 cgi 目录失败, 请手动指定配置: APACHE_CGI_PATH/APACHE_CGI_ACCESS_PATH 后再试"
 		failed_my_exit $LINENO
 	fi
 
