@@ -300,13 +300,23 @@ void CheckMachineWarn(TWarnConfig *pWarnConfig,
 {
 	uint32_t dwLastVal=0, dwPreLastVal=0;
 	AdaptReportValue(pNode, now, iDayMinIdx, dwLastVal, dwPreLastVal);
+	MachineInfo *pMachineInfo = slog.GetMachineInfo(pWarnConfig->iWarnId, NULL);
+	if(pMachineInfo == NULL) {
+		ERR_LOG("not find machine:%d", pWarnConfig->iWarnId);
+		return;
+	}
 
 	if((pWarnConfig->iWarnConfigFlag & ATTR_WARN_FLAG_MIN) && dwLastVal < (uint32_t)pWarnConfig->iWarnMin)
 	{
 		TAttrWarnInfo wInfo;
 		wInfo.iWarnFlag = ATTR_WARN_FLAG_MIN|ATTR_WARN_FLAG_TYPE_MACHINE;
-		if(pWarnConfig->iWarnConfigFlag & ATTR_WARN_FLAG_MASK_WARN)
+		if((pWarnConfig->iWarnConfigFlag & ATTR_WARN_FLAG_MASK_WARN)
+			|| (pMachineInfo->bWarnFlag & MACH_WARN_DENY_ALL)
+			|| ((pMachineInfo->bWarnFlag & MACH_WARN_DENY_EXCEPT) && (pWarnConfig->iWarnConfigFlag&ATTR_WARN_FLAG_EXCEPTION))
+			|| ((pMachineInfo->bWarnFlag & MACH_WARN_DENY_BASIC) && IsBasicAttr(pNode->iAttrId)))
+		{
 			wInfo.iWarnFlag |= ATTR_WARN_FLAG_MASK_WARN;
+		}
 
 		wInfo.iWarnId = pNode->iMachineId;
 		wInfo.iAttrId = pNode->iAttrId;
@@ -322,8 +332,13 @@ void CheckMachineWarn(TWarnConfig *pWarnConfig,
 	{
 		TAttrWarnInfo wInfo;
 		wInfo.iWarnFlag = ATTR_WARN_FLAG_MAX|ATTR_WARN_FLAG_TYPE_MACHINE;
-		if(pWarnConfig->iWarnConfigFlag & ATTR_WARN_FLAG_MASK_WARN)
+		if((pWarnConfig->iWarnConfigFlag & ATTR_WARN_FLAG_MASK_WARN)
+			|| (pMachineInfo->bWarnFlag & MACH_WARN_DENY_ALL)
+			|| ((pMachineInfo->bWarnFlag & MACH_WARN_DENY_EXCEPT) && (pWarnConfig->iWarnConfigFlag&ATTR_WARN_FLAG_EXCEPTION))
+			|| ((pMachineInfo->bWarnFlag & MACH_WARN_DENY_BASIC) && IsBasicAttr(pNode->iAttrId)))
+		{
 			wInfo.iWarnFlag |= ATTR_WARN_FLAG_MASK_WARN;
+		}
 
 		wInfo.iWarnId = pNode->iMachineId;
 		wInfo.iAttrId = pNode->iAttrId;
@@ -341,8 +356,13 @@ void CheckMachineWarn(TWarnConfig *pWarnConfig,
 		if(w > pWarnConfig->iWarnWave) {
 			TAttrWarnInfo wInfo;
 			wInfo.iWarnFlag = ATTR_WARN_FLAG_WAVE|ATTR_WARN_FLAG_TYPE_MACHINE;
-			if(pWarnConfig->iWarnConfigFlag & ATTR_WARN_FLAG_MASK_WARN)
+			if((pWarnConfig->iWarnConfigFlag & ATTR_WARN_FLAG_MASK_WARN)
+				|| (pMachineInfo->bWarnFlag & MACH_WARN_DENY_ALL)
+				|| ((pMachineInfo->bWarnFlag & MACH_WARN_DENY_EXCEPT) && (pWarnConfig->iWarnConfigFlag&ATTR_WARN_FLAG_EXCEPTION))
+				|| ((pMachineInfo->bWarnFlag & MACH_WARN_DENY_BASIC) && IsBasicAttr(pNode->iAttrId)))
+			{
 				wInfo.iWarnFlag |= ATTR_WARN_FLAG_MASK_WARN;
+			}
 
 			wInfo.iWarnId = pNode->iMachineId;
 			wInfo.iAttrId = pNode->iAttrId;
@@ -473,17 +493,36 @@ void CheckWarnConfig(list<TAttrWarnInfo> &listWarn)
 		pNode = (TWarnConfig*)GetFirstNodeRevers(phash);
 		ERR_LOG("man bug - has node:%u, bug get first null", pTableHead->dwNodeUseCount);
 	}
+	MachineInfo *pMachineInfo = NULL;
 	while(pNode != NULL)
 	{
-		// 只需处理无上报的最小值告警
 		if(!(pNode->iWarnConfigFlag & ATTR_WARN_FLAG_MIN)
 			|| slog.GetWarnAttrInfo(pNode->iAttrId, pNode->iWarnId, NULL) != NULL)
 		{
 			goto check_warn_next;
 		}
 
+		pMachineInfo = NULL;
+		if(pNode->iWarnConfigFlag & ATTR_WARN_FLAG_TYPE_MACHINE) {
+			pMachineInfo = slog.GetMachineInfo(pNode->iWarnId, NULL);
+			if(pMachineInfo == NULL) {
+				ERR_LOG("not find machine:%d", pNode->iWarnId);
+				goto check_warn_next;
+			}
+		}
+	
 		TAttrWarnInfo wInfo;
 		wInfo.iWarnFlag = pNode->iWarnConfigFlag;
+		if(pMachineInfo != NULL 
+			&& ((pMachineInfo->bWarnFlag & MACH_WARN_DENY_ALL) 
+				|| ((pMachineInfo->bWarnFlag & MACH_WARN_DENY_EXCEPT) && (pNode->iWarnConfigFlag&ATTR_WARN_FLAG_EXCEPTION))
+				|| ((pMachineInfo->bWarnFlag & MACH_WARN_DENY_BASIC) && IsBasicAttr(pNode->iAttrId))))
+		{
+			wInfo.iWarnFlag |= ATTR_WARN_FLAG_MASK_WARN;
+			DEBUG_LOG("machine set warn mask, machine:%d, attr:%d, warn flag:%d|%d",
+				pNode->iWarnId, pNode->iAttrId, pMachineInfo->bWarnFlag, pNode->iWarnConfigFlag);
+		}
+
 		wInfo.iWarnId = pNode->iWarnId;
 		wInfo.iAttrId = pNode->iAttrId;
 		wInfo.iWarnConfigValue = pNode->iWarnConfigFlag;
