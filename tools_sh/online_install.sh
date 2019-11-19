@@ -332,14 +332,14 @@ if [ ! -z "$THIRD_LIBS" ]; then
 		fi
 	done
 fi
-./slog_run_test run_test |tee _run_test_tmp
+./slog_run_test run_test > _run_test_tmp
 if [ $? -ne 0 ]; then
 	echo "运行测试文件:./slog_run_test run_test 失败"
-	cat _run_test_cmp|grep "GLIBC"|grep "not found" > /dev/null 2>&1
+	grep "GLIBC" _run_test_tmp|grep "not found" > /dev/null 2>&1
 	if [ $? -eq 0 ]; then
 		echo "您的系统 glibc 版本太低, 您可以升级系统或者下载源码编译安装"
 		rm _run_test_cmp > /dev/null 2>&1
-	else if [ ! -z "$NEW_THIRD_LIBS" ]; then
+	elif [ ! -z "$NEW_THIRD_LIBS" ]; then
 		echo "依赖以下第三方库文件, 您可以在安装相应库后重试"
 		echo "$NEW_THIRD_LIBS"
 	fi
