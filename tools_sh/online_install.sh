@@ -564,6 +564,7 @@ fi
 CUR_STEP=`expr 1 + $CUR_STEP`
 
 
+echo ""
 apachectl -t -D DUMP_MODULES |grep cgi_module >/dev/null 2>&1
 if [ $? -ne 0 ]; then
 	echo "当前 apache 未加载模块: cgi_module, 请修改配置加载后重启 apache 服务 !!!"
@@ -573,21 +574,19 @@ else
 		apachectl restart > /dev/null 2>&1
 		[ $? -ne 0 ] && echo "重启 apache 服务失败, 请您手动重启下"
 	else
-		echo ""
 		if [ -z "$SERVER_OUT_IP" ]; then
 			echo "恭喜您, 在线安装完成, 现在您可以在浏览器中访问控制台了, 访问网址: http://$LOCAL_IP"
 			echo "约 1 分钟左右, 您可以在字符云监控系统 web 控制台上查看监控系统本身的数据上报"
 			echo " ---------------------------------------------------------------------------------"
 			echo "特别提示: 如果您的服务器是云服务器, 且不能通过网址: http://$LOCAL_IP 访问web控制台"
 			echo "您可以在本脚本中的配置: SERVER_OUT_IP 指定外网IP后, 再次执行本脚本"
-			echo ""
 		else
 			echo "恭喜您, 在线安装完成, 现在您可以在浏览器中访问控制台了, 访问网址: http://$SERVER_OUT_IP"
 			echo "约 1 分钟左右, 您可以在字符云监控系统 web 控制台上查看监控系统本身的数据上报"
-			echo ""
 		fi
 	fi
 fi
+echo ""
 CUR_STEP=`expr 1 + $CUR_STEP`
 
 cd $install_sh_home
