@@ -138,7 +138,7 @@ echo "show databases" | mysql -B |grep mysql > /dev/null 2>&1
 if [ $? -ne 0 -a -z "$MYSQL_USER" ]; then
 	echo ""
 	isyes=$(yn_continue "mysql 本地匿名账号不可用, 是否现在指定 mysql 操作账号 (y/n) ?")
-	if [ "$isyes" != "yes" ];then
+	if [ "$isyes" == "yes" ];then
 		read -p "请输入 MySQL 操作账号名:" MYSQL_USER
 		read -p "请输入 MySQL 操作账号密码:" MYSQL_PASS
 		echo "您的输入为: $MYSQL_USER / $MYSQL_PASS, 如输错再次安装时, 可通过脚本中的配置: MYSQL_USER MYSQL_PASS 指定"
