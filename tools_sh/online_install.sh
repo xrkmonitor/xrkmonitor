@@ -42,16 +42,15 @@ LOCAL_IP_ETHNAME=
 
 
 install_sh_home=`pwd`
-
-function is_ip_valid() 
+function is_ip_valid()
 {
-	IP=$1     
-	if [[ $IP =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
+	IP=$1
+	if [[ $IP =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
 		FIELD1=`echo $IP|awk -F "." '{print $1}'`
 		FIELD2=`echo $IP|awk -F "." '{print $2}'`
 		FIELD3=`echo $IP|awk -F "." '{print $3}'`
 		FIELD4=`echo $IP|awk -F "." '{print $4}'`
-		[ $FIELD1 -le 255 -a $FIELD2 -le 255 -a $FIELD3 -le 255 -a $FIELD4 -le 255 ] && return 0
+		[ $FIELD1 -le 255 -a $FIELD2 -le 255 -a $FIELD3 -le 255 -a $FIELD4 -le 255 ] && return 0
 	fi
 	return 1
 }
@@ -126,7 +125,7 @@ if [ -z "$SERVER_OUT_IP" ]; then
 	if [ "$isyes" == "yes" ];then
 		while true; do
 			read -p "请输入合法IP:" SERVER_OUT_IP
-			is_ip_valid SERVER_OUT_IP
+			is_ip_valid $SERVER_OUT_IP
 			[ $? -eq 0 ] && break
 		done
 	fi
