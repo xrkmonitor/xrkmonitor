@@ -394,8 +394,26 @@ if [ $? -ne 0 ]; then
 	failed_my_exit $LINENO
 fi
    
-XRKMONITOR_DB_TABLES=''
+XRKMONITOR_DB_TABLES='flogin_history flogin_user mt_app_info mt_attr  mt_attr_type  mt_log_config mt_machine mt_module_info mt_server mt_table_upate_monitor mt_view  mt_view_battr mt_view_bmach mt_warn_config mt_warn_info  test_key_list'
+for xtable in $XRKMONITOR_DB_TABLES
+do
+	echo "show create table $xtable" | mysql -B mtreport_db > /dev/null 2>&1
+	if [ $? -ne 0 ]; then
+		echo "数据库导入失败 - 检查数据库:mtreport_db, 表: $xtable 失败"
+		failed_my_exit $LINENO 
+	fi
+done
+XRKMONITOR_DB_ATTR_TABLES='table_info table_info_day'
+for xtable in $XRKMONITOR_DB_ATTR_TABLES
+do
+	echo "show create table $xtable" | mysql -B attr_db > /dev/null 2>&1
+	if [ $? -ne 0 ]; then
+		echo "数据库导入失败 - 检查数据库:attr_db, 表: $xtable 失败"
+		failed_my_exit $LINENO 
+	fi
+done
 echo "导入 mysql 数据库 mtreport_db/attr_db 成功"
+
 echo "grant ALL PRIVILEGES ON mtreport_db.* to 'mtreport'@'localhost' identified by 'mtreport875' WITH GRANT OPTION;" | ${MYSQL_CONTEXT} 
 echo "grant ALL PRIVILEGES ON attr_db.* to 'mtreport'@'localhost' identified by 'mtreport875' WITH GRANT OPTION;" | ${MYSQL_CONTEXT} 
 echo "show tables" | mysql -B -umtreport -pmtreport875 mtreport_db |grep flogin_user > /dev/null 2>&1
