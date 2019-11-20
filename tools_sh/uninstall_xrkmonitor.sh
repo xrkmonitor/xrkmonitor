@@ -32,7 +32,6 @@ if [ $? -eq 0 -a -f tools_sh/stop_all.sh -a -f tools_sh/rm_zero.sh ]; then
 	echo "开始停止字符云监控系统服务, 请耐心等待..."
 	cd tools_sh; ./stop_all.sh; 
 	echo "开始清理共享内存"
-	sleep 1;
 	./rm_zero.sh
 	cd ..
 	rm /tmp/pid*slog*pid > /dev/null 2>&1

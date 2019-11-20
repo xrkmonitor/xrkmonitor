@@ -393,8 +393,9 @@ if [ $? -ne 0 ]; then
 	echo "导入 mysql 数据库 mtreport_db/attr_db 失败"
 	failed_my_exit $LINENO
 fi
+   
+XRKMONITOR_DB_TABLES=''
 echo "导入 mysql 数据库 mtreport_db/attr_db 成功"
-
 echo "grant ALL PRIVILEGES ON mtreport_db.* to 'mtreport'@'localhost' identified by 'mtreport875' WITH GRANT OPTION;" | ${MYSQL_CONTEXT} 
 echo "grant ALL PRIVILEGES ON attr_db.* to 'mtreport'@'localhost' identified by 'mtreport875' WITH GRANT OPTION;" | ${MYSQL_CONTEXT} 
 echo "show tables" | mysql -B -umtreport -pmtreport875 mtreport_db |grep flogin_user > /dev/null 2>&1
@@ -478,7 +479,7 @@ if [ $? -eq 0 ]; then
 fi
 ./check_proc_monitor.sh 1
 cd ..
-sleep 1
+usleep 50000
 echo "开始检测确认字符云监控后台服务运行是否正常"
 check_file /tmp/pid.slog_config.pid $LINENO
 check_file /tmp/pid.slog_client.pid $LINENO 
