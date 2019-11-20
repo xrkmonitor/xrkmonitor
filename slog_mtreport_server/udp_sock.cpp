@@ -206,9 +206,9 @@ int CUdpSock::GetMtClientInfo()
 		if(qu.num_rows() <= 0) {
 			qu.free_result();
 			snprintf(stConfig.szSql, MYSIZEOF(stConfig.szSql),
-				"insert into mt_machine set name=\'%s\',ip1=%u,create_time=now(),"
+				"insert into mt_machine set name=\'%s\',ip1=%u,create_time=\'%s\',"
 				"mod_time=now(),machine_desc=\'系统自动添加\' ",
-				ipv4_addr_str(m_dwAgentClientIp), m_dwAgentClientIp);
+				ipv4_addr_str(m_dwAgentClientIp), m_dwAgentClientIp, uitodate(slog.m_stNow.tv_sec));
 			if(!qu.execute(stConfig.szSql)){
 				ERR_LOG("execute sql:%s failed !", stConfig.szSql);
 				return ERR_SERVER;
