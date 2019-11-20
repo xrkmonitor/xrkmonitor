@@ -128,15 +128,24 @@ if [ -z "$SERVER_OUT_IP" ]; then
 			is_ip_valid $SERVER_OUT_IP
 			[ $? -eq 0 ] && break
 		done
+		echo "您输入的外网IP 为: $SERVER_OUT_IP, 再次安装时, 您可通过脚本中的配置: SERVER_OUT_IP 指定"
 	fi
 fi
 
 if [ -z "$MYSQL_USER" ]; then
 	echo ""
-	echo "数据库操作账号未指定, 您可通过脚本中的配置: MYSQL_USER, MYSQL_PASS 指定"
-	isyes=$(yn_continue "如不指定请确保本地匿名可用, 是否继续安装(y/n)?")
+	isyes=$(yn_continue "数据库操作账号未指定, 是否使用匿名账号继续安装(y/n) ?")
 	if [ "$isyes" != "yes" ];then
-		exit 0
+		isyes=$(yn_continue "是否现在指定 mysql 操作账号 (y/n) ?")
+		if [ "$isyes" == "yes" ];then
+			read -p "请输入 MySQL 操作账号名:" MYSQL_USER
+			echo "您输入的 MySQL 操作账号为: $MYSQL_USER"
+			read -p "请输入 MySQL 操作账号密码:" MYSQL_PASS
+			echo "您输入的 MySQL 操作账号密码为: $MYSQL_PASS"
+		else
+			echo "再次安装时, 您可通过脚本中的配置: MYSQL_USER, MYSQL_PASS 指定"
+			exit 0
+		fi
 	fi
 fi
 
