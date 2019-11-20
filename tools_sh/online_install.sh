@@ -178,7 +178,7 @@ function auto_detect_apache_doc_root()
 
 	if [ -d "$APH_SERVER_CONFIG_PATH" ]; then
 		sAphConfList=`find $APH_SERVER_CONFIG_PATH -name *.conf`
-		sDocRoot=`grep -v "[[:space:]]*#" $sAphConfList |grep DocumentRoot |awk '{print $2 }'`
+		sDocRoot=`grep -v "[[:space:]]*#" $sAphConfList |grep DocumentRoot |awk -F ":" '{print $2}' |awk '{print $2 }'`
 		APACHE_DOCUMENT_ROOT=${sDocRoot//\"/}
 	else
 		sDocRoot=`apachectl -t -D DUMP_RUN_CFG 2>/dev/null |grep "Main DocumentRoot"|awk '{print $3}'`
@@ -208,9 +208,9 @@ function auto_detect_apache_cgi_path()
 		sAphConfList=`find $APH_SERVER_CONFIG_PATH -name *.conf`
 		sCgiPathInfo=`grep -v "[[:space:]]*#" $sAphConfList |grep ScriptAlias`
 
-		sCgiPath=`echo "$sCgiPathInfo" |awk '{print $3}'`
+		sCgiPath=`echo "$sCgiPathInfo" |awk -F ":" '{print $2}' |awk '{print $3}'`
 		APACHE_CGI_PATH=${sCgiPath//\"/}
-		sCgiAccessPath=`echo "$sCgiPathInfo" |awk '{print $2}'`
+		sCgiAccessPath=`echo "$sCgiPathInfo" |awk -F ":" '{print $2}' |awk '{print $2}'`
 		APACHE_CGI_ACCESS_PATH=${sCgiAccessPath//\"/}
 
 		if [ ! -d "$APACHE_CGI_PATH" -o -z "$APACHE_CGI_ACCESS_PATH" ]; then
