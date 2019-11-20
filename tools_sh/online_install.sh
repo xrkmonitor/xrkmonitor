@@ -43,6 +43,19 @@ LOCAL_IP_ETHNAME=
 
 install_sh_home=`pwd`
 
+function yn_continue()
+{
+	read -p "$1" op
+	while [ "$op" != "Y" -a "$op" != "y" -a "$op" != "N" -a "$op" != "n" ]; do
+		read -p "请输入 (y/n): " op
+	done
+	if [ "$op" != "y" -a "$op" != "Y" ];then
+		echo "no" 
+	else
+		echo "yes"
+	fi
+}
+
 function failed_my_exit()
 {
 	echo ""
@@ -73,18 +86,6 @@ function yn_exit()
 	fi
 }
 
-function yn_continue()
-{
-	read -p "$1" op
-	while [ "$op" != "Y" -a "$op" != "y" -a "$op" != "N" -a "$op" != "n" ]; do
-		read -p "请输入 (y/n): " op
-	done
-	if [ "$op" != "y" -a "$op" != "Y" ];then
-		echo "no" 
-	else
-		echo "yes"
-	fi
-}
 
 CUR_OS_INFO=`cat /etc/issue`
 

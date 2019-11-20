@@ -9,6 +9,24 @@ MYSQL_USER=
 MYSQL_PASS=
 SLOG_SERVER_FILE_PATH=/home/mtreport/slog/
 
+function yn_continue()
+{
+	read -p "$1" op
+	while [ "$op" != "Y" -a "$op" != "y" -a "$op" != "N" -a "$op" != "n" ]; do
+		read -p "请输入 (y/n): " op
+	done
+	if [ "$op" != "y" -a "$op" != "Y" ];then
+		echo "no" 
+	else
+		echo "yes"
+	fi
+}
+
+isunins=$(yn_continue "确认卸载字符云监控系统吗(y/n) ?")
+if [ "$isunins" != "yes" ]; then 
+	exit 0 
+fi
+
 ls -l /tmp/pid*slog*pid >/dev/null 2>&1
 if [ $? -eq 0 -a -f tools_sh/stop_all.sh -a -f tools_sh/rm_zero.sh ]; then
 	echo "开始停止字符云监控系统服务, 请耐心等待..."
