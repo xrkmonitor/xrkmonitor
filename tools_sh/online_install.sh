@@ -427,7 +427,7 @@ fi
 XRKMONITOR_DB_TABLES='flogin_history flogin_user mt_app_info mt_attr  mt_attr_type  mt_log_config mt_machine mt_module_info mt_server mt_table_upate_monitor mt_view  mt_view_battr mt_view_bmach mt_warn_config mt_warn_info  test_key_list'
 for xtable in $XRKMONITOR_DB_TABLES
 do
-	echo "show create table $xtable" | mysql -B mtreport_db > /dev/null 2>&1
+	echo "show create table $xtable" | ${MYSQL_CONTEXT} > /dev/null 2>&1
 	if [ $? -ne 0 ]; then
 		echo "数据库导入失败 - 导入数据库:mtreport_db, 表: $xtable 失败"
 		failed_my_exit $LINENO 
@@ -436,7 +436,7 @@ done
 XRKMONITOR_DB_ATTR_TABLES='table_info table_info_day'
 for xtable in $XRKMONITOR_DB_ATTR_TABLES
 do
-	echo "show create table $xtable" | mysql -B attr_db > /dev/null 2>&1
+	echo "show create table $xtable" | ${MYSQL_CONTEXT} > /dev/null 2>&1
 	if [ $? -ne 0 ]; then
 		echo "数据库导入失败 - 导入数据库:attr_db, 表: $xtable 失败"
 		failed_my_exit $LINENO 
