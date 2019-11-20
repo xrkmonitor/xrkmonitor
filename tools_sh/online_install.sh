@@ -150,7 +150,7 @@ if [ $? -ne 0 -a -z "$MYSQL_USER" ]; then
 	fi
 fi
 
-STEP_TOTAL=8
+STEP_TOTAL=9
 CUR_STEP=1
 XRKMONITOR_HTTP=http://open.xrkmonitor.com/xrkmonitor_down
 
@@ -559,11 +559,12 @@ if [ "$isyes" == "yes" ]; then
 fi
 CUR_STEP=`expr 1 + $CUR_STEP`
 
-isyes=$(yn_continue "需要重启下 apache, 是否现在重启(y/n) ?")
+isyes=$(yn_continue "STEP: ($CUR_STEP/$STEP_TOTAL) 需要重启下 apache, 是否现在重启(y/n) ?")
 if [ "$isyes" == "yes" ]; then
 	apachectl restart > /dev/null 2>&1
 	[ $? -ne 0 ] && echo "重启 apache 服务失败, 请您手动重启下"
 fi	
+CUR_STEP=`expr 1 + $CUR_STEP`
 
 echo ""
 if [ -z "$SERVER_OUT_IP" ]; then
