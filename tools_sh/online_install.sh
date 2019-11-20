@@ -119,7 +119,7 @@ fi
 if [ -z "$MYSQL_USER" ]; then
 	echo ""
 	echo "数据库操作账号未指定, 您可通过脚本中的配置: MYSQL_USER, MYSQL_PASS 指定"
-	isyes=$(yn_continue "如不指定将使用本地匿名账号操作 mysql 数据库, 是否继续安装(y/n)?")
+	isyes=$(yn_continue "如不指定请确保本地匿名可用, 是否继续安装(y/n)?")
 	if [ "$isyes" != "yes" ];then
 		exit 0
 	fi
@@ -143,6 +143,7 @@ if [ $# -eq 1 -a "$1" == "new" ]; then
 	rm xrkmonitor_lib.tar.gz > /dev/null 2>&1
 	rm slog_all.tar.gz > /dev/null 2>&1
 	rm slog_run_test > /dev/null 2>&1
+	rm uninstall_xrkmonitor.sh > /dev/null 2>&1
 	echo "开始全新安装: 字符云监控系统, 共 $STEP_TOTAL 步"
 else
 	echo "开始自动安装: 字符云监控系统, 共 $STEP_TOTAL 步"
@@ -154,12 +155,12 @@ echo "STEP: ($CUR_STEP/$STEP_TOTAL) 下载卸载脚本: uninstall_xrkmonitor.sh"
 if [ ! -f uninstall_xrkmonitor.sh ];then
 	wget ${XRKMONITOR_HTTP}/uninstall_xrkmonitor.sh
 	if [ ! -f uninstall_xrkmonitor.sh ]; then
-		echo "wget ${XRKMONITOR_HTTP}/uninstall_xrkmonitor.sh 执行失败!"
+		echo "下载文件 uninstall_xrkmonitor.sh 失败!"
 		failed_my_exit $LINENO
 	fi
 	chmod +x uninstall_xrkmonitor.sh
 else
-	echo "卸载脚本: uninstall_xrkmonitor.sh 已存在"	
+	echo "文件: uninstall_xrkmonitor.sh 已存在"	
 fi
 CUR_STEP=`expr 1 + $CUR_STEP`
 update_config uninstall_xrkmonitor.sh
@@ -285,12 +286,12 @@ echo ""
 echo "STEP: ($CUR_STEP/$STEP_TOTAL) 下载并解压库文件: xrkmonitor_lib.tar.gz"
 if [ ! -f xrkmonitor_lib.tar.gz ]; then
 	wget ${XRKMONITOR_HTTP}/xrkmonitor_lib.tar.gz 
-	if [ $? -ne 0 ]; then
-		echo "wget ${XRKMONITOR_HTTP}/xrkmonitor_lib.tar.gz 执行失败!"
+	if [ ! -f xrkmonitor_lib.tar.gz ]; then
+		echo "下载文件: xrkmonitor_lib.tar.gz 失败!"
 		failed_my_exit $LINENO
 	fi
 else
-	echo "xrkmonitor_lib.tar.gz 文件已存在"
+	echo "文件: xrkmonitor_lib.tar.gz 已存在"
 fi
 check_file xrkmonitor_lib.tar.gz $LINENO
 tar -zxf xrkmonitor_lib.tar.gz
@@ -310,7 +311,6 @@ else
 	fi
 	ldconfig
 fi
-
 
 echo "运行测试文件: slog_tool(slog_run_test)"
 cp xrkmonitor_lib/slog_tool slog_run_test
@@ -369,12 +369,14 @@ echo ""
 echo "STEP: ($CUR_STEP/$STEP_TOTAL) 下载并解压安装包文件: slog_all.tar.gz, 请您耐心等待..."
 if [ ! -f slog_all.tar.gz ]; then
 	wget ${XRKMONITOR_HTTP}/slog_all.tar.gz
+	if [ ! -f slog_all.tar.gz ]; then
+		echo "下载文件: slog_all.tar.gz 失败"
+		failed_my_exit $LINENO
+	fi
 else
-	echo "slog_all.tar.gz 文件已存在"
+	echo "文件: slog_all.tar.gz 已存在"
 fi
-check_file slog_all.tar.gz $LINENO 
 tar -zxf slog_all.tar.gz 
-check_file db/mtreport_db.sql $LINENO 
 CUR_STEP=`expr 1 + $CUR_STEP`
 
 
@@ -386,6 +388,8 @@ else
 	echo "STEP: ($CUR_STEP/$STEP_TOTAL) 开始使用指定账号($MYSQL_USER|$MYSQL_PASS)初始化 mysql 数据库"
 	MYSQL_CONTEXT="mysql -B -u$MYSQL_USER -p$MYSQL_PASS"
 fi
+check_file db/mtreport_db.sql $LINENO 
+check_file db/attr_db.mysql $LINENO 
 ${MYSQL_CONTEXT} < db/mtreport_db.sql
 ${MYSQL_CONTEXT} < db/attr_db.mysql
 echo "show databases" | ${MYSQL_CONTEXT} |grep mtreport_db > /dev/null 2>&1
@@ -491,12 +495,14 @@ if [ "$SLOG_SERVER_FILE_PATH" != "/home/mtreport/slog/" ]; then
 fi
 
 cd tools_sh
+check_file stop_all.sh $LINENO
 ls -l /tmp/pid*slog*pid >/dev/null 2>&1
 if [ $? -eq 0 ]; then
 	./stop_all.sh
 fi
+
+check_file check_proc_monitor.sh $LINENO
 ./check_proc_monitor.sh 1
-cd ..
 usleep 50000
 echo "开始检测确认字符云监控后台服务运行是否正常"
 check_file /tmp/pid.slog_config.pid $LINENO
@@ -508,15 +514,19 @@ check_file /tmp/pid.slog_mtreport_server.pid $LINENO
 check_file /tmp/pid.slog_server.pid $LINENO 
 check_file /tmp/pid.slog_write.pid $LINENO 
 
-./add_crontab.sh > /dev/null 2>&1
-if [ $? -ne 0 ]; then
-	echo "安装字符云监控后台服务自动拉起脚本:add_crontab.sh 到 crontab 失败,请您手动安装"
+check_file add_crontab.sh $LINENO
+isyes=$(yn_continue "是否添加字符云监控服务自动拉起脚本到 crontab(y/n) ?")
+if [ "$isyes" != "yes" ]; then
+	./add_crontab.sh > /dev/null 2>&1
+	if [ $? -ne 0 ]; then
+		echo "安装字符云监控后台服务自动拉起脚本:add_crontab.sh 到 crontab 失败,请您手动安装"
+	else
+		echo "安装字符云监控后台服务自动拉起脚本: add_crontab.sh 到 crontab 成功"
+	fi
 fi
-echo "安装字符云监控后台服务自动拉起脚本: add_crontab.sh 到 crontab 成功"
 CUR_STEP=`expr 1 + $CUR_STEP`
 
 echo ""
-
 if [ -z "$SERVER_OUT_IP" ]; then
 	echo "恭喜您, 在线安装完成, 现在您可以在浏览器中访问控制台了, 访问网址: http://$LOCAL_IP"
 	echo "约 1 分钟左右, 您可以在字符云监控系统 web 控制台上查看监控系统本身的数据上报"
@@ -530,8 +540,9 @@ else
 	echo ""
 fi
 
+cd $install_sh_home
+check_file online_install.sh $LINENO
 cp online_install.sh online_install.sh_bk
 update_config online_install.sh_bk
 mv online_install.sh_bk online_install.sh
-
 
