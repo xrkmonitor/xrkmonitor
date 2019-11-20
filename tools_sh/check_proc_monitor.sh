@@ -51,7 +51,7 @@ function restart_process()
 
 	Count=`pgrep -f "${pname}"|wc -l`
 	if [ $Count -eq $pnum ] ; then return ; fi
-	usleep 50000
+	usleep 50000 > /dev/null 2>&1 || sleep 1
 	Count=`pgrep -f "${pname}"|wc -l`
 	if [ $Count -eq $pnum ] ; then return ; fi
 
@@ -82,7 +82,7 @@ function restart_process_ex()
 
 	Count=`pgrep -f "${pname}"|wc -l`
 	if [ $Count -ge $pnum_min -a $Count -le $pnum_max ] ; then return ; fi
-	usleep 50000
+	usleep 50000 > /dev/null 2>&1 || sleep 1
 	Count=`pgrep -f "${pname}"|wc -l`
 	if [ $Count -ge $pnum_min -a $Count -le $pnum_max ] ; then return ; fi
 
@@ -110,7 +110,7 @@ restart_process "${MONITORBASEDIR}/slog_memcached" 'slog_memcached' 1
 restart_process "${MONITORBASEDIR}/slog_config" 'slog_config$' 1
 while [ ! -f /tmp/_slog_config_read_ok ]  
 do
-	usleep 100000
+	usleep 50000 > /dev/null 2>&1 || sleep 1
 done
 
 restart_process "${MONITORBASEDIR}/slog_client" 'slog_client$' 1
@@ -132,7 +132,7 @@ if [ $ACTION -eq 1 ] ; then
 
 	ADDRESS=`echo $HOSTNAME`
 	RESTARTINFO="${RESTARTINFO}; host name:${ADDRESS}"
-	usleep 50000
+	usleep 50000 > /dev/null 2>&1 || sleep 1
 	#${MONITORBASEDIR}/slog_deal_warn/slog_deal_warn $MAILTOADDR "$MAILSUBJECT" "$RESTARTINFO"
 fi
 

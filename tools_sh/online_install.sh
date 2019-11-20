@@ -540,7 +540,7 @@ fi
 
 check_file check_proc_monitor.sh $LINENO
 ./check_proc_monitor.sh 1
-usleep 50000
+usleep 50000 > /dev/null 2>&1 || sleep 1
 echo "开始检测确认字符云监控后台服务运行是否正常"
 check_file /tmp/pid.slog_config.pid $LINENO
 check_file /tmp/pid.slog_client.pid $LINENO 

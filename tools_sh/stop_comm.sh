@@ -28,7 +28,7 @@ function stop_proc()
 				kill -s 10 $pid > /dev/null 2>&1
 			fi
 		done
-		usleep 50000
+		usleep 50000 > /dev/null 2>&1 || sleep 1
 		count=`expr $count + 1`
 	done
 	echo "stop failed !"
