@@ -128,7 +128,7 @@ if [ $? -eq 0 ]; then
 		echo "drop user mtreport@localhost" | ${MYSQL_CONTEXT}
 	fi
 else
-	echo "未检测到 mysql 数据库: mtreport_db/attr_db, 跳过清理"	
+	echo "未检测到 mysql 数据库: mtreport_db/attr_db, 跳过数据库清理"	
 fi
 
 if [ -d "$SLOG_SERVER_FILE_PATH" ]; then
