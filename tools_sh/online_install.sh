@@ -444,6 +444,13 @@ fi
 
 echo "数据库 mtreport_db 重新初始化"
 XRK_MYSQL_CONTEXT="mysql -B -umtreport -pmtreport875 mtreport_db "
+echo "delete from flogin_history" | $XRK_MYSQL_CONTEXT > /dev/null 2>&1
+echo "delete from mt_machine" | $XRK_MYSQL_CONTEXT > /dev/null 2>&1
+echo "delete from test_key_list" | $XRK_MYSQL_CONTEXT > /dev/null 2>&1
+echo "delete from mt_table_upate_monitor" | $XRK_MYSQL_CONTEXT > /dev/null 2>&1
+echo "delete from mt_view_bmach" | $XRK_MYSQL_CONTEXT > /dev/null 2>&1
+echo "delete from mt_warn_info" | $XRK_MYSQL_CONTEXT > /dev/null 2>&1
+
 echo "update mt_server set ip = '$LOCAL_IP'" | $XRK_MYSQL_CONTEXT > /dev/null 2>&1
 LOCAL_IP_DEC=`./slog_run_test show ips2d $LOCAL_IP |awk '{if(NF==3) print $1}'`
 if [ ! -z "$SERVER_OUT_IP" ]; then
@@ -451,9 +458,9 @@ if [ ! -z "$SERVER_OUT_IP" ]; then
 	echo "update mt_server set ip = '$SERVER_OUT_IP' where type=1" | $XRK_MYSQL_CONTEXT > /dev/null 2>&1
 fi
 if [ "$LOCAL_IP_DEC" != "$LOCAL_IP_DEC_OUT" -a ! -z "$LOCAL_IP_DEC_OUT" ]; then
-	echo "insert into mt_machine set name='$LOCAL_IP',ip1=$LOCAL_IP_DEC,ip2=$LOCAL_IP_DEC_OUT,create_time=now(),mod_time=now(),machine_desc='在线安装脚本自动添加'" | $XRK_MYSQL_CONTEXT > /dev/null 2>&1
+	echo "insert into mt_machine set name='$LOCAL_IP',ip1=$LOCAL_IP_DEC,ip2=$LOCAL_IP_DEC_OUT,create_time=now(),mod_time=now(),machine_desc='auto add'" | $XRK_MYSQL_CONTEXT > /dev/null 2>&1
 else
-	echo "insert into mt_machine set name='$LOCAL_IP',ip1=$LOCAL_IP_DEC,create_time=now(),mod_time=now(),machine_desc='在线安装脚本自动添加'" | $XRK_MYSQL_CONTEXT > /dev/null 2>&1
+	echo "insert into mt_machine set name='$LOCAL_IP',ip1=$LOCAL_IP_DEC,create_time=now(),mod_time=now(),machine_desc='auto add'" | $XRK_MYSQL_CONTEXT > /dev/null 2>&1
 fi
 
 echo "select id from mt_machine where ip1=$LOCAL_IP_DEC" | $XRK_MYSQL_CONTEXT > /dev/null 2>&1
