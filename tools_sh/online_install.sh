@@ -103,7 +103,7 @@ CUR_OS_INFO=`cat /etc/issue`
 
 MYSQL_PROC_COUNT=`ps -elf |grep mysql|wc -l`
 if [ $MYSQL_PROC_COUNT -lt 2 ]; then
-	promt_msg="未检测到依赖的第三方服务 mysql, 是否继续安装(y/n) ?"
+	promt_msg="未检测到依赖的第三方服务 mysql, 请确保该服务已安装运行, 是否继续安装(y/n) ?"
 	isyes=$(yn_continue "$promt_msg")
 	if [ "$isyes" != "yes" ];then
 		exit 0
