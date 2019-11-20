@@ -583,7 +583,7 @@ echo ""
 
 apachectl -t -D DUMP_MODULES |grep cgi_module > /dev/null 2>&1
 if [ $? -ne 0 ]; then
-	echo "当前 apache 未加载模块: cgi_module, 请修改配置加载后重启 apache 服务 !!!"
+	echo "未检测到 apache 模块: cgi_module, 请修改配置加载后重启 apache 服务. " 
 else
 	isyes=$(yn_continue "需要重启下 apache, 是否现在重启(y/n) ?")
 	if [ "$isyes" == "yes" ]; then
