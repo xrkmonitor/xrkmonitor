@@ -559,6 +559,12 @@ if [ "$isyes" == "yes" ]; then
 fi
 CUR_STEP=`expr 1 + $CUR_STEP`
 
+isyes=$(yn_continue "需要重启下 apache, 是否现在重启(y/n) ?")
+if [ "$isyes" == "yes" ]; then
+	apachectl restart > /dev/null 2>&1
+	[ $? -ne 0 ] && echo "重启 apache 服务失败, 请您手动重启下"
+fi	
+
 echo ""
 if [ -z "$SERVER_OUT_IP" ]; then
 	echo "恭喜您, 在线安装完成, 现在您可以在浏览器中访问控制台了, 访问网址: http://$LOCAL_IP"
