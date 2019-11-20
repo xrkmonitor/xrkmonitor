@@ -132,7 +132,7 @@ if [ -z "$SERVER_OUT_IP" ]; then
 	fi
 fi
 
-mysql -B > /dev/null  2>&1
+echo "show databases" | mysql -B |grep mysql > /dev/null 2>&1
 if [ $? -ne 0 -a -z "$MYSQL_USER" ]; then
 	echo ""
 	isyes=$(yn_continue "mysql 本地匿名账号不可用, 是否现在指定 mysql 操作账号 (y/n) ?")
