@@ -150,7 +150,7 @@ if [ $? -ne 0 -a -z "$MYSQL_USER" ]; then
 	fi
 fi
 
-STEP_TOTAL=9
+STEP_TOTAL=8
 CUR_STEP=1
 XRKMONITOR_HTTP=http://open.xrkmonitor.com/xrkmonitor_down
 
@@ -581,11 +581,11 @@ echo "然后修改安装脚本中的相关配置后再次执行安装脚本: onl
 echo "感谢您的使用, 联系我们: Q群(699014295), email(1820140912@qq.com)"
 echo ""
 
-apachectl -t -D DUMP_MODULES |grep cgi_module >/dev/null 2>&1
+apachectl -t -D DUMP_MODULES |grep cgi_module > /dev/null 2>&1
 if [ $? -ne 0 ]; then
 	echo "当前 apache 未加载模块: cgi_module, 请修改配置加载后重启 apache 服务 !!!"
 else
-	isyes=$(yn_continue "STEP: ($CUR_STEP/$STEP_TOTAL) 需要重启下 apache, 是否现在重启(y/n) ?")
+	isyes=$(yn_continue "需要重启下 apache, 是否现在重启(y/n) ?")
 	if [ "$isyes" == "yes" ]; then
 		apachectl restart > /dev/null 2>&1
 		[ $? -ne 0 ] && echo "重启 apache 服务失败, 请您手动重启下"
@@ -603,7 +603,6 @@ else
 	fi
 fi
 echo ""
-CUR_STEP=`expr 1 + $CUR_STEP`
 
 cd $install_sh_home
 check_file online_install.sh $LINENO
