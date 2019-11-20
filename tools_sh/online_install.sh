@@ -548,7 +548,7 @@ check_file /tmp/pid.slog_server.pid $LINENO
 check_file /tmp/pid.slog_write.pid $LINENO 
 
 check_file add_crontab.sh $LINENO
-isyes=$(yn_continue "是否添加字符云监控服务自动拉起脚本到 crontab(y/n) ?")
+isyes=$(yn_continue "服务启动成功, 是否添加字符云监控服务自动拉起脚本到 crontab(y/n) ?")
 if [ "$isyes" == "yes" ]; then
 	./add_crontab.sh > /dev/null 2>&1
 	if [ $? -ne 0 ]; then
