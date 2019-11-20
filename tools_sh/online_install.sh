@@ -146,6 +146,7 @@ XRKMONITOR_HTTP=http://open.xrkmonitor.com/xrkmonitor_down
 
 function update_config() 
 {
+	sed -i "/^SERVER_OUT_IP=/cSERVER_OUT_IP=${SERVER_OUT_IP}" $1 
 	sed -i "/^APACHE_DOCUMENT_ROOT=/cAPACHE_DOCUMENT_ROOT=${APACHE_DOCUMENT_ROOT}"  $1 
 	sed -i "/^XRKMONITOR_HTML_PATH=/cXRKMONITOR_HTML_PATH=${XRKMONITOR_HTML_PATH}" $1 
 	sed -i "/^APACHE_CGI_PATH=/cAPACHE_CGI_PATH=${APACHE_CGI_PATH}" $1 
