@@ -399,7 +399,7 @@ for xtable in $XRKMONITOR_DB_TABLES
 do
 	echo "show create table $xtable" | mysql -B mtreport_db > /dev/null 2>&1
 	if [ $? -ne 0 ]; then
-		echo "数据库导入失败 - 检查数据库:mtreport_db, 表: $xtable 失败"
+		echo "数据库导入失败 - 导入数据库:mtreport_db, 表: $xtable 失败"
 		failed_my_exit $LINENO 
 	fi
 done
@@ -408,7 +408,7 @@ for xtable in $XRKMONITOR_DB_ATTR_TABLES
 do
 	echo "show create table $xtable" | mysql -B attr_db > /dev/null 2>&1
 	if [ $? -ne 0 ]; then
-		echo "数据库导入失败 - 检查数据库:attr_db, 表: $xtable 失败"
+		echo "数据库导入失败 - 导入数据库:attr_db, 表: $xtable 失败"
 		failed_my_exit $LINENO 
 	fi
 done
