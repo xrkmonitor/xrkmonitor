@@ -43,6 +43,19 @@ LOCAL_IP_ETHNAME=
 
 install_sh_home=`pwd`
 
+function is_ip_valid() 
+{
+	IP=$1     
+	if [[ $IP =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
+		FIELD1=`echo $IP|awk -F "." '{print $1}'`
+		FIELD2=`echo $IP|awk -F "." '{print $2}'`
+		FIELD3=`echo $IP|awk -F "." '{print $3}'`
+		FIELD4=`echo $IP|awk -F "." '{print $4}'`
+		[ $FIELD1 -le 255 -a $FIELD2 -le 255 -a $FIELD3 -le 255 -a $FIELD4 -le 255 ] && return 0
+	fi
+	return 1
+}
+
 function yn_continue()
 {
 	read -p "$1" op
@@ -109,10 +122,13 @@ if [ $APACHE_PROC_COUNT -lt 2 -a $APACHE_PROC_COUNT_2 -lt 2 ]; then
 fi
 
 if [ -z "$SERVER_OUT_IP" ]; then
-	echo "外网IP未指定, 您可通过脚本中的配置: SERVER_OUT_IP 指定"
-	isyes=$(yn_continue "如果您需要在外网访问监控系统web控制台, 外网IP必须指定, 是否继续安装(y/n)?")
-	if [ "$isyes" != "yes" ];then
-		exit 0
+	isyes=$(yn_continue "外网IP未指定, 如果您需要在外网访问web控制台, 需要指定外网IP, 是否现在指定(y/n)?")
+	if [ "$isyes" == "yes" ];then
+		while true; do
+			read -p "请输入合法IP:" SERVER_OUT_IP
+			is_ip_valid SERVER_OUT_IP
+			[ $? -eq 0 ] && break
+		done
 	fi
 fi
 
