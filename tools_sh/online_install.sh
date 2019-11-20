@@ -346,8 +346,11 @@ if [ $? -ne 0 ]; then
 		echo "依赖以下第三方库文件, 您可以在安装相应库后重试"
 		echo "$NEW_THIRD_LIBS"
 	fi
+	rm _run_test_tmp > /dev/null 2>&1
 	failed_my_exit $LINENO
 fi
+rm _run_test_tmp > /dev/null 2>&1
+
 if [ ! -z "$NEW_THIRD_LIBS" ]; then
 	echo ""
 	echo "在您的系统中未检测到以下第三方库:" 

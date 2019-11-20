@@ -1,6 +1,6 @@
 #!/bin/bash
-
 PATH=/bin:/sbin:/usr/bin/:/usr/sbin:/usr/local/bin:/usr/local/sbin:/usr/local/mysql/bin
+
 APACHE_DOCUMENT_ROOT=/srv/www/htdocs
 APACHE_CGI_PATH=/srv/www/cgi-bin
 XRKMONITOR_HTML_PATH=xrkmonitor
@@ -62,11 +62,8 @@ fi
 [ -d slog_tool ] && (echo "删除目录: slog_tool"; rm -fr slog_tool)
 [ -d slog_write ] && (echo "删除目录: slog_write"; rm -fr slog_write)
 [ -d tools_sh ] && (echo "删除目录: tools_sh"; rm -fr tools_sh)
-
-if [ -f xrkmonitor_lib.tar.gz ]; then
-	echo "删除文件: xrkmonitor_lib.tar.gz"
-	rm xrkmonitor_lib.tar.gz
-fi
+[ -f xrkmonitor_lib.tar.gz ] && (echo "删除文件: xrkmonitor_lib.tar.gz"; rm -fr xrkmonitor_lib.tar.gz)
+[ -f _run_test_tmp ] && (echo "删除临时文件: _run_test_tmp"; rm -fr _run_test_tmp)
 
 function yn_continue()
 {
@@ -81,15 +78,8 @@ function yn_continue()
 	fi
 }
 
-if [ -f slog_run_test ]; then
-	echo "删除运行测试文件: slog_run_test"
-	rm slog_run_test
-fi
-
-if [ -f slog_all.tar.gz ]; then
-	echo "删除安装包文件: slog_all.tar.gz"
-	rm slog_all.tar.gz
-fi
+[ -f slog_run_test ] && (echo "删除测试文件: slog_run_test"; rm -fr slog_run_test)
+[ -f slog_all.tar.gz ] && (echo "删除测试文件: slog_all.tar.gz"; rm -fr slog_all.tar.gz)
 
 if [ ! -f /etc/ld.so.conf ]; then
 	echo "动态链接库配置文件: /etc/ld.so.conf 不存在!"
@@ -129,7 +119,7 @@ if [ -d "$SLOG_SERVER_FILE_PATH" ]; then
 		rm -fr $SLOG_SERVER_FILE_PATH
 	fi
 else
-	echo "未检测到日志目录: $SLOG_PATH, 跳过日志清理"
+	echo "未检测到日志目录: $SLOG_SERVER_FILE_PATH, 跳过日志清理"
 fi
 
 isyes=$(yn_continue "是否删除安装/卸载脚本 (y/n)?")
@@ -138,8 +128,6 @@ if [ "$isyes" == "yes" ]; then
 	rm uninstall_xrkmonitor.sh
 fi
 
-
 echo "已为您清理干净字符云监控系统安装记录, 感谢您的关注."
 echo ""
-
 
