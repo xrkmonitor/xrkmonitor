@@ -129,6 +129,8 @@ if [ -z "$SERVER_OUT_IP" ]; then
 			[ $? -eq 0 ] && break
 		done
 		echo "您输入的外网IP 为: $SERVER_OUT_IP, 如输错再次安装时, 可通过脚本中的配置: SERVER_OUT_IP 指定"
+		isyes=$(yn_continue "是否继续安装(y/n) ?")
+		[ "$isyes" != "yes" ] && exit 0
 	fi
 fi
 
@@ -140,6 +142,8 @@ if [ $? -ne 0 -a -z "$MYSQL_USER" ]; then
 		read -p "请输入 MySQL 操作账号名:" MYSQL_USER
 		read -p "请输入 MySQL 操作账号密码:" MYSQL_PASS
 		echo "您的输入为: $MYSQL_USER / $MYSQL_PASS, 如输错再次安装时, 可通过脚本中的配置: MYSQL_USER MYSQL_PASS 指定"
+		isyes=$(yn_continue "是否继续安装(y/n) ?")
+		[ "$isyes" != "yes" ] && exit 0
 	else
 		echo "再次安装时, 您可通过本脚本中的配置: MYSQL_USER, MYSQL_PASS 指定"
 		exit 0
