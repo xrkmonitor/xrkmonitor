@@ -136,8 +136,8 @@ if [ $? -eq 0 ]; then
 	echo "移除 crontab 监控脚本"
 	sed -i '/check_proc_monitor\.sh/d' _del_xrkmonitor_proc_check
 	crontab _del_xrkmonitor_proc_check
-	rm _del_xrkmonitor_proc_check
 fi
+rm _del_xrkmonitor_proc_check
 
 if [ -d "$SLOG_SERVER_FILE_PATH" ]; then
 	isyes=$(yn_continue "是否删除日志目录以及日志文件 (y/n)?")
