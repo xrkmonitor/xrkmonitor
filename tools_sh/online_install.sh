@@ -531,7 +531,7 @@ check_file /tmp/pid.slog_write.pid $LINENO
 
 check_file add_crontab.sh $LINENO
 isyes=$(yn_continue "是否添加字符云监控服务自动拉起脚本到 crontab(y/n) ?")
-if [ "$isyes" != "yes" ]; then
+if [ "$isyes" == "yes" ]; then
 	./add_crontab.sh > /dev/null 2>&1
 	if [ $? -ne 0 ]; then
 		echo "安装字符云监控后台服务自动拉起脚本:add_crontab.sh 到 crontab 失败,请您手动安装"
