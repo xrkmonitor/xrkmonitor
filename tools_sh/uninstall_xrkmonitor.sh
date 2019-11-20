@@ -130,6 +130,15 @@ else
 	echo "未检测到 mysql 数据库: mtreport_db/attr_db, 跳过数据库清理"	
 fi
 
+crontab -l > _del_xrkmonitor_proc_check
+grep "check_proc_monitor.sh" _del_xrkmonitor_proc_check > /dev/null 2>&1
+if [ $? -eq 0 ]; then
+	echo "移除 crontab 监控脚本"
+	sed -i '/check_proc_monitor\.sh/d' _del_xrkmonitor_proc_check
+	crontab _del_xrkmonitor_proc_check
+	rm _del_xrkmonitor_proc_check
+fi
+
 if [ -d "$SLOG_SERVER_FILE_PATH" ]; then
 	isyes=$(yn_continue "是否删除日志目录以及日志文件 (y/n)?")
 	if [ "$isyes" == "yes" ]; then
