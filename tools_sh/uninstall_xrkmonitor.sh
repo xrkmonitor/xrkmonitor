@@ -102,10 +102,10 @@ if [ ! -f /etc/ld.so.conf ]; then
 	echo "动态链接库配置文件: /etc/ld.so.conf 不存在!"
 else
 	cat /etc/ld.so.conf |grep xrkmonitor_lib > /dev/null 2>&1
-	if [ $? -ne 0 ]; then
+	if [ $? -eq 0 ]; then
 		sed -i '/xrkmonitor_lib/d' /etc/ld.so.conf
+		ldconfig
 	fi
-	ldconfig
 fi
 
 
