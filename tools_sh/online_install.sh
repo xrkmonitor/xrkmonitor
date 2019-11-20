@@ -599,11 +599,11 @@ echo "\t监控系统 html/js 文件目录: $APACHE_DOCUMENT_ROOT/$XRKMONITOR_HTM
 echo "\t监控系统日志中心日志目录: $SLOG_SERVER_FILE_PATH (cgi需要有读权限)"
 echo "\t本机IP: $LOCAL_IP_ETHNAME, 本机外网IP: $SERVER_OUT_IP"
 echo "\t监控系统动态链接库目录: $install_sh_home/xrkmonitor_lib"
+echo "---------------------------------------------------------------------------------"
 echo "\t如以上信息有误, 或者您想更改"
 echo "\t\t请先执行卸载脚本: uninstall_xrkmonitor.sh "
 echo "\t\t然后修改安装脚本中的相关配置后再次执行安装脚本: online_install.sh"
 echo "\t感谢您的使用, 联系我们: Q群(699014295), email(1820140912@qq.com)"
-echo "---------------------------------------------------------------------------------"
 
 cd $install_sh_home
 check_file online_install.sh $LINENO
