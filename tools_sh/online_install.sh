@@ -285,7 +285,7 @@ if [ ! -d "$SLOG_SERVER_FILE_PATH" ]; then
 		fi
 	fi
 	echo "新建日志中心日志文件目录: $SLOG_SERVER_FILE_PATH 成功"
-	chmod 755 "$XRKMONITOR_CGI_LOG_PATH"
+	chmod 755 "$SLOG_SERVER_FILE_PATH"
 	if [ $? -ne 0 ]; then
 		yn_exit "修改日志中心日志文件目录权限失败, 请确保cgi有读权限, 是否继续(y/n)" $LINENO 
 	fi
