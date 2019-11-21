@@ -452,12 +452,12 @@ s,@prefix@,/usr/local,;t t
 s,@program_transform_name@,s,x,x,,;t t
 s,@bindir@,${exec_prefix}/bin,;t t
 s,@sbindir@,${exec_prefix}/sbin,;t t
-s,@libexecdir@,${exec_prefix}/libexec,;t t
+s,@libexecdir@,${exec_prefix}/lib,;t t
 s,@datadir@,${prefix}/share,;t t
 s,@sysconfdir@,${prefix}/etc,;t t
 s,@sharedstatedir@,${prefix}/com,;t t
 s,@localstatedir@,${prefix}/var,;t t
-s,@libdir@,${exec_prefix}/lib,;t t
+s,@libdir@,${exec_prefix}/lib64,;t t
 s,@includedir@,${prefix}/include,;t t
 s,@oldincludedir@,/usr/include,;t t
 s,@infodir@,${prefix}/info,;t t

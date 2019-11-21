@@ -26,12 +26,12 @@ exec_prefix = ${prefix}
 
 bindir = ${exec_prefix}/bin
 sbindir = ${exec_prefix}/sbin
-libexecdir = ${exec_prefix}/libexec
+libexecdir = ${exec_prefix}/lib
 datadir = ${prefix}/share
 sysconfdir = ${prefix}/etc
 sharedstatedir = ${prefix}/com
 localstatedir = ${prefix}/var
-libdir = ${exec_prefix}/lib
+libdir = ${exec_prefix}/lib64
 infodir = ${prefix}/info
 mandir = ${prefix}/man
 includedir = ${prefix}/include

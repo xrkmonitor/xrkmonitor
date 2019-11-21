@@ -3,6 +3,6 @@ VER_MINOR = 1.0
 INSTALL_INC = *.h
 SRCS = cgiwrap.c cgi.c html.c date.c rfc2388.c
 
-INCLS = ./date.h ./cgi.h ./html.h ./cgiwrap.h
+INCLS = ./cgiwrap.h ./html.h ./date.h ./cgi.h
 
 INCLUDE = -I.. -I. -I/usr/include/mtagent_api_open

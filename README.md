@@ -35,9 +35,24 @@
 **微信告警示例:**(支持邮件、短信、微信、PC客户端等告警方式，告警功能无需开发直接可用)  
 ![开源版监控系统告警示例](http://xrkmonitor.com/monitor/images/open_wx_2.png)
 
-**在线文档：- [在线文档 http://xrkmonitor.com/monitor/dmt_open_doc.html](http://xrkmonitor.com/monitor/dmt_open_doc.html)**   
+
+**在线自动安装部署:**   
+
+http://open.xrkmonitor.com/xrkmonitor_down/online_install.sh; chmod +x online_install.sh; ./online_install.sh  
+
+在线部署说明:  
+在线部署目前只支持集中部署方式, 即所有服务部署在一台机器上, 该机器上需要安装 mysql/apache    
+使用 普通账号 执行安装部署要求如下:    
+1. 在线部署使用动态链接库, 需要在指定目录下执行安装脚本, 目录为: /home/mtreport   
+2. 普通账号某些目录可能无权操作, 需要授权才能正常安装    
+我们建议您先在本地虚拟机上执行在线安装, 熟悉安装流程后在实际部署到您的服务器上.  
+
 
 **项目演示链接：[字符云监控项目演示 http://open.xrkmonitor.com](http://open.xrkmonitor.com)**   
+
+
+**在线文档：- [在线文档 http://xrkmonitor.com/monitor/dmt_open_doc.html](http://xrkmonitor.com/monitor/dmt_open_doc.html)**   
+
 
 ## 联系我们
 QQ 群 699014295 (加群密码：xrkmonitor):   
