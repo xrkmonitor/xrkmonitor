@@ -273,11 +273,18 @@ if [ ! -d "$APACHE_CGI_PATH" ]; then
 fi
 
 if [ ! -d "$APACHE_DOCUMENT_ROOT/$XRKMONITOR_HTML_PATH" ]; then
-	yn_exit "字符云监控 html/js 文件安装路径: $APACHE_DOCUMENT_ROOT/$XRKMONITOR_HTML_PATH 不存在,是否新建(y/n)?" 102
+	echo "html/js 文件安装目录 $APACHE_DOCUMENT_ROOT/$XRKMONITOR_HTML_PATH 不存在, 尝试创建"
 	mkdir -p "$APACHE_DOCUMENT_ROOT/$XRKMONITOR_HTML_PATH"
 	if [ ! -d "$APACHE_DOCUMENT_ROOT/$XRKMONITOR_HTML_PATH" ]; then
-		echo "新建目录: $APACHE_DOCUMENT_ROOT/$XRKMONITOR_HTML_PATH 失败"
+		echo "新建目录: $APACHE_DOCUMENT_ROOT/$XRKMONITOR_HTML_PATH 失败, 如无权限请授权后再试"
+		yn_exit "是否现在重试(y/n) ?" $LINENO 
+		mkdir -p "$APACHE_DOCUMENT_ROOT/$XRKMONITOR_HTML_PATH"
+		if [ ! -d "$APACHE_DOCUMENT_ROOT/$XRKMONITOR_HTML_PATH" ]; then
+			echo "新建 html/js 文件目录: $APACHE_DOCUMENT_ROOT/$XRKMONITOR_HTML_PATH 失败 !"
+		fi
 		failed_my_exit $LINENO 
+	else
+		echo "新建目录: $APACHE_DOCUMENT_ROOT/$XRKMONITOR_HTML_PATH 成功"
 	fi
 fi
 
