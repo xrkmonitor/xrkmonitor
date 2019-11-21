@@ -56,7 +56,6 @@ check_cgi mt_slog
 
 tar cvf ${TarP} tools_sh/rm_zero.sh
 tar rvf ${TarP} tools_sh/check_proc_monitor.sh
-tar rvf ${TarP} tools_sh/start_all.sh
 tar rvf ${TarP} tools_sh/stop_all.sh
 tar rvf ${TarP} tools_sh/add_crontab.sh
 tar rvf ${TarP} tools_sh/start_comm.sh
