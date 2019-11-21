@@ -284,16 +284,23 @@ if [ ! -d "$APACHE_DOCUMENT_ROOT/$XRKMONITOR_HTML_PATH" ]; then
 		fi
 		failed_my_exit $LINENO 
 	else
-		echo "新建目录: $APACHE_DOCUMENT_ROOT/$XRKMONITOR_HTML_PATH 成功"
+		echo "新建 html/js 文件目录: $APACHE_DOCUMENT_ROOT/$XRKMONITOR_HTML_PATH 成功"
 	fi
 fi
 
 if [ ! -d "$XRKMONITOR_CGI_LOG_PATH" ]; then
-	yn_exit "cgi 本地日志文件路径: $XRKMONITOR_CGI_LOG_PATH 不存在, 是否新建(y/n)?" $LINENO
+	echo "cgi 本地日志文件目录: $XRKMONITOR_CGI_LOG_PATH 不存在, 尝试创建" 
 	mkdir -p "$XRKMONITOR_CGI_LOG_PATH"
 	if [ ! -d "$XRKMONITOR_CGI_LOG_PATH" ]; then
-		echo "新建目录: $XRKMONITOR_CGI_LOG_PATH 失败"
+		echo "新建目录: $XRKMONITOR_CGI_LOG_PATH 失败, 如无权限请授权后再试"
+		yn_exit "是否现在重试(y/n) ?" $LINENO 
+		mkdir -p "$XRKMONITOR_CGI_LOG_PATH"
+		if [ ! -d "$XRKMONITOR_CGI_LOG_PATH" ]; then
+			echo "新建 cgi 本地日志文件目录: $XRKMONITOR_CGI_LOG_PATH 失败 !"
+		fi
 		failed_my_exit $LINENO 
+	else
+		echo "新建 cgi 本地日志文件目录: $XRKMONITOR_CGI_LOG_PATH 成功"
 	fi
 	chmod 777 "$XRKMONITOR_CGI_LOG_PATH"
 	if [ $? -ne 0 ]; then
