@@ -281,11 +281,10 @@ if [ ! -d "$APACHE_DOCUMENT_ROOT/$XRKMONITOR_HTML_PATH" ]; then
 		mkdir -p "$APACHE_DOCUMENT_ROOT/$XRKMONITOR_HTML_PATH"
 		if [ ! -d "$APACHE_DOCUMENT_ROOT/$XRKMONITOR_HTML_PATH" ]; then
 			echo "新建 html/js 文件目录: $APACHE_DOCUMENT_ROOT/$XRKMONITOR_HTML_PATH 失败 !"
+			failed_my_exit $LINENO 
 		fi
-		failed_my_exit $LINENO 
-	else
-		echo "新建 html/js 文件目录: $APACHE_DOCUMENT_ROOT/$XRKMONITOR_HTML_PATH 成功"
 	fi
+	echo "新建 html/js 文件目录: $APACHE_DOCUMENT_ROOT/$XRKMONITOR_HTML_PATH 成功"
 fi
 
 if [ ! -d "$XRKMONITOR_CGI_LOG_PATH" ]; then
@@ -297,11 +296,10 @@ if [ ! -d "$XRKMONITOR_CGI_LOG_PATH" ]; then
 		mkdir -p "$XRKMONITOR_CGI_LOG_PATH"
 		if [ ! -d "$XRKMONITOR_CGI_LOG_PATH" ]; then
 			echo "新建 cgi 本地日志文件目录: $XRKMONITOR_CGI_LOG_PATH 失败 !"
+			failed_my_exit $LINENO 
 		fi
-		failed_my_exit $LINENO 
-	else
-		echo "新建 cgi 本地日志文件目录: $XRKMONITOR_CGI_LOG_PATH 成功"
 	fi
+	echo "新建 cgi 本地日志文件目录: $XRKMONITOR_CGI_LOG_PATH 成功"
 	chmod 777 "$XRKMONITOR_CGI_LOG_PATH"
 	if [ $? -ne 0 ]; then
 		yn_exit "修改 cgi 日志目录权限失败, 请确保cgi 可写日志目录, 是否继续(y/n)" $LINENO 
