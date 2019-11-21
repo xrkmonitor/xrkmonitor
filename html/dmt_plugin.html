@@ -1,7 +1,7 @@
 <script language="javascript" type="text/javascript">
 var <?cs var:config.plugin_pre ?>_plugin_list = $.parseJSON('<?cs var:config.plugin_list ?>');
 var <?cs var:config.plugin_pre ?>_sel_plugin = "null";
-var <?cs var:config.plugin_pre ?>_sel_detail_idx = ""; // 用于弹出详情对话框时设置数据
+var <?cs var:config.plugin_pre ?>_sel_detail_idx = ""; 
 
 function <?cs var:config.plugin_pre ?>Search()
 {
@@ -93,7 +93,6 @@ function <?cs var:config.plugin_pre ?>OnDetail(idx)
 	$('#<?cs var:config.plugin_pre ?>_language').text(<?cs var:config.plugin_pre ?>_plugin_list.list[idx].dev_language);
 	$('#<?cs var:config.plugin_pre ?>_dest_os').text(<?cs var:config.plugin_pre ?>_plugin_list.list[idx].dest_os);
 
-	// 换行符有转码，需要转换回来
 	var dc = <?cs var:config.plugin_pre ?>_plugin_list.list[idx].desc;
 	$('#<?cs var:config.plugin_pre ?>_plugin_desc').html(dc.replace(/&br/g, "\r\n"));
 	var op = { mask:true, maxable:false, height:320, width:520, resizable:false, drawable:true};
@@ -211,7 +210,7 @@ $(document).ready(function(){
 	<div class="unitBox" style="margin-left:1px;"> 
 		<div class="accountInfo" style='display:block;height:30px;'>
 			<div class='note-text' style='text-align:left; font-size:13px; margin-top:8px;'>
-				说明：监控插件无需开发,下载部署后即可生成相关监控数据; 我们欢迎自行开发插件, 如您开发了插件且有意愿开源, 我们可以免费为您发布到插件市场.
+				插件功能开发中, 敬请期待 ! - 说明：监控插件无需开发,下载部署后即可生成相关监控数据; 我们欢迎自行开发插件, 如您开发了插件且有意愿开源, 我们可以免费为您发布到插件市场.
 			</div>
 		</div>
 
