@@ -15,21 +15,36 @@ if [ ! -f ${MYSQL_INCLUDE}/mysql/mysql.h ]; then
 fi
 # check mysql 库文件路径是否 OK
 if [ ! -f ${MYSQL_LIB}/libmysqlclient.so ]; then
-	echo "(1/$STEP_TOTAL) not find file:${MYSQL_LIB}/libmysqlclient.so, check mysql lib path failed !"
-	exit 2
+	if [ -f /usr/lib64/libmysqlclient.so ]; then
+		sed -i '/^MYSQL_LIB/cMYSQL_LIB = \/usr\/lib64' make_env
+	elif [ -f /usr/lib/x86_64-linux-gnu/libmysqlclient.so ]; then
+		sed -i '/^MYSQL_LIB/cMYSQL_LIB = \/usr\/lib\/x86_64-linux-gnu' make_env
+	else
+		echo "(1/$STEP_TOTAL) not find file:${MYSQL_LIB}/libmysqlclient.so, check mysql lib path failed !"
+		exit 2
+	fi
 fi
 echo "(1/$STEP_TOTAL) mysql devel check ok"
+
+function yn_continue()
+{
+	read -p "$1" op
+	while [ "$op" != "Y" -a "$op" != "y" -a "$op" != "N" -a "$op" != "n" ]; do
+		read -p "please input (y/n): " op
+	done
+	if [ "$op" != "y" -a "$op" != "Y" ];then
+		echo "no" 
+	else
+		echo "yes"
+	fi
+}
 
 function InstallFailed()
 {
 	echo ""
-	soft=$1
-	read -p "$soft failed, continue(y/n)? " op
-	while [ $op != "Y" -a $op != "y" -a $op != "N" -a $op != "n" ]; do 
-		read -p "please input y/n: " op
-	done
-	if [ $op != "y" -a $op != "Y" ];then
-		exit -1
+	isyes=$(yn_continue "$1 failed, continue(y/n)? ")
+	if [ "$isyes" != "yes" ];then
+		exit -1 
 	fi
 }
 
@@ -37,11 +52,8 @@ function InstallFailed()
 function InstallProtobuf()
 {
 	echo ""
-	read -p "(2/$STEP_TOTAL) install protobuf(y/n)? " op
-	while [ $op != "Y" -a $op != "y" -a $op != "N" -a $op != "n" ]; do 
-		read -p "please input y/n: " op
-	done
-	if [ $op != "y" -a $op != "Y" ];then
+	isyes=$(yn_continue "(2/$STEP_TOTAL) install protobuf(y/n)? ")
+	if [ "$isyes" != "yes" ];then
 		return;
 	fi
 
@@ -67,11 +79,8 @@ function InstallProtobuf()
 function InstallFastcgiDev()
 {
 	echo ""
-	read -p "(3/$STEP_TOTAL) install fastcgi devel(y/n)? " op
-	while [ $op != "Y" -a $op != "y" -a $op != "N" -a $op != "n" ]; do 
-		read -p "please input y/n: " op
-	done
-	if [ $op != "y" -a $op != "Y" ];then
+	isyes=$(yn_continue "(3/$STEP_TOTAL) install fastcgi devel(y/n)? ")
+	if [ "$isyes" != "yes" ];then
 		return;
 	fi
 
@@ -99,7 +108,7 @@ function InstallMysqlwrap()
 	echo ""
 	if [ ! -f /usr/include/mysqlwrapped/libmysqlwrapped.h ]; then
 		# clearsilver cgi 模板引擎, 首次运行时需要执行下 configure
-		cd $cdir/lib/clearsilver; ./configure
+		cd $cdir/lib/clearsilver; ./configure ; touch _configure_check_
 	
 		cd $cdir/lib/mysqlwrapped
 		echo "(4/$STEP_TOTAL) preinstall mysqlwrapped ($SUFFIX)"
@@ -120,11 +129,8 @@ function InstallMysqlwrap()
 function InstallMemcached()
 {
 	echo ""
-	read -p "(5/$STEP_TOTAL) make and install memcached(y/n)? " op
-	while [ $op != "Y" -a $op != "y" -a $op != "N" -a $op != "n" ]; do 
-		read -p "please input y/n: " op
-	done
-	if [ $op != "y" -a $op != "Y" ];then
+	isyes=$(yn_continue "(5/$STEP_TOTAL) make and install memcached(y/n)? ")
+	if [ "$isyes" != "yes" ];then
 		return;
 	fi
 
@@ -158,5 +164,6 @@ InstallFastcgiDev
 InstallMysqlwrap
 InstallMemcached
 
+cd $cdir
 touch _install_dev_run_
 

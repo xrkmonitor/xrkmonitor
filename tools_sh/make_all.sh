@@ -1,5 +1,4 @@
 #!/bin/bash
-USE_DLL_COMM_LIB=`cat ../make_env |grep ^USE_DLL_COMM_LIB|awk '{print $3}'`
 cd ..
 Name=slog_all
 TarF=${Name}.tar
@@ -57,17 +56,14 @@ check_cgi mt_slog
 
 tar cvf ${TarP} tools_sh/rm_zero.sh
 tar rvf ${TarP} tools_sh/check_proc_monitor.sh
-tar rvf ${TarP} tools_sh/start_all.sh
 tar rvf ${TarP} tools_sh/stop_all.sh
 tar rvf ${TarP} tools_sh/add_crontab.sh
 tar rvf ${TarP} tools_sh/start_comm.sh
 tar rvf ${TarP} tools_sh/stop_comm.sh
 tar rvf ${TarP} tools_sh/install_bin.sh
 tar rvf ${TarP} cgi_fcgi/* --exclude *.cpp --exclude Makefile --exclude cgi_debug.txt 
-
-if [ "${USE_DLL_COMM_LIB}" == 'yes' ]; then
-	tar rvf ${TarP} tools_sh/xrkmonitor_lib/*
-fi
+tar rvf ${TarP} db
+tar rvf ${TarP} html 
 
 dirlist=`find . -maxdepth 1 -type d`
 for dr in $dirlist

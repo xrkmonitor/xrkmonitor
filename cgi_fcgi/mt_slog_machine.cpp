@@ -47,17 +47,6 @@
 #include <cgi_head.h>
 #include <cgi_comm.h>
 
-enum {
-	MACHINE_WARN_FLAG_MIN=1,
-	MACH_WARN_ALLOW_ALL=1,
-	MACH_WARN_DENY_ALL=2,
-	MACH_WARN_DENY_BASIC=3,
-	MACH_WARN_DENY_EXCEPT=4,
-	MACHINE_WARN_FLAG_MAX=4,
-};
-
-#define INVALID_MACHINE_WARN_FLAG(t) (t<MACHINE_WARN_FLAG_MIN || t>MACHINE_WARN_FLAG_MAX)
-
 CSupperLog slog;
 CGIConfig stConfig;
 
@@ -844,15 +833,16 @@ static int SaveMachine(bool bIsMod=false)
 			const char *pvtmp = NULL;
 			if(pInfo->iNameVmemIdx > 0)
 				pvtmp = MtReport_GetFromVmem_Local(pInfo->iNameVmemIdx);
-			if(strcmp(pvtmp, pname))
+			if(pvtmp == NULL || strcmp(pvtmp, pname))
 			{
 				MtReport_FreeVmem(pInfo->iNameVmemIdx);
 				pInfo->iNameVmemIdx = MtReport_SaveToVmem(pname, strlen(pname)+1);
 			}
 
+			pvtmp = NULL;
 			if(pInfo->iDescVmemIdx > 0)
 				pvtmp = MtReport_GetFromVmem_Local(pInfo->iDescVmemIdx);
-			if(pdesc == NULL || strcmp(pdesc, pvtmp))
+			if(pdesc != NULL && (pvtmp==NULL || strcmp(pdesc, pvtmp)))
 			{
 				MtReport_FreeVmem(pInfo->iDescVmemIdx);
 				pInfo->iDescVmemIdx = MtReport_SaveToVmem(pdesc, strlen(pdesc)+1);

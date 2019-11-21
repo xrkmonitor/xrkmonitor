@@ -152,6 +152,7 @@ int cgiwrap_save_env(const char *pszToFile)
     fclose(fp);
     return 0;
   }
+  fclose(fp);
 	return -2;
 }
 

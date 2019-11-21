@@ -571,7 +571,7 @@ int MtReport_Log(int iLogType, const char *pszFmt, ...)
 			break;
 		}
 	}
-	if(i >= MTLOG_SHM_DEF_COUNT) {
+	if(pShmLog == NULL) {
 		va_start(ap, pszFmt);
 		iRet = MtReport_Log_To_Spec(iLogType, pszFmt, ap);
 		va_end(ap);

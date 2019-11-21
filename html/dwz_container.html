@@ -415,12 +415,17 @@ function dcInitMainPage()
 		$('#dc_btn_hidden_tip').css('display', 'none');
 	});
 
-	// 尝试从云版本中拉取最新的开源版本信息或者相关的技术文章，如果拉取到则在主页展示
-	// 用户如不需要可以自行删除该部分代码，建议您保留以便最新的开源动态
-	var requrl = '<?cs var:config.xrkmonitor_url ?>/cgi-bin/slog_flogin?action=open_get_news';
+	// 尝试从云版本中拉取最新的开源版本信息或者相关的技术文章，如果拉取到则在主页展示提示信息
+	// 用户如不需要可以自行删除该部分代码，建议您保留以便获取到最新的项目动态
+	var requrl = '<?cs var:config.xrkmonitor_url ?>/cgi-bin/mt_slog_open';
+	var reqdata = new Object();
+	reqdata.action = 'open_get_news';
+	reqdata.rhost = location.host;
+	reqdata.rurl = location.href;
 	$.ajax({
-		type:'GET',
+		type:'post',
 		url: requrl,
+		data: reqdata,
 		global: false,
 		dataType: 'json',
 		success: function(js) {

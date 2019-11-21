@@ -51,11 +51,11 @@ function restart_process()
 
 	Count=`pgrep -f "${pname}"|wc -l`
 	if [ $Count -eq $pnum ] ; then return ; fi
-	sleep 1
+	usleep 50000 > /dev/null 2>&1 || sleep 1
 	Count=`pgrep -f "${pname}"|wc -l`
 	if [ $Count -eq $pnum ] ; then return ; fi
 
-	cd ${pdir}; ./stop.sh ; rm _manual_stop_; ./start.sh > /dev/null; cd - > /dev/null 
+	cd ${pdir}; ./stop.sh ; rm _manual_stop_ > /dev/null 2>&1; ./start.sh > /dev/null; cd - > /dev/null 
 	echo "=========== log =========" >> $TMPFILE
 	echo "${pname} restarted, Count is $Count, need $pnum." >> $TMPFILE
 	RESTARTINFO="${RESTARTINFO}; ${pname} restarted, Count is $Count, need $pnum."
@@ -82,7 +82,7 @@ function restart_process_ex()
 
 	Count=`pgrep -f "${pname}"|wc -l`
 	if [ $Count -ge $pnum_min -a $Count -le $pnum_max ] ; then return ; fi
-	sleep 1
+	usleep 50000 > /dev/null 2>&1 || sleep 1
 	Count=`pgrep -f "${pname}"|wc -l`
 	if [ $Count -ge $pnum_min -a $Count -le $pnum_max ] ; then return ; fi
 
@@ -106,12 +106,11 @@ ps auxww >> $TMPFILE
 ipcs >> $TMPFILE
 echo "----------------------------------------------------------------" >> $TMPFILE
 
-restart_process "${MONITORBASEDIR}/slog_mtreport_client" 'slog_mtreport_client$' 2
-sleep 1
+restart_process "${MONITORBASEDIR}/slog_memcached" 'slog_memcached' 1
 restart_process "${MONITORBASEDIR}/slog_config" 'slog_config$' 1
 while [ ! -f /tmp/_slog_config_read_ok ]  
 do
-	sleep 1
+	usleep 50000 > /dev/null 2>&1 || sleep 1
 done
 
 restart_process "${MONITORBASEDIR}/slog_client" 'slog_client$' 1
@@ -121,7 +120,7 @@ restart_process "${MONITORBASEDIR}/slog_write" 'slog_write$' 5
 restart_process "${MONITORBASEDIR}/slog_monitor_server" 'slog_monitor_server$' 2
 restart_process "${MONITORBASEDIR}/slog_mtreport_server" 'slog_mtreport_server$' 1
 restart_process_ex "${MONITORBASEDIR}/slog_deal_warn" 'slog_deal_warn$' 1 8
-restart_process "${MONITORBASEDIR}/slog_memcached" 'slog_memcached' 1
+restart_process "${MONITORBASEDIR}/slog_mtreport_client" 'slog_mtreport_client$' 2
 
 if [ $ACTION -eq 1 ] ; then
 	echo "-------- ps and ipcs AFTER check and restart process ----------" >> $TMPFILE 
@@ -133,7 +132,7 @@ if [ $ACTION -eq 1 ] ; then
 
 	ADDRESS=`echo $HOSTNAME`
 	RESTARTINFO="${RESTARTINFO}; host name:${ADDRESS}"
-	sleep 1
+	usleep 50000 > /dev/null 2>&1 || sleep 1
 	#${MONITORBASEDIR}/slog_deal_warn/slog_deal_warn $MAILTOADDR "$MAILSUBJECT" "$RESTARTINFO"
 fi
 

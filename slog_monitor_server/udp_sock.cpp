@@ -224,13 +224,15 @@ int CUdpSock::TryChangeAttrSaveType()
 
 int CUdpSock::CreateAttrDayTable(const char *pszTbName)
 {
+	MyQuery myqu(m_qu, db);
+	Query & qu = myqu.GetQuery();
+	snprintf(stConfig.szBinSql, sizeof(stConfig.szBinSql), "drop table IF EXISTS %s_day", pszTbName);
+	qu.execute(stConfig.szBinSql);
+
 	snprintf(stConfig.szBinSql, sizeof(stConfig.szBinSql),
 		"create table `%s_day` ( `attr_id` int(11) DEFAULT '0', `machine_id` int(11) DEFAULT '0',"
 		"`value` BLOB, `max` int(12) unsigned , `min` int(12) unsigned , `total` int(12) unsigned,"
 		"`last_ip` int(12) unsigned, PRIMARY KEY (`attr_id`, `machine_id`) ) ENGINE=InnoDB", pszTbName);
-
-	MyQuery myqu(m_qu, db);
-	Query & qu = myqu.GetQuery();
 	if(!qu.execute(stConfig.szBinSql))
 	{
 		ERR_LOG("execute sql:%s failed !", stConfig.szBinSql);
@@ -299,6 +301,10 @@ int CUdpSock::CreateAttrTable(const char *pszTbName)
 	if(pszTbName == NULL)
 		pszTbName = GetTodayTableName();
 	strncpy(m_szLastTableName, pszTbName, sizeof(m_szLastTableName)-1);
+	MyQuery myqu(m_qu, db);
+	Query & qu = myqu.GetQuery();
+	snprintf(stConfig.szBinSql, sizeof(stConfig.szBinSql), "drop table IF EXISTS %s", pszTbName);
+	qu.execute(stConfig.szBinSql);
 
 	snprintf(stConfig.szBinSql, sizeof(stConfig.szBinSql), 
 		"create table `%s` (`id` int(11) auto_increment, `attr_id` int(11) default 0,"
@@ -306,8 +312,6 @@ int CUdpSock::CreateAttrTable(const char *pszTbName)
 		"`str_val` BLOB, `report_time` timestamp default CURRENT_TIMESTAMP, PRIMARY KEY  (`id`), "
 		" KEY (`attr_id`, `machine_id`) )", pszTbName);
 
-	MyQuery myqu(m_qu, db);
-	Query & qu = myqu.GetQuery();
 	if(!qu.execute(stConfig.szBinSql))
 	{
 		ERR_LOG("execute sql:%s failed !", stConfig.szBinSql);

@@ -141,7 +141,7 @@ int GetReadTableFlagByStr(const char *pstr)
 /*
    *
    * 首次运行时将日志调成本地的日志,并输出全部日志可以定位启动问题
-   * SLOG_OUT_TYPE 3, SLOG_TYPE 255, SLOG_SET_TEST 1
+   * SLOG_OUT_TYPE 3, SLOG_TYPE all, SLOG_SET_TEST 1
    *
    */
 int Init(const char *pFile = NULL)

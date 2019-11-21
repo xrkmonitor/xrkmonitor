@@ -1,0 +1,206 @@
+<script language="javascript" type="text/javascript">
+var dap_plugin_list = '';
+var dap_sel_plugin = "null";
+var dap_sel_detail_idx = ""; // 用于弹出详情对话框时设置数据
+
+function dapSetSelplugin(selIndex)
+{
+	dap_sel_plugin = dap_plugin_list.list[selIndex];
+}
+
+function dapOnDetail(idx)
+{
+	dap_sel_detail_idx = idx;
+	$('#dap_plugin_name').text(dap_plugin_list.list[idx].plugin_name);
+	$('#dap_plugin_id').text(dap_plugin_list.list[idx].show_id);
+	$('#dap_add_time').text(dap_plugin_list.list[idx].create_time);
+	$('#dap_mod_time').text(dap_plugin_list.list[idx].update_time);
+	$('#dap_ver').text(dap_plugin_list.list[idx].ver);
+	$('#dap_auth').text(dap_plugin_list.list[idx].auth);
+
+	if(dap_plugin_list.list[idx].open_src == 0)
+		$('#dap_open').text('开源');
+	else
+		$('#dap_open').text('闭源');
+	if(dap_plugin_list.list[idx].set_method == 0)
+		$('#dap_set_method').text('内置');
+	else
+		$('#dap_set_method').text('外置');
+	$('#dap_language').text(dap_plugin_list.list[idx].dev_language);
+	$('#dap_dest_os').text(dap_plugin_list.list[idx].dest_os);
+	if(dap_plugin_list.list[idx].add_attr_type == 1)
+		$('#dap_attr').text('是');
+	else
+		$('#dap_attr').text('否');
+	if(dap_plugin_list.list[idx].add_module_log == 1)
+		$('#dap_log').text('是');
+	else
+		$('#dap_log').text('否');
+
+	// 换行符有转码，需要转换回来
+	var dc = dap_plugin_list.list[idx].desc;
+	$('#dap_plugin_desc').html(dc.replace(/&br/g, "\r\n"));
+	var op = { mask:true, maxable:false, height:320, width:520, resizable:false, drawable:true};
+	$.pdialog.openLocal(
+		'dap_show_detail', 'dlg_dap_show_detail', '查看应用监控插件详情', op);
+}
+
+function dapSetpluginList()
+{
+	if(dap_plugin_list == null || dap_plugin_list.count <= 0)
+		return "";
+
+	var ulist = dap_plugin_list.list;
+	var uhtml = "";
+	for(var i=0, j=1; i < ulist.length; i++,j++)
+	{
+		uhtml += "<tr onclick='dapSetSelplugin(" + i + ")'>";
+		uhtml += "<td>" + j + "</td>";
+		uhtml += "<td>" + ulist[i].plugin_name + "</td>";
+		uhtml += "<td>" + ulist[i].show_id + "</td>";
+
+		uhtml += "<td>" + ulist[i].desc.replace(/&br/g, "<br />") + "</td>";
+
+		if(ulist[i].open_src == 0)
+			uhtml += "<td>开源</td>";
+		else
+			uhtml += "<td>闭源</td>";
+		uhtml += "<td>" + ulist[i].dev_language + "</td>";
+		uhtml += "<td>" + ulist[i].ver + "</td>";
+		uhtml += "<td>" + ulist[i].dest_os + "</td>";
+		if(ulist[i].set_method == 0)
+			uhtml += "<td>内置</td>";
+		else
+			uhtml += "<td>外置</td>";
+		uhtml += "<td>" + ulist[i].auth + "</td>";
+		var detail = "<a class='detail' href='#' onclick='return dapOnDetail("+i+");'>详情</a>";
+		uhtml += "<td>"+detail+"</td>";
+
+		var dm = "<a class='detail' href='#' onclick='return dapOnDaemon("+i+");'>查看</a>";
+		uhtml += "<td>"+dm+"</td>";
+	
+		var dw = "<a class='detail' href='#' onclick='return dapOnDownLoad("+i+");'>下载</a>";
+		uhtml += "<td>"+dw+"</td>";
+
+		uhtml += "</tr>";
+	}
+	return uhtml;
+}
+
+$(document).ready(function(){
+	var requrl = '<?cs var:config.xrkmonitor_url ?>/cgi-bin/mt_slog_open';
+	var reqdata = new Object();
+	reqdata.action = 'open_get_plugins';
+	reqdata.rhost = location.host;
+	reqdata.plugin_type = 2;
+	$.ajax({
+		type:'post',
+		url: requrl,
+		data: reqdata,
+		global: false,
+		dataType: 'json',
+		success: function(js) {
+			if(js.ret != 0) {
+				alertMsg.warn("系统监控插件信息获取失败:" + js.errmsg);
+				return;
+			}
+			if(js.count > 0) {
+				dap_plugin_list = js;
+				var ulist = dapSetpluginList();
+				$("#dap_plugin_list_tbody").html(ulist);
+			}
+		}
+	});
+});
+
+</script>
+
+<div class="pageContent">
+	<div class="unitBox" style="margin-left:1px;"> 
+		<div class="accountInfo" style='display:block;height:30px;'>
+			<div class='note-text' style='text-align:left; font-size:13px; margin-top:8px;'>
+				说明：应用监控插件用于监控特定应用的业务数据, 例如apache,mysql等应用; 我们欢迎自行开发插件, 如您开发了插件且有意愿开源, 我们可以免费为您发布到插件市场.
+			</div>
+		</div>
+
+		<div class="pageContent" style="border-left:1px #B8D0D6 solid;border-right:1px #B8D0D6 solid">
+			<div>
+				<table class="list" width="100%" layoutH="34"> 
+					<thead>
+						<tr>
+							<th width="40">序号</th>
+							<th width="120">插件名称</th>
+							<th width="50">插件ID</th>
+							<th width="200">插件描述</th>
+							<th width="50">开源情况</th>
+							<th width="50">开发语言</th>
+							<th width="40">版本</th>
+							<th width="50">运行平台</th>
+							<th width="40">部署</th>
+							<th width="60">开发者</th>
+							<th width="30">详情</th>
+							<th width="30">演示</th>
+							<th width="40">下载</th>
+						</tr>
+					</thead>
+					<tbody id="dap_plugin_list_tbody">
+					</tbody>
+				</table>
+			</div> 
+		</div>
+	</div> <!-- unitBox -->
+</div>
+
+<div id='dap_show_detail' style='display:none'>
+	<div layoutH="36">
+		<table> 
+			<tr height="25">
+				<td width="120" align="right">插件名称：</td>
+				<td width="140" id="dap_plugin_name"></td>
+				<td width="120" align="right">插件 id：</td>
+				<td width="180" id="dap_plugin_id"></td>
+			</tr>
+
+			<tr height="25">
+				<td  align="right">更新时间：</td>
+				<td id="dap_mod_time"></td>
+				<td  align="right">创建时间：</td>
+				<td id="dap_add_time"></td>
+			</tr>
+
+			<tr height="25">
+				<td  align="right">当前版本：</td>
+				<td id="dap_ver"></td>
+				<td  align="right">开发者：</td>
+				<td id="dap_auth"></td>
+			</tr>
+
+			<tr height="25">
+				<td  align="right">开源情况：</td>
+				<td id="dap_open"></td>
+				<td  align="right">部署方式：</td>
+				<td id="dap_set_method"></td>
+			</tr>
+
+			<tr height="25">
+				<td  align="right">开发语言：</td>
+				<td id="dap_language"></td>
+				<td  align="right">运行平台：</td>
+				<td id="dap_dest_os"></td>
+			</tr>
+
+			<tr height="28">
+				<td align="right">插件描述：</td>
+				<td colspan="3">
+				<textarea rows="4" cols="50" id='dap_plugin_desc' readonly></textarea>
+				</td>
+			</tr>
+		</table>
+	</div>
+
+	<div class="formBar">
+		<ul> <li><div class="button"><div class="buttonContent"><button type="button" class="close">&nbsp;&nbsp;关&nbsp;闭&nbsp;&nbsp;</button></div></div></li>
+		</ul>
+	</div>
+</div>
+

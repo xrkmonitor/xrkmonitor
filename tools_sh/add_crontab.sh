@@ -20,4 +20,5 @@ fi
 
 echo "add to crontab failed"
 rm _add_xrkmonitor_proc_check 
+exit 1
 

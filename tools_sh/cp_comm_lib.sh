@@ -5,21 +5,48 @@ if [ "${USE_DLL_COMM_LIB}" != 'yes' ]; then
 fi
 MTLIB_LIB_PATH=`cat ../make_env |grep MTLIB_LIB_PATH|awk '{print $3}'`
 LIB_DEST_PATH=./xrkmonitor_lib
+cdir=`pwd`
+
+# 运行测试文件
+if [ ! -f ../slog_tool/slog_tool ]; then
+	echo "file : ../slog_tool/slog_tool  not exist"
+	exit 2
+fi
 
 if [ ! -d ${LIB_DEST_PATH} ]; then
 	mkdir -p ${LIB_DEST_PATH}
 fi
+rm -fr ${LIB_DEST_PATH}/*
+cp ../slog_tool/slog_tool ${LIB_DEST_PATH}
 cd ${LIB_DEST_PATH}
-rm -fr *
 
 function check_lib_exit()
 {
 	if [ ! -f $1 ]; then
-		echo "copy lib failed, file:$1 not exit"
+		echo "copy lib failed, file:$1 not exist"
 		exit 1
 	fi
 }
+
+
+# 系统库
 check_lib_exit ${MTLIB_LIB_PATH}/libmysqlclient.so.18.0.0
+check_lib_exit /lib64/libssl.so.1.0.0 
+check_lib_exit /lib64/libcrypto.so.1.0.0
+check_lib_exit /lib64/libz.so.1
+check_lib_exit /lib64/libdl.so.2
+
+cp ${MTLIB_LIB_PATH}/libmysqlclient.so.18.0.0 . 
+strip libmysqlclient.so.18.0.0
+ln -s libmysqlclient.so.18.0.0 libmysqlclient.so.18
+ln -s libmysqlclient.so.18 libmysqlclient.so
+cp /lib64/libssl.so.1.0.0 .
+cp /lib64/libcrypto.so.1.0.0 .
+cp /lib64/libz.so.1 .
+cp /lib64/libdl.so.2 .
+
+
+# xrkmonitor 公共库
 check_lib_exit ${MTLIB_LIB_PATH}/libmysqlwrapped-1.1.0.so
 check_lib_exit ${MTLIB_LIB_PATH}/libmtreport_api_open-1.1.0.so
 check_lib_exit ${MTLIB_LIB_PATH}/libSockets-1.1.0.so
@@ -57,11 +84,6 @@ strip libneo_utl-1.1.0.so
 ln -s libneo_utl-1.1.0.so libneo_utl.so.1 
 ln -s libneo_utl.so.1 libneo_utl.so 
 
-cp ${MTLIB_LIB_PATH}/libmysqlclient.so.18.0.0 . 
-strip libmysqlclient.so.18.0.0
-ln -s libmysqlclient.so.18.0.0 libmysqlclient.so.18
-ln -s libmysqlclient.so.18 libmysqlclient.so
-
 cp ${MTLIB_LIB_PATH}/libmysqlwrapped-1.1.0.so .
 strip libmysqlwrapped-1.1.0.so
 ln -s libmysqlwrapped-1.1.0.so libmysqlwrapped.so.1
@@ -92,6 +114,6 @@ strip libmtreport_api-1.1.0.so
 ln -s libmtreport_api-1.1.0.so libmtreport_api.so.1
 ln -s libmtreport_api.so.1 libmtreport_api.so
 
-
-
+cd $cdir
+tar -czf xrkmonitor_lib.tar.gz $LIB_DEST_PATH
 

@@ -18,7 +18,7 @@ OBJ := $(SRC:.cpp=.o)
 DEP := $(SRC:.cpp=.d)
 
 $(TARGETS): ${OBJ}
-	$(CC) -g -Wall -o $@ $^ $(COMM_LIB) 
+	$(CC) $(CXXFLAGS) -o $@ $^ $(COMM_LIB) 
 ifeq ($(USE_DLL_COMM_LIB), yes) 
 	strip $(TARGETS)
 endif

@@ -295,18 +295,14 @@ int main(int argc, char **argv, char **envp)
 				pcsTemplate = "dwz_index.html";
 			}
 			else if(iRet >= 0 && !strcmp(pAction, "left_attr"))
-			{
 				pcsTemplate = "dwz_left_attr.html";
-			}
 		}
 		else if(!strcmp(pAction, "left_m"))
-		{
 			pcsTemplate = "dwz_left_m.html";
-		}
 		else if(!strcmp(pAction, "left_log"))
-		{
 			pcsTemplate = "dwz_left_log.html";
-		}
+		else if(!strcmp(pAction, "left_plus"))
+			pcsTemplate = "dwz_left_plus.html";
 		else if(!strcmp(pAction, "left_user"))
 			pcsTemplate = "dwz_left_user.html";
 		else if(!strcmp(pAction, "left_plugin"))

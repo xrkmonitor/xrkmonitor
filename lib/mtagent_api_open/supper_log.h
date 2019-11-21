@@ -102,6 +102,18 @@ typedef struct
 }TCommSendMailInfoShm;
 
 // 属性告警相关结构 ----------- start
+
+enum {
+	MACHINE_WARN_FLAG_MIN=1,
+	MACH_WARN_ALLOW_ALL=1,
+	MACH_WARN_DENY_ALL=2,
+	MACH_WARN_DENY_BASIC=3,
+	MACH_WARN_DENY_EXCEPT=4,
+	MACHINE_WARN_FLAG_MAX=4,
+};
+#define INVALID_MACHINE_WARN_FLAG(t) (t<MACHINE_WARN_FLAG_MIN || t>MACHINE_WARN_FLAG_MAX)
+
+
 #define WARN_CONFIG_TYPE_VIEW 1
 #define WARN_CONFIG_TYPE_MACHINE 2
 #define WARN_CONFIG_HASH_NODE_COUNT 100031 //全局配置
@@ -2105,7 +2117,7 @@ class CSLogClient
 
 // 日志记录类 ----- 将日志写入文件 - 用于日志服务器端将日志写入到磁盘文件 ------------------------
 #define MAX_APP_LOG_SHM_COUNT 5000 // 单机最多应用日志共享内存数
-#define DEF_SLOG_LOG_FILE_PATH "/usr/local/slog/" // slog 日志文件默认路径
+#define DEF_SLOG_LOG_FILE_PATH "/home/mtreport/slog/" // slog 日志文件默认路径
 #define SHOW_REALTIME_LOG_TIME_SEC 5*60 // 显示实时日志时，只显示前多少秒内的日志
 #define SHOW_REALTIME_LAST_WRITE_LOG 10 // 显示最近写入的多少条日志，以便当客户端发送延迟的log时能够显示log
 

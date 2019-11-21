@@ -516,6 +516,7 @@ static int SaveAttr(bool bIsMod=false)
 		strSql = "update mt_attr set";
 
 	if(!bIsMod) {
+		AddParameter(&ppara, "create_time", uitodate(stConfig.dwCurTime), NULL);
 		AddParameter(&ppara, "user_add", stConfig.stUser.puser, NULL);
 		AddParameter(&ppara, "user_add_id", stConfig.stUser.puser_info->iUserId, "DB_CAL");
 		JoinParameter_Insert(&strSql, qu.GetMysql(), ppara);

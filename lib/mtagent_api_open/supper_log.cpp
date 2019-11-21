@@ -2941,7 +2941,7 @@ int CSupperLog::UpdateConfig(const char *pkey, const char *pval)
 		return SLOG_ERROR_LINE;
 	}
 	FILE *fp_w = fopen(strFileTmp.c_str(), "w+");
-	if(fp == NULL)
+	if(fp_w == NULL)
 	{
 		ERR_LOG("open file failed(%s), msg:%s", strFileTmp.c_str(), strerror(errno));
 		fclose(fp);

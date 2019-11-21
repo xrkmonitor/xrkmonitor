@@ -328,6 +328,7 @@ static int SaveView(bool bIsMod=false)
 	{
 		AddParameter(&ppara, "user_add", stConfig.stUser.puser, NULL);
 		AddParameter(&ppara, "create_time", uitodate(stConfig.dwCurTime), NULL);
+		AddParameter(&ppara, "mod_time", uitodate(stConfig.dwCurTime), NULL);
 		AddParameter(&ppara, "user_add_id", stConfig.stUser.puser_info->iUserId, "DB_CAL");
 	}
 	else
