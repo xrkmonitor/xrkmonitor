@@ -140,12 +140,12 @@ fi
 rm _del_xrkmonitor_proc_check
 
 if [ -d "$SLOG_SERVER_FILE_PATH" ]; then
-	isyes=$(yn_continue "是否删除日志目录以及日志文件 (y/n)?")
+	isyes=$(yn_continue "是否删除日志中心目录以及日志文件 (y/n)?")
 	if [ "$isyes" == "yes" ]; then
 		rm -fr $SLOG_SERVER_FILE_PATH
 	fi
 else
-	echo "未检测到日志目录: $SLOG_SERVER_FILE_PATH, 跳过日志清理"
+	echo "未检测到日志中心日志文件目录: $SLOG_SERVER_FILE_PATH, 跳过日志清理"
 fi
 
 isyes=$(yn_continue "是否删除安装/卸载脚本 (y/n)?")

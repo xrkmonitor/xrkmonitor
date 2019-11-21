@@ -272,6 +272,26 @@ if [ ! -d "$APACHE_CGI_PATH" ]; then
 	auto_detect_apache_cgi_path	
 fi
 
+if [ ! -d "$SLOG_SERVER_FILE_PATH" ]; then
+	echo "日志中心日志文件目录: $SLOG_SERVER_FILE_PATH 不存在, 尝试创建" 
+	mkdir -p "$SLOG_SERVER_FILE_PATH"
+	if [ ! -d "$SLOG_SERVER_FILE_PATH" ]; then
+		echo "新建目录: $SLOG_SERVER_FILE_PATH 失败, 如无权限请授权后再试"
+		yn_exit "是否现在重试(y/n) ?" $LINENO 
+		mkdir -p "$SLOG_SERVER_FILE_PATH"
+		if [ ! -d "$SLOG_SERVER_FILE_PATH" ]; then
+			echo "新建 cgi 本地日志文件目录: $SLOG_SERVER_FILE_PATH 失败 !"
+			failed_my_exit $LINENO 
+		fi
+	fi
+	echo "新建日志中心日志文件目录: $SLOG_SERVER_FILE_PATH 成功"
+	chmod 755 "$XRKMONITOR_CGI_LOG_PATH"
+	if [ $? -ne 0 ]; then
+		yn_exit "修改日志中心日志文件目录权限失败, 请确保cgi有读权限, 是否继续(y/n)" $LINENO 
+	fi
+fi
+
+
 if [ ! -d "$APACHE_DOCUMENT_ROOT/$XRKMONITOR_HTML_PATH" ]; then
 	echo "html/js 文件安装目录 $APACHE_DOCUMENT_ROOT/$XRKMONITOR_HTML_PATH 不存在, 尝试创建"
 	mkdir -p "$APACHE_DOCUMENT_ROOT/$XRKMONITOR_HTML_PATH"
@@ -582,9 +602,9 @@ echo "--------------------------------------------------------------------------
 echo "	apache 网站根目录: $APACHE_DOCUMENT_ROOT"
 echo "	apache cgi 目录: $APACHE_CGI_PATH"
 echo "	apache cgi 访问路径: $APACHE_CGI_ACCESS_PATH"
-echo "	apache cgi 本地日志目录: $XRKMONITOR_CGI_LOG_PATH (cgi需有读写权限)"
+echo "	apache cgi 本地日志目录: $XRKMONITOR_CGI_LOG_PATH (cgi需要读写权限)"
 echo "	监控系统 html/js 文件目录: $APACHE_DOCUMENT_ROOT/$XRKMONITOR_HTML_PATH"
-echo "	监控系统日志中心日志目录: $SLOG_SERVER_FILE_PATH (cgi需要有读权限)"
+echo "	监控系统日志中心日志目录: $SLOG_SERVER_FILE_PATH (cgi需要读权限)"
 echo "	本机IP: $LOCAL_iP, 本机外网IP: $SERVER_OUT_IP"
 echo "	监控系统动态链接库目录: $install_sh_home/xrkmonitor_lib"
 echo "---------------------------------------------------------------------------------"
