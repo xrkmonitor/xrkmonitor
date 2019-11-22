@@ -34,7 +34,7 @@ if [ $? -eq 0 -a -f tools_sh/stop_all.sh -a -f tools_sh/rm_zero.sh ]; then
 	echo "开始清理共享内存"
 	./rm_zero.sh
 	cd ..
-	rm /tmp/pid*slog*pid > /dev/null 2>&1
+	rm -f /tmp/pid*slog*pid > /dev/null 2>&1
 fi
 
 if [ -f /tmp/_slog_config_read_ok ]; then
@@ -45,7 +45,7 @@ if [ -f $APACHE_DOCUMENT_ROOT/index.html ]; then
 	cat $APACHE_DOCUMENT_ROOT/index.html |grep "$XRKMONITOR_HTML_PATH" > /dev/null 2>&1
 	if [ $? -eq 0 ]; then
 		echo "删除文件: $APACHE_DOCUMENT_ROOT/index.html"
-		rm $APACHE_DOCUMENT_ROOT/index.html
+		rm -f $APACHE_DOCUMENT_ROOT/index.html
 	fi
 fi
 
@@ -56,8 +56,8 @@ fi
 
 if [ -f "$APACHE_CGI_PATH/mt_slog" ]; then
 	echo "删除 cgi 文件"
-	rm $APACHE_CGI_PATH/mt_slog*
-	rm $APACHE_CGI_PATH/slog_flogin*
+	rm -f $APACHE_CGI_PATH/mt_slog*
+	rm -f $APACHE_CGI_PATH/slog_flogin*
 fi
 
 [ -d "$XRKMONITOR_CGI_LOG_PATH" ] && (echo "删除 cgi 日志目录: $XRKMONITOR_CGI_LOG_PATH"; rm -fr "$XRKMONITOR_CGI_LOG_PATH")
@@ -137,7 +137,7 @@ if [ $? -eq 0 ]; then
 	sed -i '/check_proc_monitor\.sh/d' _del_xrkmonitor_proc_check
 	crontab _del_xrkmonitor_proc_check
 fi
-rm _del_xrkmonitor_proc_check
+rm -f _del_xrkmonitor_proc_check
 
 if [ -d "$SLOG_SERVER_FILE_PATH" ]; then
 	isyes=$(yn_continue "是否删除日志中心目录以及日志文件 (y/n)?")
@@ -150,8 +150,8 @@ fi
 
 isyes=$(yn_continue "是否删除安装/卸载脚本 (y/n)?")
 if [ "$isyes" == "yes" ]; then
-	rm online_install.sh 
-	rm uninstall_xrkmonitor.sh
+	rm -f online_install.sh 
+	rm -f uninstall_xrkmonitor.sh
 fi
 
 echo "已为您清理干净字符云监控系统安装记录, 感谢您的关注."

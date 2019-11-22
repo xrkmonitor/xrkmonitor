@@ -166,10 +166,10 @@ function update_config()
 }
 
 if [ $# -eq 1 -a "$1" == "new" ]; then 
-	rm xrkmonitor_lib.tar.gz > /dev/null 2>&1
-	rm slog_all.tar.gz > /dev/null 2>&1
-	rm slog_run_test > /dev/null 2>&1
-	rm uninstall_xrkmonitor.sh > /dev/null 2>&1
+	rm -f xrkmonitor_lib.tar.gz > /dev/null 2>&1
+	rm -f slog_all.tar.gz > /dev/null 2>&1
+	rm -f slog_run_test > /dev/null 2>&1
+	rm -f uninstall_xrkmonitor.sh > /dev/null 2>&1
 	echo "开始全新安装: 字符云监控系统, 共 $STEP_TOTAL 步"
 else
 	echo "开始自动安装: 字符云监控系统, 共 $STEP_TOTAL 步"
@@ -382,7 +382,7 @@ ldd slog_run_test > _ldd_slog_run_test 2>&1
 THIRD_LIBS=`grep -v GLIBC _ldd_slog_run_test |grep xrkmonitor_lib|awk '{print $1}'|awk -F "." -v mylib="$XRKMONITOR_LIBS" '{if(!match(mylib, $1)) print $0; }'`
 THIRD_LIBS_OTHER=`grep -v GLIBC _ldd_slog_run_test |grep "not found"|awk '{print $1}'`
 THIRD_LIBS="$THIRD_LIBS $THIRD_LIBS_OTHER"
-rm _ldd_slog_run_test >/dev/null 2>&1
+rm -f _ldd_slog_run_test >/dev/null 2>&1
 
 if [ ! -z "$THIRD_LIBS" ]; then
 	NEW_THIRD_LIBS=''
@@ -391,7 +391,7 @@ if [ ! -z "$THIRD_LIBS" ]; then
 		ldconfig -p |grep $third_lib |grep -v xrkmonitor_lib  > /dev/null 2>&1
 		if [ $? -eq 0 ]; then
 			third_lib_base=`echo $third_lib|awk -F "." '{print $1}'`
-			rm xrkmonitor_lib/$third_lib_base*
+			rm -f xrkmonitor_lib/$third_lib_base*
 		else
 			NEW_THIRD_LIBS="$NEW_THIRD_LIBS $third_lib"
 		fi
@@ -409,10 +409,10 @@ if [ $? -ne 0 ]; then
 		echo "依赖以下第三方库文件, 您可以在安装相应库后重试"
 		echo "$NEW_THIRD_LIBS"
 	fi
-	rm _run_test_tmp > /dev/null 2>&1
+	rm -f _run_test_tmp > /dev/null 2>&1
 	failed_my_exit $LINENO
 fi
-rm _run_test_tmp > /dev/null 2>&1
+rm -f _run_test_tmp > /dev/null 2>&1
 
 if [ ! -z "$NEW_THIRD_LIBS" ]; then
 	echo ""
