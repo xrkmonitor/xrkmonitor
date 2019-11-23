@@ -4,7 +4,7 @@
 
 if [ ! -f _install_dev_run_ ]; then
 	echo "you never run install_dev.sh, now run it first ."
-	./install_dev.sh
+	./install_dev.sh || exit 1
 fi
 
 if [ ! -f /usr/include/mysqlwrapped/libmysqlwrapped.h ]; then
