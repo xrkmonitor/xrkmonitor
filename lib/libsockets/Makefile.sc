@@ -13,8 +13,8 @@ VERSION = $(VER_MAJOR).$(VER_MINOR)
 #  solaris9-sparc-64
 #  macosx
 #  solaris8
-PLATFORM = linux-x86-64
-include	Makefile.Defines.$(PLATFORM)
+#PLATFORM = linux-x86-64
+#include	Makefile.Defines.$(PLATFORM)
 
 # General configuration variables:
 INCDIR = $(MTLIB_INCLUDE_PATH)/Sockets

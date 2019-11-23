@@ -7,19 +7,16 @@ CFLAGS += -march=i586 -Wall -g $(INCLUDE) -MD -D_VERSION='"$(VERSION)"'
 CFLAGS +=	-O2
 
 
-CFLAGS +=	-DLINUX -m64
+CFLAGS +=	-DLINUX 
 
 CFLAGS +=	-fPIC
 
 LIBS +=		\
-		-lssl -lcrypto \
 		-lpthread
 
 OBJS +=		Semaphore.o
 
 LDFLAGSSO =	-shared \
-		-Wl,-lssl \
-		-Wl,-lcrypto \
 		-Wl,-lxml2 \
 		-Wl,-lpthread \
 		-Wl,-h$(SONAME) \
