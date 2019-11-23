@@ -97,29 +97,6 @@ void UpdateConfigFile(const char *pfile, TConfigItemList & list)
 }
 
 
-int GetConfigFile(const char *pAppStr, char **pconfOut)
-{
-	if(pconfOut == NULL)
-		return -1; 
-
-	char *papp = strdup(pAppStr);
-	if(papp == NULL)
-		return -2; 
-
-	char *pconf = strrchr(papp, '/');
-	if(pconf != NULL)
-	{   
-		*pconf = '\0';
-		pconf++;
-	}   
-
-	static char szConf[256];
-	snprintf(szConf, sizeof(szConf), "%s.conf", pconf);
-	free(papp);
-	*pconfOut = szConf;
-	return 0;
-}
-
 static char * get_val(char* desc, char* src)
 {
 	char *descp=desc, *srcp=src;
@@ -303,40 +280,6 @@ static int GetParamVal(char *sLine, char *sParam, char *sVal)
 	if (sParam[0] == '#')
 		return 1;
 		
-	return 0;
-}
-
-int LoadConfig(const char *pszConfigFilePath, ...)
-{
-	FILE *pstFile;
-	char sLine[MAX_CONFIG_LINE_LEN+1], sParam[MAX_CONFIG_LINE_LEN+1], sVal[MAX_CONFIG_LINE_LEN+1];
-	va_list ap;
-	
-	va_start(ap, pszConfigFilePath);
-	InitDefault(ap);
-	va_end(ap);
-
-	if ((pstFile = fopen(pszConfigFilePath, "r")) == NULL)
-	{
-		return E_ERR;
-	}
-
-	while (1)
-	{
-		fgets(sLine, sizeof(sLine), pstFile);
-		if (feof(pstFile))
-		{
-			break; 
-		}
-		
-		if (GetParamVal(sLine, sParam, sVal) == 0)
-		{
-			va_start(ap, pszConfigFilePath);
-			SetVal(ap, sParam, sVal);
-			va_end(ap);
-		}
-	}	
-	fclose(pstFile);
 	return 0;
 }
 
