@@ -3,8 +3,8 @@
 
 **在线一键部署:**   
 
-安装脚本: install.sh
-从以下链接下载后, 按提示执行即可, 需要系统支持 bash
+安装脚本: install.sh  
+从以下链接下载后, 按提示执行即可, 需要系统支持 bash  
 ( http://xrkmonitor.com/monitor/download/install.sh; chmod +x install.sh; ./install.sh ) 
 
 在线部署说明:   
