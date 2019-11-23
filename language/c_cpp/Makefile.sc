@@ -57,8 +57,8 @@ install:
 	install -m 644 $(INSTALL_INC) $(INCDIR)
 	install -m 644 $(STATICLIB) $(LIBDIR)
 	install -m 755 $(SHAREDLIB) $(LIBDIR)
-	ln -sf libmtreport_api-1.1.0.so /usr/lib64/libmtreport_api.so.1
-	ln -sf libmtreport_api.so.1 /usr/lib64/libmtreport_api.so
+	ln -sf libmtreport_api-1.1.0.so $(LIBDIR)/libmtreport_api.so.1
+	ln -sf libmtreport_api.so.1 $(LIBDIR)/libmtreport_api.so
 	install -m 755 $(SHAREDLIB) ../../slog_mtreport_client/libmtreport/
 	ln -sf libmtreport_api-1.1.0.so ../../slog_mtreport_client/libmtreport/libmtreport_api.so.1
 	ln -sf libmtreport_api.so.1 ../../slog_mtreport_client/libmtreport/libmtreport_api.so
