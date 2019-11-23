@@ -7,4 +7,11 @@ if [ ! -f _install_dev_run_ ]; then
 	./install_dev.sh
 fi
 
+if [ ! -f /usr/include/mysqlwrapped/libmysqlwrapped.h ]; then
+	cd lib/mysqlwrapped
+	cat IError.h enum_t.h set_t.h Database.h Query.h > libmysqlwrapped.h
+	mkdir -p /usr/include/mysqlwrapped > /dev/null 2>&1
+	cp libmysqlwrapped.h /usr/include/mysqlwrapped
+fi
+
 
