@@ -73,4 +73,7 @@ install:
 clean:
 	rm -f $(MODULES) $(STATICLIB) $(SHAREDLIB) $(LIBNAME)
 	rm -f *.d
+	rm -fr $(INCDIR)
+	rm -fr $(LIBDIR)/$(TARGET).*
+	rm -fr $(LIBDIR)/$(TARGET)-*
 
