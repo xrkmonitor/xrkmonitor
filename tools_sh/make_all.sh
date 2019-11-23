@@ -100,6 +100,7 @@ do
 		fi
 done
 
+echo "打包中, 请稍等..."
 cd tools_sh
 mkdir _tmp
 mv ../${TarF} _tmp
