@@ -5,7 +5,6 @@ all:
 
 clean:
 	make clean -f Makefile.sc
-	rm -f Makefile.srcs
 	make clean -f Makefile.pt
 
 install:
