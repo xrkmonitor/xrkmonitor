@@ -8,7 +8,6 @@ debug:
 
 clean:
 	make clean -f Makefile.sc
-	rm -f Makefile.srcs
 
 install:
 	make install -f Makefile.sc

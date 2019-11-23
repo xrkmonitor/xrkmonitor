@@ -64,5 +64,7 @@ install:
 	ln -sf libmtreport_api.so.1 ../../slog_mtreport_client/libmtreport/libmtreport_api.so
 
 clean:
-	rm -f  $(MODULES) $(STATICLIB) $(LIBNAME)
+	rm -f $(LIBDIR)/lib$(TARGET).*
+	rm -f $(MODULES) $(STATICLIB) $(LIBNAME)
+	rm -fr $(INCDIR)
 
