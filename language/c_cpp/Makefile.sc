@@ -65,6 +65,7 @@ install:
 
 clean:
 	rm -f $(LIBDIR)/lib$(TARGET).*
+	rm -f $(LIBDIR)/lib$(TARGET)-*
 	rm -f $(MODULES) $(STATICLIB) $(LIBNAME)
 	rm -fr $(INCDIR)
 
