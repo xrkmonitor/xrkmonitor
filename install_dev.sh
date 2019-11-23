@@ -9,21 +9,38 @@ STEP_TOTAL=5
 MYSQL_INCLUDE=`cat make_env |grep ^MYSQL_INCLUDE|awk '{print $3}'`
 MYSQL_LIB=`cat make_env |grep ^MYSQL_LIB|awk '{print $3}'`
 # check mysql 头文件路径是否 OK
-if [ ! -f ${MYSQL_INCLUDE}/mysql/mysql.h ]; then
+if [ ! -f "${MYSQL_INCLUDE}/mysql/mysql.h" ]; then
 	echo "(1/$STEP_TOTAL) not find file:${MYSQL_INCLUDE}/mysql/mysql.h, check mysql include path failed !"
 	exit 1
 fi
 # check mysql 库文件路径是否 OK
-if [ ! -f ${MYSQL_LIB}/libmysqlclient.so ]; then
+if [ ! -f "${MYSQL_LIB}/libmysqlclient.so" ]; then
 	if [ -f /usr/lib64/libmysqlclient.so ]; then
 		sed -i '/^MYSQL_LIB/cMYSQL_LIB = \/usr\/lib64' make_env
+	elif [ -f /usr/lib/libmysqlclient.so ]; then
+		sed -i '/^MYSQL_LIB/cMYSQL_LIB = \/usr\/lib' make_env
 	elif [ -f /usr/lib/x86_64-linux-gnu/libmysqlclient.so ]; then
 		sed -i '/^MYSQL_LIB/cMYSQL_LIB = \/usr\/lib\/x86_64-linux-gnu' make_env
+	elif [ -f /usr/lib/i386-linux-gnu/libmysqlclient.so ]; then
+		sed -i '/^MYSQL_LIB/cMYSQL_LIB = \/usr\/lib\/i386-linux-gnu' make_env
 	else
 		echo "(1/$STEP_TOTAL) not find file:${MYSQL_LIB}/libmysqlclient.so, check mysql lib path failed !"
 		exit 2
 	fi
 fi
+# 公共库/头文件安装路径
+if [ ! -d "${MTLIB_INCLUDE_PATH}" ];then
+	sed -i '/^MTLIB_INCLUDE_PATH/cMTLIB_INCLUDE_PATH = \/usr\/include' make_env
+fi
+if [ ! -d "${MTLIB_LIB_PATH}" ];then
+	if [ -d /usr/lib64 -o -d /lib64 ]; then
+		sed -i '/^MTLIB_LIB_PATH/cMTLIB_LIB_PATH = \/usr\/lib64' make_env
+	else
+		sed -i '/^MTLIB_LIB_PATH/cMTLIB_LIB_PATH = \/usr\/lib' make_env
+	fi
+fi
+
+
 echo "(1/$STEP_TOTAL) mysql devel check ok"
 
 function yn_continue()

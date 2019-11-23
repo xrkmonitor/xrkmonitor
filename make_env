@@ -2,9 +2,11 @@
 MYSQL_INCLUDE = /usr/include
 
 # mysql 库文件路径: ${MYSQL_LIB}/ libmysqlclient.so
+# 如该目录下不存在库, install_dev.sh 脚本会尝试探测
 MYSQL_LIB = /usr/lib64
 
 # 监控系统公共库安装路径，请勿在路径后加空格, = 符号两边需要空格
+# 如自行指定位置, 请先创建相应目录, 否则 install_dev.sh 脚本会自动修改
 MTLIB_INCLUDE_PATH = /usr/include
 MTLIB_LIB_PATH = /usr/lib64
 
