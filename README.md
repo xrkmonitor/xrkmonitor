@@ -3,8 +3,9 @@
 
 **在线一键部署:**   
 
-下载脚本: online_install.sh, 执行脚本按提示操作即可完成部署   
-( http://open.xrkmonitor.com/xrkmonitor_down/online_install.sh; chmod +x online_install.sh; ./online_install.sh ) 
+安装脚本: install.sh
+从以下链接下载后, 按提示执行即可, 需要系统支持 bash
+( http://xrkmonitor.com/monitor/download/install.sh; chmod +x install.sh; ./install.sh ) 
 
 在线部署说明:   
 在线部署目前只支持集中部署方式, 即所有服务部署在一台机器上, 该机器上需要安装 mysql/apache    
