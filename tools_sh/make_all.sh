@@ -1,4 +1,15 @@
 #!/bin/bash
+
+USE_DLL_COMM_LIB=`cat ../make_env |grep ^USE_DLL_COMM_LIB|awk '{print $3}'`
+if [ "${USE_DLL_COMM_LIB}" == 'yes' ]; then
+	./cp_comm_lib.sh
+	if [ ! -f xrkmonitor_lib.tar.gz ]; then
+		echo "压缩包: xrkmonitor_lib.tar.gz 不存在, 动态链接库打包失败 !"
+		exit 1
+	fi
+	mv xrkmonitor_lib.tar.gz ../
+fi
+
 cd ..
 Name=slog_all
 TarF=${Name}.tar
@@ -54,6 +65,9 @@ check_cgi slog_flogin
 check_cgi mt_slog_user 
 check_cgi mt_slog 
 
+cp tools_sh/local_install.sh .
+cp tools_sh/uninstall_xrkmonitor.sh .
+
 tar cvf ${TarP} tools_sh/rm_zero.sh
 tar rvf ${TarP} tools_sh/check_proc_monitor.sh
 tar rvf ${TarP} tools_sh/stop_all.sh
@@ -64,6 +78,12 @@ tar rvf ${TarP} tools_sh/install_bin.sh
 tar rvf ${TarP} cgi_fcgi/* --exclude *.cpp --exclude Makefile --exclude cgi_debug.txt 
 tar rvf ${TarP} db
 tar rvf ${TarP} html 
+
+tar rvf ${TarP} local_install.sh
+tar rvf ${TarP} uninstall_xrkmonitor.sh 
+if [ -f xrkmonitor_lib.tar.gz ]; then
+	tar rvf ${TarP} xrkmonitor_lib.tar.gz
+fi
 
 dirlist=`find . -maxdepth 1 -type d`
 for dr in $dirlist
@@ -96,4 +116,8 @@ if [ ! -d ${BackupDir} ]; then
 fi
 CurDate=`date "+%Y%m%d"`
 cp ${TarF}.gz ${BackupDir}/${TarF}.gz.$CurDate
+rm -f ../uninstall_xrkmonitor.sh
+rm -f ../local_install.sh
+rm -f ../xrkmonitor_lib.tar.gz
+
 
