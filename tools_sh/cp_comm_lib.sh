@@ -20,7 +20,7 @@ rm -fr ${LIB_DEST_PATH}/*
 cp ../slog_tool/slog_tool ${LIB_DEST_PATH}
 
 COPY_LIBS_INFO=('libmysqlclient' 'libssl' 'libcrypto' 'libz' 'libdl' 'libmysqlwrapped' 'libmtreport_api_open' 'libSockets' 'libmyproto' 'libprotobuf' 'libmtreport_api' 'libfcgi' 'libneo_cgi' 'libneo_cs' 'libneo_utl' 'libcgicomm')
-cd ${LIB_DEST_PATH}; rm -fr *
+cd ${LIB_DEST_PATH}
 
 function copy_lib_to_dest()
 {
