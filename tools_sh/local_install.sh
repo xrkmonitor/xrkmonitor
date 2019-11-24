@@ -288,71 +288,12 @@ function auto_detect_apache_cgi_path()
 	sed -i "/^APACHE_CGI_ACCESS_PATH=/cAPACHE_CGI_ACCESS_PATH=${APACHE_CGI_ACCESS_PATH}" uninstall_xrkmonitor.sh
 }
 
-<<<<<<< .mine
-||||||| .r2550
-function auto_load_apache_cgi_module()
-{
-	if [ -z "$APH_SERVER_CONFIG_PATH" -o ! -d "$APH_SERVER_CONFIG_PATH" ]; then
-		auto_detect_apache_cfg_path
-	fi
-
-	if [ -d "$APH_SERVER_CONFIG_PATH" ]; then
-		if [ -z "$sAphConfList" ]; then
-			sAphConfList=`find $APH_SERVER_CONFIG_PATH -name "*.conf"`
-		fi
-		sCgiPathInfoList=`grep -v "[[:space:]]*#" $sAphConfList |grep ScriptAlias |awk -F ":" '{ if(NR==1) print $2; else print ":"$2}'`
-		IFSBAK=$IFS
-		IFS=':'
-		for sCgiPathInfo in $sCgiPathInfoList
-		do
-			sCgiPath=`echo "$sCgiPathInfo" | awk '{print $3}'`
-			APACHE_CGI_PATH=${sCgiPath//\"/}
-			sCgiAccessPath=`echo "$sCgiPathInfo" | awk '{print $2}'`
-			APACHE_CGI_ACCESS_PATH=${sCgiAccessPath//\"/}
-			if [  -d "$APACHE_CGI_PATH" -o -z "$APACHE_CGI_ACCESS_PATH" ]; then
-				break;
-			fi
-		done
-		IFS=$IFSBAK
-
-		if [ ! -d "$APACHE_CGI_PATH" -o -z "$APACHE_CGI_ACCESS_PATH" ]; then
-			echo "尝试探测 cgi 目录失败, 请手动指定配置: APACHE_CGI_PATH/APACHE_CGI_ACCESS_PATH 后再试"
-			failed_my_exit $LINENO
-		fi
-	else
-		echo "尝试自动探测 cgi 目录失败, 请手动指定配置: APACHE_CGI_PATH/APACHE_CGI_ACCESS_PATH 后再试"
-		failed_my_exit $LINENO
-	fi
-
-	echo "成功探测到 cgi 绝对路径目录: $APACHE_CGI_PATH"
-	sed -i "/^APACHE_CGI_PATH=/cAPACHE_CGI_PATH=${APACHE_CGI_PATH}" uninstall_xrkmonitor.sh
-	echo "成功探测到 cgi 访问路径: $APACHE_CGI_ACCESS_PATH"
-	sed -i "/^APACHE_CGI_ACCESS_PATH=/cAPACHE_CGI_ACCESS_PATH=${APACHE_CGI_ACCESS_PATH}" uninstall_xrkmonitor.sh
-}
-
-
 if [ ! -d "$APACHE_DOCUMENT_ROOT" ]; then
 	echo "apache 网站根目录: $APACHE_DOCUMENT_ROOT 不存在, 尝试自动探测"
 	auto_detect_apache_doc_root
 	yn_exit "探测结果是否正确, 如不正确请手动在安装脚本中指定后再试 (y/n) ?" $LINENO 
 fi
 
-$APACHE_CMD -t -D DUMP_MODULES |grep cgi_module > /dev/null 2>&1
-if [ $? -ne 0 ]; then
-	isyes=$(yn_continue "apache 未加载 cgi_module 模块, 是否通过安装脚本自动加载(y/n)?")
-	if [ "$isyes" == "yes" ];then
-		auto_load_apache_cgi_module	
-	fi
-fi
-
-=======
-if [ ! -d "$APACHE_DOCUMENT_ROOT" ]; then
-	echo "apache 网站根目录: $APACHE_DOCUMENT_ROOT 不存在, 尝试自动探测"
-	auto_detect_apache_doc_root
-	yn_exit "探测结果是否正确, 如不正确请手动在安装脚本中指定后再试 (y/n) ?" $LINENO 
-fi
-
->>>>>>> .r2551
 if [ ! -d "$APACHE_CGI_PATH" ]; then
 	echo "apache 网站 cgi 目录: $APACHE_CGI_PATH 不存在, 尝试自动探测"
 	auto_detect_apache_cgi_path	
