@@ -18,101 +18,50 @@ if [ ! -d ${LIB_DEST_PATH} ]; then
 fi
 rm -fr ${LIB_DEST_PATH}/*
 cp ../slog_tool/slog_tool ${LIB_DEST_PATH}
-cd ${LIB_DEST_PATH}
 
-function check_lib_exit()
+COPY_LIBS_INFO=('libmysqlclient' 'libssl' 'libcrypto' 'libz' 'libdl' 'libmysqlwrapped' 'libmtreport_api_open' 'libSockets' 'libmyproto' 'libprotobuf' 'libmtreport_api' 'libfcgi' 'libneo_cgi' 'libneo_cs' 'libneo_utl' 'libcgicomm')
+cd ${LIB_DEST_PATH}; rm -fr *
+
+function copy_lib_to_dest()
 {
-	if [ ! -f $1 ]; then
-		echo "copy lib failed, file:$1 not exist"
-		exit 1
+	ls -l $1 |grep "^-" > /dev/null 2>&1
+	if [ $? -eq 0 ]; then
+		cp $1 .
+	else 
+		ls -l $1 |grep "^l" > /dev/null 2>&1
+		if [ $? -eq 0 ]; then
+			local ldstfile=`basename $1`
+			local ldirname=`dirname $1`
+			local lsrcfile=`ls -l $1 |awk '{print $NF}'`
+
+			echo $lsrcfile |grep "^/" > /dev/null 2>&1
+			if [ $? -eq 0 ]; then
+				copy_lib_to_dest $lsrcfile
+			else
+				copy_lib_to_dest $ldirname/$lsrcfile
+			fi
+			if [ $? -ne 0 ]; then
+				return 1;
+			fi
+			ln -s $lsrcfile $ldstfile
+		else
+			return 1
+		fi
 	fi
+	return 0
 }
 
-
-# 系统库
-check_lib_exit ${MTLIB_LIB_PATH}/libmysqlclient.so.18.0.0
-check_lib_exit /lib64/libssl.so.1.0.0 
-check_lib_exit /lib64/libcrypto.so.1.0.0
-check_lib_exit /lib64/libz.so.1
-check_lib_exit /lib64/libdl.so.2
-
-cp ${MTLIB_LIB_PATH}/libmysqlclient.so.18.0.0 . 
-strip libmysqlclient.so.18.0.0
-ln -s libmysqlclient.so.18.0.0 libmysqlclient.so.18
-ln -s libmysqlclient.so.18 libmysqlclient.so
-cp /lib64/libssl.so.1.0.0 .
-cp /lib64/libcrypto.so.1.0.0 .
-cp /lib64/libz.so.1 .
-cp /lib64/libdl.so.2 .
-
-
-# xrkmonitor 公共库
-check_lib_exit ${MTLIB_LIB_PATH}/libmysqlwrapped-1.1.0.so
-check_lib_exit ${MTLIB_LIB_PATH}/libmtreport_api_open-1.1.0.so
-check_lib_exit ${MTLIB_LIB_PATH}/libSockets-1.1.0.so
-check_lib_exit ${MTLIB_LIB_PATH}/libmyproto-1.1.0.so
-check_lib_exit ${MTLIB_LIB_PATH}/libprotobuf.so.6.0.0
-check_lib_exit ${MTLIB_LIB_PATH}/libmtreport_api-1.1.0.so
-check_lib_exit ${MTLIB_LIB_PATH}/libfcgi.so.0.0.0
-check_lib_exit ${MTLIB_LIB_PATH}/libneo_cgi-1.1.0.so
-check_lib_exit ${MTLIB_LIB_PATH}/libneo_cs-1.1.0.so
-check_lib_exit ${MTLIB_LIB_PATH}/libneo_utl-1.1.0.so
-check_lib_exit ${MTLIB_LIB_PATH}/libcgicomm-1.1.0.so
-
-cp ${MTLIB_LIB_PATH}/libfcgi.so.0.0.0 .
-strip libfcgi.so.0.0.0
-ln -s libfcgi.so.0.0.0 libfcgi.so.0
-ln -s libfcgi.so.0 libfcgi.so
-
-cp ${MTLIB_LIB_PATH}/libneo_cgi-1.1.0.so .
-strip libneo_cgi-1.1.0.so
-ln -s libneo_cgi-1.1.0.so libneo_cgi.so.1 
-ln -s libneo_cgi.so.1 libneo_cgi.so 
-
-cp ${MTLIB_LIB_PATH}/libneo_cs-1.1.0.so .
-strip libneo_cs-1.1.0.so
-ln -s libneo_cs-1.1.0.so libneo_cs.so.1 
-ln -s libneo_cs.so.1 libneo_cs.so 
-
-cp ${MTLIB_LIB_PATH}/libcgicomm-1.1.0.so .
-strip libcgicomm-1.1.0.so
-ln -s libcgicomm-1.1.0.so libcgicomm.so.1 
-ln -s libcgicomm.so.1 libcgicomm.so
-
-cp ${MTLIB_LIB_PATH}/libneo_utl-1.1.0.so .
-strip libneo_utl-1.1.0.so
-ln -s libneo_utl-1.1.0.so libneo_utl.so.1 
-ln -s libneo_utl.so.1 libneo_utl.so 
-
-cp ${MTLIB_LIB_PATH}/libmysqlwrapped-1.1.0.so .
-strip libmysqlwrapped-1.1.0.so
-ln -s libmysqlwrapped-1.1.0.so libmysqlwrapped.so.1
-ln -s libmysqlwrapped.so.1 libmysqlwrapped.so
-
-cp ${MTLIB_LIB_PATH}/libmtreport_api_open-1.1.0.so .
-strip libmtreport_api_open-1.1.0.so
-ln -s libmtreport_api_open-1.1.0.so libmtreport_api_open.so.1
-ln -s libmtreport_api_open.so.1 libmtreport_api_open.so
-
-cp ${MTLIB_LIB_PATH}/libSockets-1.1.0.so .
-strip libSockets-1.1.0.so
-ln -s libSockets-1.1.0.so libSockets.so.1
-ln -s libSockets.so.1 libSockets.so
-
-cp ${MTLIB_LIB_PATH}/libmyproto-1.1.0.so .
-strip libmyproto-1.1.0.so
-ln -s libmyproto-1.1.0.so libmyproto.so.1
-ln -s libmyproto.so.1 libmyproto.so
-
-cp ${MTLIB_LIB_PATH}/libprotobuf.so.6.0.0 .
-strip libprotobuf.so.6.0.0
-ln -s libprotobuf.so.6.0.0 libprotobuf.so.6
-ln -s libprotobuf.so.6 libprotobuf.so
-
-cp ${MTLIB_LIB_PATH}/libmtreport_api-1.1.0.so .
-strip libmtreport_api-1.1.0.so
-ln -s libmtreport_api-1.1.0.so libmtreport_api.so.1
-ln -s libmtreport_api.so.1 libmtreport_api.so
+for lib in ${COPY_LIBS_INFO[@]}; do
+	dlib=`ldd ${cdir}/../cgi_fcgi/slog_flogin|grep $lib.so`
+	if [ $? -ne 0 -o -z "$dlib" ]; then
+		echo "copy lib: $lib failed, not find !"
+		exit 2
+	fi
+ 	dfile=`echo $dlib|awk '{print $3}'`
+	if [ $? -eq 0 -a ! -z "$dfile" ]; then
+		copy_lib_to_dest $dfile
+	fi
+done
 
 cd $cdir
 tar -czf xrkmonitor_lib.tar.gz $LIB_DEST_PATH
