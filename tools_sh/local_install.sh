@@ -220,7 +220,7 @@ function auto_detect_apache_doc_root()
 	fi
 
 	if [ -d "$APH_SERVER_CONFIG_PATH" ]; then
-		if [ -z $sAphConfList ]; then
+		if [ -z "$sAphConfList" ]; then
 			sAphConfList=`find $APH_SERVER_CONFIG_PATH -name "*.conf"`
 		fi
 		sDocRootList=`grep -v "[[:space:]]*#" $sAphConfList |grep DocumentRoot |awk -F ":" '{if(NR==1) print $2; else print ":"$2}'`
@@ -255,7 +255,7 @@ function auto_detect_apache_cgi_path()
 	fi
 
 	if [ -d "$APH_SERVER_CONFIG_PATH" ]; then
-		if [ -z $sAphConfList ]; then
+		if [ -z "$sAphConfList" ]; then
 			sAphConfList=`find $APH_SERVER_CONFIG_PATH -name "*.conf"`
 		fi
 		sCgiPathInfoList=`grep -v "[[:space:]]*#" $sAphConfList |grep ScriptAlias |awk -F ":" '{ if(NR==1) print $2; else print ":"$2}'`
@@ -295,7 +295,7 @@ function auto_load_apache_cgi_module()
 	fi
 
 	if [ -d "$APH_SERVER_CONFIG_PATH" ]; then
-		if [ -z $sAphConfList ]; then
+		if [ -z "$sAphConfList" ]; then
 			sAphConfList=`find $APH_SERVER_CONFIG_PATH -name "*.conf"`
 		fi
 		sCgiPathInfoList=`grep -v "[[:space:]]*#" $sAphConfList |grep ScriptAlias |awk -F ":" '{ if(NR==1) print $2; else print ":"$2}'`
