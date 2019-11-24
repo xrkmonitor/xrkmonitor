@@ -288,6 +288,8 @@ function auto_detect_apache_cgi_path()
 	sed -i "/^APACHE_CGI_ACCESS_PATH=/cAPACHE_CGI_ACCESS_PATH=${APACHE_CGI_ACCESS_PATH}" uninstall_xrkmonitor.sh
 }
 
+<<<<<<< .mine
+||||||| .r2550
 function auto_load_apache_cgi_module()
 {
 	if [ -z "$APH_SERVER_CONFIG_PATH" -o ! -d "$APH_SERVER_CONFIG_PATH" ]; then
@@ -343,6 +345,14 @@ if [ $? -ne 0 ]; then
 	fi
 fi
 
+=======
+if [ ! -d "$APACHE_DOCUMENT_ROOT" ]; then
+	echo "apache 网站根目录: $APACHE_DOCUMENT_ROOT 不存在, 尝试自动探测"
+	auto_detect_apache_doc_root
+	yn_exit "探测结果是否正确, 如不正确请手动在安装脚本中指定后再试 (y/n) ?" $LINENO 
+fi
+
+>>>>>>> .r2551
 if [ ! -d "$APACHE_CGI_PATH" ]; then
 	echo "apache 网站 cgi 目录: $APACHE_CGI_PATH 不存在, 尝试自动探测"
 	auto_detect_apache_cgi_path	
