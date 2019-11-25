@@ -90,9 +90,11 @@ int Init(const char *pFile = NULL)
         return SLOG_ERROR_LINE;
     }   
 
-    if(GetIpFromIf(stConfig.szLocalIp, stConfig.szLocalIp) != 0)
+	if(stConfig.szLocalIp[0] == '\0' || INADDR_NONE == inet_addr(stConfig.szLocalIp))
+		GetCustLocalIP(stConfig.szLocalIp);
+	if(stConfig.szLocalIp[0] == '\0' || INADDR_NONE == inet_addr(stConfig.szLocalIp))
     {
-        ERR_LOG("GetIpFromIf failed ! local if name:%s", stConfig.szLocalIp);
+		ERR_LOG("get local ip failed, use LOCAL_IP to set !");
         return SLOG_ERROR_LINE;
     }
 

@@ -956,10 +956,10 @@ void CSupperLog::ShowShmLogInfo(int iLogIndex)
 int CSupperLog::InitCommon(const char *pConfFile) 
 {
 	int32_t iRet = 0;
-	char szLocalEth[32] = {0};
+	char szLocalIp[32] = {0};
 	char szLogTypeStr[200] = {0};
 	if((iRet=LoadConfig(pConfFile,
-		"LOCAL_IF_NAME", CFG_STRING, szLocalEth, "eth0", MYSIZEOF(szLocalEth),
+		"LOCAL_IP", CFG_STRING, szLocalIp, "", MYSIZEOF(szLocalIp),
 		"SLOG_CONFIG_ID", CFG_INT, &m_dwConfigId, 0,
 		"FAST_CGI_MAX_HITS", CFG_INT, &m_iFastCgiHits, 0,
 		"SLOG_OUT_TYPE", CFG_INT, &m_iLogOutType, 2,
@@ -975,10 +975,11 @@ int CSupperLog::InitCommon(const char *pConfFile)
 	}
 
 	m_iLocalLogType = GetLogTypeByStr(szLogTypeStr);
-	char szLocalIp[32] = {0};
-	if(GetIpFromIf(szLocalIp, szLocalEth) != 0)
+	if(szLocalIp[0] == '\0' || INADDR_NONE == inet_addr(szLocalIp))
+		GetCustLocalIP(szLocalIp);
+	if(szLocalIp[0] == '\0' || INADDR_NONE == inet_addr(szLocalIp))
 	{
-	    ERR_LOG("GetIpFromIf failed ! local if name:%s", szLocalEth);
+		ERR_LOG("get local ip failed, use LOCAL_IP to set !");
 	    return SLOG_ERROR_LINE;
 	}
 
@@ -3031,8 +3032,8 @@ int CSupperLog::InitForUseLocalLog(const char *pszConfigFile)
 
 int CSupperLog::Init(const char *pszLocalIP)
 {
+	char szLocalIp[32] = {0};
 	m_bInit = false; // 尝试用数据库配置初始
-	char szLocalEth[32] = {0};
 
 	if(m_pShmConfig == NULL || m_pShmAppInfo == NULL)
 	{
@@ -3069,7 +3070,7 @@ int CSupperLog::Init(const char *pszLocalIP)
 		"MONITOR_MACHINE_SHM_KEY", CFG_INT, &m_iMonitorMachineShmKey, DEF_MONITOR_MACHINE_SHM_KEY,
 		"SLOG_COREDUMP_FILE", CFG_STRING, m_szCoreFile,  "/home/mtreport/slog_core/", MYSIZEOF(m_szCoreFile),
 		"SLOG_PROCESS_COUNT", CFG_INT, &m_iProcessCount, 1,
-		"LOCAL_IF_NAME", CFG_STRING, szLocalEth, "eth0", MYSIZEOF(szLocalEth),
+		"LOCAL_IP", CFG_STRING, szLocalIp, "", MYSIZEOF(szLocalIp),
 		(void*)NULL)) < 0)
 	{   
 		ERR_LOG("LoadConfig:%s failed ! ret:%d", m_strConfigFile.c_str(), iRet);
@@ -3086,10 +3087,11 @@ int CSupperLog::Init(const char *pszLocalIP)
 		m_strLocalIP = pszLocalIP;
 	if(m_strLocalIP.size() <= 0)
 	{
-		char szLocalIp[32] = {0};
-		if(GetIpFromIf(szLocalIp, szLocalEth) != 0)
+		if(szLocalIp[0] == '\0' || INADDR_NONE == inet_addr(szLocalIp)) 
+			GetCustLocalIP(szLocalIp);
+		if(szLocalIp[0] == '\0' || INADDR_NONE == inet_addr(szLocalIp))
 		{
-			ERR_LOG("GetIpFromIf failed ! local if name:%s", szLocalEth);
+			ERR_LOG("get local ip failed, use LOCAL_IP to set !");
 			return SLOG_ERROR_LINE;
 		}
 		m_strLocalIP = szLocalIp;

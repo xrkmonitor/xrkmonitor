@@ -74,7 +74,6 @@ tar rvf ${TarP} tools_sh/stop_all.sh
 tar rvf ${TarP} tools_sh/add_crontab.sh
 tar rvf ${TarP} tools_sh/start_comm.sh
 tar rvf ${TarP} tools_sh/stop_comm.sh
-tar rvf ${TarP} tools_sh/install_bin.sh
 tar rvf ${TarP} cgi_fcgi/* --exclude *.cpp --exclude Makefile --exclude cgi_debug.txt 
 tar rvf ${TarP} db
 tar rvf ${TarP} html 

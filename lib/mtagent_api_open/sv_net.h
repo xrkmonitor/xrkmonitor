@@ -46,7 +46,7 @@ typedef struct{
 
 int GetIf(IfDesc_ipv4 * pstDesc);
 const char * GetLocalIP(const char *pszRemoteIp);
-int GetIpFromIf(char szIp[16], const char * szIfName);
+void GetCustLocalIP(char *pszLocalIp);
 
 static inline uint64_t Hton64(uint64_t qwVal)
 {

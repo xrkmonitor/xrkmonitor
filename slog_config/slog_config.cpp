@@ -154,7 +154,6 @@ int Init(const char *pFile = NULL)
 
 	int32_t iRet = 0, iLogToStd = 0, iLogWriteSpeed = 100, iSysDaemon = 0;
 	int32_t  iConfigId = 0, iVmemShmKey = 0, iLoginShmKey = 0;
-	char szIpEth[16] = {0};
 	if((iRet=LoadConfig(pConfFile,
 		"MYSQL_SERVER", CFG_STRING, stConfig.szDbHost, "127.0.0.1", MYSIZEOF(stConfig.szDbHost),
 		"MYSQL_USER", CFG_STRING, stConfig.szUserName, "mtreport", MYSIZEOF(stConfig.szUserName),
@@ -162,7 +161,7 @@ int Init(const char *pFile = NULL)
 		"MYSQL_DATABASE", CFG_STRING, stConfig.szDbName, "mtreport_db", MYSIZEOF(stConfig.szDbName),
 		"MYSQL_DB_PORT", CFG_INT, &stConfig.iDbPort, 3306,
 		"FLOGIN_SHM_KEY", CFG_INT, &iLoginShmKey, FLOGIN_SESSION_HASH_SHM_KEY,
-		"LOCAL_IF_NAME", CFG_STRING, szIpEth, "eth0", MYSIZEOF(szIpEth),
+		"LOCAL_IP", CFG_STRING, stConfig.szLocalIp, "", MYSIZEOF(stConfig.szLocalIp),
 		"SLOG_LOG_FILE", CFG_STRING, stConfig.szLogFile, "./slog_config.log", MYSIZEOF(stConfig.szLogFile),
 		"SLOG_LOG_TO_STD", CFG_INT, &iLogToStd, 0,
 		"LOCAL_DELETE_NO_USE_IN_SQL", CFG_INT, &stConfig.iDeleteNoUseRecord, 0,
@@ -233,9 +232,11 @@ int Init(const char *pFile = NULL)
 		strncpy(stConfig.psysConfig->szAgentAccessKey, stConfig.szAccessKey, sizeof(stConfig.psysConfig->szAgentAccessKey));
 	}
 
-	if(GetIpFromIf(stConfig.szLocalIp, szIpEth) != 0)
+	if(stConfig.szLocalIp[0] == '\0' || INADDR_NONE == inet_addr(stConfig.szLocalIp))
+		GetCustLocalIP(stConfig.szLocalIp);
+	if(stConfig.szLocalIp[0] == '\0' || INADDR_NONE == inet_addr(stConfig.szLocalIp))
 	{
-		ERR_LOG("GetIpFromIf failed ! local if name:%s", stConfig.szLocalIp);
+		ERR_LOG("get local ip failed, use LOCAL_IP to set !");
 		return SLOG_ERROR_LINE;
 	}
 

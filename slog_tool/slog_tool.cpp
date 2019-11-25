@@ -45,7 +45,6 @@ using namespace comm;
 
 typedef struct
 {
-	char szLocalIp[20];
 	SLogConfig *pShmConfig;
 	SLogAppInfo *pAppInfo;
 	int iLoginShmKey;
@@ -576,7 +575,6 @@ int Init(const char *pFile = NULL)
 
 	int32_t iRet = 0, iLogToStd = 0;
 	if((iRet=LoadConfig(pConfFile,
-		"LOCAL_IF_NAME", CFG_STRING, stConfig.szLocalIp, "eth0", MYSIZEOF(stConfig.szLocalIp),
 		"SLOG_LOG_TO_STD", CFG_INT, &iLogToStd, 0,
 		"SLOG_CONFIG_ID", CFG_INT, &stConfig.iConfigId, 0,
 		"FLOGIN_SHM_KEY", CFG_INT, &stConfig.iLoginShmKey, FLOGIN_SESSION_HASH_SHM_KEY,
@@ -608,12 +606,6 @@ int Init(const char *pFile = NULL)
 	if(stConfig.pShmConfig == NULL || stConfig.pAppInfo == NULL) 
 	{
 		FATAL_LOG("get pShmConfig or pAppInfo failed !");
-		return SLOG_ERROR_LINE;
-	}
-
-	if(GetIpFromIf(stConfig.szLocalIp, stConfig.szLocalIp) != 0)
-	{
-		ERR_LOG("GetIpFromIf failed ! local if name:%s", stConfig.szLocalIp);
 		return SLOG_ERROR_LINE;
 	}
 

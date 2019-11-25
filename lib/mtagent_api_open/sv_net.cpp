@@ -46,6 +46,7 @@
 #include <time.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <ifaddrs.h>
 
 #include "sv_net.h"
 #include "sv_str.h"
@@ -89,17 +90,27 @@ int GetIf(IfDesc_ipv4 * pstDesc)
 	return 0;
 }
 
-int GetIpFromIf(char szIp[16], const char * szIfName)
-{
-	IfDesc_ipv4 stDesc;	
 
-	snprintf(stDesc.name, sizeof(stDesc.name), "%s", szIfName);
-	if(GetIf(&stDesc) < 0){
-		return -1;
-	}else{
-		snprintf(szIp, 16, "%s", inet_ntoa(stDesc.addr.sin_addr));
-		return 0;
-	}
+void GetCustLocalIP(char *pszLocalIp)
+{
+	struct ifaddrs *addr = NULL;
+	struct ifaddrs *temp_addr = NULL;
+	const char *pip = NULL;
+
+	if( getifaddrs(&addr) == 0) {
+		temp_addr = addr;
+		while(temp_addr != NULL) {
+			if(temp_addr->ifa_addr->sa_family == AF_INET) { 
+				pip = inet_ntoa(((struct sockaddr_in *)temp_addr->ifa_addr)->sin_addr);
+				if(strcmp(pip, "127.0.0.1")){
+					strcpy(pszLocalIp, pip);
+					break;
+				}
+			} 
+			temp_addr = temp_addr->ifa_next;        
+		}    
+	}    
+	freeifaddrs(addr);
 }
 
 int SetNBlock(int iSock)

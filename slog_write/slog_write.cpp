@@ -92,7 +92,7 @@ int Init(const char *pFile = NULL)
 
 	int32_t iRet = 0;
 	if((iRet=LoadConfig(pConfFile,
-		"LOCAL_IF_NAME", CFG_STRING, stConfig.szLocalIp, "eth0", sizeof(stConfig.szLocalIp),
+		"LOCAL_IP", CFG_STRING, stConfig.szLocalIp, "", sizeof(stConfig.szLocalIp),
 		"SLOG_SERVER_FILE_PATH", CFG_STRING, stConfig.szLogPath, DEF_SLOG_LOG_FILE_PATH, sizeof(stConfig.szLogPath),
 		"WRITE_SHOW_PER_SECS", CFG_INT, &stConfig.iPerShowTimeSec, 300,
 		"SCAN_LOGFILE_AGAIN", CFG_INT, &stConfig.iScanAgain, 1,
@@ -115,9 +115,11 @@ int Init(const char *pFile = NULL)
 		stConfig.iCheckWriteProcessTime = 10;
 	}
 
-	if(GetIpFromIf(stConfig.szLocalIp, stConfig.szLocalIp) != 0)
+	if(stConfig.szLocalIp[0] == '\0' || INADDR_NONE == inet_addr(stConfig.szLocalIp))
+		GetCustLocalIP(stConfig.szLocalIp);
+	if(stConfig.szLocalIp[0] == '\0' || INADDR_NONE == inet_addr(stConfig.szLocalIp))
 	{
-		ERR_LOG("GetIpFromIf failed ! local if name:%s", stConfig.szLocalIp);
+		ERR_LOG("get local ip failed, use LOCAL_IP to set !");
 		return SLOG_ERROR_LINE;
 	}
 

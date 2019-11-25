@@ -1002,7 +1002,7 @@ int InitFastCgiStart(CGIConfig &myConf)
 
 	if(LoadConfig(myConf.szConfigFile,
 	   "SLOG_SET_TEST", CFG_INT, &myConf.iCfgTestLog, 0,
-	   "LOCAL_IF_NAME", CFG_STRING, myConf.szLocalIp, "eth0", MYSIZEOF(myConf.szLocalIp),
+	   "LOCAL_IF", CFG_STRING, myConf.szLocalIp, "", MYSIZEOF(myConf.szLocalIp),
 	   "DEBUG_LOG_FILE", CFG_STRING, myConf.szDebugPath, CGI_COREDUMP_DEBUG_OUTPUT_PATH, MYSIZEOF(myConf.szDebugPath),
 	   "FAST_CGI_MAX_HITS", CFG_INT, &myConf.dwMaxHits, FAST_CGI_DEF_HITS_MAX,
 	   "FAST_CGI_RUN_MAX_HOURS", CFG_INT, &myConf.dwExitTime, FAST_CGI_DEF_RUN_MAX_TIME_HOURS,
@@ -1030,12 +1030,12 @@ int InitFastCgiStart(CGIConfig &myConf)
 	myConf.pid = getpid();
 	myConf.dwExitTime = myConf.dwCurTime+myConf.dwExitTime*60*60 + rand()%60;
 
-	if(INADDR_NONE == inet_addr(myConf.szLocalIp))
+	if(myConf.szLocalIp[0] == '\0' || INADDR_NONE == inet_addr(myConf.szLocalIp))
+		GetCustLocalIP(myConf.szLocalIp);
+	if(myConf.szLocalIp[0] == '\0' || INADDR_NONE == inet_addr(myConf.szLocalIp))
 	{
-		if(GetIpFromIf(myConf.szLocalIp, myConf.szLocalIp) != 0) {
-			ERR_LOG("get local ip failed !");
-			return SLOG_ERROR_LINE;
-		}
+		ERR_LOG("get local ip failed !");
+		return SLOG_ERROR_LINE;
 	}
 
 	int iRet = 0;

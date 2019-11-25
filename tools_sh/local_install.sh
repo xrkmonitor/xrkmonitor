@@ -107,6 +107,27 @@ function check_file()
 	fi
 }
 
+function UpdateServerCfg()
+{
+	cfgItem=$1 
+	cfgVal=$2
+
+	dirlist=`find . -maxdepth 1 -type d`
+	for dr in $dirlist
+	do 
+		if [ -f $dr/$dr -a -f $dr/$dr.conf ]; then 
+			sed -i '/LOCAL_IP/d' $dr/$dr.conf
+			echo "$cfgItem $cfgVal" >> $dr/$dr.conf
+		fi
+	done
+	cgilist=`ls cgi_fcgi/*.conf -1`
+	for cfg in $cgilist
+	do 
+		sed -i '/LOCAL_IP/d' $cfg
+		echo "$cfgItem $cfgVal" >> $cfg
+	done
+}
+
 function yn_exit()
 {
 	read -p "$1" op
@@ -522,13 +543,14 @@ echo "STEP: ($CUR_STEP/$STEP_TOTAL) 修改字符云监控服务相关配置"
 sed -i "/^SERVER_MASTER/cSERVER_MASTER $LOCAL_IP" slog_mtreport_client/slog_mtreport_client.conf
 CUR_CGI_LOG_PATH=`cat cgi_fcgi/slog_flogin.conf |grep SLOG_LOG_FILE|awk '{print $2}'|xargs dirname`
 if [ "$CUR_CGI_LOG_PATH" != "$XRKMONITOR_CGI_LOG_PATH" ]; then
-	echo "更新 CGI 文件日志文件路径"
+	echo "更新 CGI 文件日志文件目录配置"
 	OLD_CGI_LOG_PATH=${CUR_CGI_LOG_PATH//\//\\\/}
 	NEW_CGI_LOG_PATH=${XRKMONITOR_CGI_LOG_PATH//\//\\\/}
 	sed -i "s/${OLD_CGI_LOG_PATH}/${NEW_CGI_LOG_PATH}/g" `ls cgi_fcgi/*.conf -1`
 fi
 CUR_CS_PATH=`cat cgi_fcgi/slog_flogin.conf |grep CS_PATH|awk '{print $2}'`
 if [ "$CUR_CS_PATH" != "$APACHE_DOCUMENT_ROOT/$XRKMONITOR_HTML_PATH/" ]; then
+	echo "更新 html 模板文件目录配置"
 	sXrkmonitorHtmlPath=${XRKMONITOR_HTML_PATH//\//\\\/}
 	sed -i "s/\/xrkmonitor/\/$sXrkmonitorHtmlPath/g" `ls cgi_fcgi/*.conf -1`
 	sApacheDocRootCs=${APACHE_DOCUMENT_ROOT//\//\\\/}
@@ -536,10 +558,13 @@ if [ "$CUR_CS_PATH" != "$APACHE_DOCUMENT_ROOT/$XRKMONITOR_HTML_PATH/" ]; then
 	sed -i "s/\/xrkmonitor/\/$sXrkmonitorHtmlPath/g" html/index.html
 fi
 if [ "$APACHE_CGI_ACCESS_PATH" != "/cgi-bin/" ]; then
+	echo "更新 cgi 访问路径配置"
 	sCgiAccessPath=${APACHE_CGI_ACCESS_PATH//\//\\\/}
 	sed -i "s/\/cgi-bin\//$sCgiAccessPath/g" `ls cgi_fcgi/*.conf -1`
 	sed -i "s/\/cgi-bin\//$sCgiAccessPath/g" html/index.html
 fi
+echo "更新本机 IP 配置(您的服务器有多个IP时可能需要手动指定,一般不用)"
+UpdateServerCfg "LOCAL_IP" $LOCAL_IP
 CUR_STEP=`expr 1 + $CUR_STEP`
 
 
@@ -562,18 +587,19 @@ if [ "$SLOG_SERVER_FILE_PATH" != "/home/mtreport/slog/" ]; then
 	sed -i "/^SLOG_SERVER_FILE_PATH=/cSLOG_SERVER_FILE_PATH ${sCurLogServerPath}" uninstall_xrkmonitor.sh
 	sed -i "/^SLOG_SERVER_FILE_PATH/cSLOG_SERVER_FILE_PATH ${sCurLogServerPath}" slog_write/slog_write.conf
 fi
-
 cd tools_sh
 check_file stop_all.sh $LINENO
 ls -l /tmp/pid*slog*pid >/dev/null 2>&1
 if [ $? -eq 0 ]; then
 	./stop_all.sh
 fi
-
 check_file check_proc_monitor.sh $LINENO
 ./check_proc_monitor.sh 1
 usleep 50000 > /dev/null 2>&1 || sleep 1
-echo "开始检测确认字符云监控后台服务运行是否正常"
+CUR_STEP=`expr 1 + $CUR_STEP`
+
+echo ""
+echo "STEP: ($CUR_STEP/$STEP_TOTAL) 检测确认云监控后台服务"
 check_file /tmp/pid.slog_config.pid $LINENO
 check_file /tmp/pid.slog_client.pid $LINENO 
 check_file /tmp/pid.slog_check_warn.pid $LINENO 
