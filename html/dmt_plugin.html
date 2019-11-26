@@ -10,10 +10,10 @@ function <?cs var:config.plugin_pre ?>Search()
 	reqdata.action = 'open_get_plugins';
 	reqdata.rhost = location.host;
 	reqdata.plugin_type = '<?cs var:config.plugin_type ?>';
-	reqdata.dev_language = $('#<?cs var:config.plugin_pre ?>_dev_language').val();
-	reqdata.dest_os = $('#<?cs var:config.plugin_pre ?>_dest_os').val();
-	reqdata.open_src = $('#<?cs var:config.plugin_pre ?>_open_src').val();
-	reqdata.set_method = $('#<?cs var:config.plugin_pre ?>_set_method').val();
+	reqdata.dev_language = $('#<?cs var:config.plugin_pre ?>_SearchBar select[name=dev_language]').val();
+	reqdata.dest_os = $('#<?cs var:config.plugin_pre ?>_SearchBar select[name=dest_os]').val();
+	reqdata.open_src = $('#<?cs var:config.plugin_pre ?>_SearchBar select[name=open_src]').val();
+	reqdata.set_method = $('#<?cs var:config.plugin_pre ?>_SearchBar select[name=set_method]').val();
 	$.ajax({
 		type:'post',
 		url: requrl,
@@ -131,9 +131,6 @@ function <?cs var:config.plugin_pre ?>SetpluginList()
 		var detail = "<a class='detail' href='#' onclick='return <?cs var:config.plugin_pre ?>OnDetail("+i+");'>详情</a>";
 		uhtml += "<td>"+detail+"</td>";
 
-		var dm = "<a class='detail' href='#' onclick='return <?cs var:config.plugin_pre ?>OnDaemon("+i+");'>查看</a>";
-		uhtml += "<td>"+dm+"</td>";
-	
 		var dw = "<a class='detail' href='#' onclick='return <?cs var:config.plugin_pre ?>OnDownLoad("+i+");'>下载</a>";
 		uhtml += "<td>"+dw+"</td>";
 
@@ -221,7 +218,7 @@ $(document).ready(function(){
 					<tr>
 						<td>
 							<label>开发语言：</label>
-							<select name="dev_language" id='<?cs var:config.plugin_pre ?>_dev_language'>
+							<select name="dev_language">
 								<option value="all">-全部-</option>
 								<option value="c/c++">c/c++</option>
 								<option value="php">php</option>
@@ -234,7 +231,7 @@ $(document).ready(function(){
 
 						<td>
 							<label>运行平台：</label>
-							<select name="dest_os" id='<?cs var:config.plugin_pre ?>_dest_os'> 
+							<select name="dest_os"> 
 								<option value="all">-全部-</option>
 								<option value="Linux">Linux</option>
 								<option value="Windows">Windows</option>
@@ -243,7 +240,7 @@ $(document).ready(function(){
 	
 						<td>
 							<label>是否开源：</label>
-							<select name="open_src" id='<?cs var:config.plugin_pre ?>_open_src'> 
+							<select name="open_src">
 								<option value="999">-全部-</option>
 								<option value="0">开 源</option>
 								<option value="1">闭 源</option>
@@ -252,7 +249,7 @@ $(document).ready(function(){
 
 						<td>
 							<label>部署方式：</label>
-							<select name="set_method" id='<?cs var:config.plugin_pre ?>_set_method'>
+							<select name="set_method">
 								<option value="999">-全部-</option>
 								<option value="0">内 置</option>
 								<option value="1">外 置</option>
@@ -301,7 +298,6 @@ $(document).ready(function(){
 							<th width="40">部署</th>
 							<th width="60">开发者</th>
 							<th width="30">详情</th>
-							<th width="30">演示</th>
 							<th width="40">下载</th>
 						</tr>
 					</thead>
