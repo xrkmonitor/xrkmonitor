@@ -52,13 +52,13 @@
 2. php
 	   
 **web 控制台页面展示:**     
-![字符云监控系统](http://open.xrkmonitor.com/html/images/web_page.gif)
+![字符云监控系统](http://xrkmonitor.com/monitor/images/web_page.gif)
 
 **分布式日志系统日志查看演示:**   
-![开源版监控系统](http://open.xrkmonitor.com/html/images/web_log.gif)
+![开源版监控系统](http://xrkmonitor.com/monitor/images/web_log.gif)
 
 **监控点数据图表查看演示:**   
-![开源版监控系统](http://open.xrkmonitor.com/html/images/web_attr.gif)
+![开源版监控系统](http://xrkmonitor.com/monitor/images/web_attr.gif)
 
 **微信告警示例:**(支持邮件、短信、微信、PC客户端等告警方式，告警功能无需开发直接可用)  
 ![开源版监控系统告警示例](http://xrkmonitor.com/monitor/images/open_wx_2.png)
