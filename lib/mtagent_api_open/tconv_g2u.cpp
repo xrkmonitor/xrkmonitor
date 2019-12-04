@@ -24082,18 +24082,22 @@ int tconv_gbk2utf8(const char * in, C2_SIZE ilen, char * out, C2_SIZE * olen)
 	return wong_bytes;
 }
 
+
+// 判断是否中文 utf8 编码
 int IsUtf8Str(const char *sStr)
 {
     const unsigned char *pc = (const unsigned char*)sStr;
-	int iLen = (int)strlen((const char*)pc), i = 0, t = 0;
+	int iLen = (int)strlen((const char*)pc), i = 0, t = 0, hz = 0;
 	while(iLen > i) {
 		t = TCONV_UTF8_LENGTH_ALL(*pc);
 		i += t;
 		pc += t;
 		if(t == 0)
 			break;
+		if(t == 3)
+			++hz;
 	}
-	if(iLen == i)
+	if(iLen == i && hz > 0)
 		return 1;
 	return 0;
 }
