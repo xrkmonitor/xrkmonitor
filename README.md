@@ -5,7 +5,7 @@
 
 安装脚本: install.sh  
 从以下链接下载后, 按提示执行即可, 需要系统支持 bash  
-( http://xrkmonitor.com/monitor/download/install.sh; chmod +x install.sh; ./install.sh ) 
+(wget http://xrkmonitor.com/monitor/download/install.sh; chmod +x install.sh; ./install.sh ) 
 
 在线部署说明:  
 安装脚本会先检查当前系统是否支持在线安装, 如不支持您可以下载源码后在系统上编译安装   
