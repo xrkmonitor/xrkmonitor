@@ -28,6 +28,8 @@
 
 安装环境变量同在线安装一样, 具体可以查看说明文档: http://xrkmonitor.com/monitor/dmt_open_doc.html
 
+控制台默认账号密码: sadmin/sadmin  
+
 
 **使用的技术方案:**  
 1. apache + mysql(监控点数据、配置信息使用 mysql 存储, 支持分布式部署)   

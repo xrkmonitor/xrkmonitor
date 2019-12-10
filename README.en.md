@@ -1,36 +1,83 @@
-# 字符云监控开源版
+## 项目简介
+集监控点监控、日志监控、数据可视化以及监控告警为一体的国产开源监控系统，直接部署即可使用。    
 
-#### Description
-集成监控点监控、日志监控、数据分析、数据可视化以及监控告警为一体的国产开源监控系统，直接部署即可使用。
+**在线一键部署:**   
 
-#### Software Architecture
-Software architecture description
+安装脚本: install.sh  
+从以下链接下载后, 按提示执行即可, 需要系统支持 bash  
+( http://xrkmonitor.com/monitor/download/install.sh; chmod +x install.sh; ./install.sh ) 
 
-#### Installation
+在线部署说明:  
+安装脚本会先检查当前系统是否支持在线安装, 如不支持您可以下载源码后在系统上编译安装   
+在线部署目前只支持集中部署方式, 即所有服务部署在一台机器上, 该机器上需要安装 mysql/apache    
+安装脚本使用中文 utf8 编码, 安装过程请将您的终端设置为 utf8, 以免出现乱码   
+安装脚本同时支持 root 账号和普通账号操作, 使用普通账号执行安装部署要求如下: 
+1. 在线部署使用动态链接库, 需要在指定目录下执行安装脚本, 目录为: /home/mtreport   
+2. 普通账号某些目录可能无权操作, 需要授权才能正常安装    
 
-1. xxxx
-2. xxxx
-3. xxxx
+卸载脚本: uninstall_xrkmonitor.sh   
+在线部署过程中会下载该脚本, 如需卸载可执行该脚本  
 
-#### Instructions
+我们强烈建议您先在本地虚拟机上执行在线安装, 熟悉安装流程后在实际部署到您的服务器上.   
 
-1. xxxx
-2. xxxx
-3. xxxx
+**离线一键部署(源码编译)**  
 
-#### Contribution
+如果在线安装失败或者需要二次开发, 可以使用源码编译方式安装  
+安装脚本: local_install.sh  
+卸载脚本: uninstall_xrkmonitor.sh   
 
-1. Fork the repository
-2. Create Feat_xxx branch
-3. Commit your code
-4. Create Pull Request
+安装环境变量同在线安装一样, 具体可以查看说明文档: http://xrkmonitor.com/monitor/dmt_open_doc.html
+
+控制台默认账号密码: sadmin/sadmin  
 
 
-#### Gitee Feature
+**使用的技术方案:**  
+1. apache + mysql(监控点数据、配置信息使用 mysql 存储, 支持分布式部署)   
+2. 前端 web 控制台采用 [dwz 开源框架](http://jui.org/)   
+3. 前端监控图表采用开源 [echarts](https://www.echartsjs.com/zh/index.html) 绘制
+4. 后台 cgi 使用开源的cgi模板引擎 - [clearsilver](http://www.clearsilver.net/), 所有cgi支持以fastcgi方式部署    
+5. 后台服务使用了开源的 socket 开发框架 - [C++ Sockets](http://www.alhem.net/Sockets/)   
 
-1. You can use Readme\_XXX.md to support different languages, such as Readme\_en.md, Readme\_zh.md
-2. Gitee blog [blog.gitee.com](https://blog.gitee.com)
-3. Explore open source project [https://gitee.com/explore](https://gitee.com/explore)
-4. The most valuable open source project [GVP](https://gitee.com/gvp)
-5. The manual of Gitee [https://gitee.com/help](https://gitee.com/help)
-6. The most popular members  [https://gitee.com/gitee-stars/](https://gitee.com/gitee-stars/)
+**相比其它开源监控系统优势:**    
+1.	集成告警功能, 支持多种告警方式，告警通道无需开发    
+2.	集成分布式日志系统功能    
+3.  支持多种部署方式    
+	a.支持集中部署, 小规模需求只需一台服务器即可部署   
+	b.支持分布式部署
+4.	支持自动化配置
+5.  监控 api 接口清晰简单，轻松集成到您的软件系统中   
+6.  支持多用户访问
+7.  支持插件功能, 无需开发即可使用监控插件完成监控需求
+   
+**当前监控上报API支持的语言如下(更多语言支持在开发中):**   
+1. c/c++ 
+2. php
+	   
+**web 控制台页面展示:**     
+![字符云监控系统](http://xrkmonitor.com/monitor/images/web_page.gif)
+
+**分布式日志系统日志查看演示:**   
+![开源版监控系统](http://xrkmonitor.com/monitor/images/web_log.gif)
+
+**监控点数据图表查看演示:**   
+![开源版监控系统](http://xrkmonitor.com/monitor/images/web_attr.gif)
+
+**微信告警示例:**(支持邮件、短信、微信、PC客户端等告警方式，告警功能无需开发直接可用)  
+![开源版监控系统告警示例](http://xrkmonitor.com/monitor/images/open_wx_2.png)
+
+
+**项目演示链接：[字符云监控项目演示 http://open.xrkmonitor.com](http://open.xrkmonitor.com)**   
+
+
+**在线文档：- [在线文档 http://xrkmonitor.com/monitor/dmt_open_doc.html](http://xrkmonitor.com/monitor/dmt_open_doc.html)**   
+
+
+## 联系我们
+QQ 群 699014295 (加群密码：xrkmonitor):   
+![字符云监控系统QQ群](http://xrkmonitor.com/monitor/main/img/new_qq_group.png)  
+
+微信公众号:   
+![字符云监控系统微信公众号](http://xrkmonitor.com/monitor/main/img/main_wx_qrcode.jpg)  
+
+邮箱：1820140912@qq.com
+
