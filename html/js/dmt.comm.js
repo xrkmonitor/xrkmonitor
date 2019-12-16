@@ -36,6 +36,7 @@ var g_dmtChartHeight = 460;
 var g_dmtSingleChartMinWidth = 1100;
 var g_dmtSingleChartHeight = 520;
 var g_all_charts = new Array();
+var g_dmtRedrawChartCountShowProc = 5;
 
 // 判断浏览器类型是否支持
 function dmtIsExplorerSupport()
@@ -106,16 +107,33 @@ function dmtRedrawCharts(type_id, type, isLeftShow)
 	if(typeof g_all_charts != 'undefined')
 	{
 		var keystr = '_'+type_id+type;
-		for(ct in g_all_charts)
-		{
-			if(ct.match(keystr)) 
-			{
-				if($('#'+ct).css('width') == g_dmtChartWidth)
-					return ;
-				$('#'+ct).css('width', g_dmtChartWidth);
-				g_all_charts[ct].resize();
+		var iNeedRedraw = 0;
+		for(ct in g_all_charts) {
+		    if(ct.match(keystr)) {
+				if(typeof g_all_charts[ct].setwidth != 'undefined' && g_all_charts[ct].setwidth == g_dmtChartWidth) 
+					return; 
+				iNeedRedraw++; 
 			}
 		}
+
+		var rchart = $("#my_background,#my_progressBar"); 
+		if(iNeedRedraw > g_dmtRedrawChartCountShowProc) { 
+			$('#my_progressBar').text('图表重绘中, 请稍等...'); 
+			rchart.show(); 
+		}
+
+		setTimeout(function() {
+			for(ct in g_all_charts)
+			{
+				if(ct.match(keystr)) 
+				{
+					$('#'+ct).css('width', g_dmtChartWidth);
+					g_all_charts[ct].resize();
+					g_all_charts[ct].setwidth = g_dmtChartWidth;
+				}
+			}
+			rchart.hide();
+		}, 5);
 	}
 }
 
@@ -783,6 +801,7 @@ function dmtSetStrAttrInfoChart(ct_id, attr_info, js, attr_val_list, showtype)
 
 	g_all_charts[ct_id] = echarts.init(document.getElementById(ct_id));
 	g_all_charts[ct_id].setOption(op);
+	g_all_charts[ct_id].setwidth = g_dmtChartWidth;
 }
 
 function dmtGetXAxisTimeInfo(dateStart, count_day)
@@ -1052,6 +1071,7 @@ function dmtShowAttrInfo(attr_list, attr_val_list, ct_div, showtype)
 
 		// echarts toolbox onclick 函数一旦设置后不能改变，所有将告警相关参数保存到数组对象中
 		g_all_charts[attr_show_id].warnInfo = warnInfo;
+		g_all_charts[attr_show_id].setwidth = g_dmtChartWidth;
 	}
 }
 

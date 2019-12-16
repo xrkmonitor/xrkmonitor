@@ -85,6 +85,9 @@ function initEnv() {
 		redrawChartsMain();
 	});
 
+	// ysy -add - 2019-12-16
+	$("#my_background,#my_progressBar").hide();
+
 	var ajaxbg = $("#background,#progressBar");
 	ajaxbg.hide();
 	$(document).ajaxStart(function(){

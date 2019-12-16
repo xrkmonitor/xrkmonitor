@@ -139,60 +139,6 @@ function <?cs var:config.plugin_pre ?>SetpluginList()
 	return uhtml;
 }
 
-function <?cs var:config.plugin_pre ?>AddPlugin()
-{
-	var url = "<?cs var:config.cgipath?>mt_slog?action=add_mt_plugin&type=<?cs var:config.plugin_type ?>";
-	var op = $.parseJSON('{"mask":true,"maxable":false,"height":480,"width":520}'); 
-	$.pdialog.open(url, "<?cs var:config.plugin_pre ?>_dlg_add_sys_plugin", "添加监控插件", op); 
-}
-
-function <?cs var:config.plugin_pre ?>DeletePlugin()
-{
-	if(<?cs var:config.plugin_pre ?>_sel_plugin == "null")
-	{
-		alertMsg.info("请先点击插件列表选择一个要删除的插件");
-		return;
-	}
-
-	var msg="确认删除插件：" + <?cs var:config.plugin_pre ?>_sel_plugin.plugin_name + " (id:" + <?cs var:config.plugin_pre ?>_sel_plugin.show_id + ") 吗？";
-	msg += "<br /> (注意: 插件相关的监控点以及模块等配置也将被删除)";
-
-	alertMsg.confirm(msg, {
-		okCall: function(){
-			var url = "<?cs var:config.cgipath?>mt_slog?action=delete_mt_plugin"+"&id="+<?cs var:config.plugin_pre ?>_sel_plugin.plugin_id ;
-			$.get(url, function(js){
-				if(dmtFirstDealAjaxResponse(js))
-					return;
-
-				if(js.statusCode==200){
-					alertMsg.info("删除成功。");
-					return navTab.reload();
-				}
-				else if(js.msg)
-					alertMsg.error(js.msg);
-				else
-					alertMsg.error("删除失败！");
-			}, "json"); 
-		}
-	});
-	return;
-}
-
-function <?cs var:config.plugin_pre ?>ModPlugin()
-{
-	if(<?cs var:config.plugin_pre ?>_sel_plugin == "null")
-	{
-		alertMsg.info("请先点击插件列表选择一个要修改的插件");
-		return;
-	}
-
-	var url = "<?cs var:config.cgipath?>mt_slog?action=mod_mt_plugin&type=<?cs var:config.plugin_type ?>";
-	url += "&plugin_id=" + <?cs var:config.plugin_pre ?>_sel_plugin.plugin_id; 
-
-	var op = $.parseJSON('{"mask":true,"maxable":false,"height":480,"width":520}'); 
-	$.pdialog.open(url, "<?cs var:config.plugin_pre ?>_dlg_mod_plugin", "修改监控插件", op); 
-}
-
 $(document).ready(function(){
 	<?cs var:config.plugin_pre ?>Search();
 });
@@ -266,25 +212,8 @@ $(document).ready(function(){
 		</div>
 
 		<div class="pageContent" style="border-left:1px #B8D0D6 solid;border-right:1px #B8D0D6 solid">
-			<?cs if:comm.user_type == 4 || comm.user_type == 1 ?>
-			<div class="panelBar">
-				<ul class="toolBar">
-					<li><a class="add" href="#" onclick="return <?cs var:config.plugin_pre ?>AddPlugin();"><span>添加</span></a></li>
-					<li class="line">line</li>
-					<li><a class="delete" href="#" onclick="return <?cs var:config.plugin_pre ?>DeletePlugin();"><span>删除</span></a></li>
-					<li class="line">line</li>
-					<li><a class="edit" href="#" onclick="return <?cs var:config.plugin_pre ?>ModPlugin();"><span>修改</span></a></li>
-					<li class="line">line</li>
-				</ul>
-			</div>
-			<?cs /if ?>
-
 			<div>
-				<?cs if:comm.user_type == 4 || comm.user_type == 1 ?>
-				<table class="list" width="100%" layoutH="98"> 
-				<?cs else ?>
 				<table class="list" width="100%" layoutH="68"> 
-				<?cs /if ?>
 					<thead>
 						<tr>
 							<th width="40">序号</th>

@@ -92,6 +92,10 @@
 
 <div id='background' class='background'></div>
 <div id='progressBar' class='progressBar'>数据加载中，请稍等...</div>
+
+<!-- ysy add -->
+<div id='my_background' class='background'></div>
+<div id='my_progressBar' class='progressBar'>数据处理中, 请稍后...</div>
 ]]></_PAGE_>
 
 <!-- dwz.pagination -->
