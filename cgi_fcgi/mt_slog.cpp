@@ -2124,7 +2124,6 @@ static int DealSaveModule(CGI *cgi, bool bIsAdd=false)
 static int DispatchLogServer(int iNewAppId, Query &qu)
 {
 	int iStartIdx = 0;
-	uint32_t dwServiceId = 0;
 	SLogServer *psvr = NULL;
 	std::map<uint32_t,bool> mapTry;
 	std::map<uint32_t, SLogServer *> mapUse;
@@ -2146,31 +2145,30 @@ static int DispatchLogServer(int iNewAppId, Query &qu)
 	std::map<uint32_t, SLogServer *>::iterator it = mapUse.begin();
 	for(int i=0; it != mapUse.end() && i<idx; i++)
 		it++;
-	dwServiceId = it->first;
 	psvr = it->second;
 
-	std::string strSvrFor;
-	for(int i=0; i < psvr->stForAppList.wAppCount; i++)
-	{
-		strSvrFor += itoa(psvr->stForAppList.aiApp[i]);
-		strSvrFor += ",";
-	}
-	strSvrFor += itoa(iNewAppId);
 
-	std::string strSql;
-	strSql = "update mt_server set srv_for=\'";
-	strSql += strSvrFor;
-	strSql += "\', cfg_seq=";
-	strSql += uitoa(time(NULL));
-	strSql += " where id=";
-	strSql += uitoa(dwServiceId);
+    std::ostringstream sql; 
+    sql << "select srv_for from mt_server where xrk_id=" << it->first;
+    if(!qu.get_result(sql.str().c_str()) ||  !qu.fetch_row()) {
+        ERR_LOG("get server info failed, id:%d", it->first);
+        return SLOG_ERROR_LINE;
+    }    
+    std::string strSvrFor = qu.getstr("srv_for");
+    qu.free_result();
+    if(strSvrFor.size() > 0) 
+        strSvrFor += ","; 
+    strSvrFor += itoa(iNewAppId);
 
-	if(!qu.execute(strSql))
-	{
-		ERR_LOG("execute sql:%s failed", strSql.c_str());
-		return SLOG_ERROR_LINE;
-	}
-	INFO_LOG("dispatch log server:%s, for app:%d ok", psvr->szIpV4, iNewAppId);
+    sql.str("");
+    sql << "update mt_server set srv_for=\'" << strSvrFor << "\', cfg_seq=" << time(NULL) 
+        << " where id=" << it->first;
+    if(!qu.execute(sql.str()))
+    {    
+        ERR_LOG("execute sql:%s failed", sql.str().c_str());
+        return SLOG_ERROR_LINE;
+    }    
+    INFO_LOG("dispatch log server:%s, for app:%d ok", psvr->szIpV4, iNewAppId);
 	return 0;
 }
 
