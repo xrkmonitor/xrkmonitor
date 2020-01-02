@@ -1705,9 +1705,6 @@ int32_t ReadTableAttr(Database &db, uint32_t uid=0)
 				INFO_LOG("delete attr info from attr type:%u attr id:%d - attr count:%d",
 					pInfo->iAttrType, iAttrId, pAttrType->wAttrCount);
 			}
-			else {
-				ERR_LOG("get attr type:%d failed", pInfo->iAttrType);
-			}
 		}
 
 		if(iStatus == RECORD_STATUS_DELETE)
@@ -1958,6 +1955,10 @@ int32_t ReadTableAttrType(Database &db, uint32_t uid=0)
 				// 不允许删除有监控点的类型，所以这里不应该走到
 				WARN_LOG("set delete mt_attr count:%d, attr_type:%d", qutmp.affected_rows(), iType);
 			}
+
+			// 子类型也设为删除状态
+			sprintf(sSql, "update mt_attr_type set xrk_status=1 where xrk_status=0 and parent_type=%d", iType);
+			qutmp.execute(sSql);
 
 			sprintf(sSql, "delete from mt_attr_type where type=%u", iType);  
 			if(!stConfig.iDeleteDbRecord || dwCurTime < dwLastModTime+stConfig.iDelRecordTime)
