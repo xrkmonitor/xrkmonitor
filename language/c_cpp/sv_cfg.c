@@ -77,6 +77,8 @@ static char * get_val(char* desc, char* src)
 			case '\t':
 			case '\0':
 			case '\n':
+			case '\r':
+			case '\v':
 				space=1;
 				srcp++;
 				break;
