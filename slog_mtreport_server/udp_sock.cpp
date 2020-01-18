@@ -193,7 +193,7 @@ int CUdpSock::GetMtClientInfo()
 	// 新客户端接入，写入数据库自动注册
 	if(m_iRemoteMachineId <= 0) {
 		snprintf(stConfig.szSql, MYSIZEOF(stConfig.szSql), 
-			"select id from mt_machine where (ip1=%u or ip2=%u or ip3=%u or ip4=%u)",
+			"select id,status from mt_machine where (ip1=%u or ip2=%u or ip3=%u or ip4=%u)",
 			m_dwAgentClientIp,m_dwAgentClientIp,m_dwAgentClientIp,m_dwAgentClientIp);
 
 		MyQuery myqu(stConfig.qu, stConfig.db);
@@ -203,17 +203,32 @@ int CUdpSock::GetMtClientInfo()
 			return ERR_SERVER;
 		}
 
-		if(qu.num_rows() <= 0) {
+		if(qu.num_rows() <= 0 || !qu.fetch_row() || qu.getval("status") != 0)
+		{
+			int iDbMachineId = 0;
+			if(qu.num_rows() > 0)
+			    iDbMachineId = qu.getval("id");
 			qu.free_result();
-			snprintf(stConfig.szSql, MYSIZEOF(stConfig.szSql),
-				"insert into mt_machine set name=\'%s\',ip1=%u,create_time=\'%s\',"
-				"mod_time=now(),machine_desc=\'系统自动添加\' ",
-				ipv4_addr_str(m_dwAgentClientIp), m_dwAgentClientIp, uitodate(slog.m_stNow.tv_sec));
+
+			if(iDbMachineId > 0) 
+				snprintf(stConfig.szSql, MYSIZEOF(stConfig.szSql),
+					"replace into mt_machine set name=\'%s\',ip1=%u,create_time=\'%s\',"
+					"mod_time=now(),machine_desc=\'系统自动添加\',status=0,id=%d",
+					ipv4_addr_str(m_dwAgentClientIp), m_dwAgentClientIp, uitodate(slog.m_stNow.tv_sec),
+					iDbMachineId);
+			else
+				snprintf(stConfig.szSql, MYSIZEOF(stConfig.szSql),
+					"insert into mt_machine set name=\'%s\',ip1=%u,create_time=\'%s\',"
+					"mod_time=now(),machine_desc=\'系统自动添加\'",
+					ipv4_addr_str(m_dwAgentClientIp), m_dwAgentClientIp, uitodate(slog.m_stNow.tv_sec));
 			if(!qu.execute(stConfig.szSql)){
 				ERR_LOG("execute sql:%s failed !", stConfig.szSql);
 				return ERR_SERVER;
 			}
-			m_iRemoteMachineId = qu.insert_id();
+			if(iDbMachineId > 0)
+				m_iRemoteMachineId = iDbMachineId;
+			else
+				m_iRemoteMachineId = qu.insert_id();
 			INFO_LOG("insert new machine for agent client ip:%s, machine id:%d",
 				ipv4_addr_str(m_dwAgentClientIp), m_iRemoteMachineId);
 		}
