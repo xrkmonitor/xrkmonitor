@@ -493,13 +493,16 @@ static int DealSaveConfig(CGI *cgi, bool bIsAdd=false)
 	}
 
 	// module 归属验证
-	int iModuleIdx = 0;
-	for(; iModuleIdx < pAppInfo->wModuleCount; iModuleIdx++)
+	int iModuleIdx = 0, k = 0;
+	for(; k < SLOG_MODULE_COUNT_MAX_PER_APP && iModuleIdx < pAppInfo->wModuleCount; k++)
 	{
-		if(pAppInfo->arrModuleList[iModuleIdx].iModuleId == iModuleId)
+		if(0 == pAppInfo->arrModuleList[k].iModuleId)
+			continue;
+		if(pAppInfo->arrModuleList[k].iModuleId == iModuleId)
 			break;
+		iModuleIdx++;
 	}
-	if(iModuleIdx >= pAppInfo->wModuleCount)
+	if(iModuleIdx >= pAppInfo->wModuleCount || k >= SLOG_MODULE_COUNT_MAX_PER_APP)
 	{
 		ERR_LOG("find app:%d, module:%d failed", iAppId, iModuleId);
 		stConfig.pErrMsg = CGI_REQERR;
@@ -755,12 +758,15 @@ static int GetLogConfigList(Json &js, SearchInfo *pinfo=NULL)
 
 			pModuleInfo = NULL;
 			int iTmpModuleId = qu.getval("module_id");
-			for(int i=0; i < pAppInfo->wModuleCount; i++)
+			for(int i=0,j=0; i < SLOG_MODULE_COUNT_MAX_PER_APP && j < pAppInfo->wModuleCount; i++)
 			{
+				if(pAppInfo->arrModuleList[i].iModuleId == 0)
+					continue;
 				if(iTmpModuleId == pAppInfo->arrModuleList[i].iModuleId) {
 					pModuleInfo = pAppInfo->arrModuleList+i;
 					break;
-				}
+				} 
+				j++;
 			}
 			if(pModuleInfo != NULL && pModuleInfo->iNameVmemIdx > 0)
 				cfg["module_name"] = MtReport_GetFromVmem_Local(pModuleInfo->iNameVmemIdx);
