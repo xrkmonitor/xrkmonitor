@@ -392,21 +392,22 @@ int CMemCacheClient::RecvData(char *pszbuf, int maxlen)
     }
 
     ret = recv(m_iSocket, pszbuf, maxlen, 0);
-
     if(ret > 0)
     {
         pszbuf[ret] = 0;
-
         return ret;
     }
-
     if(ret == 0)
         return -15;
 
     if(AsyncReconnect() < 0)
         return -15;
 
-    return -20;
+	ret = recv(m_iSocket, pszbuf, maxlen, 0);
+	if(ret < 0)
+		return -20;
+	pszbuf[ret] = 0;
+	return ret;
 }
 
 int CMemCacheClient::Send2RecvData(int nsendlen)
@@ -418,7 +419,9 @@ int CMemCacheClient::Send2RecvData(int nsendlen)
         if(AsyncReconnect() < 0)
             return -15;
 
-        return -20;
+		ret = SendCmd(m_szbuffer, nsendlen);
+		if(ret != 0)
+			return -20;
     }
 
     memset(m_szbuffer, 0, m_iBufferLen);
