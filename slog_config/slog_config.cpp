@@ -1496,6 +1496,7 @@ int32_t ReadTableAttr(Database &db, uint32_t uid=0)
 	const char *ptmp = NULL;
 	int iAttrType = 0;
 	MtSystemConfig *psysConfig = stConfig.psysConfig;
+	SharedHashTable *pstHash = slog.GetWarnConfigInfoHash();
 
 	while(qu.fetch_row())
 	{
@@ -1518,7 +1519,12 @@ int32_t ReadTableAttr(Database &db, uint32_t uid=0)
 		if(qu.getval("data_type") == EX_REPORT)
 		{
 			uint32_t t_dwIsFind = 0;
-			TWarnConfig *pConfig = slog.GetWarnConfigInfo(0, iAttrId, &t_dwIsFind);
+			TWarnConfig *pConfig = NULL;
+			if(iStatus == RECORD_STATUS_USE)
+				pConfig = slog.GetWarnConfigInfo(0, iAttrId, &t_dwIsFind);
+			else
+				pConfig = slog.GetWarnConfigInfo(0, iAttrId, NULL);
+
 			if(iStatus == RECORD_STATUS_USE && !t_dwIsFind)
 			{
 				if(pConfig == NULL) {
@@ -1544,6 +1550,7 @@ int32_t ReadTableAttr(Database &db, uint32_t uid=0)
 			else if(iStatus != RECORD_STATUS_USE && t_dwIsFind)
 			{
 				memset(pConfig, 0, sizeof(*pConfig));
+				RemoveHashNode(pstHash, pConfig);
 				INFO_LOG("remove attr exception warn config info - %d", iAttrId);
 			}
 		}
