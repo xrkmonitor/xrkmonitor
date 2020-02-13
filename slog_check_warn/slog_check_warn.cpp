@@ -519,7 +519,14 @@ void CheckWarnConfig(list<TAttrWarnInfo> &listWarn)
 		}
 	
 		TAttrWarnInfo wInfo;
-		wInfo.iWarnFlag = pNode->iWarnConfigFlag;
+		wInfo.iWarnFlag = ATTR_WARN_FLAG_MIN;
+		if(pNode->iWarnConfigFlag & ATTR_WARN_FLAG_TYPE_MACHINE)
+			wInfo.iWarnFlag |= ATTR_WARN_FLAG_TYPE_MACHINE;
+		else
+			wInfo.iWarnFlag |= ATTR_WARN_FLAG_TYPE_VIEW;
+		if(pNode->iWarnConfigFlag & ATTR_WARN_FLAG_MASK_WARN)
+			wInfo.iWarnFlag |= ATTR_WARN_FLAG_MASK_WARN;
+
 		if(pMachineInfo != NULL 
 			&& ((pMachineInfo->bWarnFlag & MACH_WARN_DENY_ALL) 
 				|| ((pMachineInfo->bWarnFlag & MACH_WARN_DENY_EXCEPT) && (pNode->iWarnConfigFlag&ATTR_WARN_FLAG_EXCEPTION))
@@ -532,7 +539,7 @@ void CheckWarnConfig(list<TAttrWarnInfo> &listWarn)
 
 		wInfo.iWarnId = pNode->iWarnId;
 		wInfo.iAttrId = pNode->iAttrId;
-		wInfo.iWarnConfigValue = pNode->iWarnConfigFlag;
+		wInfo.iWarnConfigValue = pNode->iWarnMin;
 		wInfo.dwWarnValue = 0;
 		wInfo.dwWarnTimeSec = slog.m_stNow.tv_sec;
 		listWarn.push_back(wInfo);
