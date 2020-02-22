@@ -83,7 +83,7 @@ static int GetUserTotalRecords(UserSearchInfo *pinfo=NULL)
 	char sTmpBuf[128] = {0};
 	Query & qu = *stConfig.qu;
 	
-	sprintf(sSqlBuf, "select count(*) from flogin_user where status=%d", RECORD_STATUS_USE);
+	sprintf(sSqlBuf, "select count(*) from flogin_user where xrk_status=%d", RECORD_STATUS_USE);
 	if(pinfo != NULL && pinfo->pszUserName != NULL && pinfo->pszUserName[0] != '\0')
 	{
 		memset(sTmpBuf, 0, sizeof(sTmpBuf));
@@ -124,7 +124,7 @@ static int GetUserList(Json &js, UserSearchInfo *pinfo=NULL)
 		ERR_LOG("invalid iCurPage(%d) or iNumPerPage(%d)", iCurPage, iNumPerPage);
 		return SLOG_ERROR_LINE;
 	}
-	sprintf(sSqlBuf, "select * from flogin_user where status=%d", RECORD_STATUS_USE);
+	sprintf(sSqlBuf, "select * from flogin_user where xrk_status=%d", RECORD_STATUS_USE);
 	if(pinfo != NULL && pinfo->pszUserName != NULL && pinfo->pszUserName[0] != '\0')
 	{
 		memset(sTmpBuf, 0, sizeof(sTmpBuf));
@@ -200,7 +200,7 @@ static int DeleteUser()
 	}
 
 	static char sSqlBuf[256];
-	sprintf(sSqlBuf, "select user_name,login_type from flogin_user where user_id=%d and status=%d",
+	sprintf(sSqlBuf, "select user_name,login_type from flogin_user where user_id=%d and xrk_status=%d",
 		id, RECORD_STATUS_USE);
 	Query & qu = *stConfig.qu;
 	qu.get_result(sSqlBuf);
@@ -218,7 +218,7 @@ static int DeleteUser()
 	}
 	qu.free_result();
 
-	sprintf(sSqlBuf, "update flogin_user set status=%d where user_id=%d", RECORD_STATUS_DELETE, id);
+	sprintf(sSqlBuf, "update flogin_user set xrk_status=%d where user_id=%d", RECORD_STATUS_DELETE, id);
 	if(!qu.execute(sSqlBuf))
 	{
 		qu.execute("ROLLBACK");
@@ -338,7 +338,7 @@ static bool CheckUserPassMd5(const char *ppass)
 	Query & qu = *stConfig.qu;
 
 	// 验证老密码
-	sprintf(sBuf, "select user_pass_md5 from flogin_user where user_id=%d and status=%d",
+	sprintf(sBuf, "select user_pass_md5 from flogin_user where user_id=%d and xrk_status=%d",
 		stConfig.stUser.puser_info->iUserId, RECORD_STATUS_USE);
 	if(qu.get_result(sBuf) && qu.fetch_row())
 	{
@@ -589,7 +589,7 @@ int DetailUser()
 
 	char sSqlBuf[256] = {0};
 	Query & qu = *stConfig.qu;
-	sprintf(sSqlBuf, "select * from flogin_user where user_id=%d and status=%d", 
+	sprintf(sSqlBuf, "select * from flogin_user where user_id=%d and xrk_status=%d", 
 		iUserId, RECORD_STATUS_USE);
 	qu.get_result(sSqlBuf);
 	if(qu.num_rows() < 1 || qu.fetch_row() == NULL) {
@@ -802,7 +802,7 @@ static int DealChangeEmail()
 static bool IsUserEmailExist(const char *pemail)
 {
 	char sBuf[256];
-	snprintf(sBuf, sizeof(sBuf), "select user_id from flogin_user where email=\'%s\' and status=%d",
+	snprintf(sBuf, sizeof(sBuf), "select user_id from flogin_user where email=\'%s\' and xrk_status=%d",
 		pemail, STATUS_USE);
 	if(stConfig.qu->get_result(sBuf) && stConfig.qu->fetch_row()) 
 	{
@@ -817,7 +817,7 @@ static bool IsUserEmailExist(const char *pemail)
 static bool IsUserNameExist(const char *pname)
 {
 	char sBuf[256];
-	snprintf(sBuf, sizeof(sBuf), "select user_id from flogin_user where user_name=\'%s\' and status=%d",
+	snprintf(sBuf, sizeof(sBuf), "select user_id from flogin_user where user_name=\'%s\' and xrk_status=%d",
 		pname, STATUS_USE);
 	if(stConfig.qu->get_result(sBuf) && stConfig.qu->fetch_row()) 
 	{

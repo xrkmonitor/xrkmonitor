@@ -342,7 +342,8 @@ static void AddLoginHistory(FloginInfo *psess)
 
 	// 只保留 MAX_LOG_HISTORY_PER_USER 条记录
 	char sSql[256] = {0};
-	snprintf(sSql, sizeof(sSql), "select id from flogin_history where user_id=%d order by id asc", psess->iUserId);
+	snprintf(sSql, sizeof(sSql), 
+		"select xrk_id from flogin_history where user_id=%d order by xrk_id asc", psess->iUserId);
 	stConfig.qu->get_result(sSql);
 	int iCount = stConfig.qu->num_rows();
 	if(iCount > MAX_LOG_HISTORY_PER_USER) 
@@ -351,7 +352,8 @@ static void AddLoginHistory(FloginInfo *psess)
 		Query qutmp(*stConfig.db);
 		while(iCount > MAX_LOG_HISTORY_PER_USER && stConfig.qu->fetch_row())
 		{
-			snprintf(sSql, sizeof(sSql), "delete from flogin_history where id=%d", stConfig.qu->getval("id"));
+			snprintf(sSql, sizeof(sSql), "delete from flogin_history where xrk_id=%d", 
+				stConfig.qu->getval("xrk_id"));
 			qutmp.execute(sSql);
 			iCount--;
 		}

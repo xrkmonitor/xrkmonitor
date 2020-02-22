@@ -115,7 +115,7 @@ static int GetViewTotalRecords(SearchInfo *pinfo=NULL)
 	char sSqlBuf[512] = {0};
 	Query & qu = *stConfig.qu;
 	
-	sprintf(sSqlBuf, "select count(*) from mt_view where status=%d", RECORD_STATUS_USE);
+	sprintf(sSqlBuf, "select count(*) from mt_view where xrk_status=%d", RECORD_STATUS_USE);
 	if(pinfo != NULL && AddSearchInfo(sSqlBuf, sizeof(sSqlBuf), pinfo) < 0)
 		return SLOG_ERROR_LINE;
 
@@ -138,15 +138,15 @@ static int DealViewLookUp()
 	char sSqlBuf[512] = {0};
 	Query & qu = *stConfig.qu;
 
-	sprintf(sSqlBuf, "select id,name,view_desc from mt_view where status=%d", RECORD_STATUS_USE);
+	sprintf(sSqlBuf, "select xrk_id,xrk_name,view_desc from mt_view where xrk_status=%d", RECORD_STATUS_USE);
 	qu.get_result(sSqlBuf);
 	Json js;
 	int i=0;
 	for(i=0; i < qu.num_rows() && qu.fetch_row() != NULL; i++)
 	{
 		Json attr;
-		attr["id"] = qu.getuval("id");
-		attr["name"] = qu.getstr("name");
+		attr["id"] = qu.getuval("xrk_id");
+		attr["name"] = qu.getstr("xrk_name");
 		attr["view_desc"] = qu.getstr("view_desc");
 		js["list"].Add(attr);
 	}
@@ -177,18 +177,18 @@ static int GetViewList(Json &js, SearchInfo *pinfo=NULL)
 		return SLOG_ERROR_LINE;
 	}
 
-	sprintf(sSqlBuf, "select * from mt_view where status=%d", RECORD_STATUS_USE);
+	sprintf(sSqlBuf, "select * from mt_view where xrk_status=%d", RECORD_STATUS_USE);
 	if(pinfo != NULL && AddSearchInfo(sSqlBuf, sizeof(sSqlBuf), pinfo) < 0)
 		return SLOG_ERROR_LINE;
 
 	int iOrder = 0;
-	iOrder = (iOrder==0 ? SetRecordsOrder(stConfig.cgi, sSqlBuf, "id") : 1);
+	iOrder = (iOrder==0 ? SetRecordsOrder(stConfig.cgi, sSqlBuf, "xrk_id") : 1);
 	iOrder = (iOrder==0 ? SetRecordsOrder(stConfig.cgi, sSqlBuf, "create_time") : 1);
-	iOrder = (iOrder==0 ? SetRecordsOrder(stConfig.cgi, sSqlBuf, "name") : 1);
+	iOrder = (iOrder==0 ? SetRecordsOrder(stConfig.cgi, sSqlBuf, "xrk_name") : 1);
 	iOrder = (iOrder==0 ? SetRecordsOrder(stConfig.cgi, sSqlBuf, "user_add") : 1);
 	iOrder = (iOrder==0 ? SetRecordsOrder(stConfig.cgi, sSqlBuf, "view_flag") : 1);
 	if(iOrder == 0) 
-		strcat(sSqlBuf, " order by id desc");
+		strcat(sSqlBuf, " order by xrk_id desc");
 
 	char sTmpBuf[64]={0};
 	sprintf(sTmpBuf, " limit %d,%d", iNumPerPage*(iCurPage-1), iNumPerPage);
@@ -200,8 +200,8 @@ static int GetViewList(Json &js, SearchInfo *pinfo=NULL)
 	for(i=0; i < qu.num_rows() && qu.fetch_row() != NULL; i++)
 	{
 		Json attr;
-		attr["id"] = qu.getuval("id");
-		attr["name"] = qu.getstr("name");
+		attr["id"] = qu.getuval("xrk_id");
+		attr["name"] = qu.getstr("xrk_name");
 		attr["view_desc"] = qu.getstr("view_desc");
 		attr["user_add"] = qu.getstr("user_add");
 		attr["add_time"] = qu.getstr("create_time");
@@ -232,7 +232,7 @@ static int DeleteView()
 
 	static char sSqlBuf[128];
 
-	sprintf(sSqlBuf, "update mt_view set status=%d,user_mod_id=%d where id=%d",
+	sprintf(sSqlBuf, "update mt_view set xrk_status=%d,user_mod_id=%d where xrk_id=%d",
 		stConfig.iDeleteStatus, stConfig.stUser.puser_info->iUserId, id);
 	Query & qu = *stConfig.qu;
 	if(!qu.execute(sSqlBuf))
@@ -274,7 +274,7 @@ static int DealUnAutoBindMachine()
 	{
 		CLEAR_BIT(pView->bViewFlag, VIEW_FLAG_AUTO_BIND_MACHINE);
 		char sql[128] = {0};
-		snprintf(sql, sizeof(sql)-1, "update mt_view set view_flag=%d where id=%d", pView->bViewFlag, id);
+		snprintf(sql, sizeof(sql)-1, "update mt_view set view_flag=%d where xrk_id=%d", pView->bViewFlag, id);
 		Query & qu = *stConfig.qu;
 		if(!qu.execute(sql))
 			return SLOG_ERROR_LINE;
@@ -321,7 +321,7 @@ static int SaveView(bool bIsMod=false)
 	IM_SQL_PARA* ppara = NULL;
 	InitParameter(&ppara);
 
-	AddParameter(&ppara, "name", pname, NULL);
+	AddParameter(&ppara, "xrk_name", pname, NULL);
 	AddParameter(&ppara, "view_flag", flag, "DB_CAL");
 
 	if(!bIsMod)
@@ -350,7 +350,7 @@ static int SaveView(bool bIsMod=false)
 		JoinParameter_Insert(&strSql, qu.GetMysql(), ppara);
 	else {
 		JoinParameter_Set(&strSql, qu.GetMysql(), ppara);
-		strSql += " where id=";
+		strSql += " where xrk_id=";
 		strSql += itoa(id);
 	}
 
@@ -401,7 +401,7 @@ static int DealModView()
 	}
 
 	char sSqlBuf[128] = {0};
-	sprintf(sSqlBuf, "select * from mt_view where status=%d and id=%d", RECORD_STATUS_USE, id);
+	sprintf(sSqlBuf, "select * from mt_view where xrk_status=%d and xrk_id=%d", RECORD_STATUS_USE, id);
 	Query & qu = *stConfig.qu;
 	qu.get_result(sSqlBuf);
 	
@@ -414,13 +414,13 @@ static int DealModView()
 
 	if(qu.fetch_row() != NULL)
 	{
-		hdf_set_value(stConfig.cgi->hdf, "view.dvm_view_id", qu.getstr("id"));
+		hdf_set_value(stConfig.cgi->hdf, "view.dvm_view_id", qu.getstr("xrk_id"));
 		hdf_set_int_value(stConfig.cgi->hdf, "view.dvm_view_flag", qu.getval("view_flag"));
-		hdf_set_value(stConfig.cgi->hdf, "view.dvm_view_name", qu.getstr("name"));
+		hdf_set_value(stConfig.cgi->hdf, "view.dvm_view_name", qu.getstr("xrk_name"));
 		hdf_set_value(stConfig.cgi->hdf, "view.dvm_view_desc", qu.getstr("view_desc"));
 	}
 	hdf_set_value(stConfig.cgi->hdf, "config.action", "save_mod_view");
-	DEBUG_LOG("try update view:%d-%s from:%s", id, qu.getstr("name"), stConfig.remote);
+	DEBUG_LOG("try update view:%d-%s from:%s", id, qu.getstr("xrk_name"), stConfig.remote);
 	qu.free_result();
 	return 0;
 }

@@ -85,7 +85,7 @@ static int GetAttrTotalRecords(AttrSearchInfo *pinfo=NULL)
 	Query & qu = *stConfig.qu;
 	
 	sprintf(sSqlBuf, "select count(*) from mt_attr inner join mt_attr_type on "
-		" mt_attr.attr_type=mt_attr_type.type where mt_attr.status=0 and mt_attr_type.status=0");
+		" mt_attr.attr_type=mt_attr_type.xrk_type where mt_attr.xrk_status=0 and mt_attr_type.xrk_status=0");
 	if(pinfo != NULL && pinfo->iAttrDataType != 0)
 	{
 		sprintf(sTmpBuf, " and mt_attr.data_type=%d", pinfo->iAttrDataType);
@@ -101,7 +101,7 @@ static int GetAttrTotalRecords(AttrSearchInfo *pinfo=NULL)
 	if(pinfo != NULL && pinfo->pkey != NULL && pinfo->pkey[0] != '\0' && isnumber(pinfo->pkey))
 	{
 		memset(sTmpBuf, 0, sizeof(sTmpBuf));
-		snprintf(sTmpBuf, sizeof(sTmpBuf)-1, " and mt_attr.id=%d ", atoi(pinfo->pkey));
+		snprintf(sTmpBuf, sizeof(sTmpBuf)-1, " and mt_attr.xrk_id=%d ", atoi(pinfo->pkey));
 		if(strlen(sTmpBuf) + strlen(sSqlBuf) >= sizeof(sSqlBuf))
 		{
 			REQERR_LOG("search key(%s) too long, tmp:%s sql:%s", pinfo->pkey, sTmpBuf, sSqlBuf);
@@ -139,8 +139,8 @@ static int GetAttrList(Json &js, AttrSearchInfo *pinfo=NULL)
 		return SLOG_ERROR_LINE;
 	}
 
-	sprintf(sSqlBuf, "select mt_attr.*,mt_attr_type.name from mt_attr inner join mt_attr_type on "
-		" mt_attr.attr_type=mt_attr_type.type where mt_attr.status=0 and mt_attr_type.status=0");
+	sprintf(sSqlBuf, "select mt_attr.*,mt_attr_type.xrk_name from mt_attr inner join mt_attr_type on "
+		" mt_attr.attr_type=mt_attr_type.xrk_type where mt_attr.xrk_status=0 and mt_attr_type.xrk_status=0");
 	if(pinfo != NULL && pinfo->iAttrDataType != 0)
 	{
 		sprintf(sTmpBuf, " and mt_attr.data_type=%d", pinfo->iAttrDataType);
@@ -167,7 +167,7 @@ static int GetAttrList(Json &js, AttrSearchInfo *pinfo=NULL)
 	if(pinfo != NULL && pinfo->pkey != NULL && pinfo->pkey[0] != '\0' && isnumber(pinfo->pkey))
 	{
 		memset(sTmpBuf, 0, sizeof(sTmpBuf));
-		snprintf(sTmpBuf, sizeof(sTmpBuf)-1, " and mt_attr.id=%d ", atoi(pinfo->pkey));
+		snprintf(sTmpBuf, sizeof(sTmpBuf)-1, " and mt_attr.xrk_id=%d ", atoi(pinfo->pkey));
 		if(strlen(sTmpBuf) + strlen(sSqlBuf) >= sizeof(sSqlBuf)-128)
 		{
 			REQERR_LOG("search key(%s) too long, tmp:%s sql:%s", pinfo->pkey, sTmpBuf, sSqlBuf);
@@ -179,7 +179,7 @@ static int GetAttrList(Json &js, AttrSearchInfo *pinfo=NULL)
 	}
 
 	int iOrder = 0;
-	iOrder = (iOrder==0 ? SetRecordsOrder(stConfig.cgi, sSqlBuf, "id") : 1);
+	iOrder = (iOrder==0 ? SetRecordsOrder(stConfig.cgi, sSqlBuf, "xrk_id") : 1);
 	iOrder = (iOrder==0 ? SetRecordsOrder(stConfig.cgi, sSqlBuf, "create_time") : 1);
 	iOrder = (iOrder==0 ? SetRecordsOrder(stConfig.cgi, sSqlBuf, "attr_type") : 1);
 	if(iOrder == 0) // 默认按创建时间降序
@@ -202,9 +202,9 @@ static int GetAttrList(Json &js, AttrSearchInfo *pinfo=NULL)
 	for(i=0; i < qu.num_rows() && qu.fetch_row() != NULL; i++)
 	{
 		Json attr;
-		attr["id"] = qu.getuval("id");
+		attr["id"] = qu.getuval("xrk_id");
 		attr["name"] = qu.getstr("attr_name");
-		attr["attr_type"] = qu.getstr("name");
+		attr["attr_type"] = qu.getstr("xrk_name");
 		attr["attr_type_id"] = qu.getval("attr_type");
 		attr["data_type"] = qu.getval("data_type");
 		attr["attr_desc"] = qu.getstr("attr_desc");
@@ -224,7 +224,7 @@ static int GetAttrType(Json &js, int32_t iType)
 {
 	char sSqlBuf[256] = {0};
 	Query qu(*stConfig.db);
-	sprintf(sSqlBuf, "select * from mt_attr_type where status=%d and type=%d ",
+	sprintf(sSqlBuf, "select * from mt_attr_type where xrk_status=%d and xrk_type=%d ",
 		RECORD_STATUS_USE, iType);
 	qu.get_result(sSqlBuf);
 	if(qu.num_rows() == 0) {
@@ -245,7 +245,7 @@ static int GetAttrType(Json &js, int32_t iType)
 		WARN_LOG("get attr type :%d, have count:%d, use first !", iType, qu.num_rows());
 
 	js["type"] = iType;
-	js["name"] = qu.getstr("name");
+	js["name"] = qu.getstr("xrk_name");
 	js["type_pos"] = qu.getstr("type_pos");
 	js["desc"] = qu.getstr("attr_desc");
 	js["create_user"] = qu.getstr("create_user");
@@ -263,19 +263,19 @@ static int GetAttrType(Json &js, int32_t iType)
 	else
 		js["attr_count"] = pAttrTypeInfo->wAttrCount;
 
-	DEBUG_LOG("get attr type :%d attr count:%d, name:%s type_pos:%s parent_type:%d",
-		iType, (int)js["attr_count"], qu.getstr("name"), qu.getstr("type_pos"), qu.getval("parent_type"));
+	DEBUG_LOG("get attr type :%d attr count:%d, name:%s type_pos:%s parent_type:%d", iType, 
+		(int)js["attr_count"], qu.getstr("xrk_name"), qu.getstr("type_pos"), qu.getval("parent_type"));
 	qu.free_result();
 
 	// 尝试获取子类型
-	sprintf(sSqlBuf, "select type from mt_attr_type where status=%d and parent_type=%d",
+	sprintf(sSqlBuf, "select xrk_type from mt_attr_type where xrk_status=%d and parent_type=%d",
 		RECORD_STATUS_USE, iType);
 	qu.get_result(sSqlBuf);
 	int i=0, iRet=0, iCount = 0;
 	for(i=0; i < qu.num_rows() && qu.fetch_row() != NULL; i++)
 	{
 		Json subtype;
-		if((iRet=GetAttrType(subtype, qu.getval("type"))) < 0)
+		if((iRet=GetAttrType(subtype, qu.getval("xrk_type"))) < 0)
 		{
 			qu.free_result();
 			return SLOG_ERROR_LINE;
@@ -313,14 +313,14 @@ static int UpdateAttrType()
 	js["statusCode"] = 200;
 	IM_SQL_PARA* ppara = NULL;
 	InitParameter(&ppara);
-	AddParameter(&ppara, "name", pname, NULL);
+	AddParameter(&ppara, "xrk_name", pname, NULL);
 	AddParameter(&ppara, "attr_desc", pdesc, NULL);
 	AddParameter(&ppara, "mod_user", pUserInfo->szUserName, NULL);
 	AddParameter(&ppara, "user_mod_id", pUserInfo->iUserId, NULL);
 
 	strSql = "update mt_attr_type set ";
 	JoinParameter_Set(&strSql, qu.GetMysql(), ppara);
-	strSql += " where type=";
+	strSql += " where xrk_type=";
 	strSql += itoa(itype);
 	ReleaseParameter(&ppara);
 	if(!qu.execute(strSql))
@@ -361,7 +361,7 @@ static int DeleteAttr()
 
 	static char sSqlBuf[128];
 
-	sprintf(sSqlBuf, "update mt_attr set status=%d where id=%d and user_mod_id=%d",
+	sprintf(sSqlBuf, "update mt_attr set xrk_status=%d where xrk_id=%d and user_mod_id=%d",
 		stConfig.iDeleteStatus, id, stConfig.stUser.puser_info->iUserId);
 	Query & qu = *stConfig.qu;
 	if(!qu.execute(sSqlBuf))
@@ -424,7 +424,7 @@ static int DelAttrType()
 	char sSqlBuf[256] = {0};
 
 	// 尝试获取子类型
-	sprintf(sSqlBuf, "select type from mt_attr_type where status=%d and parent_type=%d",
+	sprintf(sSqlBuf, "select xrk_type from mt_attr_type where xrk_status=%d and parent_type=%d",
 		RECORD_STATUS_USE, iType);
 	qu.get_result(sSqlBuf);
 	if(qu.num_rows() > 0)
@@ -445,7 +445,8 @@ static int DelAttrType()
 		Query & qu = *stConfig.qu;
 		FloginInfo *pUserInfo = stConfig.stUser.puser_info;
 		js["statusCode"] = 200;
-		sprintf(sSqlBuf, "update mt_attr_type set status=%d where type=%u", stConfig.iDeleteStatus, atoi(ptype));
+		sprintf(sSqlBuf, "update mt_attr_type set xrk_status=%d where xrk_type=%u",
+			stConfig.iDeleteStatus, atoi(ptype));
 		if(!qu.execute(sSqlBuf))
 		{
 			ERR_LOG(CGI_BASIC_LOG_FMT"execute sql:%s failed, msg:%s", 
@@ -523,7 +524,7 @@ static int SaveAttr(bool bIsMod=false)
 	}
 	else {
 		JoinParameter_Set(&strSql, qu.GetMysql(), ppara);
-		strSql += " where id=";
+		strSql += " where xrk_id=";
 		strSql += itoa(iAttrId);
 	}
 
@@ -580,7 +581,7 @@ static int AddAttrType()
 	IM_SQL_PARA* ppara = NULL;
 	InitParameter(&ppara);
 	AddParameter(&ppara, "parent_type", iParentType, "DB_CAL");
-	AddParameter(&ppara, "name", pname, NULL);
+	AddParameter(&ppara, "xrk_name", pname, NULL);
 	AddParameter(&ppara, "type_pos", ppos, NULL);
 	AddParameter(&ppara, "attr_desc", pdesc, NULL);
 	AddParameter(&ppara, "create_user", stConfig.stUser.puser, NULL);

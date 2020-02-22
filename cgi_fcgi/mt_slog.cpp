@@ -290,7 +290,8 @@ void AddModule(Json &js, uint32_t dwAppId)
 	char sSqlBuf[128] = {0};
 	Query qu(*stConfig.db);
 
-	sprintf(sSqlBuf, "select * from module_info where app_id=%u and status=%d", dwAppId, RECORD_STATUS_USE);
+	sprintf(sSqlBuf, 
+		"select * from module_info where app_id=%u and xrk_status=%d", dwAppId, RECORD_STATUS_USE);
 	qu.get_result(sSqlBuf);
 	if(qu.num_rows() > 0) 
 	{
@@ -333,7 +334,7 @@ static void GetLogConfigTestKey(int iConfigId, std::string &strKeys)
 		Query qu(*stConfig.db);
 		char sSqlBuf[128] = {0};
 		snprintf(sSqlBuf, sizeof(sSqlBuf),
-			"select * from test_key_list where status=0 and config_id=%d", iConfigId);
+			"select * from test_key_list where xrk_status=0 and config_id=%d", iConfigId);
 		qu.get_result(sSqlBuf);
 		if(qu.num_rows() > 0) 
 		{
@@ -426,7 +427,7 @@ static void SaveLogConfigTestKey(int iConfigId, const char *pLogKeys)
 		{
 			// 删除 key
 			snprintf(sSqlBuf, sizeof(sSqlBuf),
-				"update test_key_list set status=%d where config_id=%d and test_key_type=%d "
+				"update test_key_list set xrk_status=%d where config_id=%d and test_key_type=%d "
 				" and test_key=\'%s\'", RECORD_STATUS_DELETE, iConfigId, 
 				stTestKeys_old[i].bKeyType, stTestKeys_old[i].szKeyValue);
 			qu.execute(sSqlBuf);
@@ -449,7 +450,7 @@ static void SaveLogConfigTestKey(int iConfigId, const char *pLogKeys)
 		{
 			// 新增 test key
 			snprintf(sSqlBuf, sizeof(sSqlBuf),
-				"replace into test_key_list set status=0,config_id=%d,test_key_type=%d, "
+				"replace into test_key_list set xrk_status=0,config_id=%d,test_key_type=%d, "
 				"test_key=\'%s\'", iConfigId, stTestKeys[i].bKeyType, stTestKeys[i].szKeyValue);
 			qu.execute(sSqlBuf);
 			bChanged = true;
@@ -591,7 +592,7 @@ static int DealDelConfig(CGI *cgi)
 	}
 
 	static char sSqlBuf[256] = {0};
-	sprintf(sSqlBuf, "update mt_log_config set status=%d where config_id=%d", RECORD_STATUS_DELETE, id);
+	sprintf(sSqlBuf, "update mt_log_config set xrk_status=%d where config_id=%d", RECORD_STATUS_DELETE, id);
 	Query & qu = *(stConfig.qu);
 	if(!qu.execute(sSqlBuf))
 	{
@@ -714,10 +715,10 @@ static int GetLogConfigList(Json &js, SearchInfo *pinfo=NULL)
 		return SLOG_ERROR_LINE;
 	}
 
-	sprintf(sSqlBuf, "select * from mt_log_config where status=%d", RECORD_STATUS_USE);
+	sprintf(sSqlBuf, "select * from mt_log_config where xrk_status=%d", RECORD_STATUS_USE);
 	if(pinfo != NULL && AddSearchInfo(sSqlBuf, sizeof(sSqlBuf), pinfo) < 0)
 		return SLOG_ERROR_LINE;
-	strcat(sSqlBuf, " and module_id in (select distinct module_id from mt_module_info where status=0)");
+	strcat(sSqlBuf, " and module_id in (select distinct module_id from mt_module_info where xrk_status=0)");
 
 	int iOrder = 0;
 	iOrder = (iOrder==0 ? SetRecordsOrder(stConfig.cgi, sSqlBuf, "config_id") : 1);
@@ -796,10 +797,10 @@ static int GetLogConfigTotalRecords(SearchInfo *pinfo=NULL)
 {
 	char sSqlBuf[512] = {0};
 	Query qu(*stConfig.db);
-	sprintf(sSqlBuf, "select count(*) from mt_log_config where status=%d", RECORD_STATUS_USE);
+	sprintf(sSqlBuf, "select count(*) from mt_log_config where xrk_status=%d", RECORD_STATUS_USE);
 	if(pinfo != NULL && AddSearchInfo(sSqlBuf, sizeof(sSqlBuf), pinfo) < 0)
 		return SLOG_ERROR_LINE;
-	strcat(sSqlBuf, " and module_id in (select distinct module_id from mt_module_info where status=0)");
+	strcat(sSqlBuf, " and module_id in (select distinct module_id from mt_module_info where xrk_status=0)");
 
 	DEBUG_LOG("get log config count - exesql:%s", sSqlBuf);
 	if(qu.get_result(sSqlBuf) == NULL || qu.num_rows() <= 0)
@@ -950,7 +951,7 @@ static int GetAppModuleList(CGI *cgi, Json & js)
 
 	int iAppCount=0, iModuleCount=0;
 	char sSqlBuf[128] = {0};
-	sprintf(sSqlBuf, "select app_id,app_name from mt_app_info where status=0 order by app_id");
+	sprintf(sSqlBuf, "select app_id,app_name from mt_app_info where xrk_status=0 order by app_id");
 	Query qu(*stConfig.db);
 	qu.get_result(sSqlBuf);
 	int iAppId = 0;
@@ -979,7 +980,7 @@ static int GetAppModuleList(CGI *cgi, Json & js)
 			app["log_server_port"] = 80;
 
 			sprintf(sSqlBuf, 
-				"select module_id,module_name from mt_module_info where app_id=%u and status=%d",
+				"select module_id,module_name from mt_module_info where app_id=%u and xrk_status=%d",
 				qu.getuval("app_id"), RECORD_STATUS_USE);
 			qutmp.get_result(sSqlBuf);
 			if(qutmp.num_rows() > 0) {
@@ -1088,15 +1089,16 @@ static int DealInitShowLog(CGI *cgi)
 	else {
 		Query qu(*stConfig.db);
 		char sSql[256] = {0};
-		snprintf(sSql, sizeof(sSql), "select id,name from mt_machine where status=%d", RECORD_STATUS_USE);
+		snprintf(sSql, sizeof(sSql), 
+			"select xrk_id,xrk_name from mt_machine where xrk_status=%d", RECORD_STATUS_USE);
 		qu.get_result(sSql);
 		if(qu.num_rows() > 0) {
 			int iCount = 0;
 			while(qu.fetch_row() != NULL)
 			{
 				Json mjs;
-				mjs["id"] = qu.getval("id");
-				mjs["name"] = qu.getstr("name");
+				mjs["id"] = qu.getval("xrk_id");
+				mjs["name"] = qu.getstr("xrk_name");
 				mach["mach_list"].Add(mjs);
 				iCount++;
 			}
@@ -1136,7 +1138,7 @@ int DealListModule(CGI *cgi)
 	char sSqlBuf[256] = {0};
 	Query qu(*stConfig.db);
 
-	sprintf(sSqlBuf, "select * from mt_app_info where status=0 order by app_id desc");
+	sprintf(sSqlBuf, "select * from mt_app_info where xrk_status=0 order by app_id desc");
 	qu.get_result(sSqlBuf);
 	Json js;
 	js["statusCode"] = 200;
@@ -1150,7 +1152,8 @@ int DealListModule(CGI *cgi)
 			Json app;
 			app["app_id"] = qu.getuval("app_id"); 
 			app["app_name"] = qu.getstr("app_name");
-			sprintf(sSqlBuf, "select * from mt_module_info where app_id=%u and status=%d order by module_id desc",
+			sprintf(sSqlBuf, 
+				"select * from mt_module_info where app_id=%u and xrk_status=%d order by module_id desc",
 				qu.getuval("app_id"), RECORD_STATUS_USE);
 			qutmp.get_result(sSqlBuf);
 			iModuleCount=0;
@@ -1412,7 +1415,7 @@ int DealListApp(CGI *cgi)
 	char sSqlBuf[128] = {0};
 	Query qu(*stConfig.db);
 
-	sprintf(sSqlBuf, "select * from mt_app_info where status=0 order by app_id desc");
+	sprintf(sSqlBuf, "select * from mt_app_info where xrk_status=0 order by app_id desc");
 	qu.get_result(sSqlBuf);
 	Json js;
 	js["statusCode"] = 200;
@@ -1464,7 +1467,7 @@ static int DealGetLogFilesStart(CGI *cgi)
 		char sSqlBuf[256] = {0};
 		Query qu(*stConfig.db);
 		sprintf(sSqlBuf, 
-			"select app_id,app_name from mt_app_info where status=%d", RECORD_STATUS_USE);
+			"select app_id,app_name from mt_app_info where xrk_status=%d", RECORD_STATUS_USE);
 		qu.get_result(sSqlBuf);
 
 		AppInfo *pApp = NULL;
@@ -2168,7 +2171,7 @@ static int DispatchLogServer(int iNewAppId, Query &qu)
 
     sql.str("");
     sql << "update mt_server set srv_for=\'" << strSvrFor << "\', cfg_seq=" << time(NULL) 
-        << " where id=" << it->first;
+        << " where xrk_id=" << it->first;
     if(!qu.execute(sql.str()))
     {    
         ERR_LOG("execute sql:%s failed", sql.str().c_str());
@@ -2223,7 +2226,7 @@ static int DealSaveApp(CGI *cgi, bool bIsAdd=false)
 		AddParameter(&ppara, "user_add", pUserInfo->szUserName, NULL);
 
 		// 先设为删除状态
-		AddParameter(&ppara, "status", RECORD_STATUS_DELETE, "DB_CAL");
+		AddParameter(&ppara, "xrk_status", RECORD_STATUS_DELETE, "DB_CAL");
 		strSql = "insert into mt_app_info ";
 		JoinParameter_Insert(&strSql, qu.GetMysql(), ppara);
 	}
@@ -2248,7 +2251,7 @@ static int DealSaveApp(CGI *cgi, bool bIsAdd=false)
 		if(DispatchLogServer(iNewAppId, qu) >= 0)
 		{
 			// 分派成功，改为可用状态
-			strSql = "update mt_app_info set status=";
+			strSql = "update mt_app_info set xrk_status=";
 			strSql += itoa(RECORD_STATUS_USE);
 			strSql += " where app_id=";
 			strSql += itoa(iNewAppId);
@@ -2309,7 +2312,7 @@ static int DealDelModule(CGI *cgi)
 	static char sSqlBuf[128];
 
 	// 超级管理员或授权普通管理
-	sprintf(sSqlBuf, "update mt_module_info set status=%d where module_id=%d",
+	sprintf(sSqlBuf, "update mt_module_info set xrk_status=%d where module_id=%d",
 		RECORD_STATUS_DELETE, id);
 
 	Query & qu = *(stConfig.qu);
@@ -2352,7 +2355,7 @@ static int DealDelApp(CGI *cgi)
 		return -1;
 	}
 
-	sprintf(sSqlBuf, "update mt_app_info set status=%d where app_id=%d", RECORD_STATUS_DELETE, id);
+	sprintf(sSqlBuf, "update mt_app_info set xrk_status=%d where app_id=%d", RECORD_STATUS_DELETE, id);
 
 	Query & qu = *(stConfig.qu);
 	if(!qu.execute(sSqlBuf))
@@ -2362,7 +2365,7 @@ static int DealDelApp(CGI *cgi)
 	}
 	DEBUG_LOG("delete app :%d sql:%s", id, sSqlBuf);
 
-	sprintf(sSqlBuf, "update mt_module_info set status=%d where app_id=%u", 
+	sprintf(sSqlBuf, "update mt_module_info set xrk_status=%d where app_id=%u", 
 		RECORD_STATUS_DELETE, id);
 	if(!qu.execute(sSqlBuf))
 	{
@@ -2448,21 +2451,21 @@ int DealInitLogReportTest(CGI *cgi)
 	Json js;
 
 	// 获取上报机器
-	sprintf(sSqlBuf, "select id,name from mt_machine where status=%d", RECORD_STATUS_USE);
+	sprintf(sSqlBuf, "select xrk_id,xrk_name from mt_machine where xrk_status=%d", RECORD_STATUS_USE);
 	Query qu(*stConfig.db);
 	qu.get_result(sSqlBuf);
 	for(int i=0; i < qu.num_rows() && qu.fetch_row() != NULL; i++)
 	{
 		Json mach;
-		mach["id"] = qu.getuval("id");
-		mach["name"] = qu.getstr("name");
+		mach["id"] = qu.getuval("xrk_id");
+		mach["name"] = qu.getstr("xrk_name");
 		js["mach_list"].Add(mach);
 	}
 	qu.free_result();
 
 	// log 配置
 	sprintf(sSqlBuf, "select config_id,config_name,app_id,module_id,log_types from mt_log_config "
-		" where status=%d", RECORD_STATUS_USE);
+		" where xrk_status=%d", RECORD_STATUS_USE);
 	qu.get_result(sSqlBuf);
 	for(int i=0; i < qu.num_rows() && qu.fetch_row() != NULL; i++)
 	{

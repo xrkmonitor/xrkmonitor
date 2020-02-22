@@ -631,7 +631,7 @@ echo "	apache cgi 访问路径: $APACHE_CGI_ACCESS_PATH"
 echo "	apache cgi 本地日志目录: $XRKMONITOR_CGI_LOG_PATH (cgi需要读写权限)"
 echo "	监控系统 html/js 文件目录: $APACHE_DOCUMENT_ROOT/$XRKMONITOR_HTML_PATH"
 echo "	监控系统日志中心日志目录: $SLOG_SERVER_FILE_PATH (cgi需要读权限)"
-echo "	本机IP: $LOCAL_iP, 本机外网IP: $SERVER_OUT_IP"
+echo "	本机IP: $(LOCAL_IP), 本机外网IP: $(SERVER_OUT_IP)"
 echo "	监控系统动态链接库目录: $install_sh_home/xrkmonitor_lib"
 echo "---------------------------------------------------------------------------------"
 echo "如以上信息有误, 或者您想更改, 请先执行卸载脚本: uninstall_xrkmonitor.sh "
@@ -655,9 +655,11 @@ else
 		echo "约 1 分钟左右, 您可以在字符云监控系统 web 控制台上查看监控系统本身的数据上报"
 		echo " ---------------------------------------------------------------------------------"
 		echo "特别提示: 如果您的服务器是云服务器, 且不能通过网址: http://$LOCAL_IP 访问web控制台"
+		echo "web 控制台默认账号密码: sadmin/sadmin"
 		echo "您可以在本脚本中的配置: SERVER_OUT_IP 指定外网IP后, 再次执行本脚本"
 	else
 		echo "现在您可以在浏览器中访问控制台了, 访问网址: http://$SERVER_OUT_IP"
+		echo "web 控制台默认账号密码: sadmin/sadmin"
 		echo "约 1 分钟左右, 您可以在字符云监控系统 web 控制台上查看监控系统本身的数据上报"
 	fi
 fi

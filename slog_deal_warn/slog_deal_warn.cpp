@@ -202,7 +202,7 @@ void GetSendWarnEmailAddrs(
 	const TWarnSendInfo *pSendNode, list<string> & listAddrs)
 {
 	char sSql[128] = {0};
-	snprintf(sSql , sizeof(sSql), "select email from flogin_user where status=0");
+	snprintf(sSql , sizeof(sSql), "select email from flogin_user where xrk_status=0");
 	if(stConfig.qu->get_result(sSql)) {
 		while(stConfig.qu->fetch_row())
 		{
@@ -218,7 +218,7 @@ void GetSendWarnEmailAddrs(
 int GetUserEmail(uint32_t uid, std::string &strMail)
 {
 	char sSql[256] = {0};
-	snprintf(sSql, sizeof(sSql)-1, "select email from flogin_user where user_id=%u and status=0", uid);
+	snprintf(sSql, sizeof(sSql)-1, "select email from flogin_user where user_id=%u and xrk_status=0", uid);
 	if(stConfig.qu->get_result(sSql) && stConfig.qu->fetch_row()) 
 	{
 		const char *ptmp = stConfig.qu->getstr("email");

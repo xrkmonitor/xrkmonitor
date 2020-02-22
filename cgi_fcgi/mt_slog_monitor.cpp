@@ -101,7 +101,7 @@ static int DealLeftInnerMt()
 	char sSqlBuf[256] = {0};
 	Query & qu = *stConfig.qu;
 	sprintf(sSqlBuf, 
-		"select site_id,site_name from mt_user_site_net_delay where status=%d", RECORD_STATUS_USE);
+		"select site_id,site_name from mt_user_site_net_delay where xrk_status=%d", RECORD_STATUS_USE);
 	strcat(sSqlBuf, " order by create_time asc");
 	qu.get_result(sSqlBuf);
 
@@ -125,7 +125,7 @@ static int SetViewList()
 {
 	char sSqlBuf[512] = {0};
 	Query & qu = *stConfig.qu;
-	sprintf(sSqlBuf, "select * from mt_view where status=%d", RECORD_STATUS_USE);
+	sprintf(sSqlBuf, "select * from mt_view where xrk_status=%d", RECORD_STATUS_USE);
 	strcat(sSqlBuf, " order by create_time asc");
 	qu.get_result(sSqlBuf);
 
@@ -135,11 +135,11 @@ static int SetViewList()
 	{
 		sprintf(hdf_pex, "Output.amlists.%d", i);
 		sprintf(hdf_name, "%s.id", hdf_pex);
-		hdf_set_int_value(stConfig.cgi->hdf, hdf_name, qu.getval("id"));
+		hdf_set_int_value(stConfig.cgi->hdf, hdf_name, qu.getval("xrk_id"));
 		sprintf(hdf_name, "%s.flag", hdf_pex);
 		hdf_set_int_value(stConfig.cgi->hdf, hdf_name, qu.getval("view_flag"));
 		sprintf(hdf_name, "%s.name", hdf_pex);
-		hdf_set_value(stConfig.cgi->hdf, hdf_name, qu.getstr("name"));
+		hdf_set_value(stConfig.cgi->hdf, hdf_name, qu.getstr("xrk_name"));
 	}
 	hdf_set_int_value(stConfig.cgi->hdf, "Output.view_count", i);
 	DEBUG_LOG("get view list sql:%s - result count:%d(%d)", sSqlBuf, qu.num_rows(), i);

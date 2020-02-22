@@ -117,7 +117,7 @@ static int GetWarnConfigTotalRecords(SearchInfo *pinfo=NULL)
 	char sSqlBuf[512] = {0};
 	Query qu(*stConfig.db);
 	
-	sprintf(sSqlBuf, "select count(*) from mt_warn_config where status=%d", RECORD_STATUS_USE);
+	sprintf(sSqlBuf, "select count(*) from mt_warn_config where xrk_status=%d", RECORD_STATUS_USE);
 	if(pinfo != NULL && AddSearchInfo(sSqlBuf, sizeof(sSqlBuf), pinfo) < 0)
 		return SLOG_ERROR_LINE;
 
@@ -158,8 +158,8 @@ static int GetWarnConfigList(Json &js, SearchInfo *pinfo=NULL)
 	}
 
 	sprintf(sSqlBuf, "select mt_attr.attr_name,mt_warn_config.* from mt_warn_config inner join "
-		" mt_attr on mt_warn_config.attr_id=mt_attr.id where mt_attr.status=%d and "
-		" mt_warn_config.status=%d", RECORD_STATUS_USE, RECORD_STATUS_USE);
+		" mt_attr on mt_warn_config.attr_id=mt_attr.xrk_id where mt_attr.xrk_status=%d and "
+		" mt_warn_config.xrk_status=%d", RECORD_STATUS_USE, RECORD_STATUS_USE);
 	if(pinfo != NULL && AddSearchInfo(sSqlBuf, sizeof(sSqlBuf), pinfo) < 0)
 		return SLOG_ERROR_LINE;
 
@@ -243,7 +243,7 @@ static int DealSetWarnChart()
 	char sSqlBuf[512] = {0};
 	Query qu_data(*stConfig.db);
 	snprintf(sSqlBuf, sizeof(sSqlBuf), "select * from mt_warn_config "
-		" where warn_config_id=%d and status=0", iWarnCfgId);
+		" where warn_config_id=%d and xrk_status=0", iWarnCfgId);
 	qu_data.get_result(sSqlBuf);
 	if(qu_data.num_rows() <= 0 || false == qu_data.fetch_row())
 	{
@@ -290,7 +290,7 @@ static int DealWarnMask()
 	char sSqlBuf[512] = {0};
 	Query qu_data(*stConfig.db);
 	snprintf(sSqlBuf, sizeof(sSqlBuf), 
-		"select * from mt_warn_config where warn_config_id=%d and status=0", iWarnCfgId);
+		"select * from mt_warn_config where warn_config_id=%d and xrk_status=0", iWarnCfgId);
 	qu_data.get_result(sSqlBuf);
 	if(qu_data.num_rows() <= 0 || false == qu_data.fetch_row())
 	{
@@ -367,7 +367,7 @@ static int DealMultiDel()
 	int iDelete = 0;
 	for(; pwarn_config != NULL; pwarn_config=strtok(NULL, ","))
 	{
-		sprintf(sSqlBuf, "update mt_warn_config set status=%d,user_mod_id=%d"
+		sprintf(sSqlBuf, "update mt_warn_config set xrk_status=%d,user_mod_id=%d"
 			" where warn_config_id=%s", 
 			RECORD_STATUS_DELETE, stConfig.stUser.puser_info->iUserId, pwarn_config);
 		if(!qutmp.execute(sSqlBuf))
@@ -525,7 +525,7 @@ static int DealSaveWarnConfig(bool bIsMod=false)
 		{
 			iwarn_config_id = atoi(pwarn_config);
 
-			sprintf(sSqlBuf, "select * from mt_warn_config where status=%d and warn_config_id=%s",
+			sprintf(sSqlBuf, "select * from mt_warn_config where xrk_status=%d and warn_config_id=%s",
 				RECORD_STATUS_USE, pwarn_config);
 			if(qutmp.get_result(sSqlBuf) == NULL || qutmp.num_rows() <= 0)
 			{
@@ -551,7 +551,7 @@ static int DealSaveWarnConfig(bool bIsMod=false)
 
 			if(!(iNewWarnFlag & (ATTR_WARN_FLAG_MAX+ATTR_WARN_FLAG_MIN+ATTR_WARN_FLAG_WAVE)))
 			{
-				sprintf(sSqlBuf, "update mt_warn_config set status=%d,user_mod_id=%d "
+				sprintf(sSqlBuf, "update mt_warn_config set xrk_status=%d,user_mod_id=%d "
 					" where warn_config_id=%s",
 					RECORD_STATUS_DELETE, stConfig.stUser.puser_info->iUserId, pwarn_config);
 			}

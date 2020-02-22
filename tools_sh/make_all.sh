@@ -119,5 +119,5 @@ cp ${TarF}.gz ${BackupDir}/${TarF}.gz.$CurDate
 rm -f ../uninstall_xrkmonitor.sh
 rm -f ../local_install.sh
 rm -f ../xrkmonitor_lib.tar.gz
-
+echo "打包完成, 压缩包为：slog_all.tar.gz" 
 

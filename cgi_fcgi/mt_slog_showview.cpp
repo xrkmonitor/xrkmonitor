@@ -272,7 +272,7 @@ static int SaveNotBindMachine(int view_id)
 
 	Query & qu = *stConfig.qu;
 	char sSqlBuf[256] = {0};
-	sprintf(sSqlBuf, "update mt_view_bmach set status=%d where view_id=%d and machine_id=%d",
+	sprintf(sSqlBuf, "update mt_view_bmach set xrk_status=%d where view_id=%d and machine_id=%d",
 		RECORD_STATUS_DELETE, view_id, machine_id);
 	if(!qu.execute(sSqlBuf))
 	{
@@ -326,7 +326,7 @@ static int SaveBindMachine(int view_id)
 	InitParameter(&ppara);
 	AddParameter(&ppara, "view_id", view_id, "DB_CAL");
 	AddParameter(&ppara, "machine_id", machine_id, "DB_CAL");
-	AddParameter(&ppara, "status", (uint32_t)0, "DB_CAL");
+	AddParameter(&ppara, "xrk_status", (uint32_t)0, "DB_CAL");
 	AddParameter(&ppara, "update_time", uitodate(stConfig.dwCurTime), NULL);
 	std::string strSql;
 	strSql = "replace into mt_view_bmach";
@@ -473,7 +473,7 @@ static int GetAttrType(Json &js, MmapUserAttrTypeTree & stTypeTree)
 	{
 		char sSqlBuf[256] = {0};
 		Query qu(*stConfig.db);
-		sprintf(sSqlBuf, "select name from mt_attr_type where type=%d and status=0", iType);
+		sprintf(sSqlBuf, "select xrk_name from mt_attr_type where xrk_type=%d and xrk_status=0", iType);
 		qu.get_result(sSqlBuf);
 		if(qu.num_rows() <= 0 || qu.fetch_row() == NULL)
 		{
@@ -484,7 +484,7 @@ static int GetAttrType(Json &js, MmapUserAttrTypeTree & stTypeTree)
 
 		if(qu.num_rows() > 1)
 			WARN_LOG("get attr type :%d, have count:%d, use first !", iType, qu.num_rows());
-		const char *pname = qu.getstr("name");
+		const char *pname = qu.getstr("xrk_name");
 
 		if(!stConfig.iDisableVmemCache)
 			SetAttrTypeNameToVmem(iType, pname, stConfig);
@@ -510,13 +510,13 @@ static int CreateAttrTypeTree(MmapUserAttrTypeTree & stTypeTree)
 
 	// 尝试获取子类型
 	sprintf(sSqlBuf, 
-		"select type from mt_attr_type where status=0 and parent_type=%d",
+		"select xrk_type from mt_attr_type where xrk_status=0 and parent_type=%d",
 		stTypeTree.attr_type_id());
 	qu.get_result(sSqlBuf);
 	for(int i=0; i < qu.num_rows() && qu.fetch_row() != NULL; i++)
 	{
 		MmapUserAttrTypeTree *pType = stTypeTree.add_sub_type_list();
-		pType->set_attr_type_id(qu.getval("type"));
+		pType->set_attr_type_id(qu.getval("xrk_type"));
 		if(CreateAttrTypeTree(*pType) < 0)
 		{
 			qu.free_result();
@@ -751,8 +751,8 @@ static int GetAttrTotalRecords(int view_id, AttrSearchInfo *pinfo=NULL)
 	char sTmpBuf[128] = {0};
 	Query & qu = *stConfig.qu;
 
-	sprintf(sSqlBuf, "select count(*) from mt_attr where id not in (select attr_id from mt_view_battr "
-		"where view_id=%d and status=%d) and status=%d", 
+	sprintf(sSqlBuf, "select count(*) from mt_attr where xrk_id not in (select attr_id from mt_view_battr "
+		"where view_id=%d and xrk_status=%d) and xrk_status=%d", 
 		view_id, RECORD_STATUS_USE, RECORD_STATUS_USE);
 	if(pinfo != NULL && pinfo->iAttrDataType != 0)
 	{
@@ -768,7 +768,7 @@ static int GetAttrTotalRecords(int view_id, AttrSearchInfo *pinfo=NULL)
 
 	if(pinfo != NULL && pinfo->iAttrId != 0)
 	{
-	    sprintf(sTmpBuf, " and mt_attr.id=%d", pinfo->iAttrId);
+	    sprintf(sTmpBuf, " and mt_attr.xrk_id=%d", pinfo->iAttrId);
 	    strcat(sSqlBuf, sTmpBuf);
 	}
 
@@ -795,8 +795,9 @@ static int GetAttrList(int view_id, Json &js, AttrSearchInfo *pinfo=NULL)
 	int iCurPage = hdf_get_int_value(stConfig.cgi->hdf, "config.currentPage", 1);
 	int iNumPerPage = hdf_get_int_value(stConfig.cgi->hdf, "config.numPerPage", 10);
 
-	sprintf(sSqlBuf, "select * from mt_attr where id not in (select attr_id from mt_view_battr "
-		"where view_id=%d and status=%d) and status=%d", view_id, RECORD_STATUS_USE, RECORD_STATUS_USE);
+	sprintf(sSqlBuf, "select * from mt_attr where xrk_id not in (select attr_id from mt_view_battr "
+		"where view_id=%d and xrk_status=%d) and xrk_status=%d",
+		view_id, RECORD_STATUS_USE, RECORD_STATUS_USE);
 	if(pinfo != NULL && pinfo->iAttrDataType != 0)
 	{
 		sprintf(sTmpBuf, " and mt_attr.data_type=%d", pinfo->iAttrDataType);
@@ -816,11 +817,11 @@ static int GetAttrList(int view_id, Json &js, AttrSearchInfo *pinfo=NULL)
 
 	if(pinfo != NULL && pinfo->iAttrId != 0)
 	{
-		sprintf(sTmpBuf, " and mt_attr.id=%d", pinfo->iAttrId);
+		sprintf(sTmpBuf, " and mt_attr.xrk_id=%d", pinfo->iAttrId);
 		strcat(sSqlBuf, sTmpBuf);
 		hdf_set_int_value(stConfig.cgi->hdf, "config.dam_attr_id", pinfo->iAttrId);
 	}
-	SetRecordsOrder(stConfig.cgi, sSqlBuf, "id");
+	SetRecordsOrder(stConfig.cgi, sSqlBuf, "xrk_id");
 
 	memset(sTmpBuf, 0, sizeof(sTmpBuf));
 	sprintf(sTmpBuf, " limit %d,%d", iNumPerPage*(iCurPage-1), iNumPerPage);
@@ -839,7 +840,7 @@ static int GetAttrList(int view_id, Json &js, AttrSearchInfo *pinfo=NULL)
 	for(i=0; i < qu.num_rows() && qu.fetch_row() != NULL; i++)
 	{
 		Json attr;
-		attr["id"] = qu.getval("id");
+		attr["id"] = qu.getval("xrk_id");
 		attr["name"] = qu.getstr("attr_name");
 		attr["attr_type"] = qu.getstr("attr_type");
 		attr["data_type"] = qu.getval("data_type");
@@ -928,7 +929,7 @@ static int SaveNotBindAttr(int view_id)
 		pattr_id = strtok_r(pattr_list, ",", &psave);
 		if(pattr_id == NULL)
 			break;
-		sprintf(sSqlBuf, "update mt_view_battr set status=%d where view_id=%d and attr_id=%s", 
+		sprintf(sSqlBuf, "update mt_view_battr set xrk_status=%d where view_id=%d and attr_id=%s", 
 			RECORD_STATUS_DELETE, view_id, pattr_id);
 		if(!qu.execute(sSqlBuf))
 		{
@@ -984,7 +985,8 @@ static int SaveBindAttr(int view_id)
 		pattr_id = strtok_r(pattr_list, ",", &psave);
 		if(pattr_id == NULL)
 			break;
-		sprintf(sSqlBuf, "replace into mt_view_battr set view_id=%d,attr_id=%s,status=0,update_time=''%s\'",
+		sprintf(sSqlBuf, 
+			"replace into mt_view_battr set view_id=%d,attr_id=%s,xrk_status=0,update_time=''%s\'",
 			view_id, pattr_id, uitodate(stConfig.dwCurTime));
 		if(!qu.execute(sSqlBuf))
 		{
@@ -1579,9 +1581,9 @@ static int GetMachineAttrList(int machine_id, Json &js, const char *pszTableName
 	}
 	strAttrs.replace(strAttrs.size()-1, 1, ")");
 
-	string strSql("select id,attr_name,attr_type,data_type from mt_attr where id in ");
+	string strSql("select xrk_id,attr_name,attr_type,data_type from mt_attr where xrk_id in ");
 	strSql += strAttrs;
-	strSql += " and status=0 order by attr_type asc,id asc";
+	strSql += " and xrk_status=0 order by attr_type asc,xrk_id asc";
 
 	Query & qu_taobao = *stConfig.qu;
 	qu_taobao.get_result(strSql.c_str());
@@ -1596,11 +1598,11 @@ static int GetMachineAttrList(int machine_id, Json &js, const char *pszTableName
 	for(i=0; i < qu_taobao.num_rows() && qu_taobao.fetch_row() != NULL; i++)
 	{
 		Json attr;
-		attr["id"] = qu_taobao.getval("id");
+		attr["id"] = qu_taobao.getval("xrk_id");
 		attr["name"] = qu_taobao.getstr("attr_name");
 		attr["attr_type"] = qu_taobao.getstr("attr_type");
 		attr["data_type"] = qu_taobao.getval("data_type");
-		if(IsPercentAttr(qu_taobao.getval("id")))
+		if(IsPercentAttr(qu_taobao.getval("xrk_id")))
 			attr["show_class"] = "percent";
 		else
 			attr["show_class"] = "comm";
@@ -1639,8 +1641,8 @@ static int GetAttrInfoByIdList(const char *pattr_id_list, Json & js)
 			continue;
 		}
 
-		string strSql("select id,attr_name,attr_type,data_type from mt_attr where ");
-		strSql += " and id=";
+		string strSql("select xrk_id,attr_name,attr_type,data_type from mt_attr where ");
+		strSql += " and xrk_id=";
 		strSql += pattr_id;
 		DEBUG_LOG("get attr info - sql:%s", strSql.c_str());
 
@@ -2565,7 +2567,7 @@ static int SetAttrSingle()
 static int GetWarnInfoTotalRecords(WarnListSearchInfo *pinfo=NULL)
 {
 	char sSqlBuf[512] = {0};
-	sprintf(sSqlBuf, "select count(*) from mt_warn_info where status=%d", RECORD_STATUS_USE);
+	sprintf(sSqlBuf, "select count(*) from mt_warn_info where xrk_status=%d", RECORD_STATUS_USE);
 	int iFilter = 0;
 	if(pinfo != NULL && (iFilter=AddWarnInfoSearch(sSqlBuf, sizeof(sSqlBuf), pinfo)) < 0)
 		return SLOG_ERROR_LINE;
@@ -2682,7 +2684,7 @@ static const char * GetAttrInfo(uint32_t dwAttrId)
 	}
 
 	char sSqlBuf[512] = {0};
-	snprintf(sSqlBuf, sizeof(sSqlBuf), "select attr_name from mt_attr where id=%u and status=%d",
+	snprintf(sSqlBuf, sizeof(sSqlBuf), "select attr_name from mt_attr where xrk_id=%u and xrk_status=%d",
 		dwAttrId, RECORD_STATUS_USE);
 
 	Query qu(*stConfig.db);
@@ -2829,7 +2831,7 @@ static int GetWarnList(Json & js, WarnListSearchInfo *pinfo, int iTotal)
 
 	char sSqlBuf[512] = {0};
 	int iFilter = 0;
-	snprintf(sSqlBuf, sizeof(sSqlBuf), "select * from mt_warn_info where status=0 ");
+	snprintf(sSqlBuf, sizeof(sSqlBuf), "select * from mt_warn_info where xrk_status=0 ");
 	if(pinfo != NULL && (iFilter=AddWarnInfoSearch(sSqlBuf, sizeof(sSqlBuf), pinfo)) < 0)
 		return SLOG_ERROR_LINE;
 

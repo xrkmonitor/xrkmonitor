@@ -360,7 +360,7 @@ int32_t ReadTableAppInfo(Database &db, uint32_t up_id=0)
 	{
 		dwLastModTime = datetoui(qu.getstr("update_time"));
 		iAppId = qu.getval("app_id");
-		iStatus = qu.getval("status");
+		iStatus = qu.getval("xrk_status");
 		iMatch = slog.GetAppInfo(iAppId, &iFirstFree);
 		ptmp = qu.getstr("app_name");
 
@@ -490,12 +490,12 @@ int32_t ReadTableAppInfo(Database &db, uint32_t up_id=0)
 		if(iStatus == RECORD_STATUS_DELETE)
 		{
 			// 其它相关数据也置为删除
-			sprintf(sSql, "update mt_module_info set status=1 where status=0 and app_id=%d", iAppId);
+			sprintf(sSql, "update mt_module_info set xrk_status=1 where xrk_status=0 and app_id=%d", iAppId);
 			qutmp.execute(sSql);
 			if(qutmp.affected_rows() > 0)
 				INFO_LOG("set delete mt_module_info count:%d, app:%d", qutmp.affected_rows(), iAppId);
 
-			sprintf(sSql, "update mt_log_config set status=1 where status=0 and app_id=%d", iAppId);
+			sprintf(sSql, "update mt_log_config set xrk_status=1 where xrk_status=0 and app_id=%d", iAppId);
 			if(qutmp.affected_rows() > 0)
 				INFO_LOG("set delete mt_log_config count:%d, app:%d", qutmp.affected_rows(), iAppId);
 
@@ -570,7 +570,7 @@ int32_t ReadTableModuleInfo(Database &db, int *pCustModuleId=NULL, uint32_t uid=
 	{
 		dwLastModTime = datetoui(qu.getstr("mod_time"));
 		iAppId = qu.getval("app_id");
-		iStatus = qu.getval("status");
+		iStatus = qu.getval("xrk_status");
 		ptmp = qu.getstr("module_name");
 		iModuleId = qu.getval("module_id");
 
@@ -626,7 +626,8 @@ int32_t ReadTableModuleInfo(Database &db, int *pCustModuleId=NULL, uint32_t uid=
 
 		if(iStatus == RECORD_STATUS_DELETE)
 		{
-			sprintf(sSql, "update mt_log_config set status=1 where status=0 and module_id=%d", iModuleId);
+			sprintf(sSql, 
+				"update mt_log_config set xrk_status=1 where xrk_status=0 and module_id=%d", iModuleId);
 			qutmp.execute(sSql);
 			if(qutmp.affected_rows() > 0)
 				INFO_LOG("set delete mt_log_config count:%d, module:%d", qutmp.affected_rows(), iModuleId);
@@ -644,7 +645,7 @@ int32_t ReadTableModuleInfo(Database &db, int *pCustModuleId=NULL, uint32_t uid=
 				}
 
 				// 删除配置
-				sprintf(sSql, "update mt_log_config set status=%d where module_id=%d", RECORD_STATUS_DELETE, iModuleId);
+				sprintf(sSql, "update mt_log_config set xrk_status=%d where module_id=%d", RECORD_STATUS_DELETE, iModuleId);
 				if(!qutmp.execute(sSql)){
 					ERR_LOG("execute sql:%s failed !", sSql);
 					return SLOG_ERROR_LINE;
@@ -694,7 +695,7 @@ int32_t ReadTableWarnConfig(Database &db, uint32_t rid=0)
 		// 设置 视图id 起始值为：10000000
 		iWarnId = qu.getval("warn_type_value");
 		iAttrId = qu.getval("attr_id");
-		iStatus = qu.getval("status");
+		iStatus = qu.getval("xrk_status");
 		if(iStatus == RECORD_STATUS_USE)
 			pConfig = slog.GetWarnConfigInfo(iWarnId, iAttrId, &dwIsFind);
 		else
@@ -729,7 +730,7 @@ int32_t ReadTableWarnConfig(Database &db, uint32_t rid=0)
 			pConfig->dwLastUpdateTime = dwLastModTime;
 		}
 
-		if(qu.getval("status") != RECORD_STATUS_USE)
+		if(qu.getval("xrk_status") != RECORD_STATUS_USE)
 		{
 			if(pConfig) {
 				memset(pConfig, 0, sizeof(*pConfig));
@@ -763,7 +764,7 @@ int32_t ReadTableServer(Database &db, uint32_t uid=0)
 	if(uid == 0)
 		snprintf(sSql, sizeof(sSql)-1, "select * from mt_server");
 	else
-		snprintf(sSql, sizeof(sSql)-1, "select * from mt_server where id=%u", uid);
+		snprintf(sSql, sizeof(sSql)-1, "select * from mt_server where xrk_id=%u", uid);
 
 	Query qu(db);
 	if(!qu.get_result(sSql))
@@ -796,20 +797,20 @@ int32_t ReadTableServer(Database &db, uint32_t uid=0)
 	}while(0)
 
 		pIpV4 = qu.getstr("ip");
-		stServerConfig.wType = qu.getval("type");
+		stServerConfig.wType = qu.getval("xrk_type");
 		strncpy(stServerConfig.szIpV4, pIpV4, MYSIZEOF(stServerConfig.szIpV4)-1);
 		stServerConfig.dwIp = inet_addr(pIpV4);
 		stServerConfig.bSandBox = qu.getval("sand_box");
 		stServerConfig.bRegion = qu.getval("region");
 		stServerConfig.bIdc = qu.getval("idc");
-		stServerConfig.wPort = qu.getval("port");
+		stServerConfig.wPort = qu.getval("xrk_port");
 		stServerConfig.iWeightConfig = qu.getuval("weight");
-		stServerConfig.dwServiceId = qu.getval("id");
+		stServerConfig.dwServiceId = qu.getval("xrk_id");
 		stServerConfig.dwCfgSeq = qu.getuval("cfg_seq");
 
 		dwLastModTime = datetoui(qu.getstr("update_time"));
 		pSrvFor = qu.getstr("srv_for");
-		iStatus = qu.getval("status");
+		iStatus = qu.getval("xrk_status");
 		iMatch = slog.GetServerInfo(stServerConfig.dwServiceId, &iFirstFree);
 
 		if(iStatus == RECORD_STATUS_USE)
@@ -865,7 +866,7 @@ int32_t ReadTableServer(Database &db, uint32_t uid=0)
 
 		if(iStatus == RECORD_STATUS_DELETE)
 		{  
-			sprintf(sSql, "delete from mt_server where id=%u", stServerConfig.dwServiceId);
+			sprintf(sSql, "delete from mt_server where xrk_id=%u", stServerConfig.dwServiceId);
 
 			// 执行物理删除必须要间隔一定时间 stConfig.iDelRecordTime
 			if(!stConfig.iDeleteDbRecord || dwCurTime < dwLastModTime+stConfig.iDelRecordTime)
@@ -930,7 +931,7 @@ int32_t ReadTableConfigInfo(Database &db, uint32_t *pCustCfgId=NULL, uint32_t ri
 		stLogConfig.dwSpeedFreq = qu.getval("write_speed");
 		stLogConfig.wTestKeyCount = 0;
 
-		iStatus = qu.getval("status");
+		iStatus = qu.getval("xrk_status");
 		iMatchApp = slog.GetAppInfo(stLogConfig.iAppId, (int32_t*)NULL);
 		iMatchModule = slog.GetAppModuleInfo(iMatchApp, stLogConfig.iModuleId, NULL);
 		iMatch = slog.GetSlogConfig(stLogConfig.dwCfgId, &iFirstFreeConfig);
@@ -1092,7 +1093,7 @@ int32_t ReadTableFloginUser(Database &db, uint32_t uid=0)
 		dwLoginTime = qu.getuval("last_login_time");
 		iLoginIdx = qu.getval("login_index");
 		iUserId = qu.getval("user_id");
-		iStatus = qu.getval("status");
+		iStatus = qu.getval("xrk_status");
 	
 		if(iLoginIdx < 0 || iLoginIdx >= FLOGIN_SESSION_NODE_COUNT
 			|| dwCurTime >= LOGIN_MAX_EXPIRE_TIME+dwLoginTime
@@ -1177,7 +1178,7 @@ int32_t ReadTableTestKeyInfo(Database &db, uint32_t up_id=0)
 	char sSql[256];
 
 	if(up_id != 0)
-		sprintf(sSql, "select * from test_key_list where id=%u", up_id);
+		sprintf(sSql, "select * from test_key_list where xrk_id=%u", up_id);
 	else
 		sprintf(sSql, "select * from test_key_list");
 	Query qu(db);
@@ -1199,11 +1200,11 @@ int32_t ReadTableTestKeyInfo(Database &db, uint32_t up_id=0)
 	while(qu.fetch_row())
 	{
 		dwLastModTime = datetoui(qu.getstr("update_time"));
-		dwTestKeyId = qu.getuval("id");
+		dwTestKeyId = qu.getuval("xrk_id");
 		bKeyType = qu.getval("test_key_type");
 		pszKeyValue = qu.getstr("test_key");
 		dwCfgId = qu.getuval("config_id");
-		iStatus = qu.getval("status");
+		iStatus = qu.getval("xrk_status");
 		iMatchConfig = slog.GetSlogConfig(dwCfgId, NULL);
 		iMatchKey = slog.GetTestKey(iMatchConfig, bKeyType, pszKeyValue, &iFirstFree);
 		if(iStatus == RECORD_STATUS_USE && iMatchConfig >= 0 && iMatchKey < 0)
@@ -1246,7 +1247,7 @@ int32_t ReadTableTestKeyInfo(Database &db, uint32_t up_id=0)
 		if(iStatus == RECORD_STATUS_DELETE)
 		{
 			// 从数据库中删除
-			sprintf(sSql, "delete from test_key_list where id=%u", dwTestKeyId); 
+			sprintf(sSql, "delete from test_key_list where xrk_id=%u", dwTestKeyId); 
 			if(!stConfig.iDeleteDbRecord || dwCurTime < dwLastModTime+stConfig.iDelRecordTime)
 			{
 				DEBUG_LOG("skip - %s, last update time:%u(%u)", sSql, dwLastModTime, dwCurTime);
@@ -1295,7 +1296,7 @@ int32_t ReadTableWarnInfo(Database &db, uint32_t uid=0)
 	{
 		dwLastModTime = datetoui(qu.getstr("update_time"));
 		iWarnId = qu.getval("wid");
-		iStatus = qu.getval("status");
+		iStatus = qu.getval("xrk_status");
 		pInfo = slog.GetWarnInfo(iWarnId, &dwIsFind);
 		if(iStatus == RECORD_STATUS_USE && !dwIsFind)
 		{   // 插入共享内存
@@ -1474,7 +1475,7 @@ int32_t ReadTableAttr(Database &db, uint32_t uid=0)
 	if(uid == 0)
 		snprintf(sSql, sizeof(sSql)-1, "select * from mt_attr");
 	else
-		snprintf(sSql, sizeof(sSql)-1, "select * from mt_attr where id=%u", uid);
+		snprintf(sSql, sizeof(sSql)-1, "select * from mt_attr where xrk_id=%u", uid);
 
 	Query qutmp(db);
 	Query qu(db);
@@ -1500,8 +1501,8 @@ int32_t ReadTableAttr(Database &db, uint32_t uid=0)
 
 	while(qu.fetch_row())
 	{
-		iAttrId = qu.getval("id");
-		iStatus = qu.getval("status");
+		iAttrId = qu.getval("xrk_id");
+		iStatus = qu.getval("xrk_status");
 		ptmp = qu.getstr("attr_name");
 		dwLastModTime = datetoui(qu.getstr("update_time"));
 		iAttrType = qu.getval("attr_type");
@@ -1510,7 +1511,7 @@ int32_t ReadTableAttr(Database &db, uint32_t uid=0)
 		{
 			WARN_LOG("attr:%d is delete, type:%d", iAttrId, iAttrType);
 			iStatus = RECORD_STATUS_DELETE;
-			snprintf(sSql, sizeof(sSql), "update mt_attr set status=%d where id=%d", 
+			snprintf(sSql, sizeof(sSql), "update mt_attr set xrk_status=%d where xrk_id=%d", 
 				RECORD_STATUS_DELETE, iAttrId);
 			qutmp.execute(sSql);
 		}
@@ -1717,22 +1718,24 @@ int32_t ReadTableAttr(Database &db, uint32_t uid=0)
 		if(iStatus == RECORD_STATUS_DELETE)
 		{
 			// 相关数据删除
-			sprintf(sSql, "update mt_view_battr set status=1 where status=0 and attr_id=%d", iAttrId);
+			sprintf(sSql, 
+				"update mt_view_battr set xrk_status=1 where xrk_status=0 and attr_id=%d", iAttrId);
 			qutmp.execute(sSql);
 			if(qutmp.affected_rows() > 0)
 				INFO_LOG("set delete mt_view_battr count:%d, attr_id:%d", qutmp.affected_rows(), iAttrId);
 
-			sprintf(sSql, "update mt_warn_config set status=1 where status=0 and attr_id=%d", iAttrId);
+			sprintf(sSql, 
+				"update mt_warn_config set xrk_status=1 where xrk_status=0 and attr_id=%d", iAttrId);
 			qutmp.execute(sSql);
 			if(qutmp.affected_rows() > 0)
 				INFO_LOG("set delete mt_warn_config count:%d, attr_id:%d", qutmp.affected_rows(), iAttrId);
 
-			sprintf(sSql, "update mt_warn_info set status=1 where status=0 and attr_id=%d", iAttrId);
+			sprintf(sSql, "update mt_warn_info set xrk_status=1 where xrk_status=0 and attr_id=%d", iAttrId);
 			qutmp.execute(sSql);
 			if(qutmp.affected_rows() > 0)
 				INFO_LOG("set delete mt_warn_info count:%d, attr_id:%d", qutmp.affected_rows(), iAttrId);
 
-			snprintf(sSql, sizeof(sSql), "delete from mt_attr where id=%u", iAttrId);  
+			snprintf(sSql, sizeof(sSql), "delete from mt_attr where xrk_id=%u", iAttrId);  
 			if(!stConfig.iDeleteDbRecord || dwCurTime < dwLastModTime+stConfig.iDelRecordTime)
 			{
 				DEBUG_LOG("skip - %s, last update time:%u(%u)", sSql, dwLastModTime, dwCurTime);
@@ -1870,9 +1873,9 @@ int32_t ReadTableAttrType(Database &db, uint32_t uid=0)
 	char sSql[256] = {0};
 
 	if(uid == 0)
-		snprintf(sSql, sizeof(sSql)-1, "select * from mt_attr_type order by type asc");
+		snprintf(sSql, sizeof(sSql)-1, "select * from mt_attr_type order by xrk_type asc");
 	else
-		snprintf(sSql, sizeof(sSql)-1, "select * from mt_attr_type where type=%u", uid);
+		snprintf(sSql, sizeof(sSql)-1, "select * from mt_attr_type where xrk_type=%u", uid);
 
 	Query qu(db);
 	if(!qu.get_result(sSql))
@@ -1895,11 +1898,11 @@ int32_t ReadTableAttrType(Database &db, uint32_t uid=0)
 	while(qu.fetch_row())
 	{
 		dwLastModTime = datetoui(qu.getstr("update_time"));
-		iType = qu.getval("type");
+		iType = qu.getval("xrk_type");
 		iTypeParent = qu.getval("parent_type");
-		iStatus = qu.getval("status");
+		iStatus = qu.getval("xrk_status");
 		dwLastModTime = datetoui(qu.getstr("update_time"));
-		ptmp = qu.getstr("name");
+		ptmp = qu.getstr("xrk_name");
 		bDeleteType = false;
 		bAddType = false;
 
@@ -1955,7 +1958,7 @@ int32_t ReadTableAttrType(Database &db, uint32_t uid=0)
 		if(iStatus == RECORD_STATUS_DELETE)
 		{
 			// 其它相关数据也置为删除
-			sprintf(sSql, "update mt_attr set status=1 where status=0 and attr_type=%d", iType);
+			sprintf(sSql, "update mt_attr set xrk_status=1 where xrk_status=0 and attr_type=%d", iType);
 			qutmp.execute(sSql);
 			if(qutmp.affected_rows() > 0)
 			{
@@ -1967,7 +1970,7 @@ int32_t ReadTableAttrType(Database &db, uint32_t uid=0)
 			sprintf(sSql, "update mt_attr_type set xrk_status=1 where xrk_status=0 and parent_type=%d", iType);
 			qutmp.execute(sSql);
 
-			sprintf(sSql, "delete from mt_attr_type where type=%u", iType);  
+			sprintf(sSql, "delete from mt_attr_type where xrk_type=%u", iType);  
 			if(!stConfig.iDeleteDbRecord || dwCurTime < dwLastModTime+stConfig.iDelRecordTime)
 			{
 				DEBUG_LOG("skip - %s, last update time:%u(%u)", sSql, dwLastModTime, dwCurTime);
@@ -1993,7 +1996,7 @@ int32_t ReadTableMachine(Database &db, uint32_t uid=0)
 	char sSql[256];
 
 	if(uid != 0)
-		snprintf(sSql, sizeof(sSql)-1, "select * from mt_machine where id=%u", uid);
+		snprintf(sSql, sizeof(sSql)-1, "select * from mt_machine where xrk_id=%u", uid);
 	else
 		snprintf(sSql, sizeof(sSql)-1, "select * from mt_machine");
 	Query qu(db);
@@ -2017,8 +2020,8 @@ int32_t ReadTableMachine(Database &db, uint32_t uid=0)
 	while(qu.fetch_row())
 	{
 		dwLastModTime = datetoui(qu.getstr("mod_time"));
-		iMachineId = qu.getval("id");
-		iStatus = qu.getval("status");
+		iMachineId = qu.getval("xrk_id");
+		iStatus = qu.getval("xrk_status");
 		pInfo = slog.GetMachineInfo(iMachineId, &dwIsFind);
 
 		if(iStatus == RECORD_STATUS_USE && !dwIsFind)
@@ -2050,7 +2053,7 @@ int32_t ReadTableMachine(Database &db, uint32_t uid=0)
 				pInfo->ip4 = qu.getuval("ip4");
 				pInfo->bWarnFlag = qu.getval("warn_flag");
 				pInfo->bModelId = qu.getval("model_id");
-				ptmp = qu.getstr("name");
+				ptmp = qu.getstr("xrk_name");
 				if(ptmp != NULL && ptmp[0] != '\0')
 					pInfo->iNameVmemIdx = MtReport_SaveToVmem(ptmp, strlen(ptmp)+1);
 				else
@@ -2092,7 +2095,7 @@ int32_t ReadTableMachine(Database &db, uint32_t uid=0)
 			pInfo->dwLastModTime = dwLastModTime;
 
 			const char *pvname = NULL;
-			ptmp = qu.getstr("name");
+			ptmp = qu.getstr("xrk_name");
 			if(pInfo->iNameVmemIdx > 0)
 				pvname = MtReport_GetFromVmem_Local(pInfo->iNameVmemIdx);
 			if(ptmp != NULL && (pvname == NULL || strcmp(pvname, ptmp)))
@@ -2173,22 +2176,23 @@ int32_t ReadTableMachine(Database &db, uint32_t uid=0)
 		if(iStatus == RECORD_STATUS_DELETE)
 		{
 			// 相关数据删除
-			sprintf(sSql, "update mt_view_bmach set status=1 where status=0 and machine_id=%d", iMachineId);
+			sprintf(sSql, 
+				"update mt_view_bmach set xrk_status=1 where xrk_status=0 and machine_id=%d", iMachineId);
 			qutmp.execute(sSql);
 			if(qutmp.affected_rows() > 0)
 				INFO_LOG("set delete mt_view_bmach count:%d, machine_id:%d", qutmp.affected_rows(), iMachineId);
 
-			sprintf(sSql, "update mt_warn_config set status=1 where status=0 and warn_type_value=%d", iMachineId);
+			sprintf(sSql, "update mt_warn_config set xrk_status=1 where xrk_status=0 and warn_type_value=%d", iMachineId);
 			qutmp.execute(sSql);
 			if(qutmp.affected_rows() > 0)
 				INFO_LOG("set delete mt_warn_config count:%d, warn_type_value:%d", qutmp.affected_rows(), iMachineId);
 
-			sprintf(sSql, "update mt_warn_info set status=1 where status=0 and warn_id=%d", iMachineId);
+			sprintf(sSql, "update mt_warn_info set xrk_status=1 where xrk_status=0 and warn_id=%d", iMachineId);
 			qutmp.execute(sSql);
 			if(qutmp.affected_rows() > 0)
 				INFO_LOG("set delete mt_warn_info count:%d, warn_id:%d", qutmp.affected_rows(), iMachineId);
 
-			sprintf(sSql, "delete from mt_machine where id=%u", iMachineId);  
+			sprintf(sSql, "delete from mt_machine where xrk_id=%u", iMachineId);  
 			if(!stConfig.iDeleteDbRecord || dwCurTime < dwLastModTime+stConfig.iDelRecordTime)
 			{
 				DEBUG_LOG("skip - %s, last update time:%u(%u)", sSql, dwLastModTime, dwCurTime);
@@ -2210,7 +2214,7 @@ int32_t ReadTableMachine(Database &db, uint32_t uid=0)
 	if(stConfig.pShmConfig->stSysCfg.iMachineId == 0)
 	{
 		snprintf(sSql, MYSIZEOF(sSql),
-			"insert into mt_machine set name=\'%s\',ip1=%u,create_time=now(),"
+			"insert into mt_machine set xrk_name=\'%s\',ip1=%u,create_time=now(),"
 			"mod_time=now(),machine_desc=\'系统自动添加\' ",
 			stConfig.szLocalIp, (uint32_t)inet_addr(stConfig.szLocalIp));
 		if(!qu.execute(sSql))
@@ -2327,7 +2331,7 @@ int32_t ReadTableViewInfo(Database &db, int iViewId_para =0)
 	if(iViewId_para == 0)
 		snprintf(sSql, sizeof(sSql)-1, "select * from mt_view");
 	else
-		snprintf(sSql, sizeof(sSql)-1, "select * from mt_view where id=%d", iViewId_para);
+		snprintf(sSql, sizeof(sSql)-1, "select * from mt_view where xrk_id=%d", iViewId_para);
 
 	Query qu(db);
 	if(!qu.get_result(sSql))
@@ -2348,8 +2352,8 @@ int32_t ReadTableViewInfo(Database &db, int iViewId_para =0)
 	MtSystemConfig *psysConfig = stConfig.psysConfig;
 	while(qu.fetch_row())
 	{
-		iViewId = qu.getval("id");
-		iStatus = qu.getval("status");
+		iViewId = qu.getval("xrk_id");
+		iStatus = qu.getval("xrk_status");
 		dwLastModTime = datetoui(qu.getstr("mod_time"));
 		iMatch = slog.GetViewInfoIndex(iViewId, &iFreeIdx);
 		pinfo = slog.GetViewInfo(iMatch);
@@ -2363,7 +2367,7 @@ int32_t ReadTableViewInfo(Database &db, int iViewId_para =0)
 				pinfo = slog.GetViewInfo(iFreeIdx);
 				slog.AddViewInfoCount();
 				pinfo->iViewId = iViewId;
-				ptmp = qu.getstr("name");
+				ptmp = qu.getstr("xrk_name");
 				if(ptmp != NULL && ptmp[0] != '\0')
 					pinfo->iViewNameVmemIdx = MtReport_SaveToVmem(ptmp, strlen(ptmp)+1);
 				else
@@ -2392,7 +2396,7 @@ int32_t ReadTableViewInfo(Database &db, int iViewId_para =0)
 		{
 			// update view info
 			const char *pvname = NULL;
-			ptmp = qu.getstr("name");
+			ptmp = qu.getstr("xrk_name");
 			if(pinfo->iViewNameVmemIdx > 0)
 				pvname = MtReport_GetFromVmem_Local(pinfo->iViewNameVmemIdx);
 			if(ptmp != NULL && (pvname == NULL || strcmp(pvname, ptmp)))
@@ -2432,27 +2436,27 @@ int32_t ReadTableViewInfo(Database &db, int iViewId_para =0)
 		if(iStatus == RECORD_STATUS_DELETE)
 		{
 			// 相关数据删除
-			sprintf(sSql, "update mt_view_battr set status=1 where status=0 and view_id=%d", iViewId);
+			sprintf(sSql, "update mt_view_battr set xrk_status=1 where xrk_status=0 and view_id=%d", iViewId);
 			qutmp.execute(sSql);
 			if(qutmp.affected_rows() > 0)
 				INFO_LOG("set delete mt_view_battr count:%d, view_id:%d", qutmp.affected_rows(), iViewId);
 
-			sprintf(sSql, "update mt_view_bmach set status=1 where status=0 and view_id=%d", iViewId);
+			sprintf(sSql, "update mt_view_bmach set xrk_status=1 where xrk_status=0 and view_id=%d", iViewId);
 			qutmp.execute(sSql);
 			if(qutmp.affected_rows() > 0)
 				INFO_LOG("set delete mt_view_bmach count:%d, view_id:%d", qutmp.affected_rows(), iViewId);
 
-			sprintf(sSql, "update mt_warn_config set status=1 where status=0 and warn_type_value=%d", iViewId);
+			sprintf(sSql, "update mt_warn_config set xrk_status=1 where xrk_status=0 and warn_type_value=%d", iViewId);
 			qutmp.execute(sSql);
 			if(qutmp.affected_rows() > 0)
 				INFO_LOG("set delete mt_warn_config count:%d, warn_type_value:%d", qutmp.affected_rows(), iViewId);
 
-			sprintf(sSql, "update mt_warn_info set status=1 where status=0 and warn_id=%d", iViewId);
+			sprintf(sSql, "update mt_warn_info set xrk_status=1 where xrk_status=0 and warn_id=%d", iViewId);
 			qutmp.execute(sSql);
 			if(qutmp.affected_rows() > 0)
 				INFO_LOG("set delete mt_warn_info count:%d, warn_id:%d", qutmp.affected_rows(), iViewId);
 
-			sprintf(sSql, "delete from mt_view where id=%u", iViewId);  
+			sprintf(sSql, "delete from mt_view where xrk_id=%u", iViewId);  
 			if(!stConfig.iDeleteDbRecord || dwCurTime < dwLastModTime+stConfig.iDelRecordTime)
 				DEBUG_LOG("skip - %s, last update time:%u(%u)", sSql, dwLastModTime, dwCurTime);
 			else
@@ -2505,7 +2509,7 @@ int32_t ReadTableMachineViewInfo(Database &db, TViewBindMachKey *pKeyInfo=NULL)
 		dwLastModTime = datetoui(qu.getstr("update_time"));
 		iMachineId = qu.getval("machine_id");
 		iViewId = qu.getval("view_id");
-		iStatus = qu.getval("status");
+		iStatus = qu.getval("xrk_status");
 		pInfo = slog.GetMachineViewInfo(iMachineId, &dwIsFind);
 		if(pInfo == NULL && iStatus == RECORD_STATUS_USE) 
 		{
@@ -2619,7 +2623,7 @@ int32_t ReadTableAttrViewInfo(Database &db, TViewBindAttrKey *pKeyInfo=NULL)
 		dwLastModTime = datetoui(qu.getstr("update_time"));
 		iAttrId = qu.getval("attr_id");
 		iViewId = qu.getval("view_id");
-		iStatus = qu.getval("status");
+		iStatus = qu.getval("xrk_status");
 		pInfo = slog.GetAttrViewInfo(iAttrId, &dwIsFind);
 		if(pInfo == NULL) {
 			ERR_LOG("need more space GetAttrViewInfo, attr id:%d, view id:%d", iAttrId, iViewId);

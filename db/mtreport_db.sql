@@ -1,8 +1,8 @@
--- MySQL dump 10.15  Distrib 10.0.30-MariaDB, for Linux (x86_64)
+-- MySQL dump 10.16  Distrib 10.2.22-MariaDB, for Linux (x86_64)
 --
 -- Host: localhost    Database: mtreport_db
 -- ------------------------------------------------------
--- Server version	10.0.30-MariaDB
+-- Server version	10.2.22-MariaDB
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -19,6 +19,8 @@
 -- Current Database: `mtreport_db`
 --
 
+/*!40000 DROP DATABASE IF EXISTS `mtreport_db`*/;
+
 CREATE DATABASE /*!32312 IF NOT EXISTS*/ `mtreport_db` /*!40100 DEFAULT CHARACTER SET utf8 */;
 
 USE `mtreport_db`;
@@ -31,16 +33,16 @@ DROP TABLE IF EXISTS `flogin_history`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `flogin_history` (
-  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `xrk_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `user_id` int(11) unsigned NOT NULL,
-  `login_time` int(12) unsigned DEFAULT '0',
+  `login_time` int(12) unsigned DEFAULT 0,
   `login_remote_address` char(16) DEFAULT '0.0.0.0',
   `receive_server` char(16) DEFAULT '0.0.0.0',
   `referer` varchar(1024) DEFAULT NULL,
   `user_agent` varchar(1024) DEFAULT NULL,
-  `method` int(10) DEFAULT '0',
+  `method` int(10) DEFAULT 0,
   `valid_time` int(11) unsigned DEFAULT NULL,
-  PRIMARY KEY (`id`),
+  PRIMARY KEY (`xrk_id`),
   KEY `user_id` (`user_id`)
 ) ENGINE=MyISAM AUTO_INCREMENT=307 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -65,25 +67,25 @@ CREATE TABLE `flogin_user` (
   `user_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `user_name` varchar(64) NOT NULL,
   `user_pass_md5` varchar(128) NOT NULL,
-  `login_type` int(11) NOT NULL DEFAULT '0',
-  `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `login_type` int(11) NOT NULL DEFAULT 0,
+  `update_time` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `rmark` varchar(128) DEFAULT NULL,
-  `dwReserved1` int(11) unsigned DEFAULT '0',
-  `dwReserved2` int(11) unsigned DEFAULT '0',
+  `dwReserved1` int(11) unsigned DEFAULT 0,
+  `dwReserved2` int(11) unsigned DEFAULT 0,
   `strReserved1` varchar(64) DEFAULT NULL,
   `strReserved2` varchar(64) DEFAULT NULL,
-  `user_flag_1` int(12) unsigned DEFAULT '0',
-  `last_login_time` int(12) unsigned DEFAULT '0',
-  `register_time` int(12) unsigned DEFAULT '0',
+  `user_flag_1` int(12) unsigned DEFAULT 0,
+  `last_login_time` int(12) unsigned DEFAULT 0,
+  `register_time` int(12) unsigned DEFAULT 0,
   `last_login_address` char(16) DEFAULT '0.0.0.0',
-  `user_add_id` int(11) unsigned DEFAULT '1',
-  `user_mod_id` int(11) unsigned DEFAULT '1',
-  `status` int(11) DEFAULT '0',
+  `user_add_id` int(11) unsigned DEFAULT 1,
+  `user_mod_id` int(11) unsigned DEFAULT 1,
+  `xrk_status` tinyint(4) DEFAULT 0,
   `email` varchar(64) DEFAULT NULL,
-  `login_index` int(11) DEFAULT '0',
+  `login_index` int(11) DEFAULT 0,
   `login_md5` varchar(32) DEFAULT '',
   `last_login_server` char(16) DEFAULT '0.0.0.0',
-  `bind_xrkmonitor_uid` int(11) unsigned DEFAULT '0',
+  `bind_xrkmonitor_uid` int(11) unsigned DEFAULT 0,
   PRIMARY KEY (`user_id`),
   KEY `idx_name` (`user_name`)
 ) ENGINE=InnoDB AUTO_INCREMENT=357 DEFAULT CHARSET=utf8;
@@ -125,14 +127,14 @@ CREATE TABLE `mt_app_info` (
   `app_name` varchar(32) NOT NULL,
   `app_desc` varchar(128) NOT NULL,
   `app_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
-  `create_time` int(12) unsigned DEFAULT '0',
-  `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `create_time` int(12) unsigned DEFAULT 0,
+  `update_time` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `user_add` varchar(64) NOT NULL,
   `user_mod` varchar(64) NOT NULL,
-  `status` tinyint(4) DEFAULT '0',
-  `app_type` int(10) unsigned DEFAULT '2',
-  `user_mod_id` int(11) unsigned DEFAULT '1',
-  `user_add_id` int(11) unsigned DEFAULT '1',
+  `xrk_status` tinyint(4) DEFAULT 0,
+  `app_type` int(10) unsigned DEFAULT 2,
+  `user_mod_id` int(11) unsigned DEFAULT 1,
+  `user_add_id` int(11) unsigned DEFAULT 1,
   PRIMARY KEY (`app_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=119 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -185,20 +187,20 @@ DROP TABLE IF EXISTS `mt_attr`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `mt_attr` (
-  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'å±žæ€§ç¼–å·',
-  `attr_type` int(8) DEFAULT '0' COMMENT 'å±žæ€§ç±»åž‹',
-  `data_type` int(6) DEFAULT '0' COMMENT 'æ•°æ®ç±»åž‹',
+  `xrk_id` int(11) NOT NULL AUTO_INCREMENT,
+  `attr_type` int(8) DEFAULT 0 COMMENT 'å±žæ€§ç±»åž‹',
+  `data_type` int(6) DEFAULT 0 COMMENT 'æ•°æ®ç±»åž‹',
   `user_add` varchar(64) DEFAULT 'rock' COMMENT 'æ·»åŠ ç”¨æˆ·',
   `attr_name` varchar(64) NOT NULL COMMENT 'å±žæ€§åç§°',
   `attr_desc` varchar(256) DEFAULT NULL COMMENT 'å±žæ€§æè¿°',
-  `status` tinyint(4) DEFAULT '0' COMMENT 'çŠ¶æ€ç  0-æ­£å¸¸ä½¿ç”¨ 1-åˆ é™¤æ ‡å¿—',
-  `user_add_id` int(11) unsigned DEFAULT '0',
-  `user_mod_id` int(11) unsigned DEFAULT '0',
-  `excep_attr_mask` tinyint(4) DEFAULT '0',
-  `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `str_attr_type` tinyint(4) DEFAULT '0',
+  `xrk_status` tinyint(4) DEFAULT 0,
+  `user_add_id` int(11) unsigned DEFAULT 0,
+  `user_mod_id` int(11) unsigned DEFAULT 0,
+  `excep_attr_mask` tinyint(4) DEFAULT 0,
+  `update_time` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `str_attr_type` tinyint(4) DEFAULT 0,
   `create_time` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`xrk_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=357 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -214,13 +216,13 @@ UNLOCK TABLES;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
 /*!50003 SET @saved_cs_results     = @@character_set_results */ ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = latin1 */ ;
-/*!50003 SET character_set_results = latin1 */ ;
+/*!50003 SET character_set_client  = utf8 */ ;
+/*!50003 SET character_set_results = utf8 */ ;
 /*!50003 SET collation_connection  = utf8_general_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
-/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 trigger mt_attr_ins after insert on mt_attr for each row begin insert into mt_table_upate_monitor(u_table_name, r_primary_id) values('mt_attr', new.id); end */;;
+/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 trigger mt_attr_ins after insert on mt_attr for each row begin insert into mt_table_upate_monitor(u_table_name, r_primary_id) values('mt_attr', new.xrk_id); end */;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
 /*!50003 SET character_set_client  = @saved_cs_client */ ;
@@ -229,13 +231,13 @@ DELIMITER ;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
 /*!50003 SET @saved_cs_results     = @@character_set_results */ ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = latin1 */ ;
-/*!50003 SET character_set_results = latin1 */ ;
+/*!50003 SET character_set_client  = utf8 */ ;
+/*!50003 SET character_set_results = utf8 */ ;
 /*!50003 SET collation_connection  = utf8_general_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
-/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 trigger mt_attr_up after update on mt_attr for each row begin insert into mt_table_upate_monitor(u_table_name, r_primary_id) values('mt_attr', old.id); end */;;
+/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 trigger mt_attr_up after update on mt_attr for each row begin insert into mt_table_upate_monitor(u_table_name, r_primary_id) values('mt_attr', old.xrk_id); end */;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
 /*!50003 SET character_set_client  = @saved_cs_client */ ;
@@ -250,19 +252,19 @@ DROP TABLE IF EXISTS `mt_attr_type`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `mt_attr_type` (
-  `type` int(11) unsigned NOT NULL AUTO_INCREMENT,
-  `parent_type` int(11) unsigned DEFAULT '0',
+  `xrk_type` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `parent_type` int(11) unsigned DEFAULT 0,
   `type_pos` varchar(128) DEFAULT '0' COMMENT 'ç±»åž‹ä½ç½®',
-  `name` varchar(64) NOT NULL COMMENT 'ç±»åž‹åç§°',
+  `xrk_name` varchar(64) NOT NULL,
   `attr_desc` varchar(256) DEFAULT NULL COMMENT 'ç±»åž‹æè¿°',
-  `status` tinyint(4) DEFAULT '0' COMMENT 'çŠ¶æ€ç  0-æ­£å¸¸ä½¿ç”¨ 1-åˆ é™¤æ ‡å¿—',
+  `xrk_status` tinyint(4) DEFAULT 0,
   `create_user` varchar(64) DEFAULT NULL,
   `mod_user` varchar(64) DEFAULT NULL,
-  `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `user_add_id` int(11) unsigned DEFAULT '0',
-  `user_mod_id` int(11) unsigned DEFAULT '0',
+  `update_time` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `user_add_id` int(11) unsigned DEFAULT 0,
+  `user_mod_id` int(11) unsigned DEFAULT 0,
   `create_time` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
-  PRIMARY KEY (`type`)
+  PRIMARY KEY (`xrk_type`)
 ) ENGINE=InnoDB AUTO_INCREMENT=84 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -278,13 +280,14 @@ UNLOCK TABLES;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
 /*!50003 SET @saved_cs_results     = @@character_set_results */ ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = latin1 */ ;
-/*!50003 SET character_set_results = latin1 */ ;
+/*!50003 SET character_set_client  = utf8 */ ;
+/*!50003 SET character_set_results = utf8 */ ;
 /*!50003 SET collation_connection  = utf8_general_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
-/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 trigger mt_attr_type_ins after insert on mt_attr_type for each row begin insert into mt_table_upate_monitor(u_table_name, r_primary_id) values('mt_attr_type', new.type); end */;;
+/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 trigger mt_attr_type_ins after insert on mt_attr_type for each row begin insert into mt_table_upate_monitor
+(u_table_name, r_primary_id) values('mt_attr_type', new.xrk_type); end */;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
 /*!50003 SET character_set_client  = @saved_cs_client */ ;
@@ -293,13 +296,14 @@ DELIMITER ;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
 /*!50003 SET @saved_cs_results     = @@character_set_results */ ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = latin1 */ ;
-/*!50003 SET character_set_results = latin1 */ ;
+/*!50003 SET character_set_client  = utf8 */ ;
+/*!50003 SET character_set_results = utf8 */ ;
 /*!50003 SET collation_connection  = utf8_general_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
-/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 trigger mt_attr_type_up after update on mt_attr_type for each row begin insert into mt_table_upate_monitor(u_table_name, r_primary_id) values('mt_attr_type', old.type); end */;;
+/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 trigger mt_attr_type_up after update on mt_attr_type for each row begin insert into mt_table_upate_monitor(
+u_table_name, r_primary_id) values('mt_attr_type', old.xrk_type); end */;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
 /*!50003 SET character_set_client  = @saved_cs_client */ ;
@@ -314,20 +318,20 @@ DROP TABLE IF EXISTS `mt_log_config`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `mt_log_config` (
-  `app_id` int(11) unsigned DEFAULT '0',
-  `module_id` int(11) unsigned DEFAULT '0',
-  `log_types` int(10) unsigned DEFAULT '0',
+  `app_id` int(11) unsigned DEFAULT 0,
+  `module_id` int(11) unsigned DEFAULT 0,
+  `log_types` int(10) unsigned DEFAULT 0,
   `config_name` varchar(32) NOT NULL,
   `config_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
-  `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `create_time` int(12) unsigned DEFAULT '0',
+  `update_time` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `create_time` int(12) unsigned DEFAULT 0,
   `user_add` varchar(64) NOT NULL,
   `user_mod` varchar(64) NOT NULL,
-  `status` tinyint(4) DEFAULT '0',
+  `xrk_status` tinyint(4) DEFAULT 0,
   `config_desc` varchar(128) DEFAULT NULL,
-  `user_add_id` int(11) unsigned DEFAULT '1',
-  `user_mod_id` int(11) unsigned DEFAULT '1',
-  `write_speed` int(10) unsigned DEFAULT '0',
+  `user_add_id` int(11) unsigned DEFAULT 1,
+  `user_mod_id` int(11) unsigned DEFAULT 1,
+  `write_speed` int(10) unsigned DEFAULT 0,
   PRIMARY KEY (`config_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=178 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -380,23 +384,23 @@ DROP TABLE IF EXISTS `mt_machine`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `mt_machine` (
-  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'æœºå™¨ç¼–å·',
-  `name` varchar(64) NOT NULL COMMENT 'æœºå™¨åç§°',
+  `xrk_id` int(11) NOT NULL AUTO_INCREMENT,
+  `xrk_name` varchar(64) NOT NULL,
   `ip1` int(12) unsigned DEFAULT NULL,
   `ip2` int(12) unsigned DEFAULT NULL,
   `ip3` int(12) unsigned DEFAULT NULL,
   `ip4` int(12) unsigned DEFAULT NULL,
   `user_add` varchar(64) DEFAULT 'rock' COMMENT 'æ·»åŠ ç”¨æˆ·',
   `user_mod` varchar(64) DEFAULT 'rock' COMMENT 'æœ€åŽæ›´æ–°ç”¨æˆ·',
-  `mod_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'æ›´æ–°æ—¶é—´',
+  `mod_time` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp() COMMENT 'æ›´æ–°æ—¶é—´',
   `machine_desc` varchar(256) DEFAULT NULL COMMENT 'æœºå™¨æè¿°',
-  `status` tinyint(4) DEFAULT '0' COMMENT 'çŠ¶æ€ç  0-æ­£å¸¸ä½¿ç”¨ 1-åˆ é™¤æ ‡å¿— 2-åœç”¨',
-  `warn_flag` int(8) DEFAULT '0' COMMENT 'å‘Šè­¦æ ‡è®°',
-  `model_id` int(8) DEFAULT '0' COMMENT 'æœºå™¨åž‹å·',
-  `user_mod_id` int(11) unsigned DEFAULT '1',
-  `user_add_id` int(11) unsigned DEFAULT '1',
+  `xrk_status` tinyint(4) DEFAULT 0,
+  `warn_flag` int(8) DEFAULT 0 COMMENT 'å‘Šè­¦æ ‡è®°',
+  `model_id` int(8) DEFAULT 0 COMMENT 'æœºå™¨åž‹å·',
+  `user_mod_id` int(11) unsigned DEFAULT 1,
+  `user_add_id` int(11) unsigned DEFAULT 1,
   `create_time` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
-  PRIMARY KEY (`id`),
+  PRIMARY KEY (`xrk_id`),
   KEY `ip1` (`ip1`)
 ) ENGINE=InnoDB AUTO_INCREMENT=118 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -413,13 +417,13 @@ UNLOCK TABLES;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
 /*!50003 SET @saved_cs_results     = @@character_set_results */ ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = latin1 */ ;
-/*!50003 SET character_set_results = latin1 */ ;
+/*!50003 SET character_set_client  = utf8 */ ;
+/*!50003 SET character_set_results = utf8 */ ;
 /*!50003 SET collation_connection  = utf8_general_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
-/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 trigger mt_machine_ins after insert on mt_machine for each row begin insert into mt_table_upate_monitor(u_table_name, r_primary_id) values('mt_machine', new.id); end */;;
+/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 trigger mt_machine_ins after insert on mt_machine for each row begin insert into mt_table_upate_monitor(u_table_name, r_primary_id) values('mt_machine', new.xrk_id); end */;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
 /*!50003 SET character_set_client  = @saved_cs_client */ ;
@@ -428,13 +432,13 @@ DELIMITER ;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
 /*!50003 SET @saved_cs_results     = @@character_set_results */ ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = latin1 */ ;
-/*!50003 SET character_set_results = latin1 */ ;
+/*!50003 SET character_set_client  = utf8 */ ;
+/*!50003 SET character_set_results = utf8 */ ;
 /*!50003 SET collation_connection  = utf8_general_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
-/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 trigger mt_machine_up after update on mt_machine for each row begin insert into mt_table_upate_monitor(u_table_name, r_primary_id) values('mt_machine', old.id); end */;;
+/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 trigger mt_machine_up after update on mt_machine for each row begin insert into mt_table_upate_monitor(u_table_name, r_primary_id) values('mt_machine', old.xrk_id); end */;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
 /*!50003 SET character_set_client  = @saved_cs_client */ ;
@@ -451,14 +455,14 @@ DROP TABLE IF EXISTS `mt_module_info`;
 CREATE TABLE `mt_module_info` (
   `module_name` varchar(32) NOT NULL,
   `module_desc` varchar(128) NOT NULL,
-  `app_id` int(11) unsigned DEFAULT '0',
+  `app_id` int(11) unsigned DEFAULT 0,
   `module_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
-  `status` tinyint(4) DEFAULT '0',
+  `xrk_status` tinyint(4) DEFAULT 0,
   `user_add` varchar(32) NOT NULL,
   `user_mod` varchar(32) NOT NULL,
-  `mod_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `user_mod_id` int(11) unsigned DEFAULT '1',
-  `user_add_id` int(11) unsigned DEFAULT '1',
+  `mod_time` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `user_mod_id` int(11) unsigned DEFAULT 1,
+  `user_add_id` int(11) unsigned DEFAULT 1,
   `create_time` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
   PRIMARY KEY (`module_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=150 DEFAULT CHARSET=latin1;
@@ -513,23 +517,23 @@ DROP TABLE IF EXISTS `mt_server`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `mt_server` (
   `ip` char(20) NOT NULL,
-  `port` int(11) unsigned NOT NULL DEFAULT '12345',
-  `type` int(8) unsigned NOT NULL DEFAULT '0',
-  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
-  `sand_box` int(8) unsigned DEFAULT '0',
-  `region` int(8) unsigned DEFAULT '0',
-  `idc` int(8) unsigned DEFAULT '0',
-  `status` int(8) DEFAULT '0',
-  `srv_for` text,
-  `weight` int(11) unsigned DEFAULT '60000',
-  `cfg_seq` int(11) unsigned DEFAULT '1',
+  `xrk_port` int(11) unsigned NOT NULL DEFAULT 12345,
+  `xrk_type` int(8) unsigned NOT NULL DEFAULT 0,
+  `xrk_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `sand_box` int(8) unsigned DEFAULT 0,
+  `region` int(8) unsigned DEFAULT 0,
+  `idc` int(8) unsigned DEFAULT 0,
+  `xrk_status` tinyint(4) DEFAULT 0,
+  `srv_for` text DEFAULT NULL,
+  `weight` int(11) unsigned DEFAULT 60000,
+  `cfg_seq` int(11) unsigned DEFAULT 1,
   `user_add` varchar(64) NOT NULL,
   `user_mod` varchar(64) NOT NULL,
-  `create_time` int(12) unsigned DEFAULT '0',
-  `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `create_time` int(12) unsigned DEFAULT 0,
+  `update_time` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `m_desc` varchar(256) DEFAULT NULL,
-  PRIMARY KEY (`ip`,`type`),
-  KEY `id` (`id`)
+  PRIMARY KEY (`ip`,`xrk_type`),
+  KEY `id` (`xrk_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=24 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -545,13 +549,13 @@ UNLOCK TABLES;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
 /*!50003 SET @saved_cs_results     = @@character_set_results */ ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = latin1 */ ;
-/*!50003 SET character_set_results = latin1 */ ;
+/*!50003 SET character_set_client  = utf8 */ ;
+/*!50003 SET character_set_results = utf8 */ ;
 /*!50003 SET collation_connection  = utf8_general_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
-/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 trigger mt_server_ins after insert on mt_server for each row begin insert into mt_table_upate_monitor(u_table_name, r_primary_id) values('mt_server', new.id); end */;;
+/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 trigger mt_server_ins after insert on mt_server for each row begin insert into mt_table_upate_monitor(u_table_name, r_primary_id) values('mt_server', new.xrk_id); end */;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
 /*!50003 SET character_set_client  = @saved_cs_client */ ;
@@ -560,13 +564,13 @@ DELIMITER ;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
 /*!50003 SET @saved_cs_results     = @@character_set_results */ ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = latin1 */ ;
-/*!50003 SET character_set_results = latin1 */ ;
+/*!50003 SET character_set_client  = utf8 */ ;
+/*!50003 SET character_set_results = utf8 */ ;
 /*!50003 SET collation_connection  = utf8_general_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
-/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 trigger mt_server_up after update on mt_server for each row begin insert into mt_table_upate_monitor(u_table_name, r_primary_id) values('mt_server', old.id); end */;;
+/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 trigger mt_server_up after update on mt_server for each row begin insert into mt_table_upate_monitor(u_table_name, r_primary_id) values('mt_server', old.xrk_id); end */;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
 /*!50003 SET character_set_client  = @saved_cs_client */ ;
@@ -582,9 +586,9 @@ DROP TABLE IF EXISTS `mt_table_upate_monitor`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `mt_table_upate_monitor` (
   `u_table_name` varchar(32) NOT NULL,
-  `r_primary_id` int(11) unsigned DEFAULT '0',
-  `r_primary_id_2` int(11) unsigned DEFAULT '0',
-  `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `r_primary_id` int(11) unsigned DEFAULT 0,
+  `r_primary_id_2` int(11) unsigned DEFAULT 0,
+  `create_time` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `r_change_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   PRIMARY KEY (`r_change_id`)
 ) ENGINE=MyISAM AUTO_INCREMENT=39863 DEFAULT CHARSET=utf8;
@@ -608,18 +612,18 @@ DROP TABLE IF EXISTS `mt_view`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `mt_view` (
-  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'è§†å›¾ç¼–å·',
-  `name` varchar(64) NOT NULL COMMENT 'è§†å›¾åç§°',
+  `xrk_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `xrk_name` varchar(64) NOT NULL,
   `user_add` varchar(64) DEFAULT 'rock' COMMENT 'æ·»åŠ ç”¨æˆ·',
   `user_mod` varchar(64) DEFAULT 'rock' COMMENT 'æœ€åŽæ›´æ–°ç”¨æˆ·',
-  `mod_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'æ›´æ–°æ—¶é—´',
+  `mod_time` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp() COMMENT 'æ›´æ–°æ—¶é—´',
   `view_desc` varchar(256) DEFAULT NULL COMMENT 'è§†å›¾æè¿°',
-  `status` tinyint(4) DEFAULT '0' COMMENT 'çŠ¶æ€ç  0-æ­£å¸¸ä½¿ç”¨ 1-åˆ é™¤æ ‡å¿—',
-  `view_flag` int(8) DEFAULT '0' COMMENT 'å‘Šè­¦æ ‡è®°',
-  `user_mod_id` int(11) unsigned DEFAULT '1',
-  `user_add_id` int(11) unsigned DEFAULT '1',
+  `xrk_status` tinyint(4) DEFAULT 0,
+  `view_flag` int(8) DEFAULT 0 COMMENT 'å‘Šè­¦æ ‡è®°',
+  `user_mod_id` int(11) unsigned DEFAULT 1,
+  `user_add_id` int(11) unsigned DEFAULT 1,
   `create_time` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`xrk_id`)
 ) ENGINE=MyISAM AUTO_INCREMENT=1000032 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -641,7 +645,7 @@ UNLOCK TABLES;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
-/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 trigger mt_view_ins after insert on mt_view for each row begin insert into mt_table_upate_monitor(u_table_name, r_primary_id) values('mt_view', new.id); end */;;
+/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 trigger mt_view_ins after insert on mt_view for each row begin insert into mt_table_upate_monitor(u_table_name, r_primary_id) values('mt_view', new.xrk_id); end */;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
 /*!50003 SET character_set_client  = @saved_cs_client */ ;
@@ -656,7 +660,7 @@ DELIMITER ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
-/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 trigger mt_view_up after update on mt_view for each row begin insert into mt_table_upate_monitor(u_table_name, r_primary_id) values('mt_view', old.id); end */;;
+/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 trigger mt_view_up after update on mt_view for each row begin insert into mt_table_upate_monitor(u_table_name, r_primary_id) values('mt_view', old.xrk_id); end */;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
 /*!50003 SET character_set_client  = @saved_cs_client */ ;
@@ -671,10 +675,10 @@ DROP TABLE IF EXISTS `mt_view_battr`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `mt_view_battr` (
-  `view_id` int(11) NOT NULL DEFAULT '0' COMMENT 'è§†å›¾ç¼–å·',
-  `attr_id` int(11) NOT NULL DEFAULT '0' COMMENT 'å±žæ€§ç¼–å·',
-  `status` tinyint(4) DEFAULT '0' COMMENT 'çŠ¶æ€ç  0-æ­£å¸¸ä½¿ç”¨ 1-åˆ é™¤æ ‡å¿—',
-  `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `view_id` int(11) NOT NULL DEFAULT 0 COMMENT 'è§†å›¾ç¼–å·',
+  `attr_id` int(11) NOT NULL DEFAULT 0 COMMENT 'å±žæ€§ç¼–å·',
+  `xrk_status` tinyint(4) DEFAULT 0,
+  `update_time` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`view_id`,`attr_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -727,11 +731,11 @@ DROP TABLE IF EXISTS `mt_view_bmach`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `mt_view_bmach` (
-  `view_id` int(11) NOT NULL DEFAULT '0' COMMENT 'è§†å›¾ç¼–å·',
-  `machine_id` int(11) NOT NULL DEFAULT '0' COMMENT 'æœºå™¨ç¼–å·',
-  `status` tinyint(4) DEFAULT '0' COMMENT 'çŠ¶æ€ç  0-æ­£å¸¸ä½¿ç”¨ 1-åˆ é™¤æ ‡å¿—',
-  `user_master` int(11) unsigned DEFAULT '1',
-  `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `view_id` int(11) NOT NULL DEFAULT 0 COMMENT 'è§†å›¾ç¼–å·',
+  `machine_id` int(11) NOT NULL DEFAULT 0 COMMENT 'æœºå™¨ç¼–å·',
+  `xrk_status` tinyint(4) DEFAULT 0,
+  `user_master` int(11) unsigned DEFAULT 1,
+  `update_time` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`view_id`,`machine_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -786,20 +790,20 @@ DROP TABLE IF EXISTS `mt_warn_config`;
 CREATE TABLE `mt_warn_config` (
   `warn_config_id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'å‘Šè­¦é…ç½®ç¼–å·',
   `attr_id` int(11) DEFAULT NULL COMMENT 'å±žæ€§ç¼–å·',
-  `warn_flag` int(11) DEFAULT '0' COMMENT 'å‘Šè­¦æ ‡è®°',
-  `max_value` int(11) DEFAULT '0' COMMENT 'æœ€å¤§å€¼',
-  `min_value` int(11) DEFAULT '0' COMMENT 'æœ€å°å€¼',
-  `wave_value` int(11) DEFAULT '0' COMMENT 'æ³¢åŠ¨å€¼',
-  `warn_type_value` int(11) DEFAULT '0' COMMENT 'å‘Šè­¦ç±»åž‹å€¼',
+  `warn_flag` int(11) DEFAULT 0 COMMENT 'å‘Šè­¦æ ‡è®°',
+  `max_value` int(11) DEFAULT 0 COMMENT 'æœ€å¤§å€¼',
+  `min_value` int(11) DEFAULT 0 COMMENT 'æœ€å°å€¼',
+  `wave_value` int(11) DEFAULT 0 COMMENT 'æ³¢åŠ¨å€¼',
+  `warn_type_value` int(11) DEFAULT 0 COMMENT 'å‘Šè­¦ç±»åž‹å€¼',
   `user_add` varchar(64) DEFAULT 'rock' COMMENT 'æ·»åŠ ç”¨æˆ·',
-  `reserved1` int(11) DEFAULT '0' COMMENT 'æœºå™¨id æˆ–è€… è§†å›¾id',
-  `reserved2` int(11) DEFAULT '0' COMMENT 'ä¿ç•™',
+  `reserved1` int(11) DEFAULT 0 COMMENT 'æœºå™¨id æˆ–è€… è§†å›¾id',
+  `reserved2` int(11) DEFAULT 0 COMMENT 'ä¿ç•™',
   `reserved3` varchar(32) DEFAULT NULL COMMENT 'ä¿ç•™',
   `reserved4` varchar(32) DEFAULT NULL COMMENT 'ä¿ç•™',
-  `status` tinyint(4) DEFAULT '0' COMMENT 'çŠ¶æ€ç  0-æ­£å¸¸ä½¿ç”¨ 1-åˆ é™¤æ ‡å¿—',
-  `user_add_id` int(11) unsigned DEFAULT '1',
-  `user_mod_id` int(11) unsigned DEFAULT '1',
-  `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `xrk_status` tinyint(4) DEFAULT 0,
+  `user_add_id` int(11) unsigned DEFAULT 1,
+  `user_mod_id` int(11) unsigned DEFAULT 1,
+  `update_time` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `create_time` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
   PRIMARY KEY (`warn_config_id`)
 ) ENGINE=MyISAM AUTO_INCREMENT=120 DEFAULT CHARSET=utf8;
@@ -853,20 +857,20 @@ DROP TABLE IF EXISTS `mt_warn_info`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `mt_warn_info` (
   `wid` int(11) NOT NULL AUTO_INCREMENT,
-  `warn_id` int(11) DEFAULT '0',
-  `attr_id` int(11) DEFAULT '0',
-  `warn_config_val` int(11) DEFAULT '0',
-  `warn_val` int(11) DEFAULT '0',
+  `warn_id` int(11) DEFAULT 0,
+  `attr_id` int(11) DEFAULT 0,
+  `warn_config_val` int(11) DEFAULT 0,
+  `warn_val` int(11) DEFAULT 0,
   `warn_time_utc` int(11) unsigned DEFAULT NULL,
-  `warn_flag` int(11) DEFAULT '0',
-  `deal_status` int(11) DEFAULT '0',
+  `warn_flag` int(11) DEFAULT 0,
+  `deal_status` int(11) DEFAULT 0,
   `last_warn_time_utc` int(11) unsigned DEFAULT NULL,
-  `warn_times` int(11) DEFAULT '0',
-  `send_warn_times` int(11) DEFAULT '0',
+  `warn_times` int(11) DEFAULT 0,
+  `send_warn_times` int(11) DEFAULT 0,
   `start_deal_time_utc` int(11) unsigned DEFAULT NULL,
   `end_deal_time_utc` int(11) unsigned DEFAULT NULL,
-  `status` tinyint(4) DEFAULT '0',
-  `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `xrk_status` tinyint(4) DEFAULT 0,
+  `update_time` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`wid`)
 ) ENGINE=InnoDB AUTO_INCREMENT=6656 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -918,13 +922,13 @@ DROP TABLE IF EXISTS `test_key_list`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `test_key_list` (
-  `config_id` int(10) unsigned NOT NULL DEFAULT '0',
+  `config_id` int(10) unsigned NOT NULL DEFAULT 0,
   `test_key` varchar(128) NOT NULL,
-  `test_key_type` int(10) unsigned DEFAULT '0',
-  `status` tinyint(4) DEFAULT '0',
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
+  `test_key_type` int(10) unsigned DEFAULT 0,
+  `xrk_status` tinyint(4) DEFAULT 0,
+  `xrk_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `update_time` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`xrk_id`),
   KEY `config_id` (`config_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=40 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -946,7 +950,7 @@ UNLOCK TABLES;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
-/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 trigger test_key_list_ins after insert on test_key_list for each row begin insert into mt_table_upate_monitor(u_table_name, r_primary_id) values('test_key_list', new.id); end */;;
+/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 trigger test_key_list_ins after insert on test_key_list for each row begin insert into mt_table_upate_monitor(u_table_name, r_primary_id) values('test_key_list', new.xrk_id); end */;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
 /*!50003 SET character_set_client  = @saved_cs_client */ ;
@@ -961,7 +965,7 @@ DELIMITER ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
-/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 trigger test_key_list_up after update on test_key_list for each row begin insert into mt_table_upate_monitor(u_table_name, r_primary_id) values('test_key_list', old.id); end */;;
+/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 trigger test_key_list_up after update on test_key_list for each row begin insert into mt_table_upate_monitor(u_table_name, r_primary_id) values('test_key_list', old.xrk_id); end */;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
 /*!50003 SET character_set_client  = @saved_cs_client */ ;
@@ -977,4 +981,4 @@ DELIMITER ;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2019-11-20 13:13:37
+-- Dump completed on 2020-02-21 21:14:46

@@ -121,7 +121,7 @@ static int AddSearchInfo(char *psql, int ibufLen, SearchInfo *pinfo)
 	if(pinfo->pkey != NULL && pinfo->pkey[0] != '\0')
 	{
 		memset(sTmpBuf, 0, sizeof(sTmpBuf));
-		snprintf(sTmpBuf, sizeof(sTmpBuf)-1, " and (name like \'%%%s%%\' or machine_desc like "
+		snprintf(sTmpBuf, sizeof(sTmpBuf)-1, " and (xrk_name like \'%%%s%%\' or machine_desc like "
 			" \'%%%s%%\')", pinfo->pkey, pinfo->pkey);
 		if((int)(strlen(sTmpBuf) + strlen(psql)) >= ibufLen)
 		{
@@ -159,7 +159,7 @@ static int GetMachineTotalRecords(SearchInfo *pinfo=NULL)
 	Query & qu = *stConfig.qu;
 	
 	int iFilter = 0;
-	sprintf(sSqlBuf, "select count(*) from mt_machine where status=%d", RECORD_STATUS_USE);
+	sprintf(sSqlBuf, "select count(*) from mt_machine where xrk_status=%d", RECORD_STATUS_USE);
 	if(pinfo != NULL && (iFilter=AddSearchInfo(sSqlBuf, sizeof(sSqlBuf), pinfo)) < 0)
 		return SLOG_ERROR_LINE;
 
@@ -287,7 +287,7 @@ static int GetMachineList(Json &js, SearchInfo *pinfo=NULL)
 	}
 
 	int iFilter = 0;
-	sprintf(sSqlBuf, "select * from mt_machine where status=%d", RECORD_STATUS_USE);
+	sprintf(sSqlBuf, "select * from mt_machine where xrk_status=%d", RECORD_STATUS_USE);
 	if(pinfo != NULL && (iFilter=AddSearchInfo(sSqlBuf, sizeof(sSqlBuf), pinfo)) < 0)
 		return SLOG_ERROR_LINE;
 
@@ -310,8 +310,8 @@ static int GetMachineList(Json &js, SearchInfo *pinfo=NULL)
 	for(i=0; i < qu.num_rows() && qu.fetch_row() != NULL; i++)
 	{
 		Json info;
-		info["id"] = qu.getuval("id");
-		info["name"] = qu.getstr("name");
+		info["id"] = qu.getuval("xrk_id");
+		info["name"] = qu.getstr("xrk_name");
 
 		info["ip"] = ipv4_addr_str(qu.getuval("ip1"));
 		if(qu.getuval("ip2") != 0) {
@@ -336,15 +336,15 @@ static int DealMachineLookUp()
 	char sSqlBuf[512] = {0};
 	Query & qu = *stConfig.qu;
 
-	sprintf(sSqlBuf, "select * from mt_machine where status=%d", RECORD_STATUS_USE);
+	sprintf(sSqlBuf, "select * from mt_machine where xrk_status=%d", RECORD_STATUS_USE);
 	qu.get_result(sSqlBuf);
 	Json js;
 	int i=0;
 	for(i=0; i < qu.num_rows() && qu.fetch_row() != NULL; i++)
 	{
 		Json attr;
-		attr["id"] = qu.getuval("id");
-		attr["name"] = qu.getstr("name");
+		attr["id"] = qu.getuval("xrk_id");
+		attr["name"] = qu.getstr("xrk_name");
 		attr["ip"] = ipv4_addr_str(qu.getuval("ip1"));
 		attr["model"] = qu.getval("model_id");
 		attr["warn_flag"] = qu.getval("warn_flag");
@@ -381,19 +381,19 @@ static int DealSysSrvList()
 	char sSqlBuf[256] = {0};
 	Query & qu = *stConfig.qu;
 	if(iSetId == 0)
-		sprintf(sSqlBuf, "select * from mt_server where status=%d ", RECORD_STATUS_USE);
+		sprintf(sSqlBuf, "select * from mt_server where xrk_status=%d ", RECORD_STATUS_USE);
 	else
-		sprintf(sSqlBuf, "select * from mt_server where status=%d and `set_id`=%d ",
+		sprintf(sSqlBuf, "select * from mt_server where xrk_status=%d and `set_id`=%d ",
 			RECORD_STATUS_USE, iSetId);
 
 	int iOrder = 0;
-	iOrder = (iOrder==0 ? SetRecordsOrder(stConfig.cgi, sSqlBuf, "id") : 1);
+	iOrder = (iOrder==0 ? SetRecordsOrder(stConfig.cgi, sSqlBuf, "xrk_id") : 1);
 	iOrder = (iOrder==0 ? SetRecordsOrder(stConfig.cgi, sSqlBuf, "ip") : 1);
-	iOrder = (iOrder==0 ? SetRecordsOrder(stConfig.cgi, sSqlBuf, "type") : 1);
+	iOrder = (iOrder==0 ? SetRecordsOrder(stConfig.cgi, sSqlBuf, "xrk_type") : 1);
 	iOrder = (iOrder==0 ? SetRecordsOrder(stConfig.cgi, sSqlBuf, "weight") : 1);
 	iOrder = (iOrder==0 ? SetRecordsOrder(stConfig.cgi, sSqlBuf, "update_time") : 1);
 	if(iOrder == 0) 
-		strcat(sSqlBuf, " order by type desc");
+		strcat(sSqlBuf, " order by xrk_type desc");
 
 	qu.get_result(sSqlBuf);
 	Json js;
@@ -404,10 +404,10 @@ static int DealSysSrvList()
 		while(qu.fetch_row() != NULL)
 		{
 			Json srv;
-			srv["id"] = qu.getuval("id"); 
+			srv["id"] = qu.getuval("xrk_id"); 
 			srv["ip"] = qu.getstr("ip");
-			srv["port"] = qu.getuval("port"); 
-			srv["type"] = qu.getuval("type"); 
+			srv["port"] = qu.getuval("xrk_port"); 
+			srv["type"] = qu.getuval("xrk_type"); 
 			srv["sand_box"] = qu.getval("sand_box");
 			srv["region"] = qu.getval("region");
 			srv["idc"] = qu.getval("idc");
@@ -463,10 +463,10 @@ static int DealSaveSysSrv(bool bIsAdd=false)
 	IM_SQL_PARA* ppara = NULL;
 	InitParameter(&ppara);
 	if(bIsAdd) {
-		AddParameter(&ppara, "type", iType, "DB_CAL");
+		AddParameter(&ppara, "xrk_type", iType, "DB_CAL");
 	}
 	AddParameter(&ppara, "ip", ip, NULL);
-	AddParameter(&ppara, "port", iPort, "DB_CAL");
+	AddParameter(&ppara, "xrk_port", iPort, "DB_CAL");
 	AddParameter(&ppara, "weight", iWeight, "DB_CAL");
 	AddParameter(&ppara, "sand_box", iSandBox, "DB_CAL");
 	AddParameter(&ppara, "cfg_seq", stConfig.dwCurTime, "DB_CAL");
@@ -494,7 +494,7 @@ static int DealSaveSysSrv(bool bIsAdd=false)
 		AddParameter(&ppara, "user_mod", pUserInfo->szUserName, NULL);
 		strSql = "update mt_server set";
 		JoinParameter_Set(&strSql, qu.GetMysql(), ppara);
-		strSql += " where id=";
+		strSql += " where xrk_id=";
 		strSql += itoa(id);
 	}
 
@@ -540,15 +540,15 @@ static int DealModSysSrv()
 
 	char sSqlBuf[128] = {0};
 	Query & qu = *stConfig.qu;
-	sprintf(sSqlBuf, "select * from mt_server where status=%d and id=%d", RECORD_STATUS_USE, srvid);
+	sprintf(sSqlBuf, "select * from mt_server where xrk_status=%d and xrk_id=%d", RECORD_STATUS_USE, srvid);
 	qu.get_result(sSqlBuf);
 	if(qu.num_rows() > 0) 
 	{
 		qu.fetch_row();
-		hdf_set_int_value(stConfig.cgi->hdf, "config.config_type", qu.getval("type")); 
+		hdf_set_int_value(stConfig.cgi->hdf, "config.config_type", qu.getval("xrk_type")); 
 		hdf_set_value(stConfig.cgi->hdf, "config.config_ip", qu.getstr("ip")); 
 		hdf_set_value(stConfig.cgi->hdf, "config.config_desc", qu.getstr("m_desc")); 
-		hdf_set_int_value(stConfig.cgi->hdf, "config.config_port", qu.getval("port")); 
+		hdf_set_int_value(stConfig.cgi->hdf, "config.config_port", qu.getval("xrk_port")); 
 		hdf_set_int_value(stConfig.cgi->hdf, "config.config_set_id", qu.getval("set_id")); 
 		hdf_set_int_value(stConfig.cgi->hdf, "config.config_weight", qu.getval("weight")); 
 		hdf_set_value(stConfig.cgi->hdf, "config.config_srv_for", qu.getstr("srv_for")); 
@@ -582,7 +582,7 @@ static int DealDelSysSrv()
 
 	char sSqlBuf[128] = {0};
 	Query & qu = *stConfig.qu;
-	sprintf(sSqlBuf, "update mt_server set status=%d where id=%d", RECORD_STATUS_DELETE, srvid);
+	sprintf(sSqlBuf, "update mt_server set xrk_status=%d where xrk_id=%d", RECORD_STATUS_DELETE, srvid);
 	if(!qu.execute(sSqlBuf))
 	{
 		ERR_LOG("execute sql:%s failed, msg:%s", sSqlBuf, qu.GetError().c_str());
@@ -624,7 +624,7 @@ static int DeleteMachine()
 
 	DeleteMachineFromShm(id);
 
-	sprintf(sSqlBuf, "update mt_machine set status=%d, user_mod_id=%d where id=%d",
+	sprintf(sSqlBuf, "update mt_machine set xrk_status=%d, user_mod_id=%d where xrk_id=%d",
 		stConfig.iDeleteStatus, stConfig.stUser.puser_info->iUserId, id);
 	Query & qu = *stConfig.qu;
 	if(!qu.execute(sSqlBuf))
@@ -709,7 +709,7 @@ static int SaveMachine(bool bIsMod=false)
 	IM_SQL_PARA* ppara = NULL;
 	InitParameter(&ppara);
 
-	AddParameter(&ppara, "name", pname, NULL);
+	AddParameter(&ppara, "xrk_name", pname, NULL);
 	if((ip_addr=inet_addr(ip2)) != INADDR_NONE) {
 		AddParameter(&ppara, "ip2", ip_addr, "DB_CAL");
 		stMachInfoToShm.ip2 = ip_addr;
@@ -764,7 +764,7 @@ static int SaveMachine(bool bIsMod=false)
 		JoinParameter_Insert(&strSql, qu.GetMysql(), ppara);
 	else {
 		JoinParameter_Set(&strSql, qu.GetMysql(), ppara);
-		strSql += " where id=";
+		strSql += " where xrk_id=";
 		strSql += itoa(id);
 	}
 
@@ -888,7 +888,7 @@ static int DealModMachine()
 	}
 
 	char sSqlBuf[128] = {0};
-	sprintf(sSqlBuf, "select * from mt_machine where status=%d and id=%d", RECORD_STATUS_USE, id);
+	sprintf(sSqlBuf, "select * from mt_machine where xrk_status=%d and xrk_id=%d", RECORD_STATUS_USE, id);
 	Query & qu = *stConfig.qu;
 	qu.get_result(sSqlBuf);
 	
@@ -901,8 +901,8 @@ static int DealModMachine()
 	int i=0;
 	for(i=0; i < qu.num_rows() && qu.fetch_row() != NULL; i++)
 	{
-		hdf_set_value(stConfig.cgi->hdf, "machine.dmm_machine_id", qu.getstr("id"));
-		hdf_set_value(stConfig.cgi->hdf, "machine.dmm_machine_name", qu.getstr("name"));
+		hdf_set_value(stConfig.cgi->hdf, "machine.dmm_machine_id", qu.getstr("xrk_id"));
+		hdf_set_value(stConfig.cgi->hdf, "machine.dmm_machine_name", qu.getstr("xrk_name"));
 		hdf_set_value(stConfig.cgi->hdf, "machine.dmm_machine_ip", ipv4_addr_str(qu.getuval("ip1")));
 		if(qu.getuval("ip2") != 0)
 			hdf_set_value(stConfig.cgi->hdf, "machine.dmm_machine_ip2", ipv4_addr_str(qu.getuval("ip2")));
