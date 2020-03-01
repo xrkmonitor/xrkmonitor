@@ -2490,16 +2490,29 @@ int DealInitLogReportTest(CGI *cgi)
 	return 0;
 }
 
-static int DealListPlugin(CGI *cgi)
+static int DealListPlugin(CGI *cgi, const char *ptype="open")
 {
 	hdf_set_value(cgi->hdf, "config.xrkmonitor_url", stConfig.szXrkmonitorSiteAddr);
+	hdf_set_value(stConfig.cgi->hdf, "config.plugin_pre", "dpopen");
+	hdf_set_valuef(stConfig.cgi->hdf, "config.navTabId=dmt_plugin_%s", ptype);
+	return 0;
+}
 
-	int type = hdf_get_int_value(cgi->hdf, "Query.plugin_type", -1);
-	hdf_set_int_value(cgi->hdf, "config.plugin_type", type);
-	hdf_set_valuef(stConfig.cgi->hdf, "config.plugin_pre=dp%d", type);
-	hdf_set_int_value(stConfig.cgi->hdf, "config.plugin_type", type);
-	hdf_set_value(stConfig.cgi->hdf, "config.str_plugin_type", stConfig.pAction);
-	hdf_set_valuef(stConfig.cgi->hdf, "config.navTabId=dmt_plugin_%d", type);
+static int DealShowPlugin(CGI *cgi)
+{
+	char *pshow_pre = hdf_get_value(cgi->hdf, "Query.plugin_pre", NULL);
+	char *plugin_id = hdf_get_value(cgi->hdf, "Query.plugin_id", NULL);
+	if((pshow_pre == NULL || (strcmp(pshow_pre, "dpopen") && strcmp(pshow_pre, "dpmy")))
+		|| plugin_id == NULL) 
+	{
+		REQERR_LOG("invalid request parameter");
+		return SLOG_ERROR_LINE;
+	}
+
+	hdf_set_value(cgi->hdf, "config.xrkmonitor_url", stConfig.szXrkmonitorSiteAddr);
+	hdf_set_value(stConfig.cgi->hdf, "config.plugin_pre", pshow_pre);
+	hdf_set_value(stConfig.cgi->hdf, "config.plugin_id", plugin_id);
+	hdf_set_value(stConfig.cgi->hdf, "config.action", "show_mt_plugin");
 	return 0;
 }
 
@@ -2650,9 +2663,10 @@ int main(int argc, char **argv, char **envp)
 			iRet = DealDelConfig(stConfig.cgi);
 
 		// monitor plus 
-		else if(!strcmp(pAction, "sys_plugin") 
-			|| !strcmp(pAction, "app_plugin") || !strcmp(pAction, "other_plugin"))
+		else if(!strcmp(pAction, "open_plugin"))
 			iRet = DealListPlugin(stConfig.cgi);
+		else if(!strcmp(pAction, "show_mt_plugin"))
+			iRet = DealShowPlugin(stConfig.cgi);
 
 		else {
 			ERR_LOG("unknow action:%s", pAction);
@@ -2692,11 +2706,10 @@ int main(int argc, char **argv, char **envp)
 			pcsTemplate = "dmt_log_files.html";
 		else if(!strcmp(pAction, "init_log_report_test"))
 			pcsTemplate = "dmt_dlg_log_report_test.html";
-		else if(!strcmp(pAction, "sys_plugin") || !strcmp(pAction, "app_plugin")
-			|| !strcmp(pAction, "other_plugin"))
-		{
+		else if(!strcmp(pAction, "open_plugin"))
 			pcsTemplate = "dmt_plugin.html";
-		}
+		else if(!strcmp(pAction, "show_mt_plugin"))
+			pcsTemplate = "dmt_dlg_add_plugin.html";
 
 		if(pcsTemplate != NULL)
 		{
