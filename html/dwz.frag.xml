@@ -1,6 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <_AJAX_>
 
+<_PAGE_ id="mypluginCM"><![CDATA[
+<ul id="mypluginCM">
+	<li rel="modify">修改</li>
+	<li rel="delete">删除</li>
+	<li rel="downpb">下载pb文件</li>
+	<li rel="downconf">下载配置文件</li>
+	<li rel="downall">下载完整包</li>
+	<li rel="makefile">重新生成文件</li>
+	<li rel="issue">发布到市场</li>
+</ul>
+]]></_PAGE_>
+
+<_PAGE_ id="mypluginOpen"><![CDATA[
+<ul id="mypluginCM">
+	<li rel="showinfo">查看</li>
+	<li rel="downpb">下载pb文件</li>
+	<li rel="downconf">下载配置文件</li>
+	<li rel="downall">下载完整包</li>
+</ul>
+]]></_PAGE_>
+
 <!-- dwz.dialog -->
 <_PAGE_ id="dialogFrag"><![CDATA[
 <div class="dialog" style="top:150px; left:300px;">

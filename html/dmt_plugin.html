@@ -1,7 +1,394 @@
+<script src="<?cs var:config.dwzpath?>js/FileSaver.js" type="text/javascript"></script>
 <script language="javascript" type="text/javascript">
 var <?cs var:config.plugin_pre ?>_plugin_list = $.parseJSON('<?cs var:config.plugin_list ?>');
-var <?cs var:config.plugin_pre ?>_sel_plugin = "null";
-var <?cs var:config.plugin_pre ?>_sel_detail_idx = ""; 
+var <?cs var:config.plugin_pre ?>_sel_plugin = null;
+var <?cs var:config.plugin_pre ?>_sel_detail_idx = ""; // 用于弹出详情对话框时设置数据
+
+function <?cs var:config.plugin_pre ?>SetSelplugin(selIndex)
+{
+	var pid;
+	if(<?cs var:config.plugin_pre ?>_sel_plugin != null) {
+		pid = '#<?cs var:config.plugin_pre ?>_plugin_' + <?cs var:config.plugin_pre ?>_sel_plugin.plugin_id;
+		if(<?cs var:config.plugin_pre ?>_sel_plugin.plugin_id
+			== <?cs var:config.plugin_pre ?>_plugin_list.list[selIndex].plugin_id) {
+			return false;
+		}
+		$(pid).css('background-color', '#ecf2f4');
+	}
+
+	<?cs var:config.plugin_pre ?>_sel_plugin = <?cs var:config.plugin_pre ?>_plugin_list.list[selIndex];
+	pid = '#<?cs var:config.plugin_pre ?>_plugin_' + <?cs var:config.plugin_pre ?>_sel_plugin.plugin_id;
+	$(pid).css('background-color', '#ddf79a');
+}
+
+function <?cs var:config.plugin_pre ?>OnDownFile(type)
+{
+	if(<?cs var:config.plugin_pre ?>_sel_plugin == null)
+	{
+		alertMsg.info("请先点击插件列表选择一个插件, 或者右键单击插件通过弹出菜单下载");
+		return;
+	}
+
+	var requrl = "<?cs var:config.cgipath?>mt_slog?action=download_plugin_file";
+	requrl += "&plugin_id=" + <?cs var:config.plugin_pre ?>_sel_plugin.plugin_id; 
+	requrl += "&plugin_pre=<?cs var:config.plugin_pre ?>"; 
+	requrl += "&type=" + type;
+	$.ajax({
+		type: "get",
+		url: requrl,
+		dataType: 'json', 
+		global: false,
+		timeout: function(){
+			alertMsg.warn("请求超时");
+		},
+		success: function(js){
+			if(dmtFirstDealAjaxResponse(js))
+				return;
+			if(typeof js.downurl != undefined) {
+				saveAs(js.downurl, js.filename);
+			}
+			else {
+				alertMsg.info("下载pb 文件失败"); 
+			}
+		}
+	});
+}
+
+function <?cs var:config.plugin_pre ?>OnMakeFile()
+{
+	if(<?cs var:config.plugin_pre ?>_sel_plugin == null)
+	{
+		alertMsg.info("请先点击插件列表选择一个要生成文件的插件, 或者右键单击插件通过弹出菜单生成");
+		return;
+	}
+
+	var requrl = "<?cs var:config.cgipath?>mt_slog?action=make_plugin_file";
+	requrl += "&plugin_id=" + <?cs var:config.plugin_pre ?>_sel_plugin.plugin_id; 
+	requrl += "&plugin_pre=<?cs var:config.plugin_pre ?>"; 
+	$.ajax({
+		type: "get",
+		url: requrl,
+		dataType: 'json', 
+		global: false,
+		timeout: function(){
+			alertMsg.warn("请求超时");
+		},
+		success: function(js){
+			if(dmtFirstDealAjaxResponse(js))
+				return;
+			if(typeof js.ret != undefined && js.ret == 0) {
+				alertMsg.correct('成功生成插件文件, 注意需要将文件同步到其它机器');
+			}
+			else {
+				alertMsg.info("插件文件生成失败"); 
+			}
+		}
+	});
+}
+
+function <?cs var:config.plugin_pre ?>OnDetail(idx)
+{
+	<?cs var:config.plugin_pre ?>_sel_detail_idx = idx;
+	$('#<?cs var:config.plugin_pre ?>_plugin_name').text(<?cs var:config.plugin_pre ?>_plugin_list.list[idx].plugin_name);
+	$('#<?cs var:config.plugin_pre ?>_plugin_id').text(<?cs var:config.plugin_pre ?>_plugin_list.list[idx].show_id);
+	$('#<?cs var:config.plugin_pre ?>_add_time').text(<?cs var:config.plugin_pre ?>_plugin_list.list[idx].create_time);
+	$('#<?cs var:config.plugin_pre ?>_mod_time').text(<?cs var:config.plugin_pre ?>_plugin_list.list[idx].update_time);
+	$('#<?cs var:config.plugin_pre ?>_ver').text(<?cs var:config.plugin_pre ?>_plugin_list.list[idx].ver);
+	$('#<?cs var:config.plugin_pre ?>_auth').text(<?cs var:config.plugin_pre ?>_plugin_list.list[idx].auth);
+
+	if(<?cs var:config.plugin_pre ?>_plugin_list.list[idx].open_src == 1)
+		$('#<?cs var:config.plugin_pre ?>_open').text('开源');
+	else
+		$('#<?cs var:config.plugin_pre ?>_open').text('闭源');
+	if(<?cs var:config.plugin_pre ?>_plugin_list.list[idx].set_method == 0)
+		$('#<?cs var:config.plugin_pre ?>_set_method').text('内置');
+	else
+		$('#<?cs var:config.plugin_pre ?>_set_method').text('外置');
+	$('#<?cs var:config.plugin_pre ?>_language').text(<?cs var:config.plugin_pre ?>_plugin_list.list[idx].dev_language);
+	$('#<?cs var:config.plugin_pre ?>_dest_os').text(<?cs var:config.plugin_pre ?>_plugin_list.list[idx].dest_os);
+
+	// 换行符有转码，需要转换回来
+	var dc = <?cs var:config.plugin_pre ?>_plugin_list.list[idx].desc;
+	$('#<?cs var:config.plugin_pre ?>_plugin_desc').html(dc.replace(/&br/g, "\r\n"));
+	var op = { mask:true, maxable:false, height:320, width:900, resizable:false, drawable:true};
+	$.pdialog.openLocal(
+		'<?cs var:config.plugin_pre ?>_show_detail', 'dlg_<?cs var:config.plugin_pre ?>_show_detail', '查看监控插件详情', op);
+}
+
+function dpGetPluginMarketStatus(stat, over)
+{
+	switch(stat) {
+		case 1:
+			return '首次发布审核中';
+		case 2:
+			return '已发布: '+over;
+		case 3:
+			return '版本更新审核中';
+		case 4:
+			return '版本更新审核未通过';
+		case 5:
+			return '发布审核未通过';
+	}
+	return "";
+}
+
+function <?cs var:config.plugin_pre ?>_GetPluginShowInfo(idx, plugin)
+{
+	var shtml = "<div style='float:left; height:230px; width:450px; background-color:#ecf2f4; margin:10px ";
+		shtml += g_PluginMargin + "px; border-radius:10px; border:1px solid #000;'";
+		shtml += " id='<?cs var:config.plugin_pre ?>_plugin_" + plugin.plugin_id + "'";
+		shtml += " onclick='return <?cs var:config.plugin_pre ?>SetSelplugin(" + idx + ")' >";
+
+	shtml += "<div style='float:left; height:180px; margin:10px; overflow:hidden; text-overflow:ellipsis;'>";
+	shtml += "<a href='#'><img width='160px' height='180px' src='";
+	if(plugin.pic != "" && plugin.pic != null) 
+		shtml += '<?cs var:config.xrkmonitor_url ?>/monitor/download/plugin/'+plugin.pic;
+	else
+		shtml += '<?cs var:config.xrkmonitor_url ?>/monitor/download/plugin/plugin_def_pic.png';
+	shtml += "'></img></a>"
+	shtml += "</div>";
+
+	shtml += "<div style='float:left;'>";
+	shtml += "<div class='pluginName'>" + plugin.plugin_name + "</div>";
+	shtml += "<div class='pluginItem'>开发语言: " + plugin.dev_language + "</div>";
+	shtml += "<div class='pluginItem'>运行平台: " + plugin.dest_os + "</div>";
+	var mt = '内置';
+	if(plugin.set_method != 0)
+		mt = '外置';
+	shtml += "<div class='pluginItem'>部署方式: " + mt + "</div>";
+	shtml += "<div class='pluginItem'>下载次数: <font color='red'>0</font></div>";
+	shtml += "<div class='pluginItem'>最新版本: " + plugin.ver + "</div>";
+	shtml += "<div class='pluginItem'>更新时间: " + plugin.update_time + "</div>";
+	shtml += "<div class='pluginItem'>插件描述: " + plugin.desc.replace(/&br/g, "\r\n") + "</div>";
+	shtml += "</div>";
+
+	shtml += "<div style='width:440px; float:left; margin-left:10px;'>";
+	shtml += "<img src='<?cs var:config.xrkmonitor_url ?>/monitor/themes/sexybuttons/images/icons/silk/status_online.png'>";
+	shtml += "&nbsp;<font color='#255fcc'>"+plugin.auth+"</font></img>";
+	<?cs if:config.navTabId == "dmt_plugin_my" || config.navTabId == "dmt_plugin_audit" ?>
+	shtml += "<div style='float:right; margin-right:10px;'>";
+	if(plugin.market_status == 1)
+		shtml += "<img src='<?cs var:config.xrkmonitor_url ?>/monitor/themes/sexybuttons/images/icons/silk/hourglass_go.png'>";
+	else if(plugin.market_status == 2)
+		shtml += "<img src='<?cs var:config.xrkmonitor_url ?>/monitor/themes/sexybuttons/images/icons/silk/accept.png'>";
+	else if(plugin.market_status == 3)
+		shtml += "<img src='<?cs var:config.xrkmonitor_url ?>/monitor/themes/sexybuttons/images/icons/silk/hourglass_go.png'>";
+	else if(plugin.market_status == 4 || plugin.market_status == 5)
+		shtml += "<img src='<?cs var:config.xrkmonitor_url ?>/monitor/themes/sexybuttons/images/icons/silk/bullet_cross.png'>";
+	else
+		shtml += "<img src=''>";
+	shtml += "&nbsp;<font color='blue' id='<?cs var:config.plugin_pre ?>_plugin_" 
+	shtml += plugin.plugin_id + "_status'>" + dpGetPluginMarketStatus(plugin.market_status, plugin.open_version) + "</font>"; 
+	shtml += "</div>";
+	<?cs /if ?>
+	shtml += "</div>";
+
+	shtml += "</div>";
+	return shtml;
+}
+
+
+function <?cs var:config.plugin_pre ?>SetpluginList()
+{
+	if(<?cs var:config.plugin_pre ?>_plugin_list == null 
+			|| <?cs var:config.plugin_pre ?>_plugin_list.count <= 0)
+		return ;
+
+	var ulist = <?cs var:config.plugin_pre ?>_plugin_list.list;
+	dmtSetPluginMarginInfo();
+
+	var uhtml = "";
+	for(var i=0, j=1; i < ulist.length; i++,j++) {
+		uhtml += <?cs var:config.plugin_pre ?>_GetPluginShowInfo(i, ulist[i]);
+	}
+
+	$("#<?cs var:config.plugin_pre ?>_plugin_list").html(uhtml);
+	$("#<?cs var:config.plugin_pre ?>_plugin_list").children().hover(
+		function(){
+			$(this).css({"margin-top":"6px", "border-top-width":"5px", "border-color":"blue"});
+			$(this).find('.pluginName').css('font-size', '20px');
+		}, 
+		function(){
+			$(this).css({"margin-top":"10px", "border-top-width":"1px", "border-color":"#000"});
+			$(this).find('.pluginName').css('font-size', '18px');
+		}
+	);
+
+	<?cs if:config.navTabId == "dmt_plugin_my" ?>
+	$("#<?cs var:config.plugin_pre ?>_plugin_list").children().contextMenu('mypluginCM', {
+	<?cs else ?>
+	$("#<?cs var:config.plugin_pre ?>_plugin_list").children().contextMenu('mypluginOpen', {
+	<?cs /if ?>
+		callback: function(t, op) {
+			t.trigger('click');
+		},
+		bindings: { 
+			modify:function(t, m) {
+				return <?cs var:config.plugin_pre ?>ModPlugin();
+			},
+			delete:function(t, m) { 
+				return <?cs var:config.plugin_pre ?>DeletePlugin();
+			},
+			downpb:function(t, m) { 
+				return <?cs var:config.plugin_pre ?>OnDownFile('pb');	
+			},
+			downconf:function(t, m) { 
+				return <?cs var:config.plugin_pre ?>OnDownFile('conf');
+			},
+			downall:function(t, m) { 
+				return <?cs var:config.plugin_pre ?>OnDownFile('zip');
+			},
+			makefile:function(t, m) { 
+				return <?cs var:config.plugin_pre ?>OnMakeFile();
+			},
+			issue:function(t, m) { 
+				return <?cs var:config.plugin_pre ?>IssuePlugin();
+		  	},
+			showinfo:function(t, m) { 
+				return <?cs var:config.plugin_pre ?>IssueShowInfo();
+			},
+			accept:function(t, m) { 
+				return <?cs var:config.plugin_pre ?>IssueAccept(1, 0);
+			},
+			deny:function(t, m) { 
+				return <?cs var:config.plugin_pre ?>IssueAccept(0, 0);
+			}
+		}
+	});
+}
+
+function <?cs var:config.plugin_pre ?>AddPlugin()
+{
+	var url = "<?cs var:config.cgipath?>mt_slog?action=add_mt_plugin&type=<?cs var:config.plugin_type ?>";
+	var op = $.parseJSON('{"mask":true,"maxable":false,"height":600,"width":920}'); 
+	$.pdialog.open(url, "<?cs var:config.plugin_pre ?>_dlg_add_sys_plugin", "添加监控插件", op); 
+}
+
+function <?cs var:config.plugin_pre ?>IssuePlugin()
+{
+	if(<?cs var:config.plugin_pre ?>_sel_plugin == null)
+	{
+		alertMsg.info("请先点击插件列表选择一个要发布的插件, 或者右键单击插件通过弹出菜单发布");
+		return;
+	}
+
+	if(<?cs var:config.plugin_pre ?>_sel_plugin.market_status == 1 
+		|| <?cs var:config.plugin_pre ?>_sel_plugin.market_status == 3)
+	{
+		alertMsg.info("当前插件有版本在审核中, 请等待审核完成后再发布");
+		return;
+	}
+
+	var requrl = "<?cs var:config.cgipath?>mt_slog?action=issue_plugin";
+	requrl += "&plugin_id=" + <?cs var:config.plugin_pre ?>_sel_plugin.plugin_id; 
+	$.ajax({
+		type: "get",
+		url: requrl,
+		dataType: 'json', 
+		global: false,
+		timeout: function(){
+			alertMsg.warn("请求超时");
+		},
+		success: function(js){
+			if(dmtFirstDealAjaxResponse(js))
+				return;
+			if(js.ret == 0) {
+				alertMsg.correct("插件发布提交成功, 审核通过后将发布到插件市场");
+				var mid = '#<?cs var:config.plugin_pre ?>_plugin_' 
+					+ <?cs var:config.plugin_pre ?>_sel_plugin.plugin_id + "_status";
+				$(mid).text(dpGetPluginMarketStatus(js.status));
+				$(mid).parent().find("img").attr('src', '/monitor/themes/sexybuttons/images/icons/silk/hourglass_go.png');
+			}
+			else if(js.ret == 301) {
+				alertMsg.info("提交审核的版本号需要比当前已发布的版本号大, 请修改版本号");
+			}
+			else {
+				alertMsg.info("插件提交发布失败");
+			}
+		}
+	});
+}
+
+function <?cs var:config.plugin_pre ?>DeletePlugin()
+{
+	if(<?cs var:config.plugin_pre ?>_sel_plugin == null)
+	{
+		alertMsg.info("请先点击插件列表选择一个要删除的插件, 或者右键单击插件通过弹出菜单删除");
+		return;
+	}
+
+	var msg="确认删除插件：" + <?cs var:config.plugin_pre ?>_sel_plugin.plugin_name + " 吗？";
+	msg += "<br /> (注意: 插件相关的监控点以及模块等配置也将被删除)";
+
+	alertMsg.confirm(msg, {
+		okCall: function(){
+			var url = "<?cs var:config.cgipath?>mt_slog?action=delete_mt_plugin"+"&id="+<?cs var:config.plugin_pre ?>_sel_plugin.plugin_id ;
+			$.get(url, function(js){
+				if(dmtFirstDealAjaxResponse(js))
+					return;
+
+				if(js.statusCode==200){
+					alertMsg.info("删除成功。");
+					return navTab.reload();
+				}
+				else if(js.msg)
+					alertMsg.error(js.msg);
+				else
+					alertMsg.error("删除失败！");
+			}, "json"); 
+		}
+	});
+	return;
+}
+
+function <?cs var:config.plugin_pre ?>IssueAccept(ac, from_d)
+{
+	if(<?cs var:config.plugin_pre ?>_sel_plugin == null)
+	{
+		alertMsg.info("请先点击插件列表选择一个要审核的插件");
+		return;
+	}
+	var url = "<?cs var:config.cgipath?>mt_slog?action=audit_plugin_issue&accept="+ac;
+	url += "&plugin_id=" + <?cs var:config.plugin_pre ?>_sel_plugin.plugin_id; 
+	url += "&plugin_show_id=" + <?cs var:config.plugin_pre ?>_sel_plugin.show_id; 
+	url += "&call_type=" + from_d;
+	if(from_d)  
+		ajaxTodo(url, dialogAjaxDone);
+	else
+		ajaxTodo(url, navTabAjaxDone);
+}
+
+function <?cs var:config.plugin_pre ?>IssueShowInfo()
+{
+	if(<?cs var:config.plugin_pre ?>_sel_plugin == null)
+	{
+		alertMsg.info("请先点击插件列表选择一个要查看的插件");
+		return;
+	}
+
+	var url = "<?cs var:config.cgipath?>mt_slog?action=show_mt_plugin&plugin_pre=<?cs var:config.plugin_pre ?>";
+	url += "&plugin_id=" + <?cs var:config.plugin_pre ?>_sel_plugin.plugin_id; 
+
+	var op = $.parseJSON('{"mask":true,"maxable":false,"height":600,"width":920}'); 
+	$.pdialog.open(url, "<?cs var:config.plugin_pre ?>_dlg_show_plugin", "查看监控插件", op); 
+}
+
+function <?cs var:config.plugin_pre ?>ModPlugin()
+{
+	if(<?cs var:config.plugin_pre ?>_sel_plugin == null)
+	{
+		alertMsg.info("请先点击插件列表选择一个要修改的插件, 或者右键单击插件通过弹出菜单修改");
+		return;
+	}
+
+	var url = "<?cs var:config.cgipath?>mt_slog?action=mod_mt_plugin&type=<?cs var:config.plugin_type ?>";
+	url += "&plugin_id=" + <?cs var:config.plugin_pre ?>_sel_plugin.plugin_id; 
+	url += "&plugin_show_id=" + <?cs var:config.plugin_pre ?>_sel_plugin.show_id; 
+	url += "&plugin_pre=<?cs var:config.plugin_pre ?>"; 
+
+	var op = $.parseJSON('{"mask":true,"maxable":false,"height":600,"width":920}'); 
+	$.pdialog.open(url, "<?cs var:config.plugin_pre ?>_dlg_mod_plugin", "修改监控插件", op); 
+}
 
 function <?cs var:config.plugin_pre ?>Search()
 {
@@ -9,11 +396,11 @@ function <?cs var:config.plugin_pre ?>Search()
 	var reqdata = new Object();
 	reqdata.action = 'open_get_plugins';
 	reqdata.rhost = location.host;
-	reqdata.plugin_type = '<?cs var:config.plugin_type ?>';
 	reqdata.dev_language = $('#<?cs var:config.plugin_pre ?>_SearchBar select[name=dev_language]').val();
 	reqdata.dest_os = $('#<?cs var:config.plugin_pre ?>_SearchBar select[name=dest_os]').val();
 	reqdata.open_src = $('#<?cs var:config.plugin_pre ?>_SearchBar select[name=open_src]').val();
 	reqdata.set_method = $('#<?cs var:config.plugin_pre ?>_SearchBar select[name=set_method]').val();
+
 	$.ajax({
 		type:'post',
 		url: requrl,
@@ -36,129 +423,59 @@ function <?cs var:config.plugin_pre ?>Search()
 	return false;
 }
 
-function <?cs var:config.plugin_pre ?>ClearSearch()
-{
-	$("#<?cs var:config.plugin_pre ?>_SearchBar select[name=dev_language] option").each(function(){
-		if(this.value == 'all')
-			$(this).attr("selected", true);
-		else
-			$(this).attr("selected", false);
-	});
-
-	$("#<?cs var:config.plugin_pre ?>_SearchBar select[name=dest_os] option").each(function(){
-		if(this.value == 'all')
-			$(this).attr("selected", true);
-		else
-			$(this).attr("selected", false);
-	});
-
-	$("#<?cs var:config.plugin_pre ?>_SearchBar select[name=open_src] option").each(function(){
-		if(this.value == 999)
-			$(this).attr("selected", true);
-		else
-			$(this).attr("selected", false);
-	});
-
-	$("#<?cs var:config.plugin_pre ?>_SearchBar select[name=set_method] option").each(function(){
-		if(this.value == 999)
-			$(this).attr("selected", true);
-		else
-			$(this).attr("selected", false);
-	});
-}
-
-function <?cs var:config.plugin_pre ?>SetSelplugin(selIndex)
-{
-	<?cs var:config.plugin_pre ?>_sel_plugin = <?cs var:config.plugin_pre ?>_plugin_list.list[selIndex];
-}
-
-function <?cs var:config.plugin_pre ?>OnDetail(idx)
-{
-	<?cs var:config.plugin_pre ?>_sel_detail_idx = idx;
-	$('#<?cs var:config.plugin_pre ?>_plugin_name').text(<?cs var:config.plugin_pre ?>_plugin_list.list[idx].plugin_name);
-	$('#<?cs var:config.plugin_pre ?>_plugin_id').text(<?cs var:config.plugin_pre ?>_plugin_list.list[idx].show_id);
-	$('#<?cs var:config.plugin_pre ?>_add_time').text(<?cs var:config.plugin_pre ?>_plugin_list.list[idx].create_time);
-	$('#<?cs var:config.plugin_pre ?>_mod_time').text(<?cs var:config.plugin_pre ?>_plugin_list.list[idx].update_time);
-	$('#<?cs var:config.plugin_pre ?>_ver').text(<?cs var:config.plugin_pre ?>_plugin_list.list[idx].ver);
-	$('#<?cs var:config.plugin_pre ?>_auth').text(<?cs var:config.plugin_pre ?>_plugin_list.list[idx].auth);
-
-	if(<?cs var:config.plugin_pre ?>_plugin_list.list[idx].open_src == 0)
-		$('#<?cs var:config.plugin_pre ?>_open').text('开源');
-	else
-		$('#<?cs var:config.plugin_pre ?>_open').text('闭源');
-	if(<?cs var:config.plugin_pre ?>_plugin_list.list[idx].set_method == 0)
-		$('#<?cs var:config.plugin_pre ?>_set_method').text('内置');
-	else
-		$('#<?cs var:config.plugin_pre ?>_set_method').text('外置');
-	$('#<?cs var:config.plugin_pre ?>_language').text(<?cs var:config.plugin_pre ?>_plugin_list.list[idx].dev_language);
-	$('#<?cs var:config.plugin_pre ?>_dest_os').text(<?cs var:config.plugin_pre ?>_plugin_list.list[idx].dest_os);
-
-	var dc = <?cs var:config.plugin_pre ?>_plugin_list.list[idx].desc;
-	$('#<?cs var:config.plugin_pre ?>_plugin_desc').html(dc.replace(/&br/g, "\r\n"));
-	var op = { mask:true, maxable:false, height:320, width:520, resizable:false, drawable:true};
-	$.pdialog.openLocal(
-		'<?cs var:config.plugin_pre ?>_show_detail', 'dlg_<?cs var:config.plugin_pre ?>_show_detail', '查看监控插件详情', op);
-}
-
-function <?cs var:config.plugin_pre ?>SetpluginList()
-{
-	if(<?cs var:config.plugin_pre ?>_plugin_list == null || <?cs var:config.plugin_pre ?>_plugin_list.count <= 0)
-		return "";
-
-	var ulist = <?cs var:config.plugin_pre ?>_plugin_list.list;
-	var uhtml = "";
-	for(var i=0, j=1; i < ulist.length; i++,j++)
-	{
-		uhtml += "<tr onclick='<?cs var:config.plugin_pre ?>SetSelplugin(" + i + ")'>";
-		uhtml += "<td>" + j + "</td>";
-		uhtml += "<td>" + ulist[i].plugin_name + "</td>";
-		uhtml += "<td>" + ulist[i].show_id + "</td>";
-
-		uhtml += "<td>" + ulist[i].desc.replace(/&br/g, "<br />") + "</td>";
-
-		if(ulist[i].open_src == 0)
-			uhtml += "<td>开源</td>";
-		else
-			uhtml += "<td>闭源</td>";
-		uhtml += "<td>" + ulist[i].dev_language + "</td>";
-		uhtml += "<td>" + ulist[i].ver + "</td>";
-		uhtml += "<td>" + ulist[i].dest_os + "</td>";
-		if(ulist[i].set_method == 0)
-			uhtml += "<td>内置</td>";
-		else
-			uhtml += "<td>外置</td>";
-		uhtml += "<td>" + ulist[i].auth + "</td>";
-		var detail = "<a class='detail' href='#' onclick='return <?cs var:config.plugin_pre ?>OnDetail("+i+");'>详情</a>";
-		uhtml += "<td>"+detail+"</td>";
-
-		var dw = "<a class='detail' href='#' onclick='return <?cs var:config.plugin_pre ?>OnDownLoad("+i+");'>下载</a>";
-		uhtml += "<td>"+dw+"</td>";
-
-		uhtml += "</tr>";
-	}
-	return uhtml;
-}
-
 $(document).ready(function(){
 	<?cs var:config.plugin_pre ?>Search();
+
+	/*
+	$('#<?cs var:config.plugin_pre ?>_SearchBar select[name=dev_language] option').each(function(){
+		if('<?cs var:config.dev_language ?>' == this.value) {
+			$(this).attr('selected', true);
+			return false;
+		}
+	});
+
+	$('#<?cs var:config.plugin_pre ?>_SearchBar select[name=dest_os] option').each(function(){
+		if('<?cs var:config.dest_os ?>' == this.value) {
+			$(this).attr('selected', true);
+			return false;
+		}
+	});
+
+	$('#<?cs var:config.plugin_pre ?>_SearchBar select[name=open_src] option').each(function(){
+		if('<?cs var:config.open_src ?>' == this.value) {
+			$(this).attr('selected', true);
+			return false;
+		}
+	});
+
+	$('#<?cs var:config.plugin_pre ?>_SearchBar select[name=set_method] option').each(function(){
+		if('<?cs var:config.set_method ?>' == this.value) {
+			$(this).attr('selected', true);
+			return false;
+		}
+	});
+	*/
 });
 
 </script>
 
 <style type="text/css">
 .pageContent .pageHeader table td label { width:60px}
+.dp_op { width:100%; height:100%; font-size:12px; color:blue; cursor:pointer; }
+.pluginName { font-size:18px; font-weight:bold; margin-top:10px; overflow:hidden; text-overflow:ellipsis; }
+.pluginItem { font-size:12px; margin-top:5px; width:260px; overflow:hidden; text-overflow:ellipsis; }
 </style>
 
 <div class="pageContent">
 	<div class="unitBox" style="margin-left:1px;"> 
 		<div class="accountInfo" style='display:block;height:30px;'>
 			<div class='note-text' style='text-align:left; font-size:13px; margin-top:8px;'>
-				插件功能开发中, 敬请期待 ! - 说明：监控插件无需开发,下载部署后即可生成相关监控数据; 我们欢迎自行开发插件, 如您开发了插件且有意愿开源, 我们可以免费为您发布到插件市场.
+				说明：监控插件无需开发,下载部署后即可生成相关监控数据; 我们欢迎自行开发插件, 如您开发了插件且有意愿开源, 我们可以免费为您发布到插件市场.
 			</div>
 		</div>
 
 		<div class="pageHeader" style="border:1px #B8D0D6 solid">
-			<form> 
+			<form onsubmit="return navTabSearch(this, '<?cs var:config.navTabId ?>');" action="<?cs var:config.cgipath?>mt_slog?action=<?cs var:config.str_plugin_type ?>"  method="post">
 			<div class="searchBar">
 				<table class="searchContent" id='<?cs var:config.plugin_pre ?>_SearchBar'>
 					<tr>
@@ -186,10 +503,10 @@ $(document).ready(function(){
 	
 						<td>
 							<label>是否开源：</label>
-							<select name="open_src">
+							<select name="open_src"> 
 								<option value="999">-全部-</option>
-								<option value="0">开 源</option>
-								<option value="1">闭 源</option>
+								<option value="1">开 源</option>
+								<option value="0">闭 源</option>
 							</select>
 						</td>
 
@@ -202,8 +519,7 @@ $(document).ready(function(){
 							</select>
 						</td>
 						<td>
-							<button type="submit" class="sexybutton" onclick="return <?cs var:config.plugin_pre ?>Search();"><span><span><span class="search">查找</span></span></span></button>
-							<button type="button" class="sexybutton" onclick="return <?cs var:config.plugin_pre ?>ClearSearch();"><span><span><span class="erase">重填</span></span></span></button>
+							<button type="submit" class="sexybutton"><span><span><span class="search">查找</span></span></span></button>
 						</td>
 					</tr>
 				</table>
@@ -211,30 +527,35 @@ $(document).ready(function(){
 			</form>
 		</div>
 
-		<div class="pageContent" style="border-left:1px #B8D0D6 solid;border-right:1px #B8D0D6 solid">
-			<div>
-				<table class="list" width="100%" layoutH="68"> 
-					<thead>
-						<tr>
-							<th width="40">序号</th>
-							<th width="120">插件名称</th>
-							<th width="50">插件ID</th>
-							<th width="200">插件描述</th>
-							<th width="50">开源情况</th>
-							<th width="50">开发语言</th>
-							<th width="40">版本</th>
-							<th width="50">运行平台</th>
-							<th width="40">部署</th>
-							<th width="60">开发者</th>
-							<th width="30">详情</th>
-							<th width="40">下载</th>
-						</tr>
-					</thead>
-					<tbody id="<?cs var:config.plugin_pre ?>_plugin_list_tbody">
-					</tbody>
-				</table>
-			</div> 
+		<div class="panelBar">
+			<ul class="toolBar">
+				<?cs if:config.navTabId == "dmt_plugin_my" ?>
+				<li><a class="add" href="#" onclick="return <?cs var:config.plugin_pre ?>AddPlugin();"><span>创建插件</span></a></li>
+				<li class="line">line</li>
+				<li><a class="delete" href="#" onclick="return <?cs var:config.plugin_pre ?>DeletePlugin();"><span>删除</span></a></li>
+				<li class="line">line</li>
+				<li><a class="edit" href="#" onclick="return <?cs var:config.plugin_pre ?>ModPlugin();"><span>修改</span></a></li>
+				<li><a class="edit" href="#" onclick="return <?cs var:config.plugin_pre ?>OnMakeFile();"><span>重新生成文件</span></a></li>
+				<li><a class="edit" href="#" onclick="return <?cs var:config.plugin_pre ?>IssuePlugin();"><span>发布到市场</span></a></li>
+				<li class="line">line</li>
+				<li><a class="edit" href="#" onclick="return <?cs var:config.plugin_pre ?>IssuePlugin();"><span>安装插件</span></a></li>
+				<?cs /if ?>
+
+				<li><a class="edit" href="#" onclick="return <?cs var:config.plugin_pre ?>IssueShowInfo();"><span>查看</span></a></li>
+
+				<li><a class="edit" href="#" onclick="return <?cs var:config.plugin_pre ?>OnDownFile('pb');"><span>下载pb文件</span></a></li>
+				<li><a class="edit" href="#" onclick="return <?cs var:config.plugin_pre ?>OnDownFile('conf');"><span>下载配置文件</span></a></li>
+				<li><a class="edit" href="#" onclick="return <?cs var:config.plugin_pre ?>OnDownFile('zip');"><span>下载完整包</span></a></li>
+				<li class="line">line</li>
+
+				<?cs if:config.navTabId == "dmt_plugin_open" ?>
+				<li><a class="edit" href="#" onclick="return <?cs var:config.plugin_pre ?>IssuePlugin();"><span>安装插件</span></a></li>
+				<?cs /if ?>
+			</ul>
 		</div>
+
+		<div layoutH="100" class="unitBox" id="<?cs var:config.plugin_pre ?>_plugin_list">
+		</div> 
 	</div> <!-- unitBox -->
 </div>
 
@@ -279,7 +600,7 @@ $(document).ready(function(){
 			<tr height="28">
 				<td align="right">插件描述：</td>
 				<td colspan="3">
-				<textarea rows="4" cols="50" id='<?cs var:config.plugin_pre ?>_plugin_desc' readonly></textarea>
+				<textarea rows="4" cols="40" id='<?cs var:config.plugin_pre ?>_plugin_desc' readonly></textarea>
 				</td>
 			</tr>
 		</table>

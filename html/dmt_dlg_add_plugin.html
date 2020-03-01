@@ -1,0 +1,711 @@
+<style type="text/css">
+.pageFormContent tr { height:25px}
+.pageFormContent tr label { width:65px}
+</style>
+<script language="javascript" type="text/javascript">
+
+/*
+   * 引用 dmt_plugin.html 变量: <?cs var:config.plugin_pre ?>_sel_plugin
+   */
+
+var g_ddap_mod_attr = false;
+var g_ddap_mod_attr_type = false;
+var g_ddap_mod_cfg = false;
+var ddapFormSplit = "---------------------------------------------------------------------------";
+var ddapFormCss = '';
+ddapFormCss = '<style type="text/css">';
+ddapFormCss += '.ddapFormItemSel { background-color:#2894FF }';
+ddapFormCss += '</style>';
+
+$(document).ready(function(){
+	$('#ddap_btn_up_picfile').click(function() {
+		var op = { mask:true, maxable:false, height:140, width:420, resizable:false, drawable:true};
+		$.pdialog.open('<?cs var:config.cgipath?>mt_slog?action=init_up_plugin_pic', 
+			'dlg_ddap_up_pic', '上传插件图片', op);
+		return false;
+	});
+
+	$('#ddap_src_url').click(function() {
+		if($(this).attr('href') == '#') {
+			alertMsg.info('未设置源码链接地址，请先设置');
+			return false;
+		}
+		return true;
+	});
+
+	$("#ddap_open_src").change(function() {
+		if($("#ddap_open_src").val() == 1)
+			$('#ddap_src_url_show').css('display', 'block');
+		else
+			$('#ddap_src_url_show').css('display', 'none');
+	});
+
+	$('#ddap_btn_set_src_url').click(function() {
+		var scur = $('#ddap_in_src_url').val();
+		var surl = prompt('请输入线上源码链接地址', scur);
+		if(surl.substr(0, 7) != "http://" && surl.substr(0, 8) != "https://") {
+			alertMsg.info('站点链接错误, 请以 http:// 或者 https:// 开头');
+			return false;
+		}
+		$('#ddap_in_src_url').val(surl);
+		$('#ddap_src_url').attr('href', surl);
+		return false;
+	});
+
+	$('#ddap_btn_mod_attr_type').click(function() {
+		if($('#ddap_attr_types').val() == 0) {
+			alertMsg.info("请先添加插件监控点类型");
+			return false;
+		}
+
+		var tp = $('#ddap_attr_types').val();
+		if(tp.length > 0) {
+			g_ddap_mod_attr_type = true;
+			var op = { mask:true, maxable:false, height:240, width:360, resizable:false, drawable:true}; 
+			$.pdialog.open('<?cs var:config.docpath?>dmt_dlg_plugin_add_attr_type.html', 
+				'dlg_ddap_add_attr_type', '修改插件监控点类型: ' + tp, op);
+		}
+		else {
+			alertMsg.info("请从下拉框中选择一个插件监控点类型");
+		}
+	});
+
+	$('#ddap_btn_mod_attr').click(function() {
+		var $trs = $("#ddap_up_file_info").contents().find('#ddap_plugin_attr table tbody >tr');
+		var $sel = $trs.filter(".ddapFormItemSel");
+		if($sel.length > 0) {
+			g_ddap_mod_attr = true;
+			var op = { mask:true, maxable:false, height:320, width:360, resizable:false, drawable:true}; 
+			$.pdialog.open('<?cs var:config.docpath?>dmt_dlg_plugin_add_attr.html', 
+				'dlg_ddap_add_attr', '修改插件监控点: ' + $sel.find("td:eq(4)").text(), op);
+		}
+		else {
+			alertMsg.info("请点击监控点列表选择一个要修改的监控点");
+		}
+	});
+
+
+	$('#ddap_btn_view_attr_type').click(function() {
+		$('#ddap_dlg_show_attr_type table tbody').html('');
+		var fhtml = "";
+		$('#ddap_attr_types option').each(function(){
+			if(this.value == 0)
+				return;
+
+			fhtml += "<tr>";
+			fhtml += "<td align='left' style='width:50px' valign='top'>" +  $(this).attr('attrid') + "</td>";
+			fhtml += "<td align='left' style='width:50px' valign='top'>" +  this.value + "</td>";
+			fhtml += "<td align='left' valign='top' style='width:200px'>" + $(this).attr('myname') + "</td>";
+			fhtml += "<td align='left' valign='top' style='width:200px'>" + $(this).attr('mydesc') + "</td>";
+			fhtml += "</tr>";
+		});
+		$('#ddap_dlg_show_attr_type table tbody').html(fhtml);
+		var op = { mask:true, maxable:false, height:280, width:560, resizable:false, drawable:true};
+		$.pdialog.openLocal('ddap_dlg_show_attr_type', 
+			'dlg_ddap_dlg_show_attr_type', '插件监控点类型查看', op);
+	});
+
+	$('#ddap_btn_add_multi').click(function() {
+		var op = { mask:true, maxable:false, height:140, width:420, resizable:false, drawable:true};
+		$.pdialog.open('<?cs var:config.cgipath?>mt_slog?action=init_up_plugin_multi_attr', 
+			'dlg_ddap_up_multi_attr', '批量导入插件监控点', op);
+		return false;
+	});
+
+	$("#ddap_btn_add_cfg").click(function(){
+		g_ddap_mod_cfg = false;
+		var op = { mask:true, maxable:false, height:320, width:400, resizable:false, drawable:true};
+		$.pdialog.open('<?cs var:config.docpath?>dmt_dlg_plugin_add_cfg.html', 
+			'dlg_ddap_add_cfg', '添加插件配置', op);
+	});
+
+	$('#ddap_btn_mod_cfg').click(function() {
+		var $trs = $("#ddap_up_file_info").contents().find('#ddap_plugin_cfg table tbody >tr');
+		var $sel = $trs.filter(".ddapFormItemSel");
+		if($sel.length > 0) {
+			g_ddap_mod_cfg = true;
+			var op = { mask:true, maxable:false, height:320, width:400, resizable:false, drawable:true};
+			$.pdialog.open('<?cs var:config.docpath?>dmt_dlg_plugin_add_cfg.html', 
+				'dlg_ddap_add_cfg', '修改插件配置', op);
+		}
+		else {
+			alertMsg.info("请点击插件配置列表选择一个要修改的配置");
+		}
+	});
+
+	$('#ddap_btn_del_cfg').click(function() {
+		var $trs = $("#ddap_up_file_info").contents().find('#ddap_plugin_cfg table tbody >tr');
+		var $sel = $trs.filter(".ddapFormItemSel");
+		if($sel.length > 0) {
+			var msg = "确认删除配置: " + $sel.find("td:eq(0)").text() + ' ?';
+			alertMsg.confirm(msg, {okCall:function(){
+					$trs.filter(".ddapFormItemSel").remove();
+					var count = $("#ddap_up_file_info").contents().find('#dapmar_cfgs').text();
+					var ncount = parseInt(count)-1;
+					$("#ddap_up_file_info").contents().find('#dapmar_cfgs').text(ncount);
+					alertMsg.info("已从列表中移除, 请点击保存以最后生效");
+				}
+			});
+		}
+		else {
+			alertMsg.info("请点击插件配置列表选择一个要删除的配置");
+		}
+	});
+
+	$("#ddap_btn_add_attr").click(function(){
+		if($('#ddap_attr_types').val() == 0) {
+			alertMsg.info("请先添加插件监控点类型");
+			return false;
+		}
+
+		g_ddap_mod_attr = false;
+		var op = { mask:true, maxable:false, height:320, width:360, resizable:false, drawable:true};
+		$.pdialog.open('<?cs var:config.docpath?>dmt_dlg_plugin_add_attr.html', 
+			'dlg_ddap_add_attr', '添加插件监控点', op);
+	});
+
+	$('#ddap_btn_del_attr').click(function() {
+		var $trs = $("#ddap_up_file_info").contents().find('#ddap_plugin_attr table tbody >tr');
+		var $sel = $trs.filter(".ddapFormItemSel");
+		if($sel.length > 0) {
+			var msg = "确认删除监控点(" 
+			msg += $sel.find("td:eq(0)").text() + ' | ' + $sel.find("td:eq(1)").text() + '): ';
+			msg += $sel.find("td:eq(4)").text() + ' ?';
+			alertMsg.confirm(msg, {okCall:function(){
+					if($sel.find("td:eq(0)").text() != '0') {
+						var requrl = "<?cs var:config.cgipath?>mt_slog_attr?action=attr_delete";
+						requrl += "&id=" + $sel.find("td:eq(0)").text();
+						ajaxTodoType(requrl, function(js){
+							if(dmtFirstDealAjaxResponse(js))
+								return;
+							if(js.statusCode == 200) {
+								alertMsg.info('删除成功');
+							}
+							else {
+								alertMsg.info('删除失败');
+								return;
+							}
+						});
+					}
+
+					$trs.filter(".ddapFormItemSel").remove();
+					var count = $("#ddap_up_file_info").contents().find('#dapmar_count').text();
+					var ncount = parseInt(count)-1;
+					$("#ddap_up_file_info").contents().find('#dapmar_count').text(ncount);
+				}
+			});
+		}
+		else {
+			alertMsg.info("请点击监控点列表选择一个要删除的监控点");
+		}
+	});
+
+	$("#ddap_btn_add_attr_type").click(function(){
+		g_ddap_mod_attr_type = false;
+		var op = { mask:true, maxable:false, height:240, width:360, resizable:false, drawable:true};
+		$.pdialog.open('<?cs var:config.docpath?>dmt_dlg_plugin_add_attr_type.html', 
+			'dlg_ddap_add_attr_type', '添加插件监控点类型', op);
+	});
+
+	<?cs if:config.action == 'save_mod_mt_plugin' || config.action == 'show_mt_plugin' ?>
+	var dp_sel_plugin = <?cs var:config.plugin_pre ?>_sel_plugin;
+	if(dp_sel_plugin == null || dp_sel_plugin.plugin_id != <?cs var:config.plugin_id ?>) {
+		alertMsg.warn("脚本运行错误, 请刷新页面重试");
+		return;
+	}
+
+	$('#ddap_plugin_name').val(dp_sel_plugin.plugin_name);
+	$('#ddap_plugin_ver').val(dp_sel_plugin.ver);
+	$('#ddap_plugin_auth').val(dp_sel_plugin.auth);
+	if(dp_sel_plugin.open_src == 0)
+		$('#ddap_src_url_show').css('display', 'none');
+	//if(dp_sel_plugin.log_config)
+	//	$('#ddap_log_check').attr('checked', true).attr('disabled', true);
+
+	$("#ddap_open_src option").each(function() {
+		if(this.value == dp_sel_plugin.open_src) {
+			$(this).attr("selected", true);
+			return false;
+		}
+	});
+
+	$('#ddap_dev_language option').each(function() {
+		if(this.value == dp_sel_plugin.dev_language) {
+			$(this).attr("selected", true);
+			return false;
+		}
+	});
+
+	$('#ddap_set_method option').each(function() {
+		if(this.value == dp_sel_plugin.set_method) {
+			$(this).attr("selected", true);
+			return false;
+		}
+	});
+
+	$('#ddap_dest_os option').each(function() {
+		if(this.value == dp_sel_plugin.dest_os) {
+			$(this).attr("selected", true);
+			return false;
+		}
+	});
+
+	// 换行符有转码，需要转换回来
+	$('#ddap_desc').text(dp_sel_plugin.desc.replace(/&br/g, "\r\n"));
+	ddapGetPluginPbInfo();
+	$('#ddap_plugin_pic').attr('src', '<?cs var:config.xrkmonitor_url ?>/monitor/main/img/qrcode_for_gh_ad9dfcd2f564_258.jpg');
+	if(dp_sel_plugin.pic != "" && dp_sel_plugin.pic != null)  {
+		$('#ddap_plugin_pic').attr('src', '<?cs var:config.xrkmonitor_url ?>/monitor/<?cs var:config.plugin_file_path ?>/'+dp_sel_plugin.pic);
+		$('#ddap_plugin_picfile').val(dp_sel_plugin.pic);
+	}
+	else {
+		$('#ddap_plugin_pic').attr('src', '<?cs var:config.xrkmonitor_url ?>/monitor/download/plugin/plugin_def_pic.png');
+	}
+
+	<?cs else ?>
+
+	$('#ddap_btn_up_pbfile').click(function() {
+		var op = { mask:true, maxable:false, height:140, width:420, resizable:false, drawable:true};
+		$.pdialog.open('<?cs var:config.cgipath?>mt_slog?action=init_up_plugin_pb', 
+			'dlg_ddap_up_pb', '导入插件 pb 文件', op);
+		return false;
+	});
+
+	$('#ddap_plugin_pic').attr('src', '<?cs var:config.xrkmonitor_url ?>/monitor/download/plugin/plugin_def_pic.png');
+	$('#ddap_up_file_info').attr(
+		'src', "<?cs var:config.cgipath ?>mt_slog_attr?action=add_plugin_multi_attr_tip");
+	
+	<?cs /if ?>
+});
+
+function ddapGetPluginPbInfo()
+{
+	var requrl = "<?cs var:config.cgipath?>mt_slog?action=get_plugin_pb_info";
+	requrl += "&plugin_id=<?cs var:config.plugin_id ?>";
+	requrl += "&plugin_pre=<?cs var:config.plugin_pre?>";
+	$.ajax({
+		type: "get",
+		url: requrl,
+		dataType: 'json', 
+		global: false,
+		timeout: function(){
+			alertMsg.warn("请求超时");
+		},
+		success: function(js){
+			if(dmtFirstDealAjaxResponse(js))
+				return;
+
+			if(js.has_pb_info == 0) {
+				$('#ddap_up_file_info').attr(
+					'src', "<?cs var:config.cgipath ?>mt_slog_attr?action=add_plugin_multi_attr_tip");
+				return;
+			}
+
+			if(js.b_add_log_module) {
+				$('#ddap_log_check').attr('checked', true).attr('disabled', true);
+			}
+
+			var attrtype = $('#ddap_attr_types');
+			if(typeof js.attr_types != undefined && js.attr_types != null) {
+				attrtype.html("");
+				for(var i=js.attr_types.length-1; i >= 0; i--) {
+					var op = $('<option></option>');
+					op.text(js.attr_types[i].attr_type_name+' ('+js.attr_types[i].plug_attr_type_id+')');
+					op.val(js.attr_types[i].plug_attr_type_id);
+					op.attr('attrid', js.attr_types[i].attr_type_id);
+					op.attr('myname', js.attr_types[i].attr_type_name);
+					op.attr('mydesc', js.attr_types[i].attr_type_desc);
+					if(i==0)
+						op.attr('selected', true);
+					attrtype.append(op);
+				}
+			}
+
+			var fhtml = "";
+			if(typeof js.attrs != undefined && js.attrs != null) {
+				fhtml = ddapFormCss;
+				fhtml += "<div id='ddap_plugin_attr' style='padding-left:5px; overflow-x:hidden;'>";
+				fhtml += "插件监控点如下共 (<font id='dapmar_count'>"+js.attrs.length+"</font>) 个: <br />";
+				fhtml += ddapFormSplit; 
+				fhtml += "<table class='list' style='word-break:break-all; word-wrap:break-all;'>";
+				fhtml += "<thead><tr>"
+				fhtml += "<th align='left' valign='top' style='width:60px'>AID</th>";
+				fhtml += "<th align='left' valign='top' style='width:60px'>PAID</th>";
+				fhtml += "<th align='left' valign='top' style='width:45px'>TID</th>";
+				fhtml += "<th align='left' valign='top' style='width:45px'>DT</th>";
+				fhtml += "<th align='left' valign='top' style='width:200px'>监控点名称</th>";
+				fhtml += "<th align='left' valign='top' style='width:200px'>监控点宏名</th>";
+				fhtml += "<th align='left' valign='top' style='width:140px'>监控点描述</th>";
+				fhtml += "</tr></thead><tbody>";
+
+				for(var i=js.attrs.length-1; i >= 0; i--) {
+					fhtml += "<tr>"; 
+					fhtml += "<td align='left' valign='top'>"+js.attrs[i].attr_id+"</td>";
+					fhtml += "<td align='left' valign='top'>"+js.attrs[i].plug_attr_id+"</td>";
+					fhtml += "<td align='left' valign='top'>"+js.attrs[i].plug_attr_type_id+"</td>";
+					fhtml += "<td align='left' valign='top'>"+js.attrs[i].attr_data_type+"</td>";
+					fhtml += "<td align='left' valign='top'>"+js.attrs[i].attr_name+"</td>";
+					fhtml += "<td align='left' valign='top'>"+js.attrs[i].attr_id_macro+"</td>";
+					fhtml += "<td align='left' valign='top'>"+js.attrs[i].attr_desc+"</td>";
+					fhtml += "</tr>";
+				}
+				fhtml += "</tbody></table>";
+				fhtml += ddapFormSplit; 
+				document.getElementById("ddap_up_file_info").contentDocument.body.innerHTML = fhtml;
+
+				var $trs = $("#ddap_up_file_info").contents().find('#ddap_plugin_attr table tbody >tr');
+				$trs.each(function() {
+					$(this).click(function() {
+						var $ftrs= $("#ddap_up_file_info").contents().find('#ddap_plugin_attr tbody >tr');
+						$ftrs.filter(".ddapFormItemSel").removeClass("ddapFormItemSel");
+						$(this).addClass("ddapFormItemSel");
+					});
+				});
+			}
+
+			if(typeof js.cfgs != undefined && js.cfgs != null) {
+				fhtml = "<div id='ddap_plugin_cfg' style='padding-left:5px; overflow-x:hidden;'>";
+				fhtml += "插件配置如下共 (<font id='dapmar_cfgs'>"+js.cfgs.length+"</font>) 个: <br />";
+				fhtml += ddapFormSplit; 
+				fhtml += "<table class='list' style='word-break:break-all; word-wrap:break-all;'><thead><tr>";
+				fhtml += "<th align='left' valign='top' style='width:200px'>配置名称</th>";
+				fhtml += "<th align='left' valign='top' style='width:200px'>配置值</th>";
+				fhtml += "<th align='left' valign='top' style='width:60px'>MDF</th>";
+				fhtml += "<th align='left' valign='top' style='width:240px'>配置说明</th>";
+				fhtml += "</tr></thead><tbody>";
+
+				for(var i=js.cfgs.length-1; i >= 0; i--) {
+					fhtml += "<tr>";
+					fhtml += "<td align='left' valign='top'>"+js.cfgs[i].item_name+"</td>";
+					fhtml += "<td align='left' valign='top'>"+js.cfgs[i].item_value+"</td>";
+					fhtml += "<td align='left' valign='top'>"+js.cfgs[i].enable_modify+"</td>";
+					fhtml += "<td align='left' valign='top'>"+js.cfgs[i].item_desc+"</td>";
+					fhtml += "</tr>";
+				}
+				fhtml += "</tbody></table>";
+				fhtml += ddapFormSplit; 
+	
+				var sAttrDiv = $("#ddap_up_file_info").contents().find("#ddap_plugin_attr");
+				if(typeof sAttrDiv != undefined && sAttrDiv != null && sAttrDiv.length > 0)
+					sAttrDiv.before(fhtml);
+				else 
+					document.getElementById("ddap_up_file_info").contentDocument.body.innerHTML 
+						= ddapFormCss+fhtml;
+
+				var $trs = $("#ddap_up_file_info").contents().find('#ddap_plugin_cfg table tbody >tr');
+				$trs.each(function() {
+					$(this).click(function() {
+						var $ftrs= $("#ddap_up_file_info").contents().find('#ddap_plugin_cfg tbody >tr');
+						$ftrs.filter(".ddapFormItemSel").removeClass("ddapFormItemSel");
+						$(this).addClass("ddapFormItemSel");
+					});
+				});
+			}
+
+			if(fhtml == "") {
+				$('#ddap_up_file_info').attr(
+					'src', "<?cs var:config.cgipath ?>mt_slog_attr?action=add_plugin_multi_attr_tip");
+			}
+
+			if(typeof js.plus_url != undefined && js.plus_url != '') {
+				$('#ddap_in_src_url').val(js.plus_url);
+				$('#ddap_src_url').attr('href', js.plus_url);
+			}
+
+		}
+	});
+}
+
+function ddapSavePluginInfo()
+{
+	if($('#ddap_plugin_name').val() == '' || $('#ddap_plugin_ver').val() == '') {
+		alertMsg.info("请输入插件名称和插件版本");
+		return false;
+	}
+	var cname = /^\w{6,28}$/;
+	if(!cname.test($('#ddap_plugin_name').val())) {
+		alertMsg.warn("插件名称不合法, 名称长度为 6-28, 由字母数字下划线组成");
+		return false;
+	}
+	var cver = /^[vV]\d\.\d\.\d/;
+	if(!cver.test($('#ddap_plugin_ver').val())) {
+		alertMsg.warn("插件版本非法");
+		return false;
+	}
+
+	if($('#ddap_open_src').val() == 1 && $('#ddap_in_src_url').val() =='') {
+		alertMsg.warn('您选择了开源，请输入源码地址(可以是码云或者其它线上源码托管地址)');
+		return false;
+	}
+
+	var sdc = $.trim($('#ddap_desc').val());
+	if(sdc.length <= 0) {
+		alertMsg.warn('请输入插件描述');
+		return false;
+	}
+
+	var tlist = '';
+	$('#ddap_attr_types option').each(function(i){
+		if(this.value == 0)
+			return;
+		if(i == 0)
+			tlist += this.value + '|' + $(this).attr('myname') + '|' + $(this).attr('mydesc'); 
+		else
+			tlist += ';' + this.value + '|' + $(this).attr('myname') + '|' + $(this).attr('mydesc'); 
+	});
+	$('#ddap_attr_type_list').val(tlist);
+
+	tlist = '';
+	var aryCheckMacro = new Array();
+	var bInvalid = false;
+	$("#ddap_up_file_info").contents().find("#ddap_plugin_attr table tbody tr").each(function(i) {
+		if(i != 0) 
+			tlist += ';';
+		$(this).find("td").each(function(j) {
+			if(j == 0) {
+				return ; // skip attr id
+			}
+			if(j != 1)
+				tlist +=  '|';
+			tlist += this.innerText;
+			if(j == 5) {
+				if(typeof aryCheckMacro[this.innerText] == undefined || aryCheckMacro[this.innerText] == null)
+					aryCheckMacro[this.innerText] = true;
+				else {
+					bInvalid = true;
+					return false;
+				}
+			}
+		});
+		tlist +=  '|';
+		if(bInvalid)
+			return false;
+	});
+	if(bInvalid) {
+		alertMsg.warn("监控点宏名重复, 请重新输入!");
+		return false;
+	}
+	$('#ddap_attr_list').val(tlist);
+
+	tlist = '';
+	$("#ddap_up_file_info").contents().find("#ddap_plugin_cfg table tbody tr").each(function(i) {
+		if(i != 0) 
+			tlist += ';';
+		$(this).find("td").each(function(j) {
+			if(j != 0)
+				tlist +=  '|';
+			tlist += this.innerText;
+		});
+		tlist +=  '|';
+	});
+	$('#ddap_cfg_list').val(tlist);
+	
+	return true;
+}
+</script>
+
+
+<div id='ddap_dlg_show_attr_type' style='display:none'>
+	<table class='list' style='word-break:break-all; word-wrap:break-all;'>
+		<thead>
+			<th align='left' valign='top' style='width:100px'>系统编号</th>
+			<th align='left' valign='top' style='width:100px'>插件内编号</th>
+			<th align='left' valign='top' style='width:200px'>类型名称</th>
+			<th align='left' valign='top' style='width:200px'>类型描述</th>
+		</thead>
+		<tbody>
+		</tbody>
+	</table>
+</div>
+
+<div class="pageContent">
+	<form id='ddap_plugin_info_fm' method="post" action="<?cs var:config.cgipath?>mt_slog?action=<?cs var:config.action ?>" class="pageForm" onsubmit="return noValidateCallback(this, dialogAjaxDone);">
+		<div class="pageFormContent" layoutH="56">
+			<input type="hidden" name="ddap_plugin_id" id='ddap_plugin_id' value="<?cs var:config.plugin_id ?>" />
+			<input type="hidden" name="navTabId" id='ddap_navTabId' value='dmt_plugin_my' /> 
+			<input type="hidden" name="ddap_attr_type_list" id='ddap_attr_type_list' /> 
+			<input type="hidden" name="ddap_attr_list" id='ddap_attr_list' /> 
+			<input type="hidden" name="ddap_cfg_list" id='ddap_cfg_list' /> 
+			<input type="hidden" name="ddap_multi_import" id='ddap_multi_import' value='false' /> 
+			<input type="hidden" name="ddap_plugin_show_id" id='ddap_plugin_show_id' value="<?cs var:config.plugin_show_id ?>" /> 
+			<input type="hidden" name="ddap_plugin_picfile" id='ddap_plugin_picfile' value="" /> 
+
+			<table>
+				<tr>
+				<td>
+					<label>插件名称：</label>
+					<?cs if:config.action == 'save_add_mt_plugin' ?>
+					<input type="text" class="required" size="26" name="ddap_plugin_name" id="ddap_plugin_name" value="<?cs var:config.ddap_plugin_name ?>" minlength="6" maxlength="28" /> 
+					<?cs else ?>
+					<input type="text" class="required" size="26" name="ddap_plugin_name" id="ddap_plugin_name" value="<?cs var:config.ddap_plugin_name ?>" readonly minlength="6" maxlength="28" /> 
+					<?cs /if ?>
+				</td>
+				<td>
+					<div style='float:left'>
+					<?cs if:config.action == 'save_add_mt_plugin' ?>
+        			<input type="button" value="导入pb文件" id='ddap_btn_up_pbfile' />&nbsp;&nbsp;
+					<select name="ddap_attr_types" id="ddap_attr_types" style='width:125px;float:right;'>
+					<?cs else ?>
+					<select name="ddap_attr_types" id="ddap_attr_types" style='width:185px;float:right;'>
+					<?cs /if ?>
+						<option value="0">-请选择-</option>
+					</select> 
+					</div>
+
+					<div style='float:left'>
+					<?cs if:config.action != "show_mt_plugin" ?>
+       				<input type="button" value="修改监控点类型" id='ddap_btn_mod_attr_type' />
+					<?cs /if ?>
+       				<input type="button" value="查看监控点类型" id='ddap_btn_view_attr_type' />
+					<?cs if:config.action != 'show_mt_plugin' ?>
+					<input type="button" value="添加配置" id='ddap_btn_add_cfg' />
+					<input type="button" value="删除配置" id='ddap_btn_del_cfg' />
+					<?cs /if ?>
+					</div>
+				</td>
+				</tr>
+
+				<tr>
+				<td> 
+					<label>插件版本：</label>
+					<input type="text" class="required" size="12" name="ddap_plugin_ver" id="ddap_plugin_ver" value="<?cs var:config.plugin_ver ?>" minlength="6" maxlength="12" />
+				</td>
+				<td rowspan="10">
+					<div> 
+						<?cs if:config.action != "show_mt_plugin" ?>
+						<input type="button" value="批量导入监控点" id='ddap_btn_add_multi'/>
+
+						<input type="button" value="添加监控点" id='ddap_btn_add_attr' />
+       					<input type="button" value="删除监控点" id='ddap_btn_del_attr' />
+						<input type="button" value="修改监控点" id='ddap_btn_mod_attr' />
+						<input type="button" value="添加监控点类型" id='ddap_btn_add_attr_type' /> 
+						<input type="button" value="修改配置" id='ddap_btn_mod_cfg' />
+						<br />
+						<iframe style='margin-top:1px' name='ddap_up_file_info' id='ddap_up_file_info' height='450' width='610'></iframe>
+						<?cs else ?>
+						<iframe style='margin-top:1px' name='ddap_up_file_info' id='ddap_up_file_info' height='470' width='610'></iframe>
+						<?cs /if ?>
+						<iframe style='margin-top:1px; display:none' name='ddap_upload_picfile_ct' id='ddap_upload_picfile_ct'></iframe>
+						<iframe style='margin-top:1px; display:none' name='ddap_upload_pbfile_ct' id='ddap_upload_pbfile_ct'></iframe>
+					</div>
+				</td>
+				</tr>
+
+				<tr>
+				<td> 
+					<label>开发者：</label>
+					<?cs if:comm.user_type == 4 || comm.user_type == 1 ?>
+					<input type="text" size="20" name="ddap_plugin_auth" id="ddap_plugin_auth" value="官方" readonly disabled />
+					<?cs else ?>
+					<input type="text" size="20" name="ddap_plugin_auth" id="ddap_plugin_auth" value="<?cs var:comm.user_name ?>" readonly disabled />
+					<?cs /if ?>
+				</td>
+				</tr>
+
+				<tr>
+				<td> 
+					<label>是否开源：</label>
+					<select name="ddap_open_src" id="ddap_open_src">
+						<option value="1">开源</option>
+						<option value="0">闭源</option>
+					</select>
+					<span id='ddap_src_url_show'>
+						<button id='ddap_btn_set_src_url' type='button'>设置链接</button>
+						<a href='#' id='ddap_src_url' target='_blank'>
+							<font style='color:blue;margin-top:2px'>查看源码</font>
+						</a>
+						<input id='ddap_in_src_url' name='ddap_in_src_url' type='hidden' value=''>
+					</span>
+				</td>
+				</tr>
+
+				<tr>
+				<td> 
+					<label>部署方式：</label>
+					<select name="ddap_set_method" id="ddap_set_method">
+						<option value="0">内置</option>
+						<option value="1">外置</option>
+					</select>
+				</td>
+				</tr>
+
+				<tr>
+				<td> 
+					<label>开发语言：</label>
+					<select name="ddap_dev_language" id="ddap_dev_language">
+						<option value="c/c++">c/c++</option>
+						<option value="php">php</option>
+						<option value="linux shell">linux shell</option>
+						<option value="javascript">javascript</option>
+						<option value="java">java</option>
+						<option value="python">python</option>
+					</select>
+				</td>
+				</tr>
+
+				<tr>
+				<td> 
+					<label>运行平台：</label>
+					<select name="ddap_dest_os" id="ddap_dest_os">
+						<option value="Linux">Linux</option>
+						<option value="Windows">Windows</option>
+					</select>
+				</td>
+				</tr>
+
+				<tr>
+				<td>
+					<label for='ddap_log_check'>日志配置：</label>
+					<input type="checkbox" name="ddap_log_check" id="ddap_log_check">
+					<font class="note-text">
+					<label style="float:right;width:160px" for='ddap_log_check'>为插件添加模块和日志配置</label>
+					</font>
+				</td>
+				</tr>
+
+				<tr>
+				<td style="height:90px;">
+					<label>插件描述：</label>
+					<textarea rows="5" cols="25" id='ddap_desc' name="ddap_desc" class='required' minlength="1" maxlength="120"></textarea>
+				</td>
+				</tr>
+
+				<tr>
+				<td style="height:90px;">
+					<label>图片预览：</label>
+					<img id="ddap_plugin_pic" width='160px' height='160px'></img>
+				</td>
+				</tr>
+				<tr>
+				<td style="height:20px; margin-right:60px; float:right;">
+					<?cs if:config.action != 'show_mt_plugin' ?>
+        			<input type="button" value="上传插件图片" id='ddap_btn_up_picfile' />
+					<?cs /if ?>
+				</td>
+				</tr>
+			</table>
+
+		</div>
+
+		<div class="formBar">
+			<ul>
+				<?cs if:config.action != 'show_mt_plugin' ?>
+				<li><div class="button"><div class="buttonContent"><button type="submit" onclick='return ddapSavePluginInfo();'>&nbsp;&nbsp;保&nbsp;存&nbsp;&nbsp;</button></div></div></li>
+				<li>
+					<div class="button"><div class="buttonContent"><button type="button" class="close">&nbsp;&nbsp;取&nbsp;消&nbsp;&nbsp;</button></div></div>
+				</li>
+				<?cs elif:config.plugin_pre == 'dp4' ?>
+				<li><div class="button"><div class="buttonContent"><button type="button" onclick='return dp4IssueAccept(1, 1);'>&nbsp;&nbsp;审核通过&nbsp;&nbsp;</button></div></div></li>
+				<li>
+					<div class="button"><div class="buttonContent"><button type="button" class="close" onclick='return dp4IssueAccept(0, 1);'>&nbsp;&nbsp;审核不通过&nbsp;&nbsp;</button></div></div>
+				</li>
+				<?cs else ?>
+				<li>
+					<div class="button"><div class="buttonContent"><button type="button" class="close">&nbsp;&nbsp;关&nbsp;闭&nbsp;&nbsp;</button></div></div>
+				</li>
+				<?cs /if ?>
+			</ul>
+		</div>
+	</form>
+</div>
+

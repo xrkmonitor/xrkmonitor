@@ -38,6 +38,39 @@ var g_dmtSingleChartHeight = 520;
 var g_all_charts = new Array();
 var g_dmtRedrawChartCountShowProc = 5;
 
+var g_PluginMargin = 10;
+function dmtSetPluginMarginInfo(tab)
+{
+	var iSub = DWZ.ui.sbar ? $("#sidebar").width() + 10 : 24;
+	var iContentW = $(window).width() - iSub - 20 - 45;
+	var xLeft = iContentW % 452;
+	var xCount = Math.trunc(iContentW/452);
+	var newM = Math.trunc(xLeft/xCount/2);
+
+	if(newM != g_PluginMargin) {
+		g_PluginMargin = newM;
+		if(typeof tab == 'undefined')
+			return true;
+
+		var ptype = '';
+		if(tab == "dmt_plugin_open")
+			ptype='#dp1_plugin_list';
+		else if(tab == "dmt_plugin_my")
+			ptype='#dp3_plugin_list';
+		else {
+			dmtJsBugReport('dmt.comm.js', 'dmtSetPluginMarginInfo', 'unknow plugin tab:'+tab);
+			return true;
+		}
+
+		$(ptype).children().each(function(){
+			$(this).css('margin', '10px '+g_PluginMargin+'px');
+		});
+		return true;
+	}
+	return false;
+}
+
+
 // 判断浏览器类型是否支持
 function dmtIsExplorerSupport()
 {
