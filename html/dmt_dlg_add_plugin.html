@@ -93,7 +93,7 @@ $(document).ready(function(){
 				return;
 
 			fhtml += "<tr>";
-			fhtml += "<td align='left' style='width:50px' valign='top'>" +  $(this).attr('attrid') + "</td>";
+			fhtml += "<td align='left' style='width:50px' valign='top'>0</td>";
 			fhtml += "<td align='left' style='width:50px' valign='top'>" +  this.value + "</td>";
 			fhtml += "<td align='left' valign='top' style='width:200px'>" + $(this).attr('myname') + "</td>";
 			fhtml += "<td align='left' valign='top' style='width:200px'>" + $(this).attr('mydesc') + "</td>";
@@ -219,8 +219,8 @@ $(document).ready(function(){
 	$('#ddap_plugin_auth').val(dp_sel_plugin.auth);
 	if(dp_sel_plugin.open_src == 0)
 		$('#ddap_src_url_show').css('display', 'none');
-	//if(dp_sel_plugin.log_config)
-	//	$('#ddap_log_check').attr('checked', true).attr('disabled', true);
+	if(dp_sel_plugin.log_config)
+		$('#ddap_log_check').attr('checked', true).attr('disabled', true);
 
 	$("#ddap_open_src option").each(function() {
 		if(this.value == dp_sel_plugin.open_src) {
@@ -280,9 +280,8 @@ $(document).ready(function(){
 
 function ddapGetPluginPbInfo()
 {
-	var requrl = "<?cs var:config.cgipath?>mt_slog?action=get_plugin_pb_info";
+	var requrl = "<?cs var:config.xrkmonitor_url?>/cgi-bin/mt_slog_open?action=open_get_plugin_pb_info";
 	requrl += "&plugin_id=<?cs var:config.plugin_id ?>";
-	requrl += "&plugin_pre=<?cs var:config.plugin_pre?>";
 	$.ajax({
 		type: "get",
 		url: requrl,
@@ -294,16 +293,6 @@ function ddapGetPluginPbInfo()
 		success: function(js){
 			if(dmtFirstDealAjaxResponse(js))
 				return;
-
-			if(js.has_pb_info == 0) {
-				$('#ddap_up_file_info').attr(
-					'src', "<?cs var:config.cgipath ?>mt_slog_attr?action=add_plugin_multi_attr_tip");
-				return;
-			}
-
-			if(js.b_add_log_module) {
-				$('#ddap_log_check').attr('checked', true).attr('disabled', true);
-			}
 
 			var attrtype = $('#ddap_attr_types');
 			if(typeof js.attr_types != undefined && js.attr_types != null) {
@@ -340,7 +329,7 @@ function ddapGetPluginPbInfo()
 
 				for(var i=js.attrs.length-1; i >= 0; i--) {
 					fhtml += "<tr>"; 
-					fhtml += "<td align='left' valign='top'>"+js.attrs[i].attr_id+"</td>";
+					fhtml += "<td align='left' valign='top'>0</td>";
 					fhtml += "<td align='left' valign='top'>"+js.attrs[i].plug_attr_id+"</td>";
 					fhtml += "<td align='left' valign='top'>"+js.attrs[i].plug_attr_type_id+"</td>";
 					fhtml += "<td align='left' valign='top'>"+js.attrs[i].attr_data_type+"</td>";
@@ -400,11 +389,6 @@ function ddapGetPluginPbInfo()
 						$(this).addClass("ddapFormItemSel");
 					});
 				});
-			}
-
-			if(fhtml == "") {
-				$('#ddap_up_file_info').attr(
-					'src', "<?cs var:config.cgipath ?>mt_slog_attr?action=add_plugin_multi_attr_tip");
 			}
 
 			if(typeof js.plus_url != undefined && js.plus_url != '') {
