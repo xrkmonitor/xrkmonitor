@@ -30,6 +30,11 @@
 			
 			var index = hash.length - 1;
 			$(this).bind('contextmenu', function(e) {
+
+				// add by ysy -- 2019-12-25
+				if(typeof op.callback == 'function')
+				    op.callback($(this), op);
+
 				display(index, this, e, op);
 				return false;
 			});

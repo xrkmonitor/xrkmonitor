@@ -2,7 +2,7 @@
 <_AJAX_>
 
 <_PAGE_ id="mypluginCM"><![CDATA[
-<ul id="mypluginCM">
+<ul id="mypluginCMct">
 	<li rel="modify">修改</li>
 	<li rel="delete">删除</li>
 	<li rel="downpb">下载pb文件</li>
@@ -13,12 +13,21 @@
 </ul>
 ]]></_PAGE_>
 
-<_PAGE_ id="mypluginOpen"><![CDATA[
-<ul id="mypluginCM">
+<_PAGE_ id="mypluginOpenIns"><![CDATA[
+<ul id="mypluginCMIns">
 	<li rel="showinfo">查看</li>
+	<li rel="make_file">重新生成文件</li>
+	<li rel="update">更新插件</li>
 	<li rel="downpb">下载pb文件</li>
 	<li rel="downconf">下载配置文件</li>
 	<li rel="downall">下载完整包</li>
+</ul>
+]]></_PAGE_>
+
+<_PAGE_ id="mypluginOpenUnIns"><![CDATA[
+<ul id="mypluginCMUnIns">
+	<li rel="showinfo">查看</li>
+	<li rel="install">安装插件</li>
 </ul>
 ]]></_PAGE_>
 
