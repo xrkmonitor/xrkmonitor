@@ -2495,6 +2495,44 @@ static int DealListPlugin(CGI *cgi, const char *ptype="open")
 	hdf_set_value(cgi->hdf, "config.xrkmonitor_url", stConfig.szXrkmonitorSiteAddr);
 	hdf_set_value(stConfig.cgi->hdf, "config.plugin_pre", "dpopen");
 	hdf_set_valuef(stConfig.cgi->hdf, "config.navTabId=dmt_plugin_%s", ptype);
+
+	char sSqlBuf[128] = {0};
+	Query qu(*stConfig.db);
+	int iCount = 0;
+
+	// 本地已安装的公共插件信息
+	if(!strcmp(ptype, "open")) {
+		Json js;
+		sprintf(sSqlBuf, 
+			"select * from mt_plugin where xrk_global=1 and xrk_status=%d", RECORD_STATUS_USE);
+		qu.get_result(sSqlBuf);
+		if(qu.num_rows() > 0) 
+		{
+			while(qu.fetch_row() != NULL)
+			{
+				Json plugin;
+				plugin["plugin_id"] = qu.getuval("plugin_id");
+				plugin["open_plugin_id"] = qu.getuval("open_plugin_id");
+				plugin["plugin_name"] = qu.getstr("plugin_name");
+				plugin["desc"] = qu.getstr("plugin_desc");
+				plugin["ver"] = qu.getstr("plugin_cur_ver");
+				plugin["auth"] = qu.getstr("plugin_auth");
+				plugin["create_time"] = uitodate(qu.getuval("create_time"));
+				plugin["update_time"] = qu.getstr("update_time");
+				plugin["open_src"] = qu.getval("open_src");
+				plugin["set_method"] = qu.getval("set_method");
+				plugin["dev_language"] = qu.getstr("dev_language");
+				plugin["dest_os"] = qu.getstr("dest_os");
+				plugin["pic"] = qu.getstr("plugin_pic");
+				plugin["log_config"] = qu.getstr("log_config");
+				js["list"].Add(plugin);
+				iCount++;
+			}
+		}
+		js["count"] = iCount;
+		qu.free_result();
+		hdf_set_value(cgi->hdf, "config.local_open_list", js.ToString().c_str());
+	}
 	return 0;
 }
 
