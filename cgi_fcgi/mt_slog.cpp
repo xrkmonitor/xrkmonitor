@@ -83,6 +83,7 @@ static const char *s_JsonRequest [] = {
 	"refresh_log_info",
 	"send_test_log",
 	"refresh_main_info",
+	"install_open_plugin",
 	NULL
 };
 
@@ -2536,6 +2537,97 @@ static int DealListPlugin(CGI *cgi, const char *ptype="open")
 	return 0;
 }
 
+class CTransSavePlugin
+{
+    public:
+        CTransSavePlugin(Query &qu, const int &iRet):m_qu(qu), m_iRet(iRet) { }
+        ~CTransSavePlugin() {
+            if(m_iRet == 0)
+                m_qu.execute("COMMIT");
+            else 
+                m_qu.execute("ROLLBACK");
+        }    
+    private:
+        Query &m_qu;
+        const int &m_iRet;
+};
+
+static int DealInstallPlugin(CGI *cgi)
+{
+	const char *pinfo = hdf_get_value(cgi->hdf, "Query.plugin", NULL);
+	if(pinfo == NULL) {
+		REQERR_LOG("invalid parameter");
+		return SLOG_ERROR_LINE;
+	}
+
+	size_t iParseIdx = 0;
+	size_t iReadLen = strlen(pinfo);
+	Json js_plugin;
+	js_plugin.Parse(pinfo, iReadLen);
+	if(iParseIdx != iReadLen) {
+		WARN_LOG("parse json content, size:%u!=%u", (uint32_t)iParseIdx, (uint32_t)iReadLen);
+	}
+
+	const char *pname = js_plugin["plus_name"];
+	if(strlen(pname) < 6 || strlen(pname) > 28) {
+	    REQERR_LOG("invalid plugin name length:%d (6-28)", (int)strlen(pname));
+	    stConfig.pErrMsg = CGI_REQERR;
+	    return SLOG_ERROR_LINE;
+	}
+	
+	const char *pdesc = js_plugin["plus_desc"];
+	if(strlen(pdesc) < 1 || strlen(pdesc) > 362) {
+	    REQERR_LOG("invalid plugin desc length:%d (1-362)", (int)strlen(pdesc));
+	    stConfig.pErrMsg = CGI_REQERR;
+	    return SLOG_ERROR_LINE;
+	}
+	
+	std::string strSql;
+	Query & qu = *(stConfig.qu);
+	int iIsSqlFailed = -1;
+	if(!qu.execute("START TRANSACTION"))
+	    return SLOG_ERROR_LINE;
+	CTransSavePlugin sMysqlTrans(qu, iIsSqlFailed);
+
+	IM_SQL_PARA* ppara = NULL;
+	InitParameter(&ppara);
+	AddParameter(&ppara, "plugin_desc", pdesc, NULL);
+	AddParameter(&ppara, "plugin_name", pname, NULL);
+	AddParameter(&ppara, "plugin_cur_ver", (const char*)(js_plugin["plus_version"]), NULL);
+	AddParameter(&ppara, "plugin_pic", (const char*)(js_plugin["plugin_pic"]), NULL);
+	AddParameter(&ppara, "dev_language", (const char*)(js_plugin["dev_language"]), NULL);
+	AddParameter(&ppara, "open_src", (bool)(js_plugin["b_open_source"]), "DB_CAL");
+	AddParameter(&ppara, "set_method", (int)(js_plugin["set_method"]), "DB_CAL");
+	AddParameter(&ppara, "dest_os", (const char*)(js_plugin["run_os"]), NULL);
+	AddParameter(&ppara, "log_config", (int)(js_plugin["b_add_log_module"]), "DB_CAL");
+	AddParameter(&ppara, "plugin_src_url", (const char*)(js_plugin["plus_url"]), NULL);
+
+	const char *pauth = js_plugin["plugin_auth"];
+	AddParameter(&ppara, "create_time", stConfig.dwCurTime, "DB_CAL");
+	AddParameter(&ppara, "update_time", uitodate(stConfig.dwCurTime), NULL);
+	AddParameter(&ppara, "plugin_auth", pauth, NULL);
+	AddParameter(&ppara, "xrk_global", (int)1, NULL);
+	AddParameter(&ppara, "open_plugin_id", (int)(js_plugin["plugin_id"]), NULL);
+
+	strSql = "insert into mt_plugin";
+	JoinParameter_Insert(&strSql, qu.GetMysql(), ppara);
+
+	Json js;
+	js["ret"] = 0;
+	STRING str;
+	string_init(&str);
+	if((stConfig.err=string_set(&str, js.ToString().c_str())) != STATUS_OK
+		|| (stConfig.err=cgi_output(stConfig.cgi, &str)) != STATUS_OK)
+	{
+		string_clear(&str);
+		stConfig.pErrMsg = CGI_ERR_SERVER;
+		return SLOG_ERROR_LINE;
+	}
+	string_clear(&str);
+	DEBUG_LOG("install open plugin success");
+	return 0;
+}
+
 static int DealShowPlugin(CGI *cgi)
 {
 	char *pshow_pre = hdf_get_value(cgi->hdf, "Query.plugin_pre", NULL);
@@ -2705,7 +2797,8 @@ int main(int argc, char **argv, char **envp)
 			iRet = DealListPlugin(stConfig.cgi);
 		else if(!strcmp(pAction, "show_mt_plugin"))
 			iRet = DealShowPlugin(stConfig.cgi);
-
+		else if(!strcmp(pAction, "install_open_plugin"))
+			iRet = DealInstallPlugin(stConfig.cgi);
 		else {
 			ERR_LOG("unknow action:%s", pAction);
 			iRet = -1;
