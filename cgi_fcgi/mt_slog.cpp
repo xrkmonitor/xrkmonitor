@@ -2552,6 +2552,75 @@ class CTransSavePlugin
         const int &m_iRet;
 };
 
+static int AddPluginLogModule(Query &qu, const char *pname, const char *pdesc, Json & js_plugin)
+{
+	FloginInfo *pUserInfo = stConfig.stUser.puser_info;
+	IM_SQL_PARA* ppara = NULL;
+
+	InitParameter(&ppara);
+	if(pdesc != NULL)
+		AddParameter(&ppara, "module_desc", pdesc, NULL);
+	if(pname != NULL)
+		AddParameter(&ppara, "module_name", pname, NULL);
+	std::string strSql;
+	AddParameter(&ppara, "user_mod_id", pUserInfo->iUserId, "DB_CAL");
+	AddParameter(&ppara, "user_mod", pUserInfo->szUserName, NULL);
+	AddParameter(&ppara, "create_time", uitodate(stConfig.dwCurTime), NULL);
+	AddParameter(&ppara, "mod_time", uitodate(stConfig.dwCurTime), NULL);
+	AddParameter(&ppara, "user_add", pUserInfo->szUserName, NULL);
+	AddParameter(&ppara, "user_add_id", pUserInfo->iUserId, "DB_CAL");
+	AddParameter(&ppara, "app_id", PLUGIN_PARENT_APP_ID, "DB_CAL");
+
+	strSql = "insert into mt_module_info ";
+	JoinParameter_Insert(&strSql, qu.GetMysql(), ppara);
+
+	ReleaseParameter(&ppara);
+	if(!qu.execute(strSql))
+	{
+		ERR_LOG("execute sql:%s failed, msg:%s", strSql.c_str(), qu.GetError().c_str());
+		return SLOG_ERROR_LINE;
+	}
+
+	js_plugin["module_id"] = (int)(qu.insert_id());
+	DEBUG_LOG("add plugin log module:%d", (int)qu.insert_id());
+	return 0;
+}
+
+static int AddPluginLogConfig(Query &qu, const char *pname, const char *pdesc, Json & js_plugin)
+{
+	FloginInfo *pUserInfo = stConfig.stUser.puser_info;
+	const int32_t iLogType = SLOG_LEVEL_INFO
+		|SLOG_LEVEL_WARNING|SLOG_LEVEL_REQERROR|SLOG_LEVEL_ERROR|SLOG_LEVEL_FATAL;
+	IM_SQL_PARA* ppara = NULL;
+	InitParameter(&ppara);
+	AddParameter(&ppara, "config_name", pname, NULL);
+	AddParameter(&ppara, "user_mod_id", pUserInfo->iUserId, "DB_CAL");
+	AddParameter(&ppara, "user_mod", pUserInfo->szUserName, NULL);
+
+	std::string strSql;
+	AddParameter(&ppara, "create_time", stConfig.dwCurTime, NULL);
+	AddParameter(&ppara, "update_time", uitodate(stConfig.dwCurTime), NULL);
+	AddParameter(&ppara, "user_add", pUserInfo->szUserName, NULL);
+	AddParameter(&ppara, "user_add_id", pUserInfo->iUserId, "DB_CAL");
+	AddParameter(&ppara, "config_desc", pdesc, NULL);
+	AddParameter(&ppara, "app_id", PLUGIN_PARENT_APP_ID, "DB_CAL");
+	AddParameter(&ppara, "module_id", (int)(js_plugin["module_id"]), "DB_CAL");
+	AddParameter(&ppara, "log_types", iLogType, "DB_CAL");
+
+	strSql = "insert into mt_log_config";
+	JoinParameter_Insert(&strSql, qu.GetMysql(), ppara);
+	ReleaseParameter(&ppara);
+	if(!qu.execute(strSql))
+	{
+		ERR_LOG("execute sql:%s failed, msg:%s", strSql.c_str(), qu.GetError().c_str());
+		return -1;
+	}
+
+	js_plugin["log_config_id"] = (int)(qu.insert_id());
+	DEBUG_LOG("add plugin log config:%d", (int)qu.insert_id());
+	return 0;
+}
+
 static int DealInstallPlugin(CGI *cgi)
 {
 	const char *pinfo = hdf_get_value(cgi->hdf, "Query.plugin", NULL);
@@ -2611,6 +2680,23 @@ static int DealInstallPlugin(CGI *cgi)
 
 	strSql = "insert into mt_plugin";
 	JoinParameter_Insert(&strSql, qu.GetMysql(), ppara);
+
+	ReleaseParameter(&ppara);
+	if(!qu.execute(strSql))
+	{
+		ERR_LOG("execute sql:%s failed, msg:%s", strSql.c_str(), qu.GetError().c_str());
+		stConfig.pErrMsg = CGI_ERR_SERVER;
+		return SLOG_ERROR_LINE;
+	}
+
+	if((int)(js_plugin["b_add_log_module"])) {
+		if(AddPluginLogModule(qu, pname, pdesc, js_plugin) < 0)
+			return SLOG_ERROR_LINE;
+		if(AddPluginLogConfig(qu, pname, pdesc, js_plugin) < 0)
+			return SLOG_ERROR_LINE;
+	}
+
+	iIsSqlFailed = 0;
 
 	Json js;
 	js["ret"] = 0;
