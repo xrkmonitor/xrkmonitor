@@ -329,6 +329,9 @@ function <?cs var:config.plugin_pre ?>SetpluginList()
 				accept:function(t, m) { 
 					return <?cs var:config.plugin_pre ?>IssueAccept(1, 0);
 				},
+				install:function(t, m) { 
+					return <?cs var:config.plugin_pre ?>InstallPlugin();
+				},
 				deny:function(t, m) { 
 					return <?cs var:config.plugin_pre ?>IssueAccept(0, 0);
 				}
@@ -342,6 +345,65 @@ function <?cs var:config.plugin_pre ?>AddPlugin()
 	var url = "<?cs var:config.cgipath?>mt_slog?action=add_mt_plugin&type=<?cs var:config.plugin_type ?>";
 	var op = $.parseJSON('{"mask":true,"maxable":false,"height":600,"width":920}'); 
 	$.pdialog.open(url, "<?cs var:config.plugin_pre ?>_dlg_add_sys_plugin", "添加监控插件", op); 
+}
+
+function <?cs var:config.plugin_pre ?>InstallPlugin()
+{
+	if(<?cs var:config.plugin_pre ?>_sel_plugin == null)
+	{
+		alertMsg.info("请先点击插件列表选择一个要安装的插件, 或者右键单击插件通过弹出菜单安装");
+		return;
+	}
+
+	var requrl = "<?cs var:config.xrkmonitor_url?>/cgi-bin/mt_slog_open?action=open_get_plugin_pb_info";
+	requrl += "&plugin_id=" + <?cs var:config.plugin_pre ?>_sel_plugin.plugin_id; 
+	$.ajax({
+		type: "get",
+		url: requrl,
+		dataType: 'json', 
+		global: false,
+		timeout: function(){
+			alertMsg.warn("请求超时");
+		},
+		success: function(js){
+			if(dmtFirstDealAjaxResponse(js))
+				return;
+			if(js.has_pb_info == 0) {
+				alertMsg.info("插件安装信息获取失败 !");
+				return;
+			}
+			<?cs var:config.plugin_pre ?>InstallPluginPb(js, <?cs var:config.plugin_pre ?>_sel_plugin);
+		}
+	});
+}
+
+function <?cs var:config.plugin_pre ?>InstallPluginPb(pbJs, psel)
+{
+	var in_url = "<?cs var:config.cgipath?>mt_slog?action=install_open_plugin";
+	var plugin_info = JSON.stringify(pbJs);
+	plugin_info.plugin_pic = psel.pic;
+
+	$.ajax({
+		type: "post",
+		url: in_url,
+		data: { plugin: JSON.stringify(pbJs) },
+		dataType: 'json', 
+		global: false,
+		timeout: function(){
+			alertMsg.warn("请求超时");
+		},
+		success: function(js){
+			if(dmtFirstDealAjaxResponse(js))
+				return;
+			if(js.ret != 0) {
+				alertMsg.info("插件安装失败: " + js.msg);
+				return;
+			}
+			else {
+				alertMsg.correct("插件安装成功, 插件部署方法请查看帮助文档");
+			}
+		}
+	});
 }
 
 function <?cs var:config.plugin_pre ?>IssuePlugin()
@@ -616,7 +678,7 @@ $(document).ready(function(){
 				<li><a class="edit" href="#" onclick="return <?cs var:config.plugin_pre ?>OnMakeFile();"><span>重新生成文件</span></a></li>
 				<li><a class="edit" href="#" onclick="return <?cs var:config.plugin_pre ?>IssuePlugin();"><span>发布到市场</span></a></li>
 				<li class="line">line</li>
-				<li><a class="edit" href="#" onclick="return <?cs var:config.plugin_pre ?>IssuePlugin();"><span>安装插件</span></a></li>
+				<li><a class="edit" href="#" onclick="return <?cs var:config.plugin_pre ?>InstallPlugin();"><span>安装插件</span></a></li>
 				<?cs /if ?>
 
 				<li><a class="edit" href="#" onclick="return <?cs var:config.plugin_pre ?>IssueShowInfo();"><span>查看</span></a></li>
@@ -627,7 +689,7 @@ $(document).ready(function(){
 				<li class="line">line</li>
 
 				<?cs if:config.navTabId == "dmt_plugin_open" ?>
-				<li><a class="edit" href="#" onclick="return <?cs var:config.plugin_pre ?>IssuePlugin();"><span>安装插件</span></a></li>
+				<li><a class="edit" href="#" onclick="return <?cs var:config.plugin_pre ?>InstallPlugin();"><span>安装插件</span></a></li>
 				<?cs /if ?>
 			</ul>
 		</div>
