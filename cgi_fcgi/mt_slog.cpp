@@ -2505,7 +2505,7 @@ static int DealListPlugin(CGI *cgi, const char *ptype="open")
 	if(!strcmp(ptype, "open")) {
 		Json js;
 		sprintf(sSqlBuf, 
-			"select * from mt_plugin where xrk_global=1 and xrk_status=%d", RECORD_STATUS_USE);
+			"select * from mt_plugin where xrk_status=%d", RECORD_STATUS_USE);
 		qu.get_result(sSqlBuf);
 		if(qu.num_rows() > 0) 
 		{
@@ -2630,6 +2630,21 @@ static int AddPluginLogConfig(Query &qu, Json & js_plugin)
 static int AddPlugin(Query &qu, Json &js_plugin)
 {
 	const char *pname = js_plugin["plus_name"];
+
+    std::ostringstream sql; 
+	sql << "select plugin_id from mt_plugin where open_plugin_id=" 
+		<< (int)(js_plugin["plugin_id"]) << ";";
+	qu.get_result(sql.str().c_str());
+	if(qu.num_rows() > 0 && qu.fetch_row()) 
+	{
+		WARN_LOG("already install plugin:%s(%d), local plugin id:%d",
+			pname, (int)(js_plugin["plugin_id"]), qu.getval("plugin_id"));
+		qu.free_result();
+		stConfig.iErrorCode = 301;
+		return SLOG_ERROR_LINE;
+	}
+	qu.free_result();
+
 	if(strlen(pname) < 6 || strlen(pname) > 28) {
 	    REQERR_LOG("invalid plugin name length:%d (6-28)", (int)strlen(pname));
 	    stConfig.pErrMsg = CGI_REQERR;
@@ -2661,7 +2676,6 @@ static int AddPlugin(Query &qu, Json &js_plugin)
 	AddParameter(&ppara, "create_time", stConfig.dwCurTime, "DB_CAL");
 	AddParameter(&ppara, "update_time", uitodate(stConfig.dwCurTime), NULL);
 	AddParameter(&ppara, "plugin_auth", pauth, NULL);
-	AddParameter(&ppara, "xrk_global", (int)1, NULL);
 	AddParameter(&ppara, "open_plugin_id", (int)(js_plugin["plugin_id"]), NULL);
 
 	strSql = "insert into mt_plugin";
@@ -2709,6 +2723,11 @@ static int AddPluginParentAttrTypes(Query &qu, Json &js_plugin)
 	}
 	DEBUG_LOG("add plugin:%s root attr type:%d", (const char *)(js_plugin["plus_name"]), (int)qu.insert_id());
 	js_plugin["plugin_root_attr_type_id"] = (int)(qu.insert_id());
+	return 0;
+}
+
+static int AddPluginCfg(Query &qu, Json &js_cfg, Json &js_plugin)
+{
 	return 0;
 }
 
@@ -2810,7 +2829,7 @@ static int DealInstallPlugin(CGI *cgi)
 	size_t iParseIdx = 0;
 	size_t iReadLen = strlen(pinfo);
 	Json js_plugin;
-	js_plugin.Parse(pinfo, iReadLen);
+	js_plugin.Parse(pinfo, iParseIdx);
 	if(iParseIdx != iReadLen) {
 		WARN_LOG("parse json content, size:%u!=%u", (uint32_t)iParseIdx, (uint32_t)iReadLen);
 	}
@@ -2853,9 +2872,19 @@ static int DealInstallPlugin(CGI *cgi)
 	Json::json_list_t & jslist_cfg = js_plugin["cfgs"].GetArray();
 	Json::json_list_t::iterator it_cfg = jslist_cfg.begin();
 	while(it_cfg != jslist_cfg.end()) {
-
+		if(AddPluginCfg(qu, *it_cfg, js_plugin) < 0)
+			return SLOG_ERROR_LINE;
+		it_cfg++;
 	}
 
+    std::ostringstream sql; 
+	sql << "update mt_plugin set pb_info=\'" <<  js_plugin.ToString() << "\' where open_plugin_id="
+		<< (int)(js_plugin["plugin_id"]) << ";";
+	if(!qu.execute(sql.str().c_str()))
+	{
+		stConfig.pErrMsg = CGI_ERR_SERVER;
+		return SLOG_ERROR_LINE;
+	}
 	iIsSqlFailed = 0;
 
 	Json js;
@@ -2870,7 +2899,7 @@ static int DealInstallPlugin(CGI *cgi)
 		return SLOG_ERROR_LINE;
 	}
 	string_clear(&str);
-	DEBUG_LOG("install open plugin success");
+	DEBUG_LOG("install open plugin:%s success", (const char*)(js_plugin["plus_name"]));
 	return 0;
 }
 
