@@ -372,6 +372,12 @@ function <?cs var:config.plugin_pre ?>InstallPlugin()
 				alertMsg.info("插件安装信息获取失败 !");
 				return;
 			}
+			js.plugin_id = <?cs var:config.plugin_pre ?>_sel_plugin.plugin_id;
+			if(<?cs var:config.plugin_pre ?>_sel_plugin.pic != "" 
+				&& <?cs var:config.plugin_pre ?>_sel_plugin.pic.pic != null)
+			{
+				js.plugin_pic = <?cs var:config.plugin_pre ?>_sel_plugin.pic;
+			}
 			<?cs var:config.plugin_pre ?>InstallPluginPb(js, <?cs var:config.plugin_pre ?>_sel_plugin);
 		}
 	});
@@ -381,7 +387,6 @@ function <?cs var:config.plugin_pre ?>InstallPluginPb(pbJs, psel)
 {
 	var in_url = "<?cs var:config.cgipath?>mt_slog?action=install_open_plugin";
 	var plugin_info = JSON.stringify(pbJs);
-	plugin_info.plugin_pic = psel.pic;
 
 	$.ajax({
 		type: "post",
