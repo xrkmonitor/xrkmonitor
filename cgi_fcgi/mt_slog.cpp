@@ -2552,10 +2552,13 @@ class CTransSavePlugin
         const int &m_iRet;
 };
 
-static int AddPluginLogModule(Query &qu, const char *pname, const char *pdesc, Json & js_plugin)
+static int AddPluginLogModule(Query &qu, Json & js_plugin)
 {
 	FloginInfo *pUserInfo = stConfig.stUser.puser_info;
 	IM_SQL_PARA* ppara = NULL;
+
+	const char *pname = js_plugin["plus_name"];
+	const char *pdesc = js_plugin["plus_desc"];
 
 	InitParameter(&ppara);
 	if(pdesc != NULL)
@@ -2582,15 +2585,18 @@ static int AddPluginLogModule(Query &qu, const char *pname, const char *pdesc, J
 	}
 
 	js_plugin["module_id"] = (int)(qu.insert_id());
-	DEBUG_LOG("add plugin log module:%d", (int)qu.insert_id());
+	DEBUG_LOG("add plugin:%s, log module:%d", pname, (int)qu.insert_id());
 	return 0;
 }
 
-static int AddPluginLogConfig(Query &qu, const char *pname, const char *pdesc, Json & js_plugin)
+static int AddPluginLogConfig(Query &qu, Json & js_plugin)
 {
 	FloginInfo *pUserInfo = stConfig.stUser.puser_info;
 	const int32_t iLogType = SLOG_LEVEL_INFO
 		|SLOG_LEVEL_WARNING|SLOG_LEVEL_REQERROR|SLOG_LEVEL_ERROR|SLOG_LEVEL_FATAL;
+	const char *pname = js_plugin["plus_name"];
+	const char *pdesc = js_plugin["plus_desc"];
+
 	IM_SQL_PARA* ppara = NULL;
 	InitParameter(&ppara);
 	AddParameter(&ppara, "config_name", pname, NULL);
@@ -2617,26 +2623,12 @@ static int AddPluginLogConfig(Query &qu, const char *pname, const char *pdesc, J
 	}
 
 	js_plugin["log_config_id"] = (int)(qu.insert_id());
-	DEBUG_LOG("add plugin log config:%d", (int)qu.insert_id());
+	DEBUG_LOG("add plugin:%s, log config:%d", pname, (int)qu.insert_id());
 	return 0;
 }
 
-static int DealInstallPlugin(CGI *cgi)
+static int AddPlugin(Query &qu, Json &js_plugin)
 {
-	const char *pinfo = hdf_get_value(cgi->hdf, "Query.plugin", NULL);
-	if(pinfo == NULL) {
-		REQERR_LOG("invalid parameter");
-		return SLOG_ERROR_LINE;
-	}
-
-	size_t iParseIdx = 0;
-	size_t iReadLen = strlen(pinfo);
-	Json js_plugin;
-	js_plugin.Parse(pinfo, iReadLen);
-	if(iParseIdx != iReadLen) {
-		WARN_LOG("parse json content, size:%u!=%u", (uint32_t)iParseIdx, (uint32_t)iReadLen);
-	}
-
 	const char *pname = js_plugin["plus_name"];
 	if(strlen(pname) < 6 || strlen(pname) > 28) {
 	    REQERR_LOG("invalid plugin name length:%d (6-28)", (int)strlen(pname));
@@ -2652,12 +2644,6 @@ static int DealInstallPlugin(CGI *cgi)
 	}
 	
 	std::string strSql;
-	Query & qu = *(stConfig.qu);
-	int iIsSqlFailed = -1;
-	if(!qu.execute("START TRANSACTION"))
-	    return SLOG_ERROR_LINE;
-	CTransSavePlugin sMysqlTrans(qu, iIsSqlFailed);
-
 	IM_SQL_PARA* ppara = NULL;
 	InitParameter(&ppara);
 	AddParameter(&ppara, "plugin_desc", pdesc, NULL);
@@ -2688,12 +2674,186 @@ static int DealInstallPlugin(CGI *cgi)
 		stConfig.pErrMsg = CGI_ERR_SERVER;
 		return SLOG_ERROR_LINE;
 	}
+	js_plugin["local_plugin_id"] = (int)(qu.insert_id());
+
+	DEBUG_LOG("add plugin:%s to db, local id:%d, open id:%d",
+		pname, (int)(js_plugin["local_plugin_id"]), (int)(js_plugin["plugin_id"]));
+	return 0;
+}
+
+static int AddPluginParentAttrTypes(Query &qu, Json &js_plugin)
+{
+	FloginInfo *pUserInfo = stConfig.stUser.puser_info;
+	IM_SQL_PARA* ppara = NULL;
+
+	std::string strSql;
+	const char *pcurTime = uitodate(stConfig.dwCurTime);
+	InitParameter(&ppara);
+	AddParameter(&ppara, "parent_type", PLUGIN_PARENT_ATTR_TYPE, "DB_CAL");
+	AddParameter(&ppara, "xrk_name", (const char *)(js_plugin["plus_name"]), NULL);
+	AddParameter(&ppara, "type_pos", "1.1.1", NULL);
+	AddParameter(&ppara, "attr_desc", (const char *)(js_plugin["plus_desc"]), NULL);
+	AddParameter(&ppara, "create_user", stConfig.stUser.puser, NULL);
+	AddParameter(&ppara, "mod_user", stConfig.stUser.puser, NULL);
+	AddParameter(&ppara, "create_time", pcurTime, NULL);
+	AddParameter(&ppara, "update_time", pcurTime, NULL);
+	AddParameter(&ppara, "user_add_id", pUserInfo->iUserId, "DB_CAL");
+	AddParameter(&ppara, "user_mod_id", pUserInfo->iUserId, "DB_CAL");
+	strSql = "insert into mt_attr_type";
+	JoinParameter_Insert(&strSql, qu.GetMysql(), ppara);
+	ReleaseParameter(&ppara);
+	if(!qu.execute(strSql))
+	{
+		ERR_LOG("execute sql:%s failed, msg:%s", strSql.c_str(), qu.GetError().c_str());
+		return SLOG_ERROR_LINE;
+	}
+	DEBUG_LOG("add plugin:%s root attr type:%d", (const char *)(js_plugin["plus_name"]), (int)qu.insert_id());
+	js_plugin["plugin_root_attr_type_id"] = (int)(qu.insert_id());
+	return 0;
+}
+
+static int AddPluginAttr(Query &qu, Json &js_attr, Json &js_plugin)
+{
+	FloginInfo *pUserInfo = stConfig.stUser.puser_info;
+	Json::json_list_t & jslist_attrtype = js_plugin["attr_types"].GetArray();
+	Json::json_list_t::iterator it_attrtype = jslist_attrtype.begin();
+	int iAttrType = 0;
+	while(it_attrtype != jslist_attrtype.end()) {
+		const Json &js = *it_attrtype;
+		if((int)(js["plug_attr_type_id"]) == (int)(js_attr["plug_attr_type_id"])) {
+			iAttrType = (int)(js["attr_type_id"]);
+			break;
+		}
+		it_attrtype++;
+	}
+
+	if(iAttrType == 0 || it_attrtype == jslist_attrtype.end()) {
+		WARN_LOG("invalid plugin:%s,  not find plug_attr_type_id:%d", 
+			(const char*)(js_plugin["plus_name"]), (int)(js_attr["plug_attr_type_id"]));
+		return SLOG_ERROR_LINE;
+	}
+
+	IM_SQL_PARA* ppara = NULL;
+	InitParameter(&ppara);
+	std::string strSql;
+	char *pcurTime = uitodate(stConfig.dwCurTime);
+	AddParameter(&ppara, "attr_name", (const char*)(js_attr["attr_name"]), NULL);
+	if(js_attr.HasValue("attr_desc"))
+		AddParameter(&ppara, "attr_desc", (const char*)(js_attr["attr_desc"]), NULL);
+	AddParameter(&ppara, "user_add", stConfig.stUser.puser, NULL);
+	AddParameter(&ppara, "data_type", (int)(js_attr["attr_data_type"]), "DB_CAL");
+	AddParameter(&ppara, "attr_type", iAttrType, "DB_CAL");
+	AddParameter(&ppara, "user_add_id", pUserInfo->iUserId, "DB_CAL");
+	AddParameter(&ppara, "user_mod_id", pUserInfo->iUserId, "DB_CAL");
+	AddParameter(&ppara, "create_time", pcurTime, NULL);
+	AddParameter(&ppara, "update_time", pcurTime, NULL);
+	strSql = "insert into mt_attr";
+	JoinParameter_Insert(&strSql, qu.GetMysql(), ppara);
+
+	ReleaseParameter(&ppara);
+	if(!qu.execute(strSql))
+	{
+		ERR_LOG("execute sql:%s failed, msg:%s", strSql.c_str(), qu.GetError().c_str());
+		return SLOG_ERROR_LINE;
+	}
+
+	DEBUG_LOG("add plugin:%s attr :%d(%s)", (const char*)(js_plugin["plus_name"]),
+		(int)qu.insert_id(), (const char*)(js_attr["attr_name"]));
+	js_attr["attr_id"] = (int)(qu.insert_id());
+	return 0;
+}
+
+static int AddPluginAttrTypes(Query &qu, Json &js_attr_type, Json &js_plugin)
+{
+	FloginInfo *pUserInfo = stConfig.stUser.puser_info;
+
+	IM_SQL_PARA* ppara = NULL;
+	std::string strSql;
+	const char *pcurTime = uitodate(stConfig.dwCurTime);
+
+	InitParameter(&ppara);
+	AddParameter(&ppara, "xrk_name", (const char *)(js_attr_type["attr_type_name"]), NULL);
+	if(js_attr_type.HasValue("attr_type_desc"))
+		AddParameter(&ppara, 
+			"attr_desc", (const char *)(js_attr_type["attr_type_desc"]), NULL);
+	AddParameter(&ppara, "parent_type", (int)(js_plugin["plugin_root_attr_type_id"]), "DB_CAL");
+	AddParameter(&ppara, "type_pos", "1.1.1.1", NULL);
+	AddParameter(&ppara, "create_user", stConfig.stUser.puser, NULL);
+	AddParameter(&ppara, "mod_user", stConfig.stUser.puser, NULL);
+	AddParameter(&ppara, "create_time", pcurTime, NULL);
+	AddParameter(&ppara, "update_time", pcurTime, NULL);
+	AddParameter(&ppara, "user_add_id", pUserInfo->iUserId, "DB_CAL");
+	AddParameter(&ppara, "user_mod_id", pUserInfo->iUserId, "DB_CAL");
+	strSql = "insert into mt_attr_type";
+	JoinParameter_Insert(&strSql, qu.GetMysql(), ppara);
+
+	ReleaseParameter(&ppara);
+	if(!qu.execute(strSql))
+	{
+		ERR_LOG("execute sql:%s failed, msg:%s", strSql.c_str(), qu.GetError().c_str());
+		return SLOG_ERROR_LINE;
+	}
+	DEBUG_LOG("add plugin:%s, attr type:%d(%s)", (const char*)(js_plugin["plus_name"]),
+		(int)qu.insert_id(), (const char *)(js_attr_type["attr_type_name"]));
+	js_attr_type["attr_type_id"] = (int)(qu.insert_id());
+	return 0;
+}
+
+static int DealInstallPlugin(CGI *cgi)
+{
+	const char *pinfo = hdf_get_value(cgi->hdf, "Query.plugin", NULL);
+	if(pinfo == NULL) {
+		REQERR_LOG("invalid parameter");
+		return SLOG_ERROR_LINE;
+	}
+
+	size_t iParseIdx = 0;
+	size_t iReadLen = strlen(pinfo);
+	Json js_plugin;
+	js_plugin.Parse(pinfo, iReadLen);
+	if(iParseIdx != iReadLen) {
+		WARN_LOG("parse json content, size:%u!=%u", (uint32_t)iParseIdx, (uint32_t)iReadLen);
+	}
+
+	Query & qu = *(stConfig.qu);
+	int iIsSqlFailed = -1;
+	if(!qu.execute("START TRANSACTION"))
+	    return SLOG_ERROR_LINE;
+	CTransSavePlugin sMysqlTrans(qu, iIsSqlFailed);
+
+	if(AddPlugin(qu, js_plugin) < 0)
+		return SLOG_ERROR_LINE;
 
 	if((int)(js_plugin["b_add_log_module"])) {
-		if(AddPluginLogModule(qu, pname, pdesc, js_plugin) < 0)
+		if(AddPluginLogModule(qu, js_plugin) < 0)
 			return SLOG_ERROR_LINE;
-		if(AddPluginLogConfig(qu, pname, pdesc, js_plugin) < 0)
+		if(AddPluginLogConfig(qu, js_plugin) < 0)
 			return SLOG_ERROR_LINE;
+	}
+
+	if(AddPluginParentAttrTypes(qu, js_plugin) < 0) 
+		return SLOG_ERROR_LINE;
+
+	Json::json_list_t & jslist_attrtype = js_plugin["attr_types"].GetArray();
+	Json::json_list_t::iterator it_attrtype = jslist_attrtype.begin();
+	while(it_attrtype != jslist_attrtype.end()) {
+		if(AddPluginAttrTypes(qu, *it_attrtype, js_plugin) < 0)
+			return SLOG_ERROR_LINE;
+		it_attrtype++;
+	}
+
+	Json::json_list_t & jslist_attr = js_plugin["attrs"].GetArray();
+	Json::json_list_t::iterator it_attr = jslist_attr.begin();
+	while(it_attr != jslist_attr.end()) {
+		if(AddPluginAttr(qu, *it_attr, js_plugin) < 0)
+			return SLOG_ERROR_LINE;
+		it_attr++;
+	}
+
+	Json::json_list_t & jslist_cfg = js_plugin["cfgs"].GetArray();
+	Json::json_list_t::iterator it_cfg = jslist_cfg.begin();
+	while(it_cfg != jslist_cfg.end()) {
+
 	}
 
 	iIsSqlFailed = 0;
@@ -2743,8 +2903,17 @@ int main(int argc, char **argv, char **envp)
 		return -1;
 	}
 
-	INFO_LOG("fcgi:%s argc:%d start pid:%u", stConfig.pszCgiName, argc, stConfig.pid);
+	if(!slog.GetAttrTypeInfo(PLUGIN_PARENT_ATTR_TYPE, NULL)) {
+		ERR_LOG("not find plugin parent attr type:%d", PLUGIN_PARENT_ATTR_TYPE);
+		return -2;
+	}
 
+	if(!slog.GetAppInfo(PLUGIN_PARENT_APP_ID)) {
+		ERR_LOG("not find plugin parent app:%d", PLUGIN_PARENT_APP_ID);
+		return -3;
+	}
+
+	INFO_LOG("fcgi:%s argc:%d start pid:%u", stConfig.pszCgiName, argc, stConfig.pid);
 	if(AfterCgiInit(stConfig) <= 0)
 		return SLOG_ERROR_LINE;
 
