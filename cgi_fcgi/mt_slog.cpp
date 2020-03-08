@@ -2512,8 +2512,8 @@ static int DealListPlugin(CGI *cgi, const char *ptype="open")
 			while(qu.fetch_row() != NULL)
 			{
 				Json plugin;
-				plugin["plugin_id"] = qu.getuval("plugin_id");
-				plugin["open_plugin_id"] = qu.getuval("open_plugin_id");
+				plugin["plugin_id"] = qu.getuval("open_plugin_id");
+				plugin["local_plugin_id"] = qu.getuval("plugin_id");
 				plugin["plugin_name"] = qu.getstr("plugin_name");
 				plugin["desc"] = qu.getstr("plugin_desc");
 				plugin["ver"] = qu.getstr("plugin_cur_ver");
@@ -2668,7 +2668,7 @@ static int AddPlugin(Query &qu, Json &js_plugin)
 	AddParameter(&ppara, "dev_language", (const char*)(js_plugin["dev_language"]), NULL);
 	AddParameter(&ppara, "open_src", (bool)(js_plugin["b_open_source"]), "DB_CAL");
 	AddParameter(&ppara, "set_method", (int)(js_plugin["set_method"]), "DB_CAL");
-	AddParameter(&ppara, "dest_os", (const char*)(js_plugin["run_os"]), NULL);
+	AddParameter(&ppara, "dest_os", (const char*)(js_plugin["dest_os"]), NULL);
 	AddParameter(&ppara, "log_config", (int)(js_plugin["b_add_log_module"]), "DB_CAL");
 	AddParameter(&ppara, "plugin_src_url", (const char*)(js_plugin["plus_url"]), NULL);
 
