@@ -143,7 +143,7 @@ function <?cs var:config.plugin_pre ?>_IsPluginInstall(plugin)
 		return -1;
 
 	for(var i=0; i < g_LocalOpenPluginList.list.length; i++) {
-		if(g_LocalOpenPluginList.list[i].open_plugin_id == plugin.plugin_id) {
+		if(g_LocalOpenPluginList.list[i].plugin_id == plugin.plugin_id) {
 			return i;
 		}
 	}
@@ -156,7 +156,7 @@ function <?cs var:config.plugin_pre ?>_GetPluginInstallStatus(plugin)
 		return "未安装";
 
 	for(var i=0; i < g_LocalOpenPluginList.list.length; i++) {
-		if(g_LocalOpenPluginList.list[i].open_plugin_id == plugin.plugin_id) {
+		if(g_LocalOpenPluginList.list[i].plugin_id == plugin.plugin_id) {
 			return "已安装";
 		}
 	}
@@ -181,16 +181,22 @@ function <?cs var:config.plugin_pre ?>_GetInstallPluginShowInfo(idx, plugin, loc
 
 	shtml += "<div style='float:left;'>";
 	shtml += "<div class='pluginName'>" + local_plugin.plugin_name + "</div>";
-	shtml += "<div class='pluginItem'>安装情况: 已安装(" + local_plugin.ver + ")</div>";
+	shtml += "<div class='pluginItem'>安装情况: <font color='blue'>已安装(" + local_plugin.ver + ")</font></div>";
 	shtml += "<div class='pluginItem'>开发语言: " + local_plugin.dev_language + "</div>";
 	shtml += "<div class='pluginItem'>运行平台: " + local_plugin.dest_os + "</div>";
 	var mt = '内置';
 	if(local_plugin.set_method != 0)
 		mt = '外置';
 	shtml += "<div class='pluginItem'>部署方式: " + mt + "</div>";
-	shtml += "<div class='pluginItem'>下载次数: <font color='red'>0</font></div>";
-	shtml += "<div class='pluginItem'>最新版本: " + plugin.ver + "</div>";
-	shtml += "<div class='pluginItem'>更新时间: " + local_plugin.update_time + "</div>";
+	shtml += "<div class='pluginItem'>下载次数: <font color='blue'>0</font></div>";
+	if(plugin.ver != local_plugin.ver) {
+		shtml += "<div class='pluginItem'>最新版本: <font color='red'>" + plugin.ver + "</font></div>";
+		shtml += "<div class='pluginItem'>最后更新时间: <font color='red'>" + local_plugin.update_time + "</font></div>";
+	}
+	else {
+		shtml += "<div class='pluginItem'>最新版本: " + plugin.ver + "</div>";
+		shtml += "<div class='pluginItem'>最后更新时间: " + local_plugin.update_time + "</div>";
+	}
 	shtml += "<div class='pluginItem'>插件描述: " + local_plugin.desc.replace(/&br/g, "\r\n") + "</div>";
 	shtml += "</div>";
 
@@ -228,7 +234,7 @@ function <?cs var:config.plugin_pre ?>_GetPluginShowInfo(idx, plugin)
 	if(plugin.set_method != 0)
 		mt = '外置';
 	shtml += "<div class='pluginItem'>部署方式: " + mt + "</div>";
-	shtml += "<div class='pluginItem'>下载次数: <font color='red'>0</font></div>";
+	shtml += "<div class='pluginItem'>下载次数: <font color='blue'>0</font></div>";
 	shtml += "<div class='pluginItem'>最新版本: " + plugin.ver + "</div>";
 	shtml += "<div class='pluginItem'>更新时间: " + plugin.update_time + "</div>";
 	shtml += "<div class='pluginItem'>插件描述: " + plugin.desc.replace(/&br/g, "\r\n") + "</div>";
@@ -274,6 +280,8 @@ function <?cs var:config.plugin_pre ?>SetpluginList()
 	for(var i=0; i < ulist.length; i++) {
 		j = <?cs var:config.plugin_pre ?>_IsPluginInstall(ulist[i]);
 		if(j >= 0) {
+			ulist[i].local_plugin_index = j;
+			g_LocalOpenPluginList.list[j].remote_plugin_index = i;
 			uhtml += <?cs var:config.plugin_pre ?>_GetInstallPluginShowInfo(i, ulist[i], g_LocalOpenPluginList.list[j]);
 		}
 		else {
@@ -373,8 +381,10 @@ function <?cs var:config.plugin_pre ?>InstallPlugin()
 				return;
 			}
 			js.plugin_id = <?cs var:config.plugin_pre ?>_sel_plugin.plugin_id;
-			if(<?cs var:config.plugin_pre ?>_sel_plugin.pic != "" 
-				&& <?cs var:config.plugin_pre ?>_sel_plugin.pic.pic != null)
+			js.dev_language = <?cs var:config.plugin_pre ?>_sel_plugin.dev_language;
+			js.dest_os = <?cs var:config.plugin_pre ?>_sel_plugin.dest_os;
+			if(typeof <?cs var:config.plugin_pre ?>_sel_plugin.pic != "undefined"
+				&& <?cs var:config.plugin_pre ?>_sel_plugin.pic.pic != "")
 			{
 				js.plugin_pic = <?cs var:config.plugin_pre ?>_sel_plugin.pic;
 			}
@@ -406,6 +416,7 @@ function <?cs var:config.plugin_pre ?>InstallPluginPb(pbJs, psel)
 			}
 			else {
 				alertMsg.correct("插件安装成功, 插件部署方法请查看帮助文档");
+				return navTab.reload();
 			}
 		}
 	});
