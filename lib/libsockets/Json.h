@@ -85,6 +85,7 @@ public:
 	json_type_t Type() const;
 
 	bool HasValue(const std::string& name) const;
+	void RemoveValue(const std::string& name);
 
 	operator char() const;
 	operator short() const;

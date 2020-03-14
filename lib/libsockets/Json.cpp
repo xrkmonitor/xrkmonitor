@@ -175,6 +175,13 @@ bool Json::HasValue(const std::string& name) const
 	return m_object.find(name) != m_object.end();
 }
 
+void Json::RemoveValue(const std::string& name)
+{
+	json_map_t::iterator it = m_object.find(name);
+	if(it != m_object.end())
+		m_object.erase(it);
+}
+
 // --------------------------------------------------------------------------------
 Json::operator uint64_t() const
 {
