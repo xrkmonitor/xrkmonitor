@@ -30,7 +30,7 @@ function <?cs var:config.plugin_pre ?>OnDownFile(type)
 {
 	if(<?cs var:config.plugin_pre ?>_sel_plugin == null)
 	{
-		alertMsg.info("请先点击插件列表选择一个插件, 或者右键单击插件通过弹出菜单下载");
+		alertMsg.info("请右键单击插件通过弹出菜单下载");
 		return;
 	}
 
@@ -63,7 +63,7 @@ function <?cs var:config.plugin_pre ?>OnMakeFile()
 {
 	if(<?cs var:config.plugin_pre ?>_sel_plugin == null)
 	{
-		alertMsg.info("请先点击插件列表选择一个要生成文件的插件, 或者右键单击插件通过弹出菜单生成");
+		alertMsg.info("请右键单击插件通过弹出菜单生成");
 		return;
 	}
 
@@ -89,35 +89,6 @@ function <?cs var:config.plugin_pre ?>OnMakeFile()
 			}
 		}
 	});
-}
-
-function <?cs var:config.plugin_pre ?>OnDetail(idx)
-{
-	<?cs var:config.plugin_pre ?>_sel_detail_idx = idx;
-	$('#<?cs var:config.plugin_pre ?>_plugin_name').text(<?cs var:config.plugin_pre ?>_plugin_list.list[idx].plugin_name);
-	$('#<?cs var:config.plugin_pre ?>_plugin_id').text(<?cs var:config.plugin_pre ?>_plugin_list.list[idx].show_id);
-	$('#<?cs var:config.plugin_pre ?>_add_time').text(<?cs var:config.plugin_pre ?>_plugin_list.list[idx].create_time);
-	$('#<?cs var:config.plugin_pre ?>_mod_time').text(<?cs var:config.plugin_pre ?>_plugin_list.list[idx].update_time);
-	$('#<?cs var:config.plugin_pre ?>_ver').text(<?cs var:config.plugin_pre ?>_plugin_list.list[idx].ver);
-	$('#<?cs var:config.plugin_pre ?>_auth').text(<?cs var:config.plugin_pre ?>_plugin_list.list[idx].auth);
-
-	if(<?cs var:config.plugin_pre ?>_plugin_list.list[idx].open_src == 1)
-		$('#<?cs var:config.plugin_pre ?>_open').text('开源');
-	else
-		$('#<?cs var:config.plugin_pre ?>_open').text('闭源');
-	if(<?cs var:config.plugin_pre ?>_plugin_list.list[idx].set_method == 0)
-		$('#<?cs var:config.plugin_pre ?>_set_method').text('内置');
-	else
-		$('#<?cs var:config.plugin_pre ?>_set_method').text('外置');
-	$('#<?cs var:config.plugin_pre ?>_language').text(<?cs var:config.plugin_pre ?>_plugin_list.list[idx].dev_language);
-	$('#<?cs var:config.plugin_pre ?>_dest_os').text(<?cs var:config.plugin_pre ?>_plugin_list.list[idx].dest_os);
-
-	// 换行符有转码，需要转换回来
-	var dc = <?cs var:config.plugin_pre ?>_plugin_list.list[idx].desc;
-	$('#<?cs var:config.plugin_pre ?>_plugin_desc').html(dc.replace(/&br/g, "\r\n"));
-	var op = { mask:true, maxable:false, height:320, width:900, resizable:false, drawable:true};
-	$.pdialog.openLocal(
-		'<?cs var:config.plugin_pre ?>_show_detail', 'dlg_<?cs var:config.plugin_pre ?>_show_detail', '查看监控插件详情', op);
 }
 
 function dpGetPluginMarketStatus(stat, over)
@@ -166,9 +137,13 @@ function <?cs var:config.plugin_pre ?>_GetPluginInstallStatus(plugin)
 function <?cs var:config.plugin_pre ?>_GetInstallPluginShowInfo(idx, plugin, local_plugin)
 {
 	var shtml = "<div plugin_type=1 style='float:left; height:230px; width:450px; background-color:#ecf2f4; margin:10px ";
-		shtml += g_PluginMargin + "px; border-radius:10px; border:1px solid #000;'";
-		shtml += " id='<?cs var:config.plugin_pre ?>_plugin_" + plugin.plugin_id + "'";
-		shtml += " onclick='return <?cs var:config.plugin_pre ?>SetSelplugin(" + idx + ")' >";
+	shtml += g_PluginMargin + "px; border-radius:10px; border:1px solid #000;'";
+	shtml += " id='<?cs var:config.plugin_pre ?>_plugin_" + plugin.plugin_id + "'";
+	if(plugin.ver != local_plugin.ver) 
+		shtml += " has_new_ver=1 ";
+	else
+		shtml += " has_new_ver=0 ";
+	shtml += " onclick='return <?cs var:config.plugin_pre ?>SetSelplugin(" + idx + ")' >";
 
 	shtml += "<div style='float:left; height:180px; margin:10px; overflow:hidden; text-overflow:ellipsis;'>";
 	shtml += "<a href='#'><img width='160px' height='180px' src='";
@@ -303,45 +278,34 @@ function <?cs var:config.plugin_pre ?>SetpluginList()
 
 	$("#<?cs var:config.plugin_pre ?>_plugin_list").children().each(function() {
 		var sMenu = 'mypluginOpenUnIns';
-		if($(this).attr('plugin_type') == 1)
-			sMenu = 'mypluginOpenIns';
+		if($(this).attr('plugin_type') == 1) {
+			if($(this).attr('has_new_ver') == 0)
+				sMenu = 'mypluginOpenIns';
+			else
+				sMenu = 'mypluginOpenInsUp';
+		}
 		$(this).contextMenu(sMenu, {
 			callback: function(t, op) {
 				t.trigger('click');
 			},
 			bindings: { 
-				modify:function(t, m) {
-					return <?cs var:config.plugin_pre ?>ModPlugin();
-				},
-				delete:function(t, m) { 
-					return <?cs var:config.plugin_pre ?>DeletePlugin();
-				},
-				downpb:function(t, m) { 
-					return <?cs var:config.plugin_pre ?>OnDownFile('pb');	
-				},
 				downconf:function(t, m) { 
 					return <?cs var:config.plugin_pre ?>OnDownFile('conf');
 				},
 				downall:function(t, m) { 
 					return <?cs var:config.plugin_pre ?>OnDownFile('zip');
 				},
-				makefile:function(t, m) { 
-					return <?cs var:config.plugin_pre ?>OnMakeFile();
-				},
-				issue:function(t, m) { 
-					return <?cs var:config.plugin_pre ?>IssuePlugin();
-			  	},
 				showinfo:function(t, m) { 
-					return <?cs var:config.plugin_pre ?>IssueShowInfo();
+					return <?cs var:config.plugin_pre ?>ShowInfo();
 				},
-				accept:function(t, m) { 
-					return <?cs var:config.plugin_pre ?>IssueAccept(1, 0);
+				showinfo_up:function(t, m) { 
+					return <?cs var:config.plugin_pre ?>ShowInfoUp();
+				},
+				update:function() {
+					return <?cs var:config.plugin_pre ?>UpdatePlugin();
 				},
 				install:function(t, m) { 
 					return <?cs var:config.plugin_pre ?>InstallPlugin();
-				},
-				deny:function(t, m) { 
-					return <?cs var:config.plugin_pre ?>IssueAccept(0, 0);
 				}
 			}
 		});
@@ -355,11 +319,78 @@ function <?cs var:config.plugin_pre ?>AddPlugin()
 	$.pdialog.open(url, "<?cs var:config.plugin_pre ?>_dlg_add_sys_plugin", "添加监控插件", op); 
 }
 
+function <?cs var:config.plugin_pre ?>UpdatePlugin()
+{
+	if(<?cs var:config.plugin_pre ?>_sel_plugin == null)
+	{
+		alertMsg.info("请右键单击插件通过弹出菜单安装");
+		return;
+	}
+
+	var requrl = "<?cs var:config.xrkmonitor_url?>/cgi-bin/mt_slog_open?action=open_get_plugin_pb_info";
+	requrl += "&plugin_id=" + <?cs var:config.plugin_pre ?>_sel_plugin.plugin_id; 
+	$.ajax({
+		type: "get",
+		url: requrl,
+		dataType: 'json', 
+		global: false,
+		timeout: function(){
+			alertMsg.warn("请求超时");
+		},
+		success: function(js){
+			if(dmtFirstDealAjaxResponse(js))
+				return;
+			if(js.has_pb_info == 0) {
+				alertMsg.info("插件更新信息获取失败 !");
+				return;
+			}
+			js.plugin_id = <?cs var:config.plugin_pre ?>_sel_plugin.plugin_id;
+			js.dev_language = <?cs var:config.plugin_pre ?>_sel_plugin.dev_language;
+			js.dest_os = <?cs var:config.plugin_pre ?>_sel_plugin.dest_os;
+			if(typeof <?cs var:config.plugin_pre ?>_sel_plugin.pic != "undefined"
+				&& <?cs var:config.plugin_pre ?>_sel_plugin.pic.pic != "")
+			{
+				js.plugin_pic = <?cs var:config.plugin_pre ?>_sel_plugin.pic;
+			}
+			<?cs var:config.plugin_pre ?>UpdatePluginPb(js, <?cs var:config.plugin_pre ?>_sel_plugin);
+		}
+	});
+}
+
+function <?cs var:config.plugin_pre ?>UpdatePluginPb(pbJs, psel)
+{
+	var in_url = "<?cs var:config.cgipath?>mt_slog?action=update_open_plugin";
+	var plugin_info = JSON.stringify(pbJs);
+
+	$.ajax({
+		type: "post",
+		url: in_url,
+		data: { plugin: JSON.stringify(pbJs) },
+		dataType: 'json', 
+		global: false,
+		timeout: function(){
+			alertMsg.warn("请求超时");
+		},
+		success: function(js){
+			if(dmtFirstDealAjaxResponse(js))
+				return;
+			if(js.ret != 0) {
+				alertMsg.info("插件更新失败: " + js.msg);
+				return;
+			}
+			else {
+				alertMsg.correct("插件更新成功, 插件部署方法请查看帮助文档");
+				return navTab.reload();
+			}
+		}
+	});
+}
+
 function <?cs var:config.plugin_pre ?>InstallPlugin()
 {
 	if(<?cs var:config.plugin_pre ?>_sel_plugin == null)
 	{
-		alertMsg.info("请先点击插件列表选择一个要安装的插件, 或者右键单击插件通过弹出菜单安装");
+		alertMsg.info("请右键单击插件通过弹出菜单安装");
 		return;
 	}
 
@@ -422,101 +453,22 @@ function <?cs var:config.plugin_pre ?>InstallPluginPb(pbJs, psel)
 	});
 }
 
-function <?cs var:config.plugin_pre ?>IssuePlugin()
+function <?cs var:config.plugin_pre ?>ShowInfo()
 {
 	if(<?cs var:config.plugin_pre ?>_sel_plugin == null)
 	{
-		alertMsg.info("请先点击插件列表选择一个要发布的插件, 或者右键单击插件通过弹出菜单发布");
+		alertMsg.info("请先点击插件列表选择一个要查看的插件");
 		return;
 	}
 
-	if(<?cs var:config.plugin_pre ?>_sel_plugin.market_status == 1 
-		|| <?cs var:config.plugin_pre ?>_sel_plugin.market_status == 3)
-	{
-		alertMsg.info("当前插件有版本在审核中, 请等待审核完成后再发布");
-		return;
-	}
-
-	var requrl = "<?cs var:config.cgipath?>mt_slog?action=issue_plugin";
-	requrl += "&plugin_id=" + <?cs var:config.plugin_pre ?>_sel_plugin.plugin_id; 
-	$.ajax({
-		type: "get",
-		url: requrl,
-		dataType: 'json', 
-		global: false,
-		timeout: function(){
-			alertMsg.warn("请求超时");
-		},
-		success: function(js){
-			if(dmtFirstDealAjaxResponse(js))
-				return;
-			if(js.ret == 0) {
-				alertMsg.correct("插件发布提交成功, 审核通过后将发布到插件市场");
-				var mid = '#<?cs var:config.plugin_pre ?>_plugin_' 
-					+ <?cs var:config.plugin_pre ?>_sel_plugin.plugin_id + "_status";
-				$(mid).text(dpGetPluginMarketStatus(js.status));
-				$(mid).parent().find("img").attr('src', '/monitor/themes/sexybuttons/images/icons/silk/hourglass_go.png');
-			}
-			else if(js.ret == 301) {
-				alertMsg.info("提交审核的版本号需要比当前已发布的版本号大, 请修改版本号");
-			}
-			else {
-				alertMsg.info("插件提交发布失败");
-			}
-		}
-	});
-}
-
-function <?cs var:config.plugin_pre ?>DeletePlugin()
-{
-	if(<?cs var:config.plugin_pre ?>_sel_plugin == null)
-	{
-		alertMsg.info("请先点击插件列表选择一个要删除的插件, 或者右键单击插件通过弹出菜单删除");
-		return;
-	}
-
-	var msg="确认删除插件：" + <?cs var:config.plugin_pre ?>_sel_plugin.plugin_name + " 吗？";
-	msg += "<br /> (注意: 插件相关的监控点以及模块等配置也将被删除)";
-
-	alertMsg.confirm(msg, {
-		okCall: function(){
-			var url = "<?cs var:config.cgipath?>mt_slog?action=delete_mt_plugin"+"&id="+<?cs var:config.plugin_pre ?>_sel_plugin.plugin_id ;
-			$.get(url, function(js){
-				if(dmtFirstDealAjaxResponse(js))
-					return;
-
-				if(js.statusCode==200){
-					alertMsg.info("删除成功。");
-					return navTab.reload();
-				}
-				else if(js.msg)
-					alertMsg.error(js.msg);
-				else
-					alertMsg.error("删除失败！");
-			}, "json"); 
-		}
-	});
-	return;
-}
-
-function <?cs var:config.plugin_pre ?>IssueAccept(ac, from_d)
-{
-	if(<?cs var:config.plugin_pre ?>_sel_plugin == null)
-	{
-		alertMsg.info("请先点击插件列表选择一个要审核的插件");
-		return;
-	}
-	var url = "<?cs var:config.cgipath?>mt_slog?action=audit_plugin_issue&accept="+ac;
+	var url = "<?cs var:config.cgipath?>mt_slog?action=show_local_mt_plugin&plugin_pre=<?cs var:config.plugin_pre ?>";
 	url += "&plugin_id=" + <?cs var:config.plugin_pre ?>_sel_plugin.plugin_id; 
-	url += "&plugin_show_id=" + <?cs var:config.plugin_pre ?>_sel_plugin.show_id; 
-	url += "&call_type=" + from_d;
-	if(from_d)  
-		ajaxTodo(url, dialogAjaxDone);
-	else
-		ajaxTodo(url, navTabAjaxDone);
+
+	var op = $.parseJSON('{"mask":true,"maxable":false,"height":600,"width":920}'); 
+	$.pdialog.open(url, "<?cs var:config.plugin_pre ?>_dlg_show_plugin", "本地已安装监控插件详情", op); 
 }
 
-function <?cs var:config.plugin_pre ?>IssueShowInfo()
+function <?cs var:config.plugin_pre ?>ShowInfoUp()
 {
 	if(<?cs var:config.plugin_pre ?>_sel_plugin == null)
 	{
@@ -529,23 +481,6 @@ function <?cs var:config.plugin_pre ?>IssueShowInfo()
 
 	var op = $.parseJSON('{"mask":true,"maxable":false,"height":600,"width":920}'); 
 	$.pdialog.open(url, "<?cs var:config.plugin_pre ?>_dlg_show_plugin", "查看监控插件", op); 
-}
-
-function <?cs var:config.plugin_pre ?>ModPlugin()
-{
-	if(<?cs var:config.plugin_pre ?>_sel_plugin == null)
-	{
-		alertMsg.info("请先点击插件列表选择一个要修改的插件, 或者右键单击插件通过弹出菜单修改");
-		return;
-	}
-
-	var url = "<?cs var:config.cgipath?>mt_slog?action=mod_mt_plugin&type=<?cs var:config.plugin_type ?>";
-	url += "&plugin_id=" + <?cs var:config.plugin_pre ?>_sel_plugin.plugin_id; 
-	url += "&plugin_show_id=" + <?cs var:config.plugin_pre ?>_sel_plugin.show_id; 
-	url += "&plugin_pre=<?cs var:config.plugin_pre ?>"; 
-
-	var op = $.parseJSON('{"mask":true,"maxable":false,"height":600,"width":920}'); 
-	$.pdialog.open(url, "<?cs var:config.plugin_pre ?>_dlg_mod_plugin", "修改监控插件", op); 
 }
 
 function <?cs var:config.plugin_pre ?>Search()
@@ -567,7 +502,7 @@ function <?cs var:config.plugin_pre ?>Search()
 		dataType: 'json',
 		success: function(js) {
 			if(js.ret != 0) {
-				alertMsg.warn("系统监控插件信息获取失败:" + js.errmsg);
+				alertMsg.warn("监控插件信息获取失败:" + js.errmsg);
 				return;
 			}
 			if(js.count > 0) {
@@ -626,7 +561,7 @@ $(document).ready(function(){
 	<div class="unitBox" style="margin-left:1px;"> 
 		<div class="accountInfo" style='display:block;height:30px;'>
 			<div class='note-text' style='text-align:left; font-size:13px; margin-top:8px;'>
-				说明：监控插件无需开发,下载部署后即可生成相关监控数据; 我们欢迎自行开发插件, 如您开发了插件且有意愿开源, 我们可以免费为您发布到插件市场.
+				说明：监控插件无需开发, 右键单击插件即可安装部署; 我们欢迎自行开发插件, 如您开发了插件且有意愿开源, 我们可以免费为您发布到插件市场.
 			</div>
 		</div>
 
@@ -681,33 +616,6 @@ $(document).ready(function(){
 				</table>
 			</div>
 			</form>
-		</div>
-
-		<div class="panelBar">
-			<ul class="toolBar">
-				<?cs if:config.navTabId == "dmt_plugin_my" ?>
-				<li><a class="add" href="#" onclick="return <?cs var:config.plugin_pre ?>AddPlugin();"><span>创建插件</span></a></li>
-				<li class="line">line</li>
-				<li><a class="delete" href="#" onclick="return <?cs var:config.plugin_pre ?>DeletePlugin();"><span>删除</span></a></li>
-				<li class="line">line</li>
-				<li><a class="edit" href="#" onclick="return <?cs var:config.plugin_pre ?>ModPlugin();"><span>修改</span></a></li>
-				<li><a class="edit" href="#" onclick="return <?cs var:config.plugin_pre ?>OnMakeFile();"><span>重新生成文件</span></a></li>
-				<li><a class="edit" href="#" onclick="return <?cs var:config.plugin_pre ?>IssuePlugin();"><span>发布到市场</span></a></li>
-				<li class="line">line</li>
-				<li><a class="edit" href="#" onclick="return <?cs var:config.plugin_pre ?>InstallPlugin();"><span>安装插件</span></a></li>
-				<?cs /if ?>
-
-				<li><a class="edit" href="#" onclick="return <?cs var:config.plugin_pre ?>IssueShowInfo();"><span>查看</span></a></li>
-
-				<li><a class="edit" href="#" onclick="return <?cs var:config.plugin_pre ?>OnDownFile('pb');"><span>下载pb文件</span></a></li>
-				<li><a class="edit" href="#" onclick="return <?cs var:config.plugin_pre ?>OnDownFile('conf');"><span>下载配置文件</span></a></li>
-				<li><a class="edit" href="#" onclick="return <?cs var:config.plugin_pre ?>OnDownFile('zip');"><span>下载完整包</span></a></li>
-				<li class="line">line</li>
-
-				<?cs if:config.navTabId == "dmt_plugin_open" ?>
-				<li><a class="edit" href="#" onclick="return <?cs var:config.plugin_pre ?>InstallPlugin();"><span>安装插件</span></a></li>
-				<?cs /if ?>
-			</ul>
 		</div>
 
 		<div layoutH="100" class="unitBox" id="<?cs var:config.plugin_pre ?>_plugin_list">
