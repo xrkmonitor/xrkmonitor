@@ -84,6 +84,7 @@ static const char *s_JsonRequest [] = {
 	"send_test_log",
 	"refresh_main_info",
 	"install_open_plugin",
+	"update_open_plugin",
 	NULL
 };
 
@@ -2731,6 +2732,77 @@ static int AddPluginCfg(Query &qu, Json &js_cfg, Json &js_plugin)
 	return 0;
 }
 
+static int TryUpdatePluginAttr(Query &qu, Json &js_local, Json &js_up)
+{
+	char szSql[128] = {0};
+	FloginInfo *pUserInfo = stConfig.stUser.puser_info;
+	snprintf(szSql, sizeof(szSql), "select data_type,attr_name,attr_desc from mt_attr "
+	    " where xrk_id=%d and xrk_status=0", (int)(js_local["attr_id"]));
+	if(!qu.get_result(szSql) || qu.num_rows() <= 0 || !qu.fetch_row()) {
+	    WARN_LOG("not find plugin:%s attr :%d", (const char*)(js_local["plus_name"]),
+			(int)(js_local["attr_id"]));
+		return SLOG_ERROR_LINE;
+	}
+
+	if(!strcmp(qu.getstr("attr_name"), (const char*)(js_up["attr_name"]))
+	    && ((js_up.HasValue("attr_desc") && !strcmp(qu.getstr("attr_desc"), (const char*)(js_up["attr_desc"])))
+			|| (!js_up.HasValue("attr_desc") && !strcmp(qu.getstr("attr_desc"), "")))
+		&& (int)(js_up["attr_data_type"]) == qu.getval("data_type")
+		&& (int)(js_up["plug_attr_type_id"]) == (int)(js_local["plug_attr_type_id"]))
+	{
+	    qu.free_result();
+		return 0;
+	}
+
+	IM_SQL_PARA* ppara = NULL;
+	std::string strSql;
+
+	InitParameter(&ppara);
+	if(!strcmp(qu.getstr("attr_name"), (const char*)(js_up["attr_name"]))) {
+		AddParameter(&ppara, "attr_name", (const char*)(js_up["attr_name"]), NULL);
+		js_local["attr_name"] = (const char*)(js_up["attr_name"]);
+	}
+	if((js_up.HasValue("attr_desc") && !strcmp(qu.getstr("attr_desc"), (const char*)(js_up["attr_desc"])))
+		|| (!js_up.HasValue("attr_desc") && !strcmp(qu.getstr("attr_desc"), "")))
+	{
+		if(js_up.HasValue("attr_desc")) {
+			 AddParameter(&ppara, "attr_desc", (const char *)(js_up["attr_desc"]), NULL);
+			 js_local["attr__desc"] = (const char *)(js_up["attr_desc"]);
+		}
+		else {
+			AddParameter(&ppara,  "attr_desc", "", NULL);
+			js_local.RemoveValue("attr_desc");
+		}
+	}
+
+	if((int)(js_up["plug_attr_type_id"]) != (int)(js_local["plug_attr_type_id"])) {
+		AddParameter(&ppara, "attr_type", (int)(js_up["attr_type_id"]), "DB_CAL");
+		js_local["plug_attr_type_id"] = (int)(js_up["plug_attr_type_id"]);
+		js_local["attr_type_id"] = (int)(js_up["attr_type_id"]);
+	}
+
+	if((int)(js_up["attr_data_type"]) != qu.getval("data_type")) {
+		AddParameter(&ppara, "data_type", (int)(js_up["attr_data_type"]), "DB_CAL");
+		js_local["attr_data_type"] = (int)(js_up["attr_data_type"]);
+	}
+
+	AddParameter(&ppara, "user_mod_id", pUserInfo->iUserId, "DB_CAL");
+	strSql = "update mt_attr set ";
+	JoinParameter_Set(&strSql, qu.GetMysql(), ppara);
+	strSql += " where xrk_id=";
+	strSql += itoa((int)(js_local["attr_id"]));
+
+	qu.free_result();
+	ReleaseParameter(&ppara);
+	if(!qu.execute(strSql))
+	{
+		ERR_LOG("execute sql:%s failed, msg:%s", strSql.c_str(), qu.GetError().c_str());
+		return SLOG_ERROR_LINE;
+	}
+	DEBUG_LOG("update plugin attr:%d", (int)(js_local["attr_id"]));
+	return 0;
+}
+
 static int AddPluginAttr(Query &qu, Json &js_attr, Json &js_plugin)
 {
 	FloginInfo *pUserInfo = stConfig.stUser.puser_info;
@@ -2782,6 +2854,68 @@ static int AddPluginAttr(Query &qu, Json &js_attr, Json &js_plugin)
 	return 0;
 }
 
+static int TryUpdatePluginAttrType(Query &qu, Json &js_local, Json &js_up)
+{
+	char szSql[128] = {0};
+	FloginInfo *pUserInfo = stConfig.stUser.puser_info;
+	snprintf(szSql, sizeof(szSql), "select xrk_name,attr_desc from mt_attr_type "
+	    " where xrk_type=%d and xrk_status=0", (int)(js_local["attr_type_id"]));
+	if(!qu.get_result(szSql) || qu.num_rows() <= 0 || !qu.fetch_row()) {
+	    WARN_LOG("not find plugin:%s attr type:%d", (const char*)(js_local["plus_name"]),
+			(int)(js_local["attr_type_id"]));
+		return SLOG_ERROR_LINE;
+	}
+
+	if(!strcmp(qu.getstr("xrk_name"), (const char*)(js_up["attr_type_name"]))
+	    && ((js_up.HasValue("attr_type_desc") && !strcmp(qu.getstr("attr_desc"), (const char*)(js_up["attr_type_desc"])))
+		|| (!js_up.HasValue("attr_type_desc") && !strcmp(qu.getstr("attr_desc"), ""))))
+	{
+	    qu.free_result();
+		return 0;
+	}
+
+	IM_SQL_PARA* ppara = NULL;
+	std::string strSql;
+	const char *pcurTime = uitodate(stConfig.dwCurTime);
+
+	InitParameter(&ppara);
+	if(!strcmp(qu.getstr("xrk_name"), (const char*)(js_up["attr_type_name"]))) {
+		AddParameter(&ppara, "xrk_name", (const char*)(js_up["attr_type_name"]), NULL);
+		js_local["attr_type_name"] = (const char*)(js_up["attr_type_name"]);
+	}
+	if((js_up.HasValue("attr_type_desc") && !strcmp(qu.getstr("attr_desc"), (const char*)(js_up["attr_type_desc"])))
+		|| (!js_up.HasValue("attr_type_desc") && !strcmp(qu.getstr("attr_desc"), "")))
+	{
+		if(js_up.HasValue("attr_type_desc")) {
+			 AddParameter(&ppara, 
+				"attr_desc", (const char *)(js_up["attr_type_desc"]), NULL);
+			 js_local["attr_type_desc"] = (const char *)(js_up["attr_type_desc"]);
+		}
+		else {
+			AddParameter(&ppara,  "attr_desc", "", NULL);
+			js_local.RemoveValue("attr_type_desc");
+		}
+	}
+
+	AddParameter(&ppara, "mod_user", stConfig.stUser.puser, NULL);
+	AddParameter(&ppara, "update_time", pcurTime, NULL);
+	AddParameter(&ppara, "user_mod_id", pUserInfo->iUserId, "DB_CAL");
+	strSql = "update mt_attr_type set ";
+	JoinParameter_Set(&strSql, qu.GetMysql(), ppara);
+	strSql += " where xrk_type=";
+	strSql += itoa((int)(js_local["attr_type_id"]));
+
+	qu.free_result();
+	ReleaseParameter(&ppara);
+	if(!qu.execute(strSql))
+	{
+		ERR_LOG("execute sql:%s failed, msg:%s", strSql.c_str(), qu.GetError().c_str());
+		return SLOG_ERROR_LINE;
+	}
+	DEBUG_LOG("update plugin attr type:%d", (int)(js_local["attr_type_id"]));
+	return 0;
+}
+
 static int AddPluginAttrTypes(Query &qu, Json &js_attr_type, Json &js_plugin)
 {
 	FloginInfo *pUserInfo = stConfig.stUser.puser_info;
@@ -2815,6 +2949,197 @@ static int AddPluginAttrTypes(Query &qu, Json &js_attr_type, Json &js_plugin)
 	DEBUG_LOG("add plugin:%s, attr type:%d(%s)", (const char*)(js_plugin["plus_name"]),
 		(int)qu.insert_id(), (const char *)(js_attr_type["attr_type_name"]));
 	js_attr_type["attr_type_id"] = (int)(qu.insert_id());
+	return 0;
+}
+
+static int GetLocalPlugin(Json &js_plugin, int iPluginId)
+{
+	char sSqlBuf[128] = {0};
+	Query qu(*stConfig.db);
+
+	snprintf(sSqlBuf, sizeof(sSqlBuf),
+		"select pb_info,plugin_id from mt_plugin where open_plugin_id=%d", iPluginId);
+	qu.get_result(sSqlBuf);
+	if(qu.num_rows() > 0 && qu.fetch_row() != NULL) 
+	{
+		hdf_set_value(stConfig.cgi->hdf, "config.plugin_info", qu.getstr("pb_info"));
+		DEBUG_LOG("get plugin:%d(local:%d) info", iPluginId, qu.getval("plugin_id"));
+	}
+	else {
+		WARN_LOG("not find plugin:%d", iPluginId);
+		qu.free_result();
+		return SLOG_ERROR_LINE;
+	}
+
+	const char *pinfo = qu.getstr("pb_info");
+	size_t iParseIdx = 0;
+	size_t iReadLen = strlen(pinfo);
+	js_plugin.Parse(pinfo, iParseIdx);
+	if(iParseIdx != iReadLen) {
+		WARN_LOG("parse json content, size:%u!=%u", (uint32_t)iParseIdx, (uint32_t)iReadLen);
+	}
+	qu.free_result();
+	return 0;
+}
+
+static int DealUpdatePlugin(CGI *cgi)
+{
+	const char *pinfo = hdf_get_value(cgi->hdf, "Query.plugin", NULL);
+	if(pinfo == NULL) {
+		REQERR_LOG("invalid parameter");
+		return SLOG_ERROR_LINE;
+	}
+
+	size_t iParseIdx = 0;
+	size_t iReadLen = strlen(pinfo);
+	Json js_plugin;
+	js_plugin.Parse(pinfo, iParseIdx);
+	if(iParseIdx != iReadLen) {
+		WARN_LOG("parse json content, size:%u!=%u", (uint32_t)iParseIdx, (uint32_t)iReadLen);
+	}
+
+	Json js_local;
+	if(GetLocalPlugin(js_local, (int)(js_plugin["plugin_id"])) < 0)
+		return SLOG_ERROR_LINE;
+
+	if(!strcmp((const char*)(js_plugin["plus_version"]), (const char*)(js_local["plus_version"]))) {
+		WARN_LOG("plus version is same, not need to update plugin:%s", (const char*)(js_plugin["plus_name"]));
+		return SLOG_ERROR_LINE;
+	}
+
+	Query & qu = *(stConfig.qu);
+	int iIsSqlFailed = -1;
+	if(!qu.execute("START TRANSACTION"))
+	    return SLOG_ERROR_LINE;
+	CTransSavePlugin sMysqlTrans(qu, iIsSqlFailed);
+
+	std::string strSql;
+	IM_SQL_PARA* ppara = NULL;
+	InitParameter(&ppara);
+
+	AddParameter(&ppara, "plugin_cur_ver", (const char*)(js_plugin["plus_version"]), NULL);
+	js_local["plus_version"] = (const char*)(js_plugin["plus_version"]);
+	if(strcmp((const char*)(js_plugin["plus_desc"]), (const char*)(js_local["plus_desc"]))) {
+		AddParameter(&ppara, "plugin_desc", (const char*)(js_plugin["plus_desc"]), NULL);
+		js_local["plus_desc"] = (const char*)(js_plugin["plus_desc"]);
+	}
+	if(strcmp((const char*)(js_plugin["plugin_auth"]), (const char*)(js_local["plugin_auth"]))) {
+		AddParameter(&ppara, "plugin_auth", (const char*)(js_plugin["plugin_auth"]), NULL);
+		js_local["plugin_auth"] = (const char*)(js_plugin["plugin_auth"]);
+	}
+	if((bool)(js_plugin["b_open_source"]) != (bool)(js_local["b_open_source"])) {
+		AddParameter(&ppara, "open_src", (bool)(js_plugin["b_open_source"]), "DB_CAL");
+		js_local["b_open_source"] = (bool)(js_plugin["b_open_source"]);
+	}
+	if(strcmp((const char*)(js_plugin["dest_os"]), (const char*)(js_local["dest_os"]))) {
+		AddParameter(&ppara, "dest_os", (const char*)(js_plugin["dest_os"]), NULL);
+		js_local["dest_os"] = (const char*)(js_plugin["dest_os"]);
+	}
+	if((int)(js_plugin["set_method"]) != (int)(js_local["set_method"])) {
+		AddParameter(&ppara, "set_method", (int)(js_plugin["set_method"]), "DB_CAL");
+		js_local["set_method"] = (int)(js_plugin["set_method"]);
+	}
+	if(strcmp((const char*)(js_plugin["dev_language"]), (const char*)(js_local["dev_language"]))) {
+		AddParameter(&ppara, "dev_language", (const char*)(js_plugin["dev_language"]), NULL);
+		js_local["dev_language"] = (const char*)(js_plugin["dev_language"]);
+	}
+	if(strcmp((const char*)(js_plugin["plugin_pic"]), (const char*)(js_local["plugin_pic"]))) {
+		AddParameter(&ppara, "plugin_pic", (const char*)(js_plugin["plugin_pic"]), NULL);
+		js_local["plugin_pic"] = (const char*)(js_plugin["plugin_pic"]);
+	}
+	if(strcmp((const char*)(js_plugin["plus_url"]), (const char*)(js_local["plus_url"]))) {
+		AddParameter(&ppara, "plugin_src_url", (const char*)(js_plugin["plus_url"]), NULL);
+		js_local["plus_url"] = (const char*)(js_plugin["plus_url"]);
+	}
+
+	if((int)(js_plugin["b_add_log_module"]) && !(int)(js_local["b_add_log_module"])) {
+		AddParameter(&ppara, "log_config", (int)(js_plugin["b_add_log_module"]), "DB_CAL");
+		js_local["b_add_log_module"] = (int)(js_plugin["b_add_log_module"]);
+		if(AddPluginLogModule(qu, js_local) < 0)
+			return SLOG_ERROR_LINE;
+		if(AddPluginLogConfig(qu, js_local) < 0)
+			return SLOG_ERROR_LINE;
+	}
+
+	Json::json_list_t & jslist_attrtype = js_plugin["attr_types"].GetArray();
+	Json::json_list_t & jslist_local_attrtype = js_local["attr_types"].GetArray();
+	Json::json_list_t::iterator it_attrtype = jslist_attrtype.begin();
+	while(it_attrtype != jslist_attrtype.end()) {
+		Json::json_list_t::iterator it_local_attrtype = jslist_local_attrtype.begin();
+		for(; it_local_attrtype != jslist_local_attrtype.end(); it_local_attrtype++) {
+			if((int)((*it_local_attrtype)["plug_attr_type_id"]) 
+				== (int)((*it_attrtype)["plug_attr_type_id"])) {
+				// 尝试更新监控点类型
+				if(TryUpdatePluginAttrType(qu, *it_local_attrtype, *it_attrtype) < 0)
+					return SLOG_ERROR_LINE;
+				break;
+			}
+		}
+
+		// 新增监控点类型
+		if(it_local_attrtype == jslist_local_attrtype.end()) {
+			if(AddPluginAttrTypes(qu, *it_attrtype, js_local) < 0)
+				return SLOG_ERROR_LINE;
+			js_local["attr_types"].Add(*it_attrtype);
+		}
+		it_attrtype++;
+	}
+
+	Json::json_list_t & jslist_attr = js_plugin["attrs"].GetArray();
+	Json::json_list_t & jslist_local_attr = js_local["attrs"].GetArray();
+	Json::json_list_t::iterator it_attr = jslist_attr.begin();
+	while(it_attr != jslist_attr.end()) {
+		Json::json_list_t::iterator it_local_attr = jslist_local_attr.begin();
+		for(; it_local_attr != jslist_local_attr.end(); it_local_attr++) {
+			if((int)((*it_local_attr)["plug_attr_id"]) 
+				== (int)((*it_attr)["plug_attr_id"])) {
+				// 尝试更新监控点类型
+				if(TryUpdatePluginAttr(qu, *it_local_attr, *it_attr) < 0)
+					return SLOG_ERROR_LINE;
+				break;
+			}
+		}
+
+		if(it_local_attr == jslist_local_attr.end()) {
+			if(AddPluginAttr(qu, *it_attr, js_local) < 0)
+				return SLOG_ERROR_LINE;
+			js_local["attrs"].Add(*it_attr);
+		}
+		it_attr++;
+	}
+
+	Json::json_list_t & jslist_cfg = js_plugin["cfgs"].GetArray();
+	Json::json_list_t::iterator it_cfg = jslist_cfg.begin();
+	while(it_cfg != jslist_cfg.end()) {
+		if(AddPluginCfg(qu, *it_cfg, js_plugin) < 0)
+			return SLOG_ERROR_LINE;
+		it_cfg++;
+	}
+
+    std::ostringstream sql; 
+	sql << "update mt_plugin set pb_info=\'" <<  js_plugin.ToString() << "\' where open_plugin_id="
+		<< (int)(js_plugin["plugin_id"]) << ";";
+	if(!qu.execute(sql.str().c_str()))
+	{
+		stConfig.pErrMsg = CGI_ERR_SERVER;
+		return SLOG_ERROR_LINE;
+	}
+
+	iIsSqlFailed = 0;
+
+	Json js;
+	js["ret"] = 0;
+	STRING str;
+	string_init(&str);
+	if((stConfig.err=string_set(&str, js.ToString().c_str())) != STATUS_OK
+		|| (stConfig.err=cgi_output(stConfig.cgi, &str)) != STATUS_OK)
+	{
+		string_clear(&str);
+		stConfig.pErrMsg = CGI_ERR_SERVER;
+		return SLOG_ERROR_LINE;
+	}
+	string_clear(&str);
+	DEBUG_LOG("update open plugin:%s success", (const char*)(js_plugin["plus_name"]));
 	return 0;
 }
 
@@ -2900,6 +3225,41 @@ static int DealInstallPlugin(CGI *cgi)
 	}
 	string_clear(&str);
 	DEBUG_LOG("install open plugin:%s success", (const char*)(js_plugin["plus_name"]));
+	return 0;
+}
+
+static int DealShowLocalPlugin(CGI *cgi)
+{
+	char *pshow_pre = hdf_get_value(cgi->hdf, "Query.plugin_pre", NULL);
+	char *plugin_id = hdf_get_value(cgi->hdf, "Query.plugin_id", NULL);
+	if((pshow_pre == NULL || (strcmp(pshow_pre, "dpopen") && strcmp(pshow_pre, "dpmy")))
+		|| plugin_id == NULL) 
+	{
+		REQERR_LOG("invalid request parameter");
+		return SLOG_ERROR_LINE;
+	}
+
+	hdf_set_value(cgi->hdf, "config.xrkmonitor_url", stConfig.szXrkmonitorSiteAddr);
+	hdf_set_value(stConfig.cgi->hdf, "config.plugin_pre", pshow_pre);
+	hdf_set_value(stConfig.cgi->hdf, "config.plugin_id", plugin_id);
+	hdf_set_value(stConfig.cgi->hdf, "config.action", "show_local_mt_plugin");
+
+	char sSqlBuf[128] = {0};
+	Query qu(*stConfig.db);
+
+	snprintf(sSqlBuf, sizeof(sSqlBuf),
+		"select pb_info,plugin_id from mt_plugin where open_plugin_id=%s", plugin_id);
+	qu.get_result(sSqlBuf);
+	if(qu.num_rows() > 0 && qu.fetch_row() != NULL) 
+	{
+		hdf_set_value(stConfig.cgi->hdf, "config.plugin_info", qu.getstr("pb_info"));
+		DEBUG_LOG("get plugin:%s(local:%d) info", plugin_id, qu.getval("plugin_id"));
+	}
+	else {
+		hdf_set_value(stConfig.cgi->hdf, "config.plugin_info", "null");
+		WARN_LOG("not find plugin:%s", plugin_id);
+	}
+	qu.free_result();
 	return 0;
 }
 
@@ -3081,8 +3441,12 @@ int main(int argc, char **argv, char **envp)
 			iRet = DealListPlugin(stConfig.cgi);
 		else if(!strcmp(pAction, "show_mt_plugin"))
 			iRet = DealShowPlugin(stConfig.cgi);
+		else if(!strcmp(pAction, "show_local_mt_plugin"))
+			iRet = DealShowLocalPlugin(stConfig.cgi);
 		else if(!strcmp(pAction, "install_open_plugin"))
 			iRet = DealInstallPlugin(stConfig.cgi);
+		else if(!strcmp(pAction, "update_open_plugin"))
+			iRet = DealUpdatePlugin(stConfig.cgi);
 		else {
 			ERR_LOG("unknow action:%s", pAction);
 			iRet = -1;
@@ -3123,7 +3487,7 @@ int main(int argc, char **argv, char **envp)
 			pcsTemplate = "dmt_dlg_log_report_test.html";
 		else if(!strcmp(pAction, "open_plugin"))
 			pcsTemplate = "dmt_plugin.html";
-		else if(!strcmp(pAction, "show_mt_plugin"))
+		else if(!strcmp(pAction, "show_mt_plugin") || !strcmp(pAction, "show_local_mt_plugin"))
 			pcsTemplate = "dmt_dlg_add_plugin.html";
 
 		if(pcsTemplate != NULL)
