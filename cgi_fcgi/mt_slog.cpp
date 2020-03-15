@@ -2727,11 +2727,6 @@ static int AddPluginParentAttrTypes(Query &qu, Json &js_plugin)
 	return 0;
 }
 
-static int AddPluginCfg(Query &qu, Json &js_cfg, Json &js_plugin)
-{
-	return 0;
-}
-
 static int TryUpdatePluginAttr(Query &qu, Json &js_local, Json &js_up)
 {
 	char szSql[128] = {0};
@@ -3109,17 +3104,34 @@ static int DealUpdatePlugin(CGI *cgi)
 	}
 
 	Json::json_list_t & jslist_cfg = js_plugin["cfgs"].GetArray();
+	Json::json_list_t & jslist_local_cfg = js_local["cfgs"].GetArray();
 	Json::json_list_t::iterator it_cfg = jslist_cfg.begin();
 	while(it_cfg != jslist_cfg.end()) {
-		if(AddPluginCfg(qu, *it_cfg, js_plugin) < 0)
-			return SLOG_ERROR_LINE;
+		Json &remote = *it_cfg;
+		Json::json_list_t::iterator it_local_cfg = jslist_local_cfg.begin();
+		for(; it_local_cfg != jslist_local_cfg.end(); it_local_cfg++) {
+			Json &local = *it_local_cfg;
+			if(!strcmp((const char*)(local["item_name"]), 
+				(const char*)(remote["item_name"])))
+			{
+				local["item_value"] = (const char*)(remote["item_value"]);
+				local["item_desc"] = (const char*)(remote["item_desc"]);
+				local["enable_modify"] = (bool)(remote["enable_modify"]);
+				break;
+			}
+		}
+		if(it_local_cfg == jslist_local_cfg.end())
+			js_local["cfgs"].Add(remote);
 		it_cfg++;
 	}
+	AddParameter(&ppara, "pb_info", js_local.ToString().c_str(), NULL);
 
-    std::ostringstream sql; 
-	sql << "update mt_plugin set pb_info=\'" <<  js_plugin.ToString() << "\' where open_plugin_id="
-		<< (int)(js_plugin["plugin_id"]) << ";";
-	if(!qu.execute(sql.str().c_str()))
+	strSql = "update mt_plugin set ";
+	JoinParameter_Set(&strSql, qu.GetMysql(), ppara);
+	strSql += " where open_plugin_id=";
+	strSql += itoa((int)(js_plugin["plugin_id"]));
+	ReleaseParameter(&ppara);
+	if(!qu.execute(strSql.c_str()))
 	{
 		stConfig.pErrMsg = CGI_ERR_SERVER;
 		return SLOG_ERROR_LINE;
@@ -3192,14 +3204,6 @@ static int DealInstallPlugin(CGI *cgi)
 		if(AddPluginAttr(qu, *it_attr, js_plugin) < 0)
 			return SLOG_ERROR_LINE;
 		it_attr++;
-	}
-
-	Json::json_list_t & jslist_cfg = js_plugin["cfgs"].GetArray();
-	Json::json_list_t::iterator it_cfg = jslist_cfg.begin();
-	while(it_cfg != jslist_cfg.end()) {
-		if(AddPluginCfg(qu, *it_cfg, js_plugin) < 0)
-			return SLOG_ERROR_LINE;
-		it_cfg++;
 	}
 
     std::ostringstream sql; 
