@@ -461,7 +461,11 @@ static int DealSaveSysSrv(bool bIsAdd=false)
 
 	FloginInfo *pUserInfo = stConfig.stUser.puser_info;
 	IM_SQL_PARA* ppara = NULL;
-	InitParameter(&ppara);
+	if(InitParameter(&ppara) < 0) {
+		ERR_LOG("sql parameter init failed !");
+		return SLOG_ERROR_LINE;
+	}
+	
 	if(bIsAdd) {
 		AddParameter(&ppara, "xrk_type", iType, "DB_CAL");
 	}
@@ -707,7 +711,10 @@ static int SaveMachine(bool bIsMod=false)
 
 	uint32_t ip_addr_1 = inet_addr(ip1);
 	IM_SQL_PARA* ppara = NULL;
-	InitParameter(&ppara);
+	if(InitParameter(&ppara) < 0) {
+		ERR_LOG("sql parameter init failed !");
+		return SLOG_ERROR_LINE;
+	}
 
 	AddParameter(&ppara, "xrk_name", pname, NULL);
 	if((ip_addr=inet_addr(ip2)) != INADDR_NONE) {

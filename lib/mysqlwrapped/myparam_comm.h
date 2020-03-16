@@ -15,10 +15,10 @@ typedef struct _IM_SQL_PARA
 	struct _IM_SQL_PARA* pnext;
 }IM_SQL_PARA;
 
-#define PARAMER_VALUE_BUF 1024
+#define PARAMER_VALUE_BUF 1024*1024
 #define PARAMER_COUNT_MAX 100
 
-void InitParameter(IM_SQL_PARA** ppara);
+int InitParameter(IM_SQL_PARA** ppara);
 int AddParameter(IM_SQL_PARA** ppara, const char* sName, const char* sValue, const char* sOperater);
 int AddParameter(IM_SQL_PARA** ppara, const char* sName, uint32_t iValue, const char* sOperater);
 int ReleaseParameter(IM_SQL_PARA** ppara); // should not use this, recommend use InitParameter

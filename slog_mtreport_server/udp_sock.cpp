@@ -288,9 +288,11 @@ int CUdpSock::GetMtClientInfo()
 int CUdpSock::SetKeyToMachineTable()
 {
 	IM_SQL_PARA* ppara = NULL;
-	InitParameter(&ppara);
+	if(InitParameter(&ppara) < 0) {
+		ERR_LOG("sql parameter init failed !");
+		return SLOG_ERROR_LINE;
+	}
 	AddParameter(&ppara, "rand_key", m_pMtClient->sRandKey, NULL);
-
 	MyQuery myqu(stConfig.qu, stConfig.db);
 	Query & qu = myqu.GetQuery();
 
@@ -299,6 +301,7 @@ int CUdpSock::SetKeyToMachineTable()
 	JoinParameter_Set(&strSql, qu.GetMysql(), ppara);
 	strSql += " where id=";
 	strSql += itoa(m_iRemoteMachineId);
+	ReleaseParameter(&ppara);
 	if(!qu.execute(strSql)) {
 		ERR_LOG("execute sql:%s failed, msg:%s", strSql.c_str(), qu.GetError().c_str());
 		return SLOG_ERROR_LINE;

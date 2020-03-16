@@ -7,10 +7,14 @@ static IM_SQL_PARA sParaComm[PARAMER_COUNT_MAX];
 static int siParaUse = 0;
 
 using std::string;
-void InitParameter(IM_SQL_PARA** ppara)
+int InitParameter(IM_SQL_PARA** ppara)
 {
+	if(siParaUse != 0) {
+		return -1;
+	}
 	siParaUse = 0;
 	*ppara = NULL;
+	return 0;
 }
 
 int AddParameter(IM_SQL_PARA** ppara, const char* sName, const char* sValue, const char* sOperater)

@@ -460,7 +460,10 @@ static int DealSaveWarnConfig(bool bIsMod=false)
 	}
 
 	IM_SQL_PARA* ppara = NULL;
-	InitParameter(&ppara);
+	if(InitParameter(&ppara) < 0) {
+		ERR_LOG("sql parameter init failed !");
+		return SLOG_ERROR_LINE;
+	}
 
 	int32_t iWarnFlag = 0, iNewWarnFlag = 0;
 	if(pmax != NULL)
@@ -501,6 +504,7 @@ static int DealSaveWarnConfig(bool bIsMod=false)
 			stConfig.pshmLoginList->stLoginList[stConfig.stUser.iLoginIndex].szUserName, NULL);
 		strSql = "insert into mt_warn_config";
 		JoinParameter_Insert(&strSql, qu.GetMysql(), ppara);
+		ReleaseParameter(&ppara);
 		if(!qu.execute(strSql))
 		{
 			ERR_LOG("execute sql:%s failed, msg:%s", strSql.c_str(), qu.GetError().c_str());

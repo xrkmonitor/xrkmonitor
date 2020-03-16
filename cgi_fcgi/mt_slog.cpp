@@ -514,7 +514,10 @@ static int DealSaveConfig(CGI *cgi, bool bIsAdd=false)
 
 	Query & qu = *(stConfig.qu);
 	IM_SQL_PARA* ppara = NULL;
-	InitParameter(&ppara);
+	if(InitParameter(&ppara) < 0) {
+		ERR_LOG("sql parameter init failed !");
+		return SLOG_ERROR_LINE;
+	}
 	if(pdesc != NULL)
 		AddParameter(&ppara, "config_desc", pdesc, NULL);
 	if(pname != NULL)
@@ -1648,7 +1651,7 @@ static int DealGetLogFiles(CGI *cgi)
 
 	STRING str_cgi;
 	string_init(&str_cgi);
-	if((stConfig.err=string_set(&str_cgi, js.ToString().c_str())) != STATUS_OK
+	if((stConfig.err=string_set(&str_cgi, str.c_str())) != STATUS_OK
 		|| (stConfig.err=cgi_output(cgi, &str_cgi)) != STATUS_OK)
 	{
 		string_clear(&str_cgi);
@@ -2073,7 +2076,10 @@ static int DealSaveModule(CGI *cgi, bool bIsAdd=false)
 	}
 
 	IM_SQL_PARA* ppara = NULL;
-	InitParameter(&ppara);
+	if(InitParameter(&ppara) < 0) {
+		ERR_LOG("sql parameter init failed !");
+		return SLOG_ERROR_LINE;
+	}
 	if(pdesc != NULL)
 		AddParameter(&ppara, "module_desc", pdesc, NULL);
 	if(pname != NULL)
@@ -2201,8 +2207,12 @@ static int DealSaveApp(CGI *cgi, bool bIsAdd=false)
 	}
 
 	IM_SQL_PARA* ppara = NULL;
-	InitParameter(&ppara);
 
+	if(InitParameter(&ppara) < 0) {
+		ERR_LOG("sql parameter init failed !");
+		return SLOG_ERROR_LINE;
+	}
+	
 	if(bIsAdd) {
 	}
 	else {
@@ -2219,8 +2229,10 @@ static int DealSaveApp(CGI *cgi, bool bIsAdd=false)
 	AddParameter(&ppara, "user_mod", pUserInfo->szUserName, NULL);
 	if(bIsAdd) {
 		strSql = "START TRANSACTION";
-		if(!qu.execute(strSql))
+		if(!qu.execute(strSql)) {
+			ReleaseParameter(&ppara);
 			return SLOG_ERROR_LINE;
+		}
 
 		AddParameter(&ppara, "create_time", stConfig.dwCurTime, "DB_CAL");
 		AddParameter(&ppara, "update_time", uitodate(stConfig.dwCurTime), NULL);
@@ -2561,7 +2573,11 @@ static int AddPluginLogModule(Query &qu, Json & js_plugin)
 	const char *pname = js_plugin["plus_name"];
 	const char *pdesc = js_plugin["plus_desc"];
 
-	InitParameter(&ppara);
+	if(InitParameter(&ppara) < 0) {
+		ERR_LOG("sql parameter init failed !");
+		return SLOG_ERROR_LINE;
+	}
+
 	if(pdesc != NULL)
 		AddParameter(&ppara, "module_desc", pdesc, NULL);
 	if(pname != NULL)
@@ -2599,7 +2615,10 @@ static int AddPluginLogConfig(Query &qu, Json & js_plugin)
 	const char *pdesc = js_plugin["plus_desc"];
 
 	IM_SQL_PARA* ppara = NULL;
-	InitParameter(&ppara);
+	if(InitParameter(&ppara) < 0) {
+		ERR_LOG("sql parameter init failed !");
+		return SLOG_ERROR_LINE;
+	}
 	AddParameter(&ppara, "config_name", pname, NULL);
 	AddParameter(&ppara, "user_mod_id", pUserInfo->iUserId, "DB_CAL");
 	AddParameter(&ppara, "user_mod", pUserInfo->szUserName, NULL);
@@ -2661,7 +2680,10 @@ static int AddPlugin(Query &qu, Json &js_plugin)
 	
 	std::string strSql;
 	IM_SQL_PARA* ppara = NULL;
-	InitParameter(&ppara);
+	if(InitParameter(&ppara) < 0) {
+		ERR_LOG("sql parameter init failed !");
+		return SLOG_ERROR_LINE;
+	}
 	AddParameter(&ppara, "plugin_desc", pdesc, NULL);
 	AddParameter(&ppara, "plugin_name", pname, NULL);
 	AddParameter(&ppara, "plugin_cur_ver", (const char*)(js_plugin["plus_version"]), NULL);
@@ -2703,7 +2725,10 @@ static int AddPluginParentAttrTypes(Query &qu, Json &js_plugin)
 
 	std::string strSql;
 	const char *pcurTime = uitodate(stConfig.dwCurTime);
-	InitParameter(&ppara);
+	if(InitParameter(&ppara) < 0) {
+		ERR_LOG("sql parameter init failed !");
+		return SLOG_ERROR_LINE;
+	}
 	AddParameter(&ppara, "parent_type", PLUGIN_PARENT_ATTR_TYPE, "DB_CAL");
 	AddParameter(&ppara, "xrk_name", (const char *)(js_plugin["plus_name"]), NULL);
 	AddParameter(&ppara, "type_pos", "1.1.1", NULL);
@@ -2751,14 +2776,16 @@ static int TryUpdatePluginAttr(Query &qu, Json &js_local, Json &js_up)
 
 	IM_SQL_PARA* ppara = NULL;
 	std::string strSql;
-
-	InitParameter(&ppara);
-	if(!strcmp(qu.getstr("attr_name"), (const char*)(js_up["attr_name"]))) {
+	if(InitParameter(&ppara) < 0) {
+		ERR_LOG("sql parameter init failed !");
+		return SLOG_ERROR_LINE;
+	}
+	if(strcmp(qu.getstr("attr_name"), (const char*)(js_up["attr_name"]))) {
 		AddParameter(&ppara, "attr_name", (const char*)(js_up["attr_name"]), NULL);
 		js_local["attr_name"] = (const char*)(js_up["attr_name"]);
 	}
-	if((js_up.HasValue("attr_desc") && !strcmp(qu.getstr("attr_desc"), (const char*)(js_up["attr_desc"])))
-		|| (!js_up.HasValue("attr_desc") && !strcmp(qu.getstr("attr_desc"), "")))
+	if((js_up.HasValue("attr_desc") && strcmp(qu.getstr("attr_desc"), (const char*)(js_up["attr_desc"])))
+		|| (!js_up.HasValue("attr_desc") && strcmp(qu.getstr("attr_desc"), "")))
 	{
 		if(js_up.HasValue("attr_desc")) {
 			 AddParameter(&ppara, "attr_desc", (const char *)(js_up["attr_desc"]), NULL);
@@ -2820,7 +2847,11 @@ static int AddPluginAttr(Query &qu, Json &js_attr, Json &js_plugin)
 	}
 
 	IM_SQL_PARA* ppara = NULL;
-	InitParameter(&ppara);
+	if(InitParameter(&ppara) < 0) {
+		ERR_LOG("sql parameter init failed !");
+		return SLOG_ERROR_LINE;
+	}
+
 	std::string strSql;
 	char *pcurTime = uitodate(stConfig.dwCurTime);
 	AddParameter(&ppara, "attr_name", (const char*)(js_attr["attr_name"]), NULL);
@@ -2873,13 +2904,18 @@ static int TryUpdatePluginAttrType(Query &qu, Json &js_local, Json &js_up)
 	std::string strSql;
 	const char *pcurTime = uitodate(stConfig.dwCurTime);
 
-	InitParameter(&ppara);
-	if(!strcmp(qu.getstr("xrk_name"), (const char*)(js_up["attr_type_name"]))) {
+	if(InitParameter(&ppara) < 0) {
+		ERR_LOG("sql parameter init failed !");
+	    qu.free_result();
+		return SLOG_ERROR_LINE;
+	}
+
+	if(strcmp(qu.getstr("xrk_name"), (const char*)(js_up["attr_type_name"]))) {
 		AddParameter(&ppara, "xrk_name", (const char*)(js_up["attr_type_name"]), NULL);
 		js_local["attr_type_name"] = (const char*)(js_up["attr_type_name"]);
 	}
-	if((js_up.HasValue("attr_type_desc") && !strcmp(qu.getstr("attr_desc"), (const char*)(js_up["attr_type_desc"])))
-		|| (!js_up.HasValue("attr_type_desc") && !strcmp(qu.getstr("attr_desc"), "")))
+	if((js_up.HasValue("attr_type_desc") && strcmp(qu.getstr("attr_desc"), (const char*)(js_up["attr_type_desc"])))
+		|| (!js_up.HasValue("attr_type_desc") && strcmp(qu.getstr("attr_desc"), "")))
 	{
 		if(js_up.HasValue("attr_type_desc")) {
 			 AddParameter(&ppara, 
@@ -2919,7 +2955,11 @@ static int AddPluginAttrTypes(Query &qu, Json &js_attr_type, Json &js_plugin)
 	std::string strSql;
 	const char *pcurTime = uitodate(stConfig.dwCurTime);
 
-	InitParameter(&ppara);
+	if(InitParameter(&ppara) < 0) {
+		ERR_LOG("sql parameter init failed !");
+		return SLOG_ERROR_LINE;
+	}
+
 	AddParameter(&ppara, "xrk_name", (const char *)(js_attr_type["attr_type_name"]), NULL);
 	if(js_attr_type.HasValue("attr_type_desc"))
 		AddParameter(&ppara, 
@@ -3008,12 +3048,134 @@ static int DealUpdatePlugin(CGI *cgi)
 	    return SLOG_ERROR_LINE;
 	CTransSavePlugin sMysqlTrans(qu, iIsSqlFailed);
 
+	if((int)(js_plugin["b_add_log_module"]) && !(int)(js_local["b_add_log_module"])) {
+		if(AddPluginLogModule(qu, js_local) < 0) {
+			return SLOG_ERROR_LINE;
+		}
+		if(AddPluginLogConfig(qu, js_local) < 0) {
+			return SLOG_ERROR_LINE;
+		}
+	}
+
+	Json::json_list_t & jslist_attrtype = js_plugin["attr_types"].GetArray();
+	Json::json_list_t & jslist_local_attrtype = js_local["attr_types"].GetArray();
+	Json::json_list_t::iterator it_attrtype = jslist_attrtype.begin();
+	while(it_attrtype != jslist_attrtype.end()) {
+		Json::json_list_t::iterator it_local_attrtype = jslist_local_attrtype.begin();
+		for(; it_local_attrtype != jslist_local_attrtype.end(); it_local_attrtype++) {
+			if((int)((*it_local_attrtype)["plug_attr_type_id"]) 
+				== (int)((*it_attrtype)["plug_attr_type_id"])) {
+				// 尝试更新监控点类型
+				if(TryUpdatePluginAttrType(qu, *it_local_attrtype, *it_attrtype) < 0) {
+					return SLOG_ERROR_LINE;
+				}
+				break;
+			}
+		}
+
+		// 新增监控点类型
+		if(it_local_attrtype == jslist_local_attrtype.end()) {
+			if(AddPluginAttrTypes(qu, *it_attrtype, js_local) < 0) {
+				return SLOG_ERROR_LINE;
+			}
+			js_local["attr_types"].Add(*it_attrtype);
+		}
+		it_attrtype++;
+	}
+
+	Json::json_list_t & jslist_attr = js_plugin["attrs"].GetArray();
+	Json::json_list_t & jslist_local_attr = js_local["attrs"].GetArray();
+	Json::json_list_t::iterator it_attr = jslist_attr.begin();
+	while(it_attr != jslist_attr.end()) {
+		Json::json_list_t::iterator it_local_attr = jslist_local_attr.begin();
+		for(; it_local_attr != jslist_local_attr.end(); it_local_attr++) {
+			if((int)((*it_local_attr)["plug_attr_id"]) 
+				== (int)((*it_attr)["plug_attr_id"])) {
+				if(TryUpdatePluginAttr(qu, *it_local_attr, *it_attr) < 0) {
+					return SLOG_ERROR_LINE;
+				}
+				break;
+			}
+		}
+		if(it_local_attr == jslist_local_attr.end()) {
+			if(AddPluginAttr(qu, *it_attr, js_local) < 0) {
+				return SLOG_ERROR_LINE;
+			}
+			js_local["attrs"].Add(*it_attr);
+		}
+		it_attr++;
+	}
+
+	Json::json_list_t & jslist_cfg = js_plugin["cfgs"].GetArray();
+	Json::json_list_t & jslist_local_cfg = js_local["cfgs"].GetArray();
+	Json::json_list_t::iterator it_cfg = jslist_cfg.begin();
+	while(it_cfg != jslist_cfg.end()) {
+		Json &remote = *it_cfg;
+		Json::json_list_t::iterator it_local_cfg = jslist_local_cfg.begin();
+		for(; it_local_cfg != jslist_local_cfg.end(); it_local_cfg++) {
+			Json &local = *it_local_cfg;
+			if(!strcmp((const char*)(local["item_name"]), 
+				(const char*)(remote["item_name"])))
+			{
+				bool bUpcfg = false;
+				if(strcmp((const char*)(local["item_value"]), (const char*)(remote["item_value"]))) {
+					local["item_value"] = (const char*)(remote["item_value"]);
+					bUpcfg = true;
+				}
+				if(strcmp((const char*)(local["item_desc"]), (const char*)(remote["item_desc"]))) {
+					local["item_desc"] = (const char*)(remote["item_desc"]);
+					bUpcfg = true;
+				}
+				if((bool)(local["enable_modify"]) != (bool)(remote["enable_modify"])) {
+					local["enable_modify"] = (bool)(remote["enable_modify"]);
+					bUpcfg = true;
+				}
+				if(bUpcfg) {
+					DEBUG_LOG("try update cfg:%s", (const char*)(local["item_name"]));
+				}
+				break;
+			}
+		}
+		if(it_local_cfg == jslist_local_cfg.end()) {
+			js_local["cfgs"].Add(remote);
+			DEBUG_LOG("add config:%s", (const char*)(remote["item_name"]));
+		}
+		it_cfg++;
+	}
+
+	// 检查配置删除
+	Json::json_list_t::iterator it_local_cfg = jslist_local_cfg.begin();
+	while(it_local_cfg != jslist_local_cfg.end()) {
+		Json &local = *it_local_cfg;
+		for(it_cfg = jslist_cfg.begin(); it_cfg!=jslist_cfg.end(); it_cfg++) {
+			Json &remote = *it_cfg;
+			if(!strcmp((const char*)(local["item_name"]),
+				(const char*)(remote["item_name"])))
+			{
+				break;
+			}
+		}
+		if(it_cfg == jslist_cfg.end()) {
+			DEBUG_LOG("remove plugin:%s, cfg:%s",
+				(const char*)(js_local["plus_name"]), (const char*)(local["item_name"]));
+			jslist_local_cfg.erase(it_local_cfg++);
+		}
+		else
+			it_local_cfg++;
+	}
+
 	std::string strSql;
 	IM_SQL_PARA* ppara = NULL;
-	InitParameter(&ppara);
-
+	if(InitParameter(&ppara) < 0) {
+		ERR_LOG("sql parameter init failed !");
+		return SLOG_ERROR_LINE;
+	}
 	AddParameter(&ppara, "plugin_cur_ver", (const char*)(js_plugin["plus_version"]), NULL);
 	js_local["plus_version"] = (const char*)(js_plugin["plus_version"]);
+	if((int)(js_plugin["b_add_log_module"]) && !(int)(js_local["b_add_log_module"])) {
+		AddParameter(&ppara, "log_config", (int)(js_plugin["b_add_log_module"]), "DB_CAL");
+		js_local["b_add_log_module"] = (int)(js_plugin["b_add_log_module"]);
+	}
 	if(strcmp((const char*)(js_plugin["plus_desc"]), (const char*)(js_local["plus_desc"]))) {
 		AddParameter(&ppara, "plugin_desc", (const char*)(js_plugin["plus_desc"]), NULL);
 		js_local["plus_desc"] = (const char*)(js_plugin["plus_desc"]);
@@ -3046,85 +3208,8 @@ static int DealUpdatePlugin(CGI *cgi)
 		AddParameter(&ppara, "plugin_src_url", (const char*)(js_plugin["plus_url"]), NULL);
 		js_local["plus_url"] = (const char*)(js_plugin["plus_url"]);
 	}
-
-	if((int)(js_plugin["b_add_log_module"]) && !(int)(js_local["b_add_log_module"])) {
-		AddParameter(&ppara, "log_config", (int)(js_plugin["b_add_log_module"]), "DB_CAL");
-		js_local["b_add_log_module"] = (int)(js_plugin["b_add_log_module"]);
-		if(AddPluginLogModule(qu, js_local) < 0)
-			return SLOG_ERROR_LINE;
-		if(AddPluginLogConfig(qu, js_local) < 0)
-			return SLOG_ERROR_LINE;
-	}
-
-	Json::json_list_t & jslist_attrtype = js_plugin["attr_types"].GetArray();
-	Json::json_list_t & jslist_local_attrtype = js_local["attr_types"].GetArray();
-	Json::json_list_t::iterator it_attrtype = jslist_attrtype.begin();
-	while(it_attrtype != jslist_attrtype.end()) {
-		Json::json_list_t::iterator it_local_attrtype = jslist_local_attrtype.begin();
-		for(; it_local_attrtype != jslist_local_attrtype.end(); it_local_attrtype++) {
-			if((int)((*it_local_attrtype)["plug_attr_type_id"]) 
-				== (int)((*it_attrtype)["plug_attr_type_id"])) {
-				// 尝试更新监控点类型
-				if(TryUpdatePluginAttrType(qu, *it_local_attrtype, *it_attrtype) < 0)
-					return SLOG_ERROR_LINE;
-				break;
-			}
-		}
-
-		// 新增监控点类型
-		if(it_local_attrtype == jslist_local_attrtype.end()) {
-			if(AddPluginAttrTypes(qu, *it_attrtype, js_local) < 0)
-				return SLOG_ERROR_LINE;
-			js_local["attr_types"].Add(*it_attrtype);
-		}
-		it_attrtype++;
-	}
-
-	Json::json_list_t & jslist_attr = js_plugin["attrs"].GetArray();
-	Json::json_list_t & jslist_local_attr = js_local["attrs"].GetArray();
-	Json::json_list_t::iterator it_attr = jslist_attr.begin();
-	while(it_attr != jslist_attr.end()) {
-		Json::json_list_t::iterator it_local_attr = jslist_local_attr.begin();
-		for(; it_local_attr != jslist_local_attr.end(); it_local_attr++) {
-			if((int)((*it_local_attr)["plug_attr_id"]) 
-				== (int)((*it_attr)["plug_attr_id"])) {
-				// 尝试更新监控点类型
-				if(TryUpdatePluginAttr(qu, *it_local_attr, *it_attr) < 0)
-					return SLOG_ERROR_LINE;
-				break;
-			}
-		}
-
-		if(it_local_attr == jslist_local_attr.end()) {
-			if(AddPluginAttr(qu, *it_attr, js_local) < 0)
-				return SLOG_ERROR_LINE;
-			js_local["attrs"].Add(*it_attr);
-		}
-		it_attr++;
-	}
-
-	Json::json_list_t & jslist_cfg = js_plugin["cfgs"].GetArray();
-	Json::json_list_t & jslist_local_cfg = js_local["cfgs"].GetArray();
-	Json::json_list_t::iterator it_cfg = jslist_cfg.begin();
-	while(it_cfg != jslist_cfg.end()) {
-		Json &remote = *it_cfg;
-		Json::json_list_t::iterator it_local_cfg = jslist_local_cfg.begin();
-		for(; it_local_cfg != jslist_local_cfg.end(); it_local_cfg++) {
-			Json &local = *it_local_cfg;
-			if(!strcmp((const char*)(local["item_name"]), 
-				(const char*)(remote["item_name"])))
-			{
-				local["item_value"] = (const char*)(remote["item_value"]);
-				local["item_desc"] = (const char*)(remote["item_desc"]);
-				local["enable_modify"] = (bool)(remote["enable_modify"]);
-				break;
-			}
-		}
-		if(it_local_cfg == jslist_local_cfg.end())
-			js_local["cfgs"].Add(remote);
-		it_cfg++;
-	}
-	AddParameter(&ppara, "pb_info", js_local.ToString().c_str(), NULL);
+	std::string strJs = js_local.ToString();
+	AddParameter(&ppara, "pb_info", strJs.c_str(), NULL);
 
 	strSql = "update mt_plugin set ";
 	JoinParameter_Set(&strSql, qu.GetMysql(), ppara);

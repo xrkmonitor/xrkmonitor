@@ -312,7 +312,11 @@ static int UpdateAttrType()
 	Query & qu = *stConfig.qu;
 	js["statusCode"] = 200;
 	IM_SQL_PARA* ppara = NULL;
-	InitParameter(&ppara);
+	if(InitParameter(&ppara) < 0) {
+		ERR_LOG("sql parameter init failed !");
+		return SLOG_ERROR_LINE;
+	}
+
 	AddParameter(&ppara, "xrk_name", pname, NULL);
 	AddParameter(&ppara, "attr_desc", pdesc, NULL);
 	AddParameter(&ppara, "mod_user", pUserInfo->szUserName, NULL);
@@ -499,7 +503,10 @@ static int SaveAttr(bool bIsMod=false)
 	}
 
 	IM_SQL_PARA* ppara = NULL;
-	InitParameter(&ppara);
+	if(InitParameter(&ppara) < 0) {
+		ERR_LOG("sql parameter init failed !");
+		return SLOG_ERROR_LINE;
+	}
 
 	AddParameter(&ppara, "attr_type", iAttrType, "DB_CAL");
 	AddParameter(&ppara, "data_type", iDataType, "DB_CAL");
@@ -579,7 +586,11 @@ static int AddAttrType()
 	}
 	FloginInfo *pUserInfo = stConfig.stUser.puser_info;
 	IM_SQL_PARA* ppara = NULL;
-	InitParameter(&ppara);
+	if(InitParameter(&ppara) < 0) {
+		ERR_LOG("sql parameter init failed !");
+		return SLOG_ERROR_LINE;
+	}
+	
 	AddParameter(&ppara, "parent_type", iParentType, "DB_CAL");
 	AddParameter(&ppara, "xrk_name", pname, NULL);
 	AddParameter(&ppara, "type_pos", ppos, NULL);
@@ -818,7 +829,11 @@ static int DealAddMultiAttr()
 	char hdf_pex[32], hdf_name[64];
 	for(; it != stAttrInfoList.end(); it++)
 	{
-		InitParameter(&ppara);
+		if(InitParameter(&ppara) < 0) {
+			ERR_LOG("sql parameter init failed !");
+			return SLOG_ERROR_LINE;
+		}
+
 		AddParameter(&ppara, "attr_type", it->iAttrType, "DB_CAL");
 		AddParameter(&ppara, "data_type", it->iDataType, "DB_CAL");
 		AddParameter(&ppara, "attr_name", it->strName.c_str(), NULL);

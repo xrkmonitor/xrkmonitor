@@ -323,7 +323,10 @@ static int SaveBindMachine(int view_id)
 	Query & qu = *stConfig.qu;
 
 	IM_SQL_PARA* ppara = NULL;
-	InitParameter(&ppara);
+	if(InitParameter(&ppara) < 0) {
+		ERR_LOG("sql parameter init failed !");
+		return SLOG_ERROR_LINE;
+	}
 	AddParameter(&ppara, "view_id", view_id, "DB_CAL");
 	AddParameter(&ppara, "machine_id", machine_id, "DB_CAL");
 	AddParameter(&ppara, "xrk_status", (uint32_t)0, "DB_CAL");

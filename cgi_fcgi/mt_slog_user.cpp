@@ -267,8 +267,11 @@ static int SaveUser(bool bIsMod=false)
 	}
 
 	IM_SQL_PARA* ppara = NULL;
-	InitParameter(&ppara);
-
+	if(InitParameter(&ppara) < 0) {
+		ERR_LOG("sql parameter init failed !");
+		return SLOG_ERROR_LINE;
+	}
+	
 	Query & qu = *stConfig.qu;
 	AddParameter(&ppara, "user_mod_id", pUserInfo->iUserId, "DB_CAL");
 

@@ -320,7 +320,10 @@ static int GetBindxrkmonitorUid()
 static void AddLoginHistory(FloginInfo *psess)
 {
 	IM_SQL_PARA* ppara = NULL;
-	InitParameter(&ppara);
+	if(InitParameter(&ppara) < 0) {
+		ERR_LOG("sql parameter init failed !");
+		return ;
+	}
 	AddParameter(&ppara, "user_id", psess->iUserId, "DB_CAL");
 	AddParameter(&ppara, "login_time", stConfig.dwCurTime, "DB_CAL");
 	AddParameter(&ppara, "valid_time", stConfig.dwCurTime+psess->iLoginExpireTime, "DB_CAL");

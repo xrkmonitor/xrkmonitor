@@ -319,7 +319,10 @@ static int SaveView(bool bIsMod=false)
 		SET_BIT(flag, VIEW_FLAG_AUTO_BIND_MACHINE);
 
 	IM_SQL_PARA* ppara = NULL;
-	InitParameter(&ppara);
+	if(InitParameter(&ppara) < 0) {
+		ERR_LOG("sql parameter init failed !");
+		return SLOG_ERROR_LINE;
+	}
 
 	AddParameter(&ppara, "xrk_name", pname, NULL);
 	AddParameter(&ppara, "view_flag", flag, "DB_CAL");
