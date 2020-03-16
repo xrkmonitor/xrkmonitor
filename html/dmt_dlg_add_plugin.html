@@ -18,6 +18,7 @@ ddapFormCss += '.ddapFormItemSel { background-color:#2894FF }';
 ddapFormCss += '</style>';
 
 $(document).ready(function(){
+
 	$('#ddap_src_url').click(function() {
 		if($(this).attr('href') == '#') {
 			alertMsg.info('未设置源码链接地址，请先设置');
@@ -62,14 +63,7 @@ $(document).ready(function(){
 		alertMsg.warn("脚本运行错误, 请刷新页面重试");
 		return;
 	}
-
 	$('#ddap_plugin_name').val(dp_sel_plugin.plugin_name);
-	$('#ddap_plugin_ver').val(dp_sel_plugin.ver);
-	$('#ddap_plugin_auth').val(dp_sel_plugin.auth);
-	if(dp_sel_plugin.open_src == 0)
-		$('#ddap_src_url_show').css('display', 'none');
-	if(dp_sel_plugin.log_config)
-		$('#ddap_log_check').attr('checked', true).attr('disabled', true);
 
 	$("#ddap_open_src option").each(function() {
 		if(this.value == dp_sel_plugin.open_src) {
@@ -99,8 +93,6 @@ $(document).ready(function(){
 		}
 	});
 
-	// 换行符有转码，需要转换回来
-	$('#ddap_desc').text(dp_sel_plugin.desc.replace(/&br/g, "\r\n"));
 	ddapGetPluginPbInfo();
 
 	if(dp_sel_plugin.pic != "" && dp_sel_plugin.pic != null)  {
@@ -114,7 +106,7 @@ $(document).ready(function(){
 function ddapSetPluginInfo(js)
 {
 	var attrtype = $('#ddap_attr_types');
-	if(typeof js.attr_types != undefined && js.attr_types != null) {
+	if(typeof js.attr_types != 'undefined' && js.attr_types != null) {
 		attrtype.html("");
 		for(var i=js.attr_types.length-1; i >= 0; i--) {
 			var op = $('<option></option>');
@@ -130,7 +122,7 @@ function ddapSetPluginInfo(js)
 	}
 
 	var fhtml = "";
-	if(typeof js.attrs != undefined && js.attrs != null) {
+	if(typeof js.attrs != 'undefined' && js.attrs != null) {
 		fhtml = ddapFormCss;
 		fhtml += "<div id='ddap_plugin_attr' style='padding-left:5px; overflow-x:hidden;'>";
 		fhtml += "插件监控点如下共 (<font id='dapmar_count'>"+js.attrs.length+"</font>) 个: <br />";
@@ -167,7 +159,7 @@ function ddapSetPluginInfo(js)
 		document.getElementById("ddap_up_file_info").contentDocument.body.innerHTML = fhtml;
 	}
 
-	if(typeof js.cfgs != undefined && js.cfgs != null) {
+	if(typeof js.cfgs != 'undefined' && js.cfgs != null) {
 		fhtml = "<div id='ddap_plugin_cfg' style='padding-left:5px; overflow-x:hidden;'>";
 		fhtml += "插件配置如下共 (<font id='dapmar_cfgs'>"+js.cfgs.length+"</font>) 个: <br />";
 		fhtml += ddapFormSplit; 
@@ -190,7 +182,7 @@ function ddapSetPluginInfo(js)
 		fhtml += ddapFormSplit; 
 	
 		var sAttrDiv = $("#ddap_up_file_info").contents().find("#ddap_plugin_attr");
-		if(typeof sAttrDiv != undefined && sAttrDiv != null && sAttrDiv.length > 0)
+		if(typeof sAttrDiv != 'undefined' && sAttrDiv != null && sAttrDiv.length > 0)
 			sAttrDiv.before(fhtml);
 		else 
 			document.getElementById("ddap_up_file_info").contentDocument.body.innerHTML 
@@ -206,10 +198,19 @@ function ddapSetPluginInfo(js)
 		});
 	}
 
-	if(typeof js.plus_url != undefined && js.plus_url != '') {
+	if(typeof js.plus_url != 'undefined' && js.plus_url != '') {
 		$('#ddap_in_src_url').val(js.plus_url);
 		$('#ddap_src_url').attr('href', js.plus_url);
 	}
+
+	$('#ddap_plugin_ver').val(js.plus_version);
+	$('#ddap_plugin_auth').val(js.plugin_auth);
+	if(js.b_open_source == 0)
+		$('#ddap_src_url_show').css('display', 'none');
+	if(js.b_add_log_module == 1)
+		$('#ddap_log_check').attr('checked', true).attr('disabled', true);
+	if(typeof js.plus_desc != 'undefined')
+		$('#ddap_desc').text(js.plus_desc.replace(/&br/g, "\r\n"));
 }
 
 function ddapGetPluginPbInfo()
