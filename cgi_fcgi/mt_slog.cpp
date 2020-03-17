@@ -85,6 +85,7 @@ static const char *s_JsonRequest [] = {
 	"refresh_main_info",
 	"install_open_plugin",
 	"update_open_plugin",
+	"make_plugin_conf",
 	NULL
 };
 
@@ -3017,6 +3018,103 @@ static int GetLocalPlugin(Json &js_plugin, int iPluginId)
 	return 0;
 }
 
+static int MakePluginConfFile(Json &plug_info, ostringstream &oAbsFile)
+{
+    FCGI_FILE * fp = FCGI_fopen(oAbsFile.str().c_str(), "w+");
+    if(fp == NULL) {
+        ERR_LOG("create plugin config file:%s failed, msg:%s", oAbsFile.str().c_str(), strerror(errno));
+        stConfig.pErrMsg = "文件创建失败";
+        return SLOG_ERROR_LINE;
+    }    
+    FCGI_fprintf(fp, "###########################################################################\r\n");
+    FCGI_fprintf(fp, "#该文件为字符云监控系统插件部署配置文件, 在部署插件时需要该文件\r\n");
+    FCGI_fprintf(fp, "#如您修改了该文件, 插件升级重新部署时注意合并修改到新配置文件\r\n");
+    FCGI_fprintf(fp, "#\r\n");
+    FCGI_fprintf(fp, "#插件名: %s\r\n", (const char*)(plug_info["plus_name"]));
+    FCGI_fprintf(fp, "#插件ID: %u\r\n", (int)(plug_info["plugin_id"]));
+    FCGI_fprintf(fp, "#文件版本: %s\r\n", (const char*)(plug_info["plus_version"]));
+    FCGI_fprintf(fp, "#\r\n");
+    FCGI_fprintf(fp, "###########################################################################\r\n");
+    FCGI_fprintf(fp, "\r\n");
+    FCGI_fprintf(fp, "\r\n");
+    FCGI_fprintf(fp, "#配置文件版本 \r\n");
+    FCGI_fprintf(fp, "XRK_PLUGIN_CONFIG_FILE_VER %s\r\n", (const char*)(plug_info["plus_version"]));
+    FCGI_fprintf(fp, "\r\n");
+    FCGI_fprintf(fp, "#插件日志配置ID, 为0表示不上报插件日志到监控系统日志中心 \r\n");
+    FCGI_fprintf(fp, "XRK_PLUGIN_CONFIG_ID %u\r\n", (int)(plug_info["log_config_id"]));
+    FCGI_fprintf(fp, "\r\n");
+    FCGI_fprintf(fp, "#插件本地日志类型, 可选值: info debug warn reqerr error fatal all \"\"\r\n");
+    FCGI_fprintf(fp, "XRK_LOCAL_LOG_TYPE error|fatal\r\n");
+    FCGI_fprintf(fp, "\r\n");
+    FCGI_fprintf(fp, "#插件本地日志文件, 注意插件需要有写权限\r\n");
+    FCGI_fprintf(fp, "XRK_LOCAL_LOG_FILE ./%s.log\r\n", (const char*)(plug_info["plus_name"]));
+    FCGI_fprintf(fp, "\r\n");
+
+	Json::json_list_t & jslist_cfg = plug_info["cfgs"].GetArray();
+	Json::json_list_t::iterator it_cfg = jslist_cfg.begin();
+	for(; it_cfg != jslist_cfg.end(); it_cfg++) {
+		Json &cfg = *it_cfg;
+        if(!(int)(cfg["enable_modify"]))
+            continue;
+        FCGI_fprintf(fp, "#%s\r\n", (const char*)(cfg["item_desc"]));
+        FCGI_fprintf(fp, "%s %s\r\n",
+            (const char*)(cfg["item_name"]), (const char*)(cfg["item_value"]));
+        FCGI_fprintf(fp, "\r\n");
+    }
+
+    FCGI_fprintf(fp, "\r\n");
+    FCGI_fprintf(fp, "#以下监控点配置项不能修改\r\n");
+	Json::json_list_t & jslist_attr = plug_info["attrs"].GetArray();
+	Json::json_list_t::iterator it_attr = jslist_attr.begin();
+	for(; it_attr != jslist_attr.end(); it_attr++) {
+		Json & attr = *it_attr;
+        FCGI_fprintf(fp, "#监控点: %s\r\n", (const char*)(attr["attr_name"]));
+        FCGI_fprintf(fp, "%s %d\r\n", (const char*)(attr["attr_id_macro"]), (int)(attr["attr_id"]));
+        FCGI_fprintf(fp, "\r\n");
+    }
+
+    FCGI_fprintf(fp, "\r\n");
+    FCGI_fclose(fp);
+    DEBUG_LOG("create config file:%s ok", oAbsFile.str().c_str());
+    return 0;
+}
+
+static int DealMakePluginConf(CGI *cgi)
+{
+	int iPluginId = hdf_get_int_value(cgi->hdf, "Query.plugin_id", 0);
+	if(iPluginId <= 0) {
+		REQERR_LOG("invalid plugin id:%d", iPluginId);
+		return SLOG_ERROR_LINE;
+	}
+
+	Json js_local;
+	if(GetLocalPlugin(js_local, iPluginId) < 0)
+		return SLOG_ERROR_LINE;
+
+	ostringstream ostrFile;
+	ostrFile << stConfig.szCsPath << "download/xrk_" << (const char*)(js_local["plus_name"]);
+	ostrFile << ".conf";
+
+	if(MakePluginConfFile(js_local, ostrFile) < 0)
+		return SLOG_ERROR_LINE;
+
+	Json js;
+	js["ret"] = 0;
+	STRING str;
+	string_init(&str);
+	if((stConfig.err=string_set(&str, js.ToString().c_str())) != STATUS_OK
+		|| (stConfig.err=cgi_output(stConfig.cgi, &str)) != STATUS_OK)
+	{
+		string_clear(&str);
+		stConfig.pErrMsg = CGI_ERR_SERVER;
+		return SLOG_ERROR_LINE;
+	}
+	string_clear(&str);
+	DEBUG_LOG("make plugin:%s config file:%s success", 
+		(const char*)(js_local["plus_name"]), ostrFile.str().c_str());
+	return 0;
+}
+
 static int DealUpdatePlugin(CGI *cgi)
 {
 	const char *pinfo = hdf_get_value(cgi->hdf, "Query.plugin", NULL);
@@ -3536,6 +3634,8 @@ int main(int argc, char **argv, char **envp)
 			iRet = DealInstallPlugin(stConfig.cgi);
 		else if(!strcmp(pAction, "update_open_plugin"))
 			iRet = DealUpdatePlugin(stConfig.cgi);
+		else if(!strcmp(pAction, "make_plugin_conf"))
+			iRet = DealMakePluginConf(stConfig.cgi);
 		else {
 			ERR_LOG("unknow action:%s", pAction);
 			iRet = -1;

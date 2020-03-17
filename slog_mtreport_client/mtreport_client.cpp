@@ -1541,7 +1541,7 @@ int LoadAllPlus()
 		if(pDirent != NULL)
 		{
 			DEBUG_LOG("read plus dir:%s type:%d", pDirent->d_name, pDirent->d_type);
-			if(pDirent->d_name[0] != '.')
+			if(pDirent->d_name[0] != '.' && pDirent->d_type == DT_DIR)
 			{
 				sFileName = pDirent->d_name;
 				sFileName += ".so";
