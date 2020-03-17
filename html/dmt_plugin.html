@@ -26,6 +26,37 @@ function <?cs var:config.plugin_pre ?>SetSelplugin(selIndex)
 	$(pid).css('background-color', '#ddf79a');
 }
 
+function <?cs var:config.plugin_pre ?>OnMakeConf()
+{
+    if(<?cs var:config.plugin_pre ?>_sel_plugin == null)
+    {
+        alertMsg.info("请右键单击插件通过弹出菜单生成");
+        return;
+    }
+
+    var requrl = "<?cs var:config.cgipath?>mt_slog?action=make_plugin_conf";
+    requrl += "&plugin_id=" + <?cs var:config.plugin_pre ?>_sel_plugin.plugin_id; 
+    $.ajax({
+        type: "get",
+        url: requrl,
+        dataType: 'json', 
+        global: false,
+        timeout: function(){
+            alertMsg.warn("请求超时");
+        },
+        success: function(js){
+            if(dmtFirstDealAjaxResponse(js))
+                return;
+            if(typeof js.ret != 'undefined' && js.ret == 0) {
+                alertMsg.correct('成功生成插件配置文件');
+            }
+            else {
+                alertMsg.info("插件配置文件生成失败"); 
+            }
+        }
+    });
+}
+
 function <?cs var:config.plugin_pre ?>OnDownFile(type)
 {
 	if(<?cs var:config.plugin_pre ?>_sel_plugin == null)
@@ -289,6 +320,9 @@ function <?cs var:config.plugin_pre ?>SetpluginList()
 				t.trigger('click');
 			},
 			bindings: { 
+				makeconf:function(t, m) { 
+					return <?cs var:config.plugin_pre ?>OnMakeConf('conf');
+				},
 				downconf:function(t, m) { 
 					return <?cs var:config.plugin_pre ?>OnDownFile('conf');
 				},
