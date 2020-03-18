@@ -331,7 +331,6 @@ int32_t CUdpSock::OnRawDataClientLog(const char *buf, size_t len)
 		}
 	}
 
-	MtReport_Attr_Add(74, 1);
 	MtReport_Attr_Add(330, 1);
 	INFO_LOG("write user client log count: %d, from:%s", iWriteLogCount, m_addrRemote.Convert(true).c_str());
 	return AckToReq(NO_ERROR);

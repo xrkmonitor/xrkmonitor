@@ -2753,11 +2753,37 @@ static int AddPluginParentAttrTypes(Query &qu, Json &js_plugin)
 	return 0;
 }
 
-static int TryUpdatePluginAttr(Query &qu, Json &js_local, Json &js_up)
+static int TryUpdatePluginAttr(Query &qu, Json &js_local, Json &js_up, const Json &jspb_local)
 {
 	char szSql[128] = {0};
 	FloginInfo *pUserInfo = stConfig.stUser.puser_info;
-	snprintf(szSql, sizeof(szSql), "select data_type,attr_name,attr_desc from mt_attr "
+
+	if(strcmp((const char*)(js_local["attr_name"]), (const char*)(js_up["attr_name"]))) 
+		js_local["attr_name"] = (const char*)(js_up["attr_name"]);
+	if(js_up.HasValue("attr_desc")) 
+		js_local["attr_desc"] = (const char*)(js_up["attr_desc"]);
+	else 
+		js_local.RemoveValue("attr_desc");
+	if((int)(js_up["attr_data_type"]) != (int)(js_local["attr_data_type"]))
+		js_local["attr_data_type"] = (int)(js_up["attr_data_type"]);
+	if((int)(js_up["plug_attr_type_id"]) != (int)(js_local["plug_attr_type_id"])) 
+		js_local["plug_attr_type_id"] = (int)(js_up["plug_attr_type_id"]);
+
+	const Json::json_list_t & jslist_local_attrtype = jspb_local["attr_types"].GetArray();
+	Json::json_list_t::const_iterator it_local_attrtype = jslist_local_attrtype.begin();
+	int iDbAttrType = 0;
+	for(; it_local_attrtype != jslist_local_attrtype.end(); it_local_attrtype++) {
+		if((int)((*it_local_attrtype)["plug_attr_type_id"]) == (int)(js_up["plug_attr_type_id"])) {
+			iDbAttrType = (int)((*it_local_attrtype)["attr_type_id"]);
+			break;
+		}
+	}
+	if(iDbAttrType == 0) {
+		ERR_LOG("not find plugin attr type:%d in local db", (int)(js_up["plug_attr_type_id"]));
+		return SLOG_ERROR_LINE;
+	}
+
+	snprintf(szSql, sizeof(szSql), "select data_type,attr_name,attr_desc,attr_type from mt_attr "
 	    " where xrk_id=%d and xrk_status=0", (int)(js_local["attr_id"]));
 	if(!qu.get_result(szSql) || qu.num_rows() <= 0 || !qu.fetch_row()) {
 	    WARN_LOG("not find plugin:%s attr :%d", (const char*)(js_local["plus_name"]),
@@ -2769,7 +2795,7 @@ static int TryUpdatePluginAttr(Query &qu, Json &js_local, Json &js_up)
 	    && ((js_up.HasValue("attr_desc") && !strcmp(qu.getstr("attr_desc"), (const char*)(js_up["attr_desc"])))
 			|| (!js_up.HasValue("attr_desc") && !strcmp(qu.getstr("attr_desc"), "")))
 		&& (int)(js_up["attr_data_type"]) == qu.getval("data_type")
-		&& (int)(js_up["plug_attr_type_id"]) == (int)(js_local["plug_attr_type_id"]))
+		&& iDbAttrType == qu.getval("attr_type"))
 	{
 	    qu.free_result();
 		return 0;
@@ -2781,33 +2807,22 @@ static int TryUpdatePluginAttr(Query &qu, Json &js_local, Json &js_up)
 		ERR_LOG("sql parameter init failed !");
 		return SLOG_ERROR_LINE;
 	}
-	if(strcmp(qu.getstr("attr_name"), (const char*)(js_up["attr_name"]))) {
+	if(strcmp(qu.getstr("attr_name"), (const char*)(js_up["attr_name"]))) 
 		AddParameter(&ppara, "attr_name", (const char*)(js_up["attr_name"]), NULL);
-		js_local["attr_name"] = (const char*)(js_up["attr_name"]);
-	}
 	if((js_up.HasValue("attr_desc") && strcmp(qu.getstr("attr_desc"), (const char*)(js_up["attr_desc"])))
 		|| (!js_up.HasValue("attr_desc") && strcmp(qu.getstr("attr_desc"), "")))
 	{
 		if(js_up.HasValue("attr_desc")) {
 			 AddParameter(&ppara, "attr_desc", (const char *)(js_up["attr_desc"]), NULL);
-			 js_local["attr__desc"] = (const char *)(js_up["attr_desc"]);
 		}
 		else {
 			AddParameter(&ppara,  "attr_desc", "", NULL);
-			js_local.RemoveValue("attr_desc");
 		}
 	}
-
-	if((int)(js_up["plug_attr_type_id"]) != (int)(js_local["plug_attr_type_id"])) {
-		AddParameter(&ppara, "attr_type", (int)(js_up["attr_type_id"]), "DB_CAL");
-		js_local["plug_attr_type_id"] = (int)(js_up["plug_attr_type_id"]);
-		js_local["attr_type_id"] = (int)(js_up["attr_type_id"]);
-	}
-
-	if((int)(js_up["attr_data_type"]) != qu.getval("data_type")) {
+	if(iDbAttrType == qu.getval("attr_type"))
+		AddParameter(&ppara, "attr_type", iDbAttrType, "DB_CAL");
+	if((int)(js_up["attr_data_type"]) != qu.getval("data_type")) 
 		AddParameter(&ppara, "data_type", (int)(js_up["attr_data_type"]), "DB_CAL");
-		js_local["attr_data_type"] = (int)(js_up["attr_data_type"]);
-	}
 
 	AddParameter(&ppara, "user_mod_id", pUserInfo->iUserId, "DB_CAL");
 	strSql = "update mt_attr set ";
@@ -2885,6 +2900,13 @@ static int TryUpdatePluginAttrType(Query &qu, Json &js_local, Json &js_up)
 {
 	char szSql[128] = {0};
 	FloginInfo *pUserInfo = stConfig.stUser.puser_info;
+	if(strcmp((const char*)(js_up["attr_type_name"]), (const char*)(js_local["attr_type_name"])))
+		js_local["attr_type_name"] = (const char*)(js_up["attr_type_name"]);
+	if(js_up.HasValue("attr_type_desc")) 
+		js_local["attr_type_desc"] = (const char*)(js_up["attr_type_desc"]);
+	else 
+		js_local.RemoveValue("attr_type_desc");
+
 	snprintf(szSql, sizeof(szSql), "select xrk_name,attr_desc from mt_attr_type "
 	    " where xrk_type=%d and xrk_status=0", (int)(js_local["attr_type_id"]));
 	if(!qu.get_result(szSql) || qu.num_rows() <= 0 || !qu.fetch_row()) {
@@ -2913,19 +2935,15 @@ static int TryUpdatePluginAttrType(Query &qu, Json &js_local, Json &js_up)
 
 	if(strcmp(qu.getstr("xrk_name"), (const char*)(js_up["attr_type_name"]))) {
 		AddParameter(&ppara, "xrk_name", (const char*)(js_up["attr_type_name"]), NULL);
-		js_local["attr_type_name"] = (const char*)(js_up["attr_type_name"]);
 	}
 	if((js_up.HasValue("attr_type_desc") && strcmp(qu.getstr("attr_desc"), (const char*)(js_up["attr_type_desc"])))
 		|| (!js_up.HasValue("attr_type_desc") && strcmp(qu.getstr("attr_desc"), "")))
 	{
 		if(js_up.HasValue("attr_type_desc")) {
-			 AddParameter(&ppara, 
-				"attr_desc", (const char *)(js_up["attr_type_desc"]), NULL);
-			 js_local["attr_type_desc"] = (const char *)(js_up["attr_type_desc"]);
+			 AddParameter(&ppara, "attr_desc", (const char *)(js_up["attr_type_desc"]), NULL);
 		}
 		else {
 			AddParameter(&ppara,  "attr_desc", "", NULL);
-			js_local.RemoveValue("attr_type_desc");
 		}
 	}
 
@@ -3189,7 +3207,7 @@ static int DealUpdatePlugin(CGI *cgi)
 		for(; it_local_attr != jslist_local_attr.end(); it_local_attr++) {
 			if((int)((*it_local_attr)["plug_attr_id"]) 
 				== (int)((*it_attr)["plug_attr_id"])) {
-				if(TryUpdatePluginAttr(qu, *it_local_attr, *it_attr) < 0) {
+				if(TryUpdatePluginAttr(qu, *it_local_attr, *it_attr, js_local) < 0) {
 					return SLOG_ERROR_LINE;
 				}
 				break;
