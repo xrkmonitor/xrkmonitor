@@ -387,7 +387,6 @@ int CUdpSock::DealCmdHelloFirst()
 	InitCmdContent(sEncBuf, iSigBufLen);
 	AckToReq(NO_ERROR); 
 	DEBUG_LOG("response first hello cmd content len:%d", iSigBufLen);
-	MtReport_Attr_Add(430, 1);
 	return NO_ERROR;
 }
 
@@ -470,7 +469,6 @@ int CUdpSock::DealCmdHello()
 	else
 		InitCmdContent(&stResp, sizeof(stResp));
 	AckToReq(NO_ERROR); 
-	MtReport_Attr_Add(432, 1);
 	return NO_ERROR;
 }
 
@@ -614,15 +612,6 @@ int CUdpSock::SetLogConfigCheckInfo(ContentCheckLogConfig *pctinfo)
 	}
 	INFO_LOG("check log config count add:%d mod:%d del:%d not change:%d, content len:%u, tlvnum:%d",
 		iAddCount, iModCount, iDelCount, iSameCount, iUseBufLen, pRespTlvBody->bTlvNum);
-
-	if(iAddCount > 0)
-		MtReport_Attr_Add(434, iAddCount);
-	if(iModCount > 0)
-		MtReport_Attr_Add(436, iModCount);
-	if(iDelCount > 0)
-		MtReport_Attr_Add(438, iDelCount);
-	if(iSameCount > 0)
-		MtReport_Attr_Add(440, iSameCount);
 	return NO_ERROR;
 }
 
@@ -798,15 +787,6 @@ int CUdpSock::SetAppInfoCheck(ContentCheckAppInfo *pctinfo)
 	}
 
 	INFO_LOG("check app config count add:%d mod:%d del:%d not change:%d", iAddCount, iModCount, iDelCount, iSameCount);
-
-	if(iAddCount > 0)
-		MtReport_Attr_Add(442, iAddCount);
-	if(iModCount > 0)
-		MtReport_Attr_Add(446, iModCount);
-	if(iDelCount > 0)
-		MtReport_Attr_Add(444, iDelCount);
-	if(iSameCount > 0)
-		MtReport_Attr_Add(448, iSameCount);
 	return NO_ERROR;
 }
 
@@ -862,14 +842,11 @@ int CUdpSock::SetSystemConfigCheck(ContentCheckSystemCfgReq *pctinfo)
 		pResp->bAttrSendPerTimeSec = stConfig.psysConfig->bAttrSendPerTimeSec;
 		pResp->bLogSendPerTimeSec = stConfig.psysConfig->bLogSendPerTimeSec;
 		pResp->bReportCpuUseSec = stConfig.psysConfig->bReportCpuUseSec;
-
 		INFO_LOG("system config change old seq:%u new seq:%u", 
 			ntohl(pctinfo->dwConfigSeq), stConfig.psysConfig->dwConfigSeq);
-		MtReport_Attr_Add(450, 1);
 	}
 	else  {
 		DEBUG_LOG("system config not change - seq:%u", stConfig.psysConfig->dwConfigSeq);
-		MtReport_Attr_Add(452, 1);
 	}
 
 	if(m_pMtClient->bEnableEncryptData) {
@@ -965,9 +942,6 @@ void CUdpSock::OnRawData(const char *buf, size_t len, struct sockaddr *sa, sockl
 
 	if(iRet != NO_ERROR)
 		AckToReq(iRet);
-
-	if(m_pMtClient != NULL)
-		MtReport_Attr_Set(404, m_pMtClient->iServerResponseTimeMs);
 }
 
 #undef APPINFO_CHECK_COPY_INFO
