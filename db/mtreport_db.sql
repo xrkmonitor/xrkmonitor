@@ -510,6 +510,46 @@ DELIMITER ;
 /*!50003 SET collation_connection  = @saved_col_connection */ ;
 
 --
+-- Table structure for table `mt_plugin`
+--
+
+DROP TABLE IF EXISTS `mt_plugin`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `mt_plugin` (
+  `plugin_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `plugin_name` varchar(64) NOT NULL,
+  `plugin_desc` varchar(512) DEFAULT NULL,
+  `plugin_cur_ver` char(12) DEFAULT NULL,
+  `plugin_auth` varchar(64) NOT NULL,
+  `xrk_status` tinyint(4) DEFAULT '0',
+  `create_time` int(12) unsigned DEFAULT '0',
+  `update_time` timestamp NOT NULL DEFAULT '1970-01-01 16:00:00' ON UPDATE CURRENT_TIMESTAMP,
+  `open_src` tinyint(4) DEFAULT '0',
+  `dest_os` varchar(64) DEFAULT 'linux',
+  `set_method` tinyint(4) DEFAULT '0',
+  `dev_language` char(32) DEFAULT 'c/c++',
+  `pb_info` text,
+  `plugin_pic` varchar(1024) DEFAULT NULL,
+  `log_config` tinyint(4) DEFAULT '0',
+  `open_plugin_id` int(11) unsigned NOT NULL,
+  `plugin_src_url` varchar(256) DEFAULT NULL,
+  PRIMARY KEY (`plugin_id`),
+  KEY `plugin_name` (`plugin_name`),
+  KEY `open_id_key` (`open_plugin_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=72 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `mt_plugin`
+--
+
+LOCK TABLES `mt_plugin` WRITE;
+/*!40000 ALTER TABLE `mt_plugin` DISABLE KEYS */;
+/*!40000 ALTER TABLE `mt_plugin` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `mt_server`
 --
 
@@ -601,7 +641,6 @@ CREATE TABLE `mt_table_upate_monitor` (
 
 LOCK TABLES `mt_table_upate_monitor` WRITE;
 /*!40000 ALTER TABLE `mt_table_upate_monitor` DISABLE KEYS */;
-INSERT INTO `mt_table_upate_monitor` VALUES ('flogin_user',1,0,'2020-03-18 14:04:42',39976);
 /*!40000 ALTER TABLE `mt_table_upate_monitor` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -982,4 +1021,4 @@ DELIMITER ;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2020-03-18 22:07:28
+-- Dump completed on 2020-03-19  7:07:52
