@@ -85,7 +85,7 @@ static const char *s_JsonRequest [] = {
 	"refresh_main_info",
 	"install_open_plugin",
 	"update_open_plugin",
-	"make_plugin_conf",
+	"down_plugin_conf",
 	NULL
 };
 
@@ -3097,7 +3097,7 @@ static int MakePluginConfFile(Json &plug_info, ostringstream &oAbsFile)
     return 0;
 }
 
-static int DealMakePluginConf(CGI *cgi)
+static int DealDownloadPluginConf(CGI *cgi)
 {
 	int iPluginId = hdf_get_int_value(cgi->hdf, "Query.plugin_id", 0);
 	if(iPluginId <= 0) {
@@ -3116,8 +3116,15 @@ static int DealMakePluginConf(CGI *cgi)
 	if(MakePluginConfFile(js_local, ostrFile) < 0)
 		return SLOG_ERROR_LINE;
 
+	ostringstream oDownUrl;
+	ostringstream oFile;
+	oFile << "xrk_" << (const char*)(js_local["plus_name"]) << ".conf";
+	oDownUrl << stConfig.szDocPath << "download/" << oFile.str();
+
 	Json js;
 	js["ret"] = 0;
+	js["downurl"] = oDownUrl.str();
+	js["filename"] = oFile.str();
 	STRING str;
 	string_init(&str);
 	if((stConfig.err=string_set(&str, js.ToString().c_str())) != STATUS_OK
@@ -3652,8 +3659,8 @@ int main(int argc, char **argv, char **envp)
 			iRet = DealInstallPlugin(stConfig.cgi);
 		else if(!strcmp(pAction, "update_open_plugin"))
 			iRet = DealUpdatePlugin(stConfig.cgi);
-		else if(!strcmp(pAction, "make_plugin_conf"))
-			iRet = DealMakePluginConf(stConfig.cgi);
+		else if(!strcmp(pAction, "down_plugin_conf"))
+			iRet = DealDownloadPluginConf(stConfig.cgi);
 		else {
 			ERR_LOG("unknow action:%s", pAction);
 			iRet = -1;
