@@ -44,7 +44,6 @@ clean:
 	make clean -C slog_deal_warn
 	make clean -C slog_tool
 	make clean -C slog_mtreport_client
-	make clean -C slog_mtreport_client/extension/linux_base
 	make clean -C slog_mtreport_server
 	make clean -C slog_tool
 
