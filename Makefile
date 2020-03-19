@@ -23,8 +23,6 @@ all:
 	make -C slog_check_warn
 	make -C slog_deal_warn
 	make -C slog_tool
-	make -C slog_mtreport_client/extension/linux_base
-	make install -C slog_mtreport_client/extension/linux_base
 	make -C slog_mtreport_client
 	make -C slog_mtreport_server 
 	make -C slog_tool
