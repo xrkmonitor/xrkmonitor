@@ -26,15 +26,31 @@ function <?cs var:config.plugin_pre ?>SetSelplugin(selIndex)
 	$(pid).css('background-color', '#ddf79a');
 }
 
-function <?cs var:config.plugin_pre ?>OnMakeConf()
+function <?cs var:config.plugin_pre ?>OnDownSrc()
 {
     if(<?cs var:config.plugin_pre ?>_sel_plugin == null)
     {
-        alertMsg.info("请右键单击插件通过弹出菜单生成");
+        alertMsg.info("请右键单击插件通过弹出菜单下载");
         return;
     }
 
-    var requrl = "<?cs var:config.cgipath?>mt_slog?action=make_plugin_conf";
+    var requrl = "<?cs var:config.xrkmonitor_url ?>/monitor/download/plugin/public/";
+	requrl += <?cs var:config.plugin_pre ?>_sel_plugin.plugin_name+ "/";
+	var filename = <?cs var:config.plugin_pre ?>_sel_plugin.plugin_name+ "_";
+	filename += <?cs var:config.plugin_pre ?>_sel_plugin.ver + ".zip";
+	requrl += filename;
+	saveAs(requrl, filename);
+}
+
+function <?cs var:config.plugin_pre ?>OnDownConf()
+{
+    if(<?cs var:config.plugin_pre ?>_sel_plugin == null)
+    {
+        alertMsg.info("请右键单击插件通过弹出菜单下载");
+        return;
+    }
+
+    var requrl = "<?cs var:config.cgipath?>mt_slog?action=down_plugin_conf";
     requrl += "&plugin_id=" + <?cs var:config.plugin_pre ?>_sel_plugin.plugin_id; 
     $.ajax({
         type: "get",
@@ -47,96 +63,14 @@ function <?cs var:config.plugin_pre ?>OnMakeConf()
         success: function(js){
             if(dmtFirstDealAjaxResponse(js))
                 return;
-            if(typeof js.ret != 'undefined' && js.ret == 0) {
-                alertMsg.correct('成功生成插件配置文件');
-            }
+			if(typeof js.downurl != 'undefined') {
+			    saveAs(js.downurl, js.filename);
+			}
             else {
-                alertMsg.info("插件配置文件生成失败"); 
+                alertMsg.info("下载部署配置文件失败"); 
             }
         }
     });
-}
-
-function <?cs var:config.plugin_pre ?>OnDownFile(type)
-{
-	if(<?cs var:config.plugin_pre ?>_sel_plugin == null)
-	{
-		alertMsg.info("请右键单击插件通过弹出菜单下载");
-		return;
-	}
-
-	var requrl = "<?cs var:config.cgipath?>mt_slog?action=download_plugin_file";
-	requrl += "&plugin_id=" + <?cs var:config.plugin_pre ?>_sel_plugin.plugin_id; 
-	requrl += "&plugin_pre=<?cs var:config.plugin_pre ?>"; 
-	requrl += "&type=" + type;
-	$.ajax({
-		type: "get",
-		url: requrl,
-		dataType: 'json', 
-		global: false,
-		timeout: function(){
-			alertMsg.warn("请求超时");
-		},
-		success: function(js){
-			if(dmtFirstDealAjaxResponse(js))
-				return;
-			if(typeof js.downurl != 'undefined') {
-				saveAs(js.downurl, js.filename);
-			}
-			else {
-				alertMsg.info("下载pb 文件失败"); 
-			}
-		}
-	});
-}
-
-function <?cs var:config.plugin_pre ?>OnMakeFile()
-{
-	if(<?cs var:config.plugin_pre ?>_sel_plugin == null)
-	{
-		alertMsg.info("请右键单击插件通过弹出菜单生成");
-		return;
-	}
-
-	var requrl = "<?cs var:config.cgipath?>mt_slog?action=make_plugin_file";
-	requrl += "&plugin_id=" + <?cs var:config.plugin_pre ?>_sel_plugin.plugin_id; 
-	requrl += "&plugin_pre=<?cs var:config.plugin_pre ?>"; 
-	$.ajax({
-		type: "get",
-		url: requrl,
-		dataType: 'json', 
-		global: false,
-		timeout: function(){
-			alertMsg.warn("请求超时");
-		},
-		success: function(js){
-			if(dmtFirstDealAjaxResponse(js))
-				return;
-			if(typeof js.ret != 'undefined' && js.ret == 0) {
-				alertMsg.correct('成功生成插件文件, 注意需要将文件同步到其它机器');
-			}
-			else {
-				alertMsg.info("插件文件生成失败"); 
-			}
-		}
-	});
-}
-
-function dpGetPluginMarketStatus(stat, over)
-{
-	switch(stat) {
-		case 1:
-			return '首次发布审核中';
-		case 2:
-			return '已发布: '+over;
-		case 3:
-			return '版本更新审核中';
-		case 4:
-			return '版本更新审核未通过';
-		case 5:
-			return '发布审核未通过';
-	}
-	return "";
 }
 
 function <?cs var:config.plugin_pre ?>_IsPluginInstall(plugin)
@@ -261,8 +195,6 @@ function <?cs var:config.plugin_pre ?>_GetPluginShowInfo(idx, plugin)
 		shtml += "<img src='<?cs var:config.xrkmonitor_url ?>/monitor/themes/sexybuttons/images/icons/silk/bullet_cross.png'>";
 	else
 		shtml += "<img src=''>";
-	shtml += "&nbsp;<font color='blue' id='<?cs var:config.plugin_pre ?>_plugin_" 
-	shtml += plugin.plugin_id + "_status'>" + dpGetPluginMarketStatus(plugin.market_status, plugin.open_version) + "</font>"; 
 	shtml += "</div>";
 	<?cs /if ?>
 	shtml += "</div>";
@@ -320,14 +252,11 @@ function <?cs var:config.plugin_pre ?>SetpluginList()
 				t.trigger('click');
 			},
 			bindings: { 
-				makeconf:function(t, m) { 
-					return <?cs var:config.plugin_pre ?>OnMakeConf('conf');
-				},
 				downconf:function(t, m) { 
-					return <?cs var:config.plugin_pre ?>OnDownFile('conf');
+					return <?cs var:config.plugin_pre ?>OnDownConf();
 				},
 				downall:function(t, m) { 
-					return <?cs var:config.plugin_pre ?>OnDownFile('zip');
+					return <?cs var:config.plugin_pre ?>OnDownSrc();
 				},
 				showinfo:function(t, m) { 
 					return <?cs var:config.plugin_pre ?>ShowInfo();
@@ -344,13 +273,6 @@ function <?cs var:config.plugin_pre ?>SetpluginList()
 			}
 		});
 	});
-}
-
-function <?cs var:config.plugin_pre ?>AddPlugin()
-{
-	var url = "<?cs var:config.cgipath?>mt_slog?action=add_mt_plugin&type=<?cs var:config.plugin_type ?>";
-	var op = $.parseJSON('{"mask":true,"maxable":false,"height":600,"width":920}'); 
-	$.pdialog.open(url, "<?cs var:config.plugin_pre ?>_dlg_add_sys_plugin", "添加监控插件", op); 
 }
 
 function <?cs var:config.plugin_pre ?>UpdatePlugin()

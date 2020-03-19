@@ -6,8 +6,7 @@
 	<li rel="showinfo">查看本地安装版本</li>
 	<li rel="showinfo_up">查看最新版本</li>
 	<li rel="update">更新到最新版本</li>
-	<li rel="makeconf">生成部署配置文件</li>
-	<li rel="downconf">下载配置文件</li>
+	<li rel="downconf">下载部署配置文件</li>
 	<li rel="downall">下载源码包</li>
 </ul>
 ]]></_PAGE_>
@@ -15,8 +14,7 @@
 <_PAGE_ id="mypluginOpenIns"><![CDATA[
 <ul id="mypluginCMIns">
 	<li rel="showinfo">查看</li>
-	<li rel="makeconf">生成部署配置文件</li>
-	<li rel="downconf">下载配置文件</li>
+	<li rel="downconf">下载部署配置文件</li>
 	<li rel="downall">下载源码包</li>
 </ul>
 ]]></_PAGE_>
