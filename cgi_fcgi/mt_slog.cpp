@@ -530,7 +530,7 @@ static int DealSaveConfig(CGI *cgi, bool bIsAdd=false)
 	AddParameter(&ppara, "user_mod", pUserInfo->szUserName, NULL);
 	std::string strSql;
 	if(bIsAdd) {
-		AddParameter(&ppara, "create_time", stConfig.dwCurTime, NULL);
+		AddParameter(&ppara, "create_time", stConfig.dwCurTime, "DB_CAL");
 		AddParameter(&ppara, "update_time", uitodate(stConfig.dwCurTime), NULL);
 		AddParameter(&ppara, "user_add", pUserInfo->szUserName, NULL);
 		AddParameter(&ppara, "user_add_id", pUserInfo->iUserId, "DB_CAL");
@@ -2625,7 +2625,7 @@ static int AddPluginLogConfig(Query &qu, Json & js_plugin)
 	AddParameter(&ppara, "user_mod", pUserInfo->szUserName, NULL);
 
 	std::string strSql;
-	AddParameter(&ppara, "create_time", stConfig.dwCurTime, NULL);
+	AddParameter(&ppara, "create_time", stConfig.dwCurTime, "DB_CAL");
 	AddParameter(&ppara, "update_time", uitodate(stConfig.dwCurTime), NULL);
 	AddParameter(&ppara, "user_add", pUserInfo->szUserName, NULL);
 	AddParameter(&ppara, "user_add_id", pUserInfo->iUserId, "DB_CAL");

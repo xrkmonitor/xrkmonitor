@@ -498,8 +498,8 @@ static int DealSaveWarnConfig(bool bIsMod=false)
 		AddParameter(&ppara, "warn_flag", iWarnFlag, "DB_CAL");
 		AddParameter(&ppara, "attr_id", iAttrId, "DB_CAL");
 		AddParameter(&ppara, "warn_type_value", iWarnTypeValue, "DB_CAL");
-		AddParameter(&ppara, "create_time", uitodate(stConfig.dwCurTime), "DB_CAL");
-		AddParameter(&ppara, "update_time", uitodate(stConfig.dwCurTime), "DB_CAL");
+		AddParameter(&ppara, "create_time", uitodate(stConfig.dwCurTime), NULL);
+		AddParameter(&ppara, "update_time", uitodate(stConfig.dwCurTime), NULL);
 		AddParameter(&ppara, "user_add",
 			stConfig.pshmLoginList->stLoginList[stConfig.stUser.iLoginIndex].szUserName, NULL);
 		strSql = "insert into mt_warn_config";
