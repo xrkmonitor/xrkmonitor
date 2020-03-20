@@ -525,14 +525,24 @@ if [ ! -z "$SERVER_OUT_IP" ]; then
 	echo "update mt_server set ip = '$SERVER_OUT_IP' where type=1" | $XRK_MYSQL_CONTEXT > /dev/null 2>&1
 fi
 if [ "$LOCAL_IP_DEC" != "$LOCAL_IP_DEC_OUT" -a ! -z "$LOCAL_IP_DEC_OUT" ]; then
-	echo "insert into mt_machine set name='$LOCAL_IP',ip1=$LOCAL_IP_DEC,ip2=$LOCAL_IP_DEC_OUT,create_time=now(),mod_time=now(),machine_desc='auto add'" | $XRK_MYSQL_CONTEXT > /dev/null 2>&1
+	echo "insert into mt_machine set xrk_name='$LOCAL_IP',ip1=$LOCAL_IP_DEC,ip2=$LOCAL_IP_DEC_OUT,create_time=now(),mod_time=now(),machine_desc='auto add'" | $XRK_MYSQL_CONTEXT > /dev/null 2>&1
 else
-	echo "insert into mt_machine set name='$LOCAL_IP',ip1=$LOCAL_IP_DEC,create_time=now(),mod_time=now(),machine_desc='auto add'" | $XRK_MYSQL_CONTEXT > /dev/null 2>&1
+	echo "insert into mt_machine set xrk_name='$LOCAL_IP',ip1=$LOCAL_IP_DEC,create_time=now(),mod_time=now(),machine_desc='auto add'" | $XRK_MYSQL_CONTEXT > /dev/null 2>&1
 fi
 
-echo "select id from mt_machine where ip1=$LOCAL_IP_DEC" | $XRK_MYSQL_CONTEXT > /dev/null 2>&1
-if [ $? -ne 0 ]; then
+checkdb=`echo "select xrk_id from mt_machine where ip1=$LOCAL_IP_DEC" | $XRK_MYSQL_CONTEXT`
+if [ $? -ne 0 -o "$checkdb" == '' ]; then
 	echo "初始化字符云监控数据库失败"
+	failed_my_exit $LINENO
+fi
+checkdb=`echo "select parent_type from mt_attr_type where xrk_type=84 and xrk_status=0" | $XRK_MYSQL_CONTEXT`
+if [ $? -ne 0 -o "$checkdb" == '' ]; then
+	echo "数据库校验错误，请确保安装包是通过官方下载"
+	failed_my_exit $LINENO
+fi
+checkdb=`echo "select user_add_id from mt_app_info where app_id=119 and xrk_status=0" | $XRK_MYSQL_CONTEXT`
+if [ $? -ne 0 -o "$checkdb" == '' ]; then
+	echo "数据库校验错误，请确保安装包是通过官方下载"
 	failed_my_exit $LINENO
 fi
 CUR_STEP=`expr 1 + $CUR_STEP`
@@ -641,7 +651,9 @@ echo ""
 
 $APACHE_CMD -t -D DUMP_MODULES |grep cgi_module > /dev/null 2>&1
 if [ $? -ne 0 ]; then
+	echo ""
 	echo "未检测到 apache 模块: cgi_module, 请修改配置加载后重启 apache 服务. " 
+	echo ""
 else
 	isyes=$(yn_continue "需要重启下 apache, 是否现在重启(y/n) ?")
 	if [ "$isyes" == "yes" ]; then
@@ -652,16 +664,17 @@ else
 	echo ""
 	if [ -z "$SERVER_OUT_IP" ]; then
 		echo "现在您可以在浏览器中访问控制台了, 访问网址: http://$LOCAL_IP"
+		echo "web 控制台默认账号密码: sadmin/sadmin"
 		echo "约 1 分钟左右, 您可以在字符云监控系统 web 控制台上查看监控系统本身的数据上报"
 		echo " ---------------------------------------------------------------------------------"
 		echo "特别提示: 如果您的服务器是云服务器, 且不能通过网址: http://$LOCAL_IP 访问web控制台"
-		echo "web 控制台默认账号密码: sadmin/sadmin"
 		echo "您可以在本脚本中的配置: SERVER_OUT_IP 指定外网IP后, 再次执行本脚本"
 	else
 		echo "现在您可以在浏览器中访问控制台了, 访问网址: http://$SERVER_OUT_IP"
 		echo "web 控制台默认账号密码: sadmin/sadmin"
 		echo "约 1 分钟左右, 您可以在字符云监控系统 web 控制台上查看监控系统本身的数据上报"
 	fi
+	echo "可以使用命令: ps -elf |grep slog, 查看监控系统后台进程"
 fi
 echo ""
 
