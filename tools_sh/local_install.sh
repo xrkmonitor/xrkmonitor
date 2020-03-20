@@ -522,7 +522,7 @@ echo "update mt_server set ip = '$LOCAL_IP'" | $XRK_MYSQL_CONTEXT > /dev/null 2>
 LOCAL_IP_DEC=`./slog_run_test show ips2d $LOCAL_IP |awk '{if(NF==3) print $1}'`
 if [ ! -z "$SERVER_OUT_IP" ]; then
 	LOCAL_IP_DEC_OUT=`./slog_run_test show ips2d $SERVER_OUT_IP|awk '{if(NF==3) print $1}'`
-	echo "update mt_server set ip = '$SERVER_OUT_IP' where type=1" | $XRK_MYSQL_CONTEXT > /dev/null 2>&1
+	echo "update mt_server set ip = '$SERVER_OUT_IP' where xrk_type=1" | $XRK_MYSQL_CONTEXT > /dev/null 2>&1
 fi
 if [ "$LOCAL_IP_DEC" != "$LOCAL_IP_DEC_OUT" -a ! -z "$LOCAL_IP_DEC_OUT" ]; then
 	echo "insert into mt_machine set xrk_name='$LOCAL_IP',ip1=$LOCAL_IP_DEC,ip2=$LOCAL_IP_DEC_OUT,create_time=now(),mod_time=now(),machine_desc='auto add'" | $XRK_MYSQL_CONTEXT > /dev/null 2>&1
