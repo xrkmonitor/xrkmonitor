@@ -96,7 +96,7 @@ $(document).ready(function(){
 	ddapGetPluginPbInfo();
 
 	if(dp_sel_plugin.pic != "" && dp_sel_plugin.pic != null)  {
-		$('#ddap_plugin_pic').attr('src', '<?cs var:config.xrkmonitor_url?>/monitor/<?cs var:config.plugin_file_path ?>/'+dp_sel_plugin.pic);
+		$('#ddap_plugin_pic').attr('src', '<?cs var:config.xrkmonitor_url?>/monitor/download/plugin/'+dp_sel_plugin.pic);
 	}
 	else {
 		$('#ddap_plugin_pic').attr('src', '<?cs var:config.xrkmonitor_url?>/monitor/download/plugin/plugin_def_pic.png');
