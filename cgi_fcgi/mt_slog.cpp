@@ -3426,6 +3426,7 @@ static int DealInstallPlugin(CGI *cgi)
 
 	Json js;
 	js["ret"] = 0;
+	js["plugin_id"] = (int)(js_plugin["plugin_id"]);
 	STRING str;
 	string_init(&str);
 	if((stConfig.err=string_set(&str, js.ToString().c_str())) != STATUS_OK
