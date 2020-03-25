@@ -25,6 +25,8 @@ XRKMONITOR_CGI_LOG_PATH=/var/log/mtreport
 MYSQL_USER=root
 MYSQL_PASS=123
 SLOG_SERVER_FILE_PATH=/home/mtreport/slog/
+SYSTEM_LIB_PATH=/usr/lib64
+XRKLIB_INSTALL_HIS_FILE=_xrkmonitor_lib_install
 
 function yn_continue()
 {
@@ -96,8 +98,8 @@ fi
 [ -d slog_tool ] && (echo "删除目录: slog_tool"; rm -fr slog_tool)
 [ -d slog_write ] && (echo "删除目录: slog_write"; rm -fr slog_write)
 [ -d tools_sh ] && (echo "删除目录: tools_sh"; rm -fr tools_sh)
-[ -f xrkmonitor_lib.tar.gz ] && (echo "删除文件: xrkmonitor_lib.tar.gz"; rm -fr xrkmonitor_lib.tar.gz)
 [ -f _run_test_tmp ] && (echo "删除临时文件: _run_test_tmp"; rm -fr _run_test_tmp)
+[ -f slog_run_test ] && (echo "删除测试文件: slog_run_test"; rm -fr slog_run_test)
 
 function yn_continue()
 {
@@ -112,9 +114,7 @@ function yn_continue()
 	fi
 }
 
-[ -f slog_run_test ] && (echo "删除测试文件: slog_run_test"; rm -fr slog_run_test)
-[ -f slog_all.tar.gz ] && (echo "删除测试文件: slog_all.tar.gz"; rm -fr slog_all.tar.gz)
-
+echo "删除库文件"
 if [ ! -f /etc/ld.so.conf ]; then
 	echo "动态链接库配置文件: /etc/ld.so.conf 不存在!"
 else
@@ -123,6 +123,36 @@ else
 		sed -i '/xrkmonitor_lib/d' /etc/ld.so.conf
 		ldconfig
 	fi
+fi
+
+function remove_old_lib()
+{
+	slib=$1
+	slk=$2
+	LIBINFO=`cat ${SYSTEM_LIB_PATH}/$XRKLIB_INSTALL_HIS_FILE | grep $slib`
+	if [ "$LIBINFO" != '' ]; then
+		rm ${SYSTEM_LIB_PATH}/$slib -f
+	fi
+
+	LIBINFO=`cat ${SYSTEM_LIB_PATH}/$XRKLIB_INSTALL_HIS_FILE | grep $slk`
+	if [ "$LIBINFO" != '' ]; then
+		rm ${SYSTEM_LIB_PATH}/$slk -f
+		echo "删除库文件：${SYSTEM_LIB_PATH}/$slib"
+	fi
+}
+if [ -f ${SYSTEM_LIB_PATH}/$XRKLIB_INSTALL_HIS_FILE ]; then
+	remove_old_lib libSockets-1.1.0.so libSockets.so.1
+	remove_old_lib libcgicomm-1.1.0.so libcgicomm.so.1
+	remove_old_lib libfcgi.so.0.0.0 libfcgi.so.0
+	remove_old_lib libmtreport_api-1.1.0.so libmtreport_api.so.1
+	remove_old_lib libmtreport_api_open-1.1.0.so libmtreport_api_open.so.1
+	remove_old_lib libmyproto-1.1.0.so libmyproto.so.1
+	remove_old_lib libmysqlwrapped-1.1.0.so libmysqlwrapped.so.1
+	remove_old_lib libneo_cgi-1.1.0.so libneo_cgi.so.1
+	remove_old_lib libneo_cs-1.1.0.so libneo_cs.so.1
+	remove_old_lib libneo_utl-1.1.0.so libneo_utl.so.1
+	remove_old_lib libprotobuf.so.6.0.0 libprotobuf.so.6
+	rm -f ${SYSTEM_LIB_PATH}/$XRKLIB_INSTALL_HIS_FILE > /dev/null 2>&1 
 fi
 
 
@@ -169,6 +199,12 @@ isyes=$(yn_continue "是否删除安装/卸载脚本 (y/n)?")
 if [ "$isyes" == "yes" ]; then
 	rm -f local_install.sh > /dev/null 2>&1
 	rm -f uninstall_xrkmonitor.sh > /dev/null 2>&1
+fi
+
+isyes=$(yn_continue "是否删除安装包 (y/n)?")
+if [ "$isyes" == "yes" ]; then
+	[ -f slog_all.tar.gz ] && (echo "删除测试文件: slog_all.tar.gz"; rm -fr slog_all.tar.gz)
+	[ -f xrkmonitor_lib.tar.gz ] && (echo "删除测试文件: xrkmonitor_lib.tar.gz"; rm -fr xrkmonitor_lib.tar.gz)
 fi
 
 echo "已为您清理干净字符云监控系统安装记录, 感谢您的关注."

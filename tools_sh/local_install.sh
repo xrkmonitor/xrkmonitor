@@ -48,6 +48,12 @@ XRKMONITOR_CGI_LOG_PATH=/var/log/mtreport
 # 指定本机IP 网卡名, 用于获取本机IP, 不指定时自动获取第一个IP 作为本机IP
 LOCAL_IP_ETHNAME=
 
+# 系统库目录
+SYSTEM_LIB_PATH=/usr/lib64
+
+# 库安装历史记录文件
+XRKLIB_INSTALL_HIS_FILE=_xrkmonitor_lib_install
+
 # ---------------- 字符云监控系统 安装环境配置 ----------------------- end -
 #
 #
@@ -60,6 +66,38 @@ APACHE_CMD=
 echo ""
 echo "---------------- 欢迎使用字符云开源监控系统 ----------------"
 echo "开始自动安装: 字符云监控系统, 共 $STEP_TOTAL 步"
+
+function remove_old_lib()
+{
+	slib=$1
+	slk=$2
+	LIBINFO=`cat ${SYSTEM_LIB_PATH}/$XRKLIB_INSTALL_HIS_FILE | grep $slib`
+	if [ "$LIBINFO" != '' ]; then
+		rm ${SYSTEM_LIB_PATH}/$slib -f
+	fi
+
+	LIBINFO=`cat ${SYSTEM_LIB_PATH}/$XRKLIB_INSTALL_HIS_FILE | grep $slk`
+	if [ "$LIBINFO" != '' ]; then
+		rm ${SYSTEM_LIB_PATH}/$slk -f
+	fi
+}
+
+function cp_lib()
+{
+	slib=$1
+	slk=$2
+	if [ -f ${SYSTEM_LIB_PATH}/$slib -o -f ${SYSTEM_LIB_PATH}/${slk} ]; then
+		echo "已存在库文件：${SYSTEM_LIB_PATH}/$slib 或者 ${SYSTEM_LIB_PATH}/$slib"
+		return
+	fi
+	cp ${install_sh_home}/xrkmonitor_lib/${slib} ${SYSTEM_LIB_PATH}
+	cd ${SYSTEM_LIB_PATH}
+	ln -s $slib $slk
+	echo $slib >> $XRKLIB_INSTALL_HIS_FILE
+	echo $slk >> $XRKLIB_INSTALL_HIS_FILE
+	cd - > /dev/null 2>&1
+	echo "安装库文件：$slib 到系统库目录：${SYSTEM_LIB_PATH}"
+}
 
 install_sh_home=`pwd`
 function is_ip_valid()
@@ -212,6 +250,8 @@ function update_config()
 	sed -i "/^XRKMONITOR_CGI_LOG_PATH=/cXRKMONITOR_CGI_LOG_PATH=${XRKMONITOR_CGI_LOG_PATH}" $1 
 	sed -i "/^MYSQL_USER=/cMYSQL_USER=${MYSQL_USER}" $1 
 	sed -i "/^MYSQL_PASS=/cMYSQL_PASS=${MYSQL_PASS}" $1 
+	sed -i "/^SYSTEM_LIB_PATH=/cSYSTEM_LIB_PATH=${SYSTEM_LIB_PATH}" $1 
+	sed -i "/^XRKLIB_INSTALL_HIS_FILE=/cXRKLIB_INSTALL_HIS_FILE=${XRKLIB_INSTALL_HIS_FILE}" $1 
 }
 
 if [ ! -f uninstall_xrkmonitor.sh ];then
@@ -418,6 +458,43 @@ else
 	fi
 fi
 
+if [ "$USE_DLL_LIB" == "yes" -a -f ${SYSTEM_LIB_PATH}/$XRKLIB_INSTALL_HIS_FILE ]; then
+	remove_old_lib libSockets-1.1.0.so libSockets.so.1
+	remove_old_lib libcgicomm-1.1.0.so libcgicomm.so.1
+	remove_old_lib libfcgi.so.0.0.0 libfcgi.so.0
+	remove_old_lib libmtreport_api-1.1.0.so libmtreport_api.so.1
+	remove_old_lib libmtreport_api_open-1.1.0.so libmtreport_api_open.so.1
+	remove_old_lib libmyproto-1.1.0.so libmyproto.so.1
+	remove_old_lib libmysqlwrapped-1.1.0.so libmysqlwrapped.so.1
+	remove_old_lib libneo_cgi-1.1.0.so libneo_cgi.so.1
+	remove_old_lib libneo_cs-1.1.0.so libneo_cs.so.1
+	remove_old_lib libneo_utl-1.1.0.so libneo_utl.so.1
+	remove_old_lib libprotobuf.so.6.0.0 libprotobuf.so.6
+	rm -f ${SYSTEM_LIB_PATH}/$XRKLIB_INSTALL_HIS_FILE > /dev/null 2>&1 
+fi
+
+isyes=$(yn_continue "是否拷贝库文件到系统库目录:$SYSTEM_LIB_PATH (y/n) ?")
+if [ "$USE_DLL_LIB" == "yes" -a "$isyes" == "yes" ]; then
+	cp_lib libSockets-1.1.0.so libSockets.so.1
+	cp_lib libcgicomm-1.1.0.so libcgicomm.so.1
+	cp_lib libfcgi.so.0.0.0 libfcgi.so.0
+	cp_lib libmtreport_api-1.1.0.so libmtreport_api.so.1
+	cp_lib libmtreport_api_open-1.1.0.so libmtreport_api_open.so.1
+	cp_lib libmyproto-1.1.0.so libmyproto.so.1
+	cp_lib libmysqlwrapped-1.1.0.so libmysqlwrapped.so.1
+	cp_lib libneo_cgi-1.1.0.so libneo_cgi.so.1
+	cp_lib libneo_cs-1.1.0.so libneo_cs.so.1
+	cp_lib libneo_utl-1.1.0.so libneo_utl.so.1
+	cp_lib libprotobuf.so.6.0.0 libprotobuf.so.6
+elif [ "$USE_DLL_LIB" == "yes" ]; then
+	echo "您已选择不拷贝动态链接库到系统库目录"
+	echo "请确认运行 cgi/后台程序 的账号可以访问默认库目录: ${install_sh_home}/xrkmonitor_lib"
+	isyes=$(yn_continue "是否继续安装 (y/n) ?")
+	if [ "$isyes" != "yes" ]; then
+		failed_my_exit $LINENO
+	fi
+fi
+
 
 echo "运行测试文件: slog_tool(slog_run_test)"
 cp slog_tool/slog_tool slog_run_test
@@ -582,7 +659,7 @@ echo ""
 echo "STEP: ($CUR_STEP/$STEP_TOTAL) 开始安装字符云监控 web 控制台"
 cp html/* $APACHE_DOCUMENT_ROOT/$XRKMONITOR_HTML_PATH -fr
 check_file $APACHE_DOCUMENT_ROOT/$XRKMONITOR_HTML_PATH/dmt_login.html $LINENO 
-chmod 777 $APACHE_DOCUMENT_ROOT/$XRKMONITOR_HTML_PATH/down
+chmod 777 $APACHE_DOCUMENT_ROOT/$XRKMONITOR_HTML_PATH/download
 cp $APACHE_DOCUMENT_ROOT/$XRKMONITOR_HTML_PATH/index.html $APACHE_DOCUMENT_ROOT
 check_file $APACHE_DOCUMENT_ROOT/index.html $LINENO 
 cp cgi_fcgi/* $APACHE_CGI_PATH -fr
