@@ -46,6 +46,10 @@ function <?cs var:config.plugin_pre ?>OnDownBin()
 	filename += local.ver + ".so";
 	requrl += filename;
 	saveAs(requrl, filename);
+
+	var rep_download_url = "<?cs var:config.xrkmonitor_url?>/cgi-bin/mt_slog_open?action=rep_open_download";
+	rep_download_url += "&plugin_id=" + <?cs var:config.plugin_pre ?>_sel_plugin.plugin_id;
+	$.ajax({ type: "get", url: rep_download_url, dataType: 'json', global: false });
 }
 
 function <?cs var:config.plugin_pre ?>OnDownSrc()
@@ -68,6 +72,10 @@ function <?cs var:config.plugin_pre ?>OnDownSrc()
 	filename += local.ver + ".zip";
 	requrl += filename;
 	saveAs(requrl, filename);
+
+	var rep_download_url = "<?cs var:config.xrkmonitor_url?>/cgi-bin/mt_slog_open?action=rep_open_download";
+	rep_download_url += "&plugin_id=" + <?cs var:config.plugin_pre ?>_sel_plugin.plugin_id;
+	$.ajax({ type: "get", url: rep_download_url, dataType: 'json', global: false });
 }
 
 function <?cs var:config.plugin_pre ?>OnDownConf()
@@ -160,7 +168,7 @@ function <?cs var:config.plugin_pre ?>_GetInstallPluginShowInfo(idx, plugin, loc
 	if(local_plugin.set_method != 0)
 		mt = '外置';
 	shtml += "<div class='pluginItem'>部署方式: " + mt + "</div>";
-	shtml += "<div class='pluginItem'>下载次数: <font color='blue'>0</font></div>";
+	shtml += "<div class='pluginItem'>安装次数: <font color='blue'>" + plugin.open_install_times + "</font></div>";
 	if(plugin.ver != local_plugin.ver) {
 		shtml += "<div class='pluginItem'>最新版本: <font color='red'>" + plugin.ver + "</font></div>";
 		shtml += "<div class='pluginItem'>最后更新时间: <font color='red'>" + local_plugin.update_time + "</font></div>";
@@ -206,7 +214,7 @@ function <?cs var:config.plugin_pre ?>_GetPluginShowInfo(idx, plugin)
 	if(plugin.set_method != 0)
 		mt = '外置';
 	shtml += "<div class='pluginItem'>部署方式: " + mt + "</div>";
-	shtml += "<div class='pluginItem'>下载次数: <font color='blue'>0</font></div>";
+	shtml += "<div class='pluginItem'>安装次数: <font color='blue'>" + plugin.open_install_times + "</font></div>";
 	shtml += "<div class='pluginItem'>最新版本: " + plugin.ver + "</div>";
 	shtml += "<div class='pluginItem'>更新时间: " + plugin.update_time + "</div>";
 	shtml += "<div class='pluginItem'>插件描述: " + plugin.desc.replace(/&br/g, "\r\n") + "</div>";
@@ -438,7 +446,10 @@ function <?cs var:config.plugin_pre ?>InstallPluginPb(pbJs, psel)
 			}
 			else {
 				alertMsg.correct("插件安装成功, 插件部署方法请查看帮助文档");
-				return navTab.reload();
+				navTab.reload();
+				var rep_install_url = "<?cs var:config.xrkmonitor_url?>/cgi-bin/mt_slog_open?action=rep_open_install";
+				rep_install_url += "&plugin_id=" + js.plugin_id;
+				$.ajax({ type: "get", url: rep_install_url, dataType: 'json', global: false });
 			}
 		}
 	});
