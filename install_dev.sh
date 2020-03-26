@@ -74,11 +74,11 @@ function InstallProtobuf()
 		return;
 	fi
 
-	if [ ! -f  /usr/lib64/libprotobuf.a ]; then
+	if [ ! -f  ${MTLIB_LIB_PATH}/libprotobuf.a ]; then
 		cd $cdir/lib/protobuf
 		tar -zxf protobuf-2.3.0.tar.gz
 		cd protobuf-2.3.0
-		./configure --libdir=/usr/lib64 --includedir=/usr/include
+		./configure --libdir=${MTLIB_LIB_PATH} --includedir=${MTLIB_INCLUDE_PATH}
 		make 
 		make install
 	else
@@ -86,8 +86,8 @@ function InstallProtobuf()
 	fi
 
 	
-	if [ ! -f  /usr/lib64/libprotobuf.a ]; then
-		echo "not find file:/usr/lib64/libprotobuf.a "
+	if [ ! -f ${MTLIB_LIB_PATH}/libprotobuf.a ]; then
+		echo "not find file:${MTLIB_LIB_PATH}/libprotobuf.a "
 		InstallFailed "protobuf"
 	fi
 }
@@ -101,20 +101,20 @@ function InstallFastcgiDev()
 		return;
 	fi
 
-	if [ ! -f /usr/include/fastcgi/fastcgi.h -o ! -f /usr/lib64/libfcgi.a ]; then
+	if [ ! -f ${MTLIB_INCLUDE_PATH}/fastcgi/fastcgi.h -o ! -f ${MTLIB_LIB_PATH}/libfcgi.a ]; then
 		echo "install fastcgi devel($SUFFIX)"
 		cd $cdir/lib/fcgi
 		tar -zxf fcgi-2.4.0.tar.gz
 		cd fcgi-2.4.0
-		./configure --libdir=/usr/lib64 --includedir=/usr/include/fastcgi
+		./configure --libdir=${MTLIB_LIB_PATH} --includedir=${MTLIB_INCLUDE_PATH}/fastcgi
 		make
 		make install
 	else
 		echo "fastcgi devel is already install ($SUFFIX)"
 	fi
 
-	if [ ! -f /usr/include/fastcgi/fastcgi.h -o ! -f /usr/lib64/libfcgi.a ]; then
-		echo "not find file:/usr/include/fastcgi/fastcgi.h or /usr/lib64/libfcgi.a"
+	if [ ! -f ${MTLIB_INCLUDE_PATH}/fastcgi/fastcgi.h -o ! -f ${MTLIB_LIB_PATH}/libfcgi.a ]; then
+		echo "not find file:${MTLIB_INCLUDE_PATH}/fastcgi/fastcgi.h or ${MTLIB_LIB_PATH}/libfcgi.a"
 		InstallFailed "fastcgi devel"
 	fi
 }
@@ -123,21 +123,21 @@ function InstallFastcgiDev()
 function InstallMysqlwrap()
 {
 	echo ""
-	if [ ! -f /usr/include/mysqlwrapped/libmysqlwrapped.h ]; then
+	if [ ! -f ${MTLIB_INCLUDE_PATH}/mysqlwrapped/libmysqlwrapped.h ]; then
 		# clearsilver cgi 模板引擎, 首次运行时需要执行下 configure
 		cd $cdir/lib/clearsilver; ./configure ; touch _configure_check_
 	
 		cd $cdir/lib/mysqlwrapped
 		echo "(4/$STEP_TOTAL) preinstall mysqlwrapped ($SUFFIX)"
 		cat IError.h enum_t.h set_t.h Database.h Query.h > libmysqlwrapped.h
-		mkdir -p /usr/include/mysqlwrapped
-		cp libmysqlwrapped.h /usr/include/mysqlwrapped 
+		mkdir -p ${MTLIB_INCLUDE_PATH}/mysqlwrapped
+		cp libmysqlwrapped.h ${MTLIB_INCLUDE_PATH}/mysqlwrapped 
 	else
 		echo "(4/$STEP_TOTAL) mysqlwrapped is already preinstall ($SUFFIX)"
 	fi
 
-	if [ ! -f /usr/include/mysqlwrapped/libmysqlwrapped.h ]; then
-		echo "not find file:/usr/include/mysqlwrapped/libmysqlwrapped.h"
+	if [ ! -f ${MTLIB_INCLUDE_PATH}/mysqlwrapped/libmysqlwrapped.h ]; then
+		echo "not find file:${MTLIB_INCLUDE_PATH}/mysqlwrapped/libmysqlwrapped.h"
 		InstallFailed "mysqlwrapped"
 	fi
 }
