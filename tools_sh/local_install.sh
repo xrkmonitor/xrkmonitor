@@ -473,26 +473,38 @@ if [ "$USE_DLL_LIB" == "yes" -a -f ${SYSTEM_LIB_PATH}/$XRKLIB_INSTALL_HIS_FILE ]
 	rm -f ${SYSTEM_LIB_PATH}/$XRKLIB_INSTALL_HIS_FILE > /dev/null 2>&1 
 fi
 
-isyes=$(yn_continue "是否拷贝库文件到系统库目录:$SYSTEM_LIB_PATH (y/n) ?")
-if [ "$USE_DLL_LIB" == "yes" -a "$isyes" == "yes" ]; then
-	cp_lib libSockets-1.1.0.so libSockets.so.1
-	cp_lib libcgicomm-1.1.0.so libcgicomm.so.1
-	cp_lib libfcgi.so.0.0.0 libfcgi.so.0
-	cp_lib libmtreport_api-1.1.0.so libmtreport_api.so.1
-	cp_lib libmtreport_api_open-1.1.0.so libmtreport_api_open.so.1
-	cp_lib libmyproto-1.1.0.so libmyproto.so.1
-	cp_lib libmysqlwrapped-1.1.0.so libmysqlwrapped.so.1
-	cp_lib libneo_cgi-1.1.0.so libneo_cgi.so.1
-	cp_lib libneo_cs-1.1.0.so libneo_cs.so.1
-	cp_lib libneo_utl-1.1.0.so libneo_utl.so.1
-	cp_lib libprotobuf.so.6.0.0 libprotobuf.so.6
-elif [ "$USE_DLL_LIB" == "yes" ]; then
-	echo "您已选择不拷贝动态链接库到系统库目录"
-	echo "请确认运行 cgi/后台程序 的账号可以访问默认库目录: ${install_sh_home}/xrkmonitor_lib"
+COPY_DLL_TO_SYSDIR=yes
+if [ -d $SYSTEM_LIB_PATH ]; then
+	isyes=$(yn_continue "是否拷贝库文件到系统库目录:$SYSTEM_LIB_PATH (y/n) ?")
+	if [ "$USE_DLL_LIB" == "yes" -a "$isyes" == "yes" ]; then
+		cp_lib libSockets-1.1.0.so libSockets.so.1
+		cp_lib libcgicomm-1.1.0.so libcgicomm.so.1
+		cp_lib libfcgi.so.0.0.0 libfcgi.so.0
+		cp_lib libmtreport_api-1.1.0.so libmtreport_api.so.1
+		cp_lib libmtreport_api_open-1.1.0.so libmtreport_api_open.so.1
+		cp_lib libmyproto-1.1.0.so libmyproto.so.1
+		cp_lib libmysqlwrapped-1.1.0.so libmysqlwrapped.so.1
+		cp_lib libneo_cgi-1.1.0.so libneo_cgi.so.1
+		cp_lib libneo_cs-1.1.0.so libneo_cs.so.1
+		cp_lib libneo_utl-1.1.0.so libneo_utl.so.1
+		cp_lib libprotobuf.so.6.0.0 libprotobuf.so.6
+	elif [ "$USE_DLL_LIB" == "yes" ]; then
+		echo "您已选择不拷贝动态链接库到系统库目录"
+		echo "请确保 cgi/后台程序 可以访问库目录: ${install_sh_home}/xrkmonitor_lib"
+		isyes=$(yn_continue "是否继续安装 (y/n) ?")
+		if [ "$isyes" != "yes" ]; then
+			failed_my_exit $LINENO
+		fi
+		COPY_DLL_TO_SYSDIR=no
+	fi
+else
+	echo "系统库目录:$SYSTEM_LIB_PATH 不可访问, 跳过动态链接库的拷贝"
+	echo "请确保 cgi/后台程序 可以访问库目录: ${install_sh_home}/xrkmonitor_lib"
 	isyes=$(yn_continue "是否继续安装 (y/n) ?")
 	if [ "$isyes" != "yes" ]; then
 		failed_my_exit $LINENO
 	fi
+	COPY_DLL_TO_SYSDIR=no
 fi
 
 
@@ -720,7 +732,11 @@ echo "	apache cgi 本地日志目录: $XRKMONITOR_CGI_LOG_PATH (cgi需要读写�
 echo "	监控系统 html/js 文件目录: $APACHE_DOCUMENT_ROOT/$XRKMONITOR_HTML_PATH"
 echo "	监控系统日志中心日志目录: $SLOG_SERVER_FILE_PATH (cgi需要读权限)"
 echo "	本机IP: $(LOCAL_IP), 本机外网IP: $(SERVER_OUT_IP)"
-echo "	监控系统动态链接库目录: $install_sh_home/xrkmonitor_lib"
+if [ "$COPY_DLL_TO_SYSDIR" == 'yes' ]; then
+	echo "	监控系统动态链接库目录: $SYSTEM_LIB_PATH, $install_sh_home/xrkmonitor_lib"
+else
+	echo "	监控系统动态链接库目录: $install_sh_home/xrkmonitor_lib, 请确保cgi和后台程序有访问权限"
+fi
 echo "---------------------------------------------------------------------------------"
 echo "如以上信息有误, 或者您想更改, 请先执行卸载脚本: uninstall_xrkmonitor.sh "
 echo "然后修改安装脚本中的相关配置后再次执行安装脚本: local_install.sh"
