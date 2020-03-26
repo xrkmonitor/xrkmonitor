@@ -26,32 +26,6 @@ function <?cs var:config.plugin_pre ?>SetSelplugin(selIndex)
 	$(pid).css('background-color', '#ddf79a');
 }
 
-function <?cs var:config.plugin_pre ?>OnDownBin()
-{
-    if(<?cs var:config.plugin_pre ?>_sel_plugin == null)
-    {
-        alertMsg.info("请右键单击插件通过弹出菜单下载");
-        return;
-    }
-
-	if(typeof <?cs var:config.plugin_pre ?>_sel_plugin.local_plugin_index == 'undefined') {
-		alertMsg.warn("请先安装插件");
-		return;
-	}
-	var local = g_LocalOpenPluginList.list[<?cs var:config.plugin_pre ?>_sel_plugin.local_plugin_index];
-    var requrl = "<?cs var:config.xrkmonitor_url ?>/monitor/download/plugin/public/";
-
-	requrl += <?cs var:config.plugin_pre ?>_sel_plugin.plugin_name+ "/";
-	var filename = <?cs var:config.plugin_pre ?>_sel_plugin.plugin_name+ "_";
-	filename += local.ver + ".so";
-	requrl += filename;
-	saveAs(requrl, filename);
-
-	var rep_download_url = "<?cs var:config.xrkmonitor_url?>/cgi-bin/mt_slog_open?action=rep_open_download";
-	rep_download_url += "&plugin_id=" + <?cs var:config.plugin_pre ?>_sel_plugin.plugin_id;
-	$.ajax({ type: "get", url: rep_download_url, dataType: 'json', global: false });
-}
-
 function <?cs var:config.plugin_pre ?>OnDownSrc()
 {
     if(<?cs var:config.plugin_pre ?>_sel_plugin == null)
@@ -294,9 +268,6 @@ function <?cs var:config.plugin_pre ?>SetpluginList()
 			bindings: { 
 				downconf:function(t, m) { 
 					return <?cs var:config.plugin_pre ?>OnDownConf();
-				},
-				downbin:function(t, m) { 
-					return <?cs var:config.plugin_pre ?>OnDownBin();
 				},
 				downall:function(t, m) { 
 					return <?cs var:config.plugin_pre ?>OnDownSrc();
