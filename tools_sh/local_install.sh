@@ -475,27 +475,29 @@ fi
 
 COPY_DLL_TO_SYSDIR=yes
 if [ -d $SYSTEM_LIB_PATH ]; then
-	isyes=$(yn_continue "是否拷贝库文件到系统库目录:$SYSTEM_LIB_PATH (y/n) ?")
-	if [ "$USE_DLL_LIB" == "yes" -a "$isyes" == "yes" ]; then
-		cp_lib libSockets-1.1.0.so libSockets.so.1
-		cp_lib libcgicomm-1.1.0.so libcgicomm.so.1
-		cp_lib libfcgi.so.0.0.0 libfcgi.so.0
-		cp_lib libmtreport_api-1.1.0.so libmtreport_api.so.1
-		cp_lib libmtreport_api_open-1.1.0.so libmtreport_api_open.so.1
-		cp_lib libmyproto-1.1.0.so libmyproto.so.1
-		cp_lib libmysqlwrapped-1.1.0.so libmysqlwrapped.so.1
-		cp_lib libneo_cgi-1.1.0.so libneo_cgi.so.1
-		cp_lib libneo_cs-1.1.0.so libneo_cs.so.1
-		cp_lib libneo_utl-1.1.0.so libneo_utl.so.1
-		cp_lib libprotobuf.so.6.0.0 libprotobuf.so.6
-	elif [ "$USE_DLL_LIB" == "yes" ]; then
-		echo "您已选择不拷贝动态链接库到系统库目录"
-		echo "请确保 cgi/后台程序 可以访问库目录: ${install_sh_home}/xrkmonitor_lib"
-		isyes=$(yn_continue "是否继续安装 (y/n) ?")
-		if [ "$isyes" != "yes" ]; then
-			failed_my_exit $LINENO
+	if [ "$USE_DLL_LIB" == "yes" ]; then
+		isyes=$(yn_continue "是否拷贝库文件到系统库目录:$SYSTEM_LIB_PATH (y/n) ?")
+		if [ "$isyes" == "yes" ]; then
+			cp_lib libSockets-1.1.0.so libSockets.so.1
+			cp_lib libcgicomm-1.1.0.so libcgicomm.so.1
+			cp_lib libfcgi.so.0.0.0 libfcgi.so.0
+			cp_lib libmtreport_api-1.1.0.so libmtreport_api.so.1
+			cp_lib libmtreport_api_open-1.1.0.so libmtreport_api_open.so.1
+			cp_lib libmyproto-1.1.0.so libmyproto.so.1
+			cp_lib libmysqlwrapped-1.1.0.so libmysqlwrapped.so.1
+			cp_lib libneo_cgi-1.1.0.so libneo_cgi.so.1
+			cp_lib libneo_cs-1.1.0.so libneo_cs.so.1
+			cp_lib libneo_utl-1.1.0.so libneo_utl.so.1
+			cp_lib libprotobuf.so.6.0.0 libprotobuf.so.6
+		else 
+			echo "您已选择不拷贝动态链接库到系统库目录"
+			echo "请确保 cgi/后台程序 可以访问库目录: ${install_sh_home}/xrkmonitor_lib"
+			isyes=$(yn_continue "是否继续安装 (y/n) ?")
+			if [ "$isyes" != "yes" ]; then
+				failed_my_exit $LINENO
+			fi
+			COPY_DLL_TO_SYSDIR=no
 		fi
-		COPY_DLL_TO_SYSDIR=no
 	fi
 else
 	echo "系统库目录:$SYSTEM_LIB_PATH 不可访问, 跳过动态链接库的拷贝"
