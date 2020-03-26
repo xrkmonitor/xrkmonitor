@@ -8,6 +8,8 @@ STEP_TOTAL=5
 # mysql 开发环境 check
 MYSQL_INCLUDE=`cat make_env |grep ^MYSQL_INCLUDE|awk '{print $3}'`
 MYSQL_LIB=`cat make_env |grep ^MYSQL_LIB|awk '{print $3}'`
+MTLIB_INCLUDE_PATH=`cat make_env |grep ^MTLIB_INCLUDE_PATH|awk '{print $3}'`
+MTLIB_LIB_PATH=`cat make_env |grep ^MTLIB_LIB_PATH|awk '{print $3}'`
 # check mysql 头文件路径是否 OK
 if [ ! -f "${MYSQL_INCLUDE}/mysql/mysql.h" ]; then
 	echo "(1/$STEP_TOTAL) not find file:${MYSQL_INCLUDE}/mysql/mysql.h, check mysql include path failed !"
@@ -40,7 +42,8 @@ if [ ! -d "${MTLIB_LIB_PATH}" ];then
 	fi
 fi
 
-
+echo ""
+echo "include dir:${MTLIB_INCLUDE_PATH}, lib dir:${MTLIB_LIB_PATH}"
 echo "(1/$STEP_TOTAL) mysql devel check ok"
 
 function yn_continue()
