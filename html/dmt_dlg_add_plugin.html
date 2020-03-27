@@ -198,15 +198,16 @@ function ddapSetPluginInfo(js)
 		});
 	}
 
-	if(typeof js.plus_url != 'undefined' && js.plus_url != '') {
+	if(typeof js.plus_url != 'undefined' && js.plus_url != '' && js.b_open_source) {
+		$('#ddap_src_url_show').css('display', 'block');
 		$('#ddap_in_src_url').val(js.plus_url);
 		$('#ddap_src_url').attr('href', js.plus_url);
 	}
+	else
+		$('#ddap_src_url_show').css('display', 'none');
 
 	$('#ddap_plugin_ver').val(js.plus_version);
 	$('#ddap_plugin_auth').val(js.plugin_auth);
-	if(js.b_open_source == 0)
-		$('#ddap_src_url_show').css('display', 'none');
 	if(js.b_add_log_module == 1)
 		$('#ddap_log_check').attr('checked', true).attr('disabled', true);
 	if(typeof js.plus_desc != 'undefined')
@@ -268,7 +269,7 @@ function ddapGetPluginPbInfo()
 			<tr>
 			<td>
 				<label>插件名称：</label>
-				<input type="text" class="required" size="26" name="ddap_plugin_name" id="ddap_plugin_name" value="<?cs var:config.ddap_plugin_name ?>" readonly minlength="6" maxlength="28" /> 
+				<input type="text" class="required" size="24" name="ddap_plugin_name" id="ddap_plugin_name" value="<?cs var:config.ddap_plugin_name ?>" readonly minlength="6" maxlength="28" /> 
 			</td>
 			<td>
 				<div style='float:left'>

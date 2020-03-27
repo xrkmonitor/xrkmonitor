@@ -138,10 +138,10 @@ function <?cs var:config.plugin_pre ?>_GetInstallPluginShowInfo(idx, plugin, loc
 	shtml += "<div class='pluginItem'>安装情况: <font color='blue'>已安装(" + local_plugin.ver + ")</font></div>";
 	shtml += "<div class='pluginItem'>开发语言: " + local_plugin.dev_language + "</div>";
 	shtml += "<div class='pluginItem'>运行平台: " + local_plugin.dest_os + "</div>";
-	var mt = '内置';
 	if(local_plugin.set_method != 0)
-		mt = '外置';
-	shtml += "<div class='pluginItem'>部署方式: " + mt + "</div>";
+		shtml += "<div class='pluginItem'>部署方式: 外置</div>";
+	else
+		shtml += "<div class='pluginItem'>部署方式: 内置</div>";
 	shtml += "<div class='pluginItem'>安装次数: <font color='blue'>" + plugin.open_install_times + "</font></div>";
 	if(plugin.ver != local_plugin.ver) {
 		shtml += "<div class='pluginItem'>最新版本: <font color='red'>" + plugin.ver + "</font></div>";
@@ -184,10 +184,10 @@ function <?cs var:config.plugin_pre ?>_GetPluginShowInfo(idx, plugin)
 	shtml += "<div class='pluginItem'>安装情况: <font color='blue'>未安装</font></div>";
 	shtml += "<div class='pluginItem'>开发语言: " + plugin.dev_language + "</div>";
 	shtml += "<div class='pluginItem'>运行平台: " + plugin.dest_os + "</div>";
-	var mt = '内置';
 	if(plugin.set_method != 0)
-		mt = '外置';
-	shtml += "<div class='pluginItem'>部署方式: " + mt + "</div>";
+		shtml += "<div class='pluginItem'>部署方式: 外置</div>";
+	else
+		shtml += "<div class='pluginItem'>部署方式: 内置</div>";
 	shtml += "<div class='pluginItem'>安装次数: <font color='blue'>" + plugin.open_install_times + "</font></div>";
 	shtml += "<div class='pluginItem'>最新版本: " + plugin.ver + "</div>";
 	shtml += "<div class='pluginItem'>更新时间: " + plugin.update_time + "</div>";
@@ -197,20 +197,6 @@ function <?cs var:config.plugin_pre ?>_GetPluginShowInfo(idx, plugin)
 	shtml += "<div style='width:440px; float:left; margin-left:10px;'>";
 	shtml += "<img src='<?cs var:config.xrkmonitor_url ?>/monitor/themes/sexybuttons/images/icons/silk/status_online.png'>";
 	shtml += "&nbsp;<font color='#255fcc'>"+plugin.auth+"</font></img>";
-	<?cs if:config.navTabId == "dmt_plugin_my" || config.navTabId == "dmt_plugin_audit" ?>
-	shtml += "<div style='float:right; margin-right:10px;'>";
-	if(plugin.market_status == 1)
-		shtml += "<img src='<?cs var:config.xrkmonitor_url ?>/monitor/themes/sexybuttons/images/icons/silk/hourglass_go.png'>";
-	else if(plugin.market_status == 2)
-		shtml += "<img src='<?cs var:config.xrkmonitor_url ?>/monitor/themes/sexybuttons/images/icons/silk/accept.png'>";
-	else if(plugin.market_status == 3)
-		shtml += "<img src='<?cs var:config.xrkmonitor_url ?>/monitor/themes/sexybuttons/images/icons/silk/hourglass_go.png'>";
-	else if(plugin.market_status == 4 || plugin.market_status == 5)
-		shtml += "<img src='<?cs var:config.xrkmonitor_url ?>/monitor/themes/sexybuttons/images/icons/silk/bullet_cross.png'>";
-	else
-		shtml += "<img src=''>";
-	shtml += "</div>";
-	<?cs /if ?>
 	shtml += "</div>";
 
 	shtml += "</div>";
@@ -456,7 +442,7 @@ function <?cs var:config.plugin_pre ?>ShowInfoUp()
 	$.pdialog.open(url, "<?cs var:config.plugin_pre ?>_dlg_show_plugin", "查看监控插件", op); 
 }
 
-function <?cs var:config.plugin_pre ?>Search()
+function <?cs var:config.plugin_pre ?>Search(pglobal)
 {
 	var requrl = '<?cs var:config.xrkmonitor_url ?>/cgi-bin/mt_slog_open';
 	var reqdata = new Object();
@@ -471,13 +457,14 @@ function <?cs var:config.plugin_pre ?>Search()
 		type:'post',
 		url: requrl,
 		data: reqdata,
-		global: false,
+		global: pglobal,
 		dataType: 'json',
 		success: function(js) {
 			if(js.ret != 0) {
 				alertMsg.warn("监控插件信息获取失败:" + js.errmsg);
 				return;
 			}
+			$("#<?cs var:config.plugin_pre ?>_plugin_list").html('');
 			if(js.count > 0) {
 				<?cs var:config.plugin_pre ?>_plugin_list = js;
 				<?cs var:config.plugin_pre ?>SetpluginList();
@@ -488,37 +475,7 @@ function <?cs var:config.plugin_pre ?>Search()
 }
 
 $(document).ready(function(){
-	<?cs var:config.plugin_pre ?>Search();
-
-	/*
-	$('#<?cs var:config.plugin_pre ?>_SearchBar select[name=dev_language] option').each(function(){
-		if('<?cs var:config.dev_language ?>' == this.value) {
-			$(this).attr('selected', true);
-			return false;
-		}
-	});
-
-	$('#<?cs var:config.plugin_pre ?>_SearchBar select[name=dest_os] option').each(function(){
-		if('<?cs var:config.dest_os ?>' == this.value) {
-			$(this).attr('selected', true);
-			return false;
-		}
-	});
-
-	$('#<?cs var:config.plugin_pre ?>_SearchBar select[name=open_src] option').each(function(){
-		if('<?cs var:config.open_src ?>' == this.value) {
-			$(this).attr('selected', true);
-			return false;
-		}
-	});
-
-	$('#<?cs var:config.plugin_pre ?>_SearchBar select[name=set_method] option').each(function(){
-		if('<?cs var:config.set_method ?>' == this.value) {
-			$(this).attr('selected', true);
-			return false;
-		}
-	});
-	*/
+	<?cs var:config.plugin_pre ?>Search(false);
 });
 
 </script>
@@ -539,7 +496,6 @@ $(document).ready(function(){
 		</div>
 
 		<div class="pageHeader" style="border:1px #B8D0D6 solid">
-			<form onsubmit="return navTabSearch(this, '<?cs var:config.navTabId ?>');" action="<?cs var:config.cgipath?>mt_slog?action=<?cs var:config.str_plugin_type ?>"  method="post">
 			<div class="searchBar">
 				<table class="searchContent" id='<?cs var:config.plugin_pre ?>_SearchBar'>
 					<tr>
@@ -583,12 +539,11 @@ $(document).ready(function(){
 							</select>
 						</td>
 						<td>
-							<button type="submit" class="sexybutton"><span><span><span class="search">查找</span></span></span></button>
+							<button type="button" class="sexybutton" onclick='<?cs var:config.plugin_pre ?>Search(true);'><span><span><span class="search">查找</span></span></span></button>
 						</td>
 					</tr>
 				</table>
 			</div>
-			</form>
 		</div>
 
 		<div layoutH="100" class="unitBox" id="<?cs var:config.plugin_pre ?>_plugin_list">
