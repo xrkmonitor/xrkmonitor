@@ -403,10 +403,10 @@ function <?cs var:config.plugin_pre ?>InstallPluginPb(pbJs, psel)
 			}
 			else {
 				alertMsg.correct("插件安装成功, 插件部署方法请查看帮助文档");
-				navTab.reload();
 				var rep_install_url = "<?cs var:config.xrkmonitor_url?>/cgi-bin/mt_slog_open?action=rep_open_install";
 				rep_install_url += "&plugin_id=" + js.plugin_id;
 				$.ajax({ type: "get", url: rep_install_url, dataType: 'json', global: false });
+				navTab.reload();
 			}
 		}
 	});
