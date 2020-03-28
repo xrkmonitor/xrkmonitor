@@ -145,11 +145,11 @@ function <?cs var:config.plugin_pre ?>_GetInstallPluginShowInfo(idx, plugin, loc
 	shtml += "<div class='pluginItem'>安装次数: <font color='blue'>" + plugin.open_install_times + "</font></div>";
 	if(plugin.ver != local_plugin.ver) {
 		shtml += "<div class='pluginItem'>最新版本: <font color='red'>" + plugin.ver + "</font></div>";
-		shtml += "<div class='pluginItem'>最后更新时间: <font color='red'>" + local_plugin.update_time + "</font></div>";
+		shtml += "<div class='pluginItem'>最后更新时间: <font color='red'>" + plugin.update_time + "</font></div>";
 	}
 	else {
 		shtml += "<div class='pluginItem'>最新版本: " + plugin.ver + "</div>";
-		shtml += "<div class='pluginItem'>最后更新时间: " + local_plugin.update_time + "</div>";
+		shtml += "<div class='pluginItem'>最后更新时间: " + plugin.update_time + "</div>";
 	}
 	shtml += "<div class='pluginItem'>插件描述: " + local_plugin.desc.replace(/&br/g, "\r\n") + "</div>";
 	shtml += "</div>";
