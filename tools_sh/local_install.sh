@@ -733,7 +733,7 @@ echo "	apache cgi 访问路径: $APACHE_CGI_ACCESS_PATH"
 echo "	apache cgi 本地日志目录: $XRKMONITOR_CGI_LOG_PATH (cgi需要读写权限)"
 echo "	监控系统 html/js 文件目录: $APACHE_DOCUMENT_ROOT/$XRKMONITOR_HTML_PATH"
 echo "	监控系统日志中心日志目录: $SLOG_SERVER_FILE_PATH (cgi需要读权限)"
-echo "	本机IP: $(LOCAL_IP), 本机外网IP: $(SERVER_OUT_IP)"
+echo "	本机IP: $LOCAL_IP, 本机外网IP: $SERVER_OUT_IP"
 if [ "$COPY_DLL_TO_SYSDIR" == 'yes' ]; then
 	echo "	监控系统动态链接库目录: $SYSTEM_LIB_PATH, $install_sh_home/xrkmonitor_lib"
 else
