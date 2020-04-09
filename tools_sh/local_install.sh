@@ -716,9 +716,9 @@ isyes=$(yn_continue "服务启动成功, 是否添加字符云监控服务自动
 if [ "$isyes" == "yes" ]; then
 	./add_crontab.sh > /dev/null 2>&1
 	if [ $? -ne 0 ]; then
-		echo "安装字符云监控后台服务自动拉起脚本:add_crontab.sh 到 crontab 失败,请您手动安装"
+		echo "安装字符云监控后台服务自动拉起脚本: check_proc_monitor.sh 到 crontab 失败,请您手动安装"
 	else
-		echo "安装字符云监控后台服务自动拉起脚本: add_crontab.sh 到 crontab 成功"
+		echo "安装字符云监控后台服务自动拉起脚本: check_proc_monitor.sh 到 crontab 成功"
 	fi
 fi
 CUR_STEP=`expr 1 + $CUR_STEP`
