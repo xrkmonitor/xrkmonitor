@@ -991,7 +991,7 @@ static int SaveBindAttr(int view_id)
 		if(pattr_id == NULL)
 			break;
 		sprintf(sSqlBuf, 
-			"replace into mt_view_battr set view_id=%d,attr_id=%s,xrk_status=0,update_time=''%s\'",
+			"replace into mt_view_battr set view_id=%d,attr_id=%s,xrk_status=0,update_time=\'%s\'",
 			view_id, pattr_id, uitodate(stConfig.dwCurTime));
 		if(!qu.execute(sSqlBuf))
 		{
