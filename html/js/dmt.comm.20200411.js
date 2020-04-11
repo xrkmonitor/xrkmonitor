@@ -786,13 +786,13 @@ function dmtSetStrAttrInfoChartIpGeo(ct_id, attr_info, js, attr_val_list, showty
 			calculable: true,
 			inRange: {
 				color: ['lightskyblue', 'yellow', 'orangered']
-			},
+			}
 		},
 		toolbox: {
 			show: true,
 			orient: 'vertical',
-			left: 'right',
 			top: 'center',
+			right:20,
 			feature: {
 				dataView: {readOnly: false},
 				restore: {},
@@ -829,7 +829,7 @@ function dmtSetStrAttrInfoChartIpGeo(ct_id, attr_info, js, attr_val_list, showty
 	if(js.str_count > 0) {
 		var total = 0;
 		for(var i=0; i < js.str_count; i++) {
-			total += js.str_list[0].value;
+			total += js.str_list[i].value;
 		}
 		op.title.subtext = '统计时间：' + attr_val_list.date_time_cur
 			+ '(总访问次数:' + total + ', 部分地理位置不能识别的访问将不显示在地图上) \n';
