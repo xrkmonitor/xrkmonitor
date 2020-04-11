@@ -30,6 +30,7 @@
 								<option value="<?cs var:config.sum_report_max ?>">取上报最大值</option>
 								<option value="<?cs var:config.ex_report ?>">异常量</option>
 								<option value="<?cs var:config.str_report_d ?>">字符串型</option>
+								<option value="<?cs var:config.str_report_d_ip ?>">字符串型-IP省级</option>
 							</select>
 						</td>
 						<td>
@@ -163,12 +164,9 @@ function daSetAttrList(attrinfo)
 		else if(listattr[i].data_type == <?cs var:config.sum_report_max ?>)
 			list += "<td>取上报最大值</td>";
 		else if(listattr[i].data_type == <?cs var:config.str_report_d ?>)
-		{
-			if(listattr[i].str_attr_type == 1)
-				list += "<td>字符串型&nbsp;-&nbsp;IP</td>";
-			else
-				list += "<td>字符串型</td>";
-		}
+			list += "<td>字符串型</td>";
+		else if(listattr[i].data_type == <?cs var:config.str_report_d_ip ?>)
+			list += "<td>字符串型-IP省级</td>";
 		else if(listattr[i].data_type == <?cs var:config.ex_report ?>)
 		{
 			if(listattr[i].excep_attr_mask == 1)

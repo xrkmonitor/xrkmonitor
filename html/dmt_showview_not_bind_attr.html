@@ -29,6 +29,8 @@ function dsnbaSetAttrList_<?cs var:config.view_id ?>(attrinfo)
 			list += "<td>取上报最大值</td>";
 		else if(listattr[i].data_type == <?cs var:config.str_report_d ?>)
 			list += "<td>字符串型</td>";
+		else if(listattr[i].data_type == <?cs var:config.str_report_d_ip ?>)
+			list += "<td>字符串型-IP省级</td>";
 		else if(listattr[i].data_type == <?cs var:config.ex_report ?>)
 			list += "<td>异常量</td>";
 		else
@@ -101,6 +103,7 @@ $(document).ready(function(){
 								<option value="<?cs var:config.sum_report_max ?>">取上报最大值</option>
 								<option value="<?cs var:config.ex_report ?>">异常量</option>
 								<option value="<?cs var:config.str_report_d ?>">字符串型</option>
+								<option value="<?cs var:config.str_report_d_ip ?>">字符串型-IP省级</option>
 							</select>
 						</td>
 						<td>
