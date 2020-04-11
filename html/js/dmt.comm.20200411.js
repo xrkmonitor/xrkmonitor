@@ -841,8 +841,6 @@ function dmtSetStrAttrInfoChartIpGeo(ct_id, attr_info, js, attr_val_list, showty
 		op.title.subtextStyle.color = 'red';
 		op.title.subtextStyle.fontWeight = 'bold';
 		op.title.subtext = "暂无数据上报";
-		op.title.x = 'center';
-		op.title.top = '20%';
 	}
 	g_all_charts[ct_id] = echarts.init(document.getElementById(ct_id));
 	g_all_charts[ct_id].setOption(op);
