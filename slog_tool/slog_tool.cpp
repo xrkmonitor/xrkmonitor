@@ -143,7 +143,7 @@ void ShowHelp()
 	printf("\t show applogfile [appid] \n");
 	printf("\t show attrlist \n");
 	printf("\t show mailshm\n");
-	printf("\t make logs n\n");
+	printf("\t show ipinfo ip\n");
 }
 
 void ShowTableInfo(int argc, char *argv[])
@@ -510,6 +510,27 @@ void ShowTableInfo(int argc, char *argv[])
 		}
 		else {
 			printf("invalid argument ! -- show machview machineId\n");
+		}
+	}
+
+	if(!strcmp(ptabName, "ipinfo")) {
+		if(argc < 4) {
+			printf("\n use xxx show ipinfo ip\n");
+			return;
+		}
+		uint32_t ip = ntohl( inet_addr(argv[3]) );
+		TIpInfo *pInfo = slog.GetIpInfo( ip );
+		if(pInfo != NULL)
+			pInfo->Show();
+		else {
+			TIpInfoShm *pshm =  slog.GetIpInfoShm();
+			if(pshm != NULL) {
+				printf("not find ip:%s, :%u, count:%d, first info\n", argv[3], ip, pshm->iCount);
+				pshm->ips[0].Show();
+			}
+			else {
+				printf("ipinfo may by not load from file !\n");
+			}
 		}
 	}
 

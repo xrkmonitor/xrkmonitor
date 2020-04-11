@@ -683,6 +683,7 @@ static int DealModAttr()
 	hdf_set_int_value(stConfig.cgi->hdf, "config.sum_report_max", SUM_REPORT_MAX);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.sum_report_his", SUM_REPORT_TOTAL);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.str_report_d", STR_REPORT_D);
+	hdf_set_int_value(stConfig.cgi->hdf, "config.str_report_d_ip", STR_REPORT_D_IP);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.ex_report", EX_REPORT);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.excep_attr_mask", iExcepAttrMask);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.inner", iAttrInner);
@@ -696,6 +697,7 @@ static int DealAddAttr()
 	hdf_set_int_value(stConfig.cgi->hdf, "config.sum_report_m", SUM_REPORT_M);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.sum_report_min", SUM_REPORT_MIN);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.str_report_d", STR_REPORT_D);
+	hdf_set_int_value(stConfig.cgi->hdf, "config.str_report_d_ip", STR_REPORT_D_IP);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.sum_report_his", SUM_REPORT_TOTAL);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.sum_report_max", SUM_REPORT_MAX);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.ex_report", EX_REPORT);
@@ -916,6 +918,7 @@ static int DealAttrSearch()
 	hdf_set_int_value(stConfig.cgi->hdf, "config.sum_report_m", SUM_REPORT_M);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.sum_report_min", SUM_REPORT_MIN);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.str_report_d", STR_REPORT_D);
+	hdf_set_int_value(stConfig.cgi->hdf, "config.str_report_d_ip", STR_REPORT_D_IP);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.sum_report_his", SUM_REPORT_TOTAL);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.sum_report_max", SUM_REPORT_MAX);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.ex_report", EX_REPORT);

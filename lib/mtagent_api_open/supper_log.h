@@ -320,11 +320,76 @@ enum {
 	SUM_REPORT_MAX=4, // 取每分钟最大值
 	SUM_REPORT_TOTAL = 5, // 按历史上报累计
 	STR_REPORT_D = 6, // 按天累计的字符串型, 一天生成一张饼图表，多个字符串时只显示前几位有上报的字符串
-	SUM_REPORT_TYPE_MAX = 6, // 最大不能超过 255
+	STR_REPORT_D_IP = 7, // IP 转地址字符串，地址为省级
+	SUM_REPORT_TYPE_MAX = 7, // 最大不能超过 255
 };
 
-// 字符串型属性归类
-#define STR_ATTR_STR_IP 1
+// Ip 地址库管理 
+#define IPINFO_FLAG_PROV_VMEM 1
+#define IPINFO_FLAG_CITY_VMEM 2
+#define IPINFO_FLAG_OWNER_VMEM 4
+#define IPINFO_HASH_NODE_COUNT 200000
+#define IPINFO_HASH_SHM_DEF_KEY 2019041122
+#define IPINFO_FILE_MAGIC_STR "_@#@%SKDFSKJskcheck_magi20200411"
+typedef struct 
+{
+	char sStart[16];
+	char sEnd[16];
+	char scountry[32];
+	char sprov[64];
+	char scity[64];
+	char sowner[32];
+}TIpInfoInFile;
+
+typedef struct
+{
+	uint32_t dwStart;
+	uint32_t dwEnd;
+	uint8_t bSaveFlag;
+	union {
+		int32_t iProvVmemIdx;
+		char sprov[12];
+	};
+	union {
+		int32_t iCityVmemIdx;
+		char scity[16];
+	};
+	union {
+		int32_t iOwnerVmemIdx;
+		char sowner[16];
+	};
+	char sReserved[32];
+	void Show() {
+		SHOW_FIELD_VALUE_UINT(dwStart);
+		SHOW_FIELD_VALUE_UINT_IP(dwStart);
+		SHOW_FIELD_VALUE_UINT(dwEnd);
+		SHOW_FIELD_VALUE_UINT_IP(dwEnd);
+		SHOW_FIELD_VALUE_UINT(bSaveFlag);
+		if(bSaveFlag & IPINFO_FLAG_PROV_VMEM)
+			printf("\t prov:%s\n", MtReport_GetFromVmem_Local(iProvVmemIdx));
+		else
+			printf("\t prov:%s\n", sprov);
+		if(bSaveFlag & IPINFO_FLAG_CITY_VMEM)
+			printf("\t city:%s\n", MtReport_GetFromVmem_Local(iCityVmemIdx));
+		else
+			printf("\t city:%s\n", scity);
+		if(bSaveFlag & IPINFO_FLAG_OWNER_VMEM)
+			printf("\t owner:%s\n", MtReport_GetFromVmem_Local(iOwnerVmemIdx));
+		else
+			printf("\t owner:%s\n", sowner);
+	}
+}TIpInfo;
+
+typedef struct {
+	int iCount;
+	TIpInfo ips[IPINFO_HASH_NODE_COUNT];
+	char sReserved[16];
+}TIpInfoShm;
+
+int IpInfoInitCmp(const void *pKey, const void *pNode);
+int IpInfoSearchCmp(const void *pKey, const void *pNode);
+typedef int (*T_FUN_IP_CMP)(const void *pKey, const void *pNode);
+std::string & GetRemoteRegionInfoNew(const char *premote, int flag=IPINFO_FLAG_PROV_VMEM|IPINFO_FLAG_CITY_VMEM);
 
 // 告警类型
 #define ATTR_WARN_TYPE_MACHINE 1 // 单机告警
@@ -818,7 +883,7 @@ typedef struct
 typedef struct _TStrAttrReportInfo
 {
 	int32_t iAttrId; // 上报属性 id
-	uint8_t bStrAttrStrType; // 字符串型监控点的字符串类型
+	uint8_t bAttrDataType;
 	int32_t iMachineId; // 上报机器 id
 	uint32_t dwLastReportIp; // 最后一次上报数据的远程IP
 	uint32_t dwLastReportTime;
@@ -829,7 +894,7 @@ typedef struct _TStrAttrReportInfo
 	char sReserved[8];
 	void Show() {
 		SHOW_FIELD_VALUE_INT(iAttrId);
-		SHOW_FIELD_VALUE_UINT(bStrAttrStrType);
+		SHOW_FIELD_VALUE_UINT(bAttrDataType);
 		SHOW_FIELD_VALUE_INT(iMachineId);
 		SHOW_FIELD_VALUE_UINT_IP(dwLastReportIp);
 		SHOW_FIELD_VALUE_UINT_TIME(dwLastReportTime);
@@ -846,10 +911,9 @@ typedef struct
 {
 	int32_t id;
 	int32_t iAttrType;
-	int32_t iDataType;
+	uint32_t iDataType;
 	int32_t iNameVmemIdx;
 	uint32_t dwLastModTime; 
-	uint8_t bStrAttrStrType; // 字符串型监控点的字符串类型
 
 	// 用于 MtSystemConfig 中连接相同用户下的 attr
 	int32_t iPreIndex;
@@ -863,9 +927,8 @@ typedef struct
 	void Show() {
 		SHOW_FIELD_VALUE_INT(id);
 		SHOW_FIELD_VALUE_INT(iAttrType);
-		SHOW_FIELD_VALUE_INT(iDataType);
+		SHOW_FIELD_VALUE_UINT(iDataType);
 		SHOW_FIELD_VALUE_INT(iNameVmemIdx);
-		SHOW_FIELD_VALUE_UINT(bStrAttrStrType);
 		SHOW_FIELD_VALUE_UINT_TIME(dwLastModTime);
 		if(iNameVmemIdx > 0)
 			printf("\t name:%s\n", MtReport_GetFromVmem_Local(iNameVmemIdx));
@@ -1683,6 +1746,11 @@ class CSupperLog: public StdLog, public IError
 			return true;
 		}
 
+		// ip 地址查询 操作
+		int InitIpInfo(bool bCreate=false);
+		TIpInfo * GetIpInfo(uint32_t dwIpAddr, T_FUN_IP_CMP pfun=IpInfoSearchCmp);
+		TIpInfoShm * GetIpInfoShm() { return m_pIpInfoShm; }
+
 		// warn info 操作
 		TWarnInfo* GetWarnInfo(uint32_t id, uint32_t *piIsFind);
 		int InitWarnInfo();
@@ -1900,6 +1968,9 @@ class CSupperLog: public StdLog, public IError
 		TSLogShm *m_pShmLog;
 		int32_t m_iAttrShmKey;
 		SharedHashTableNoList m_stHashAttr;
+
+		int32_t m_iIpInfoShmKey;
+		TIpInfoShm *m_pIpInfoShm;
 
 		int32_t m_iWarnAttrShmKey;
 		SharedHashTable m_stWarnHashAttr;

@@ -78,6 +78,8 @@ typedef struct
 	char szAccessKey[33];
 	int iDelRecordTime;
 
+	int iLoadIp;
+
 	// iDeleteDbRecord, iDeleteMonitorRecords 需要配置为 1 时只能在一台机器上配置
 	// 删除状态的数据，是否执行物理删除 1 执行，0 不执行
 	int iDeleteNoUseRecord; 
@@ -137,6 +139,159 @@ int GetReadTableFlagByStr(const char *pstr)
 	return iFlag;
 }
 
+int CheckIpInfo()
+{
+	TIpInfoShm * pInfoShm = slog.GetIpInfoShm();
+	if(pInfoShm == NULL)
+	{
+		ERR_LOG("GetIpInfoShm failed");
+		return SLOG_ERROR_LINE;
+	}
+
+	TIpInfo *pInfoPrev = NULL;
+	for(int i = 0; i < pInfoShm->iCount; i++) {
+		if(pInfoPrev == NULL) {
+			pInfoPrev = pInfoShm->ips+i;
+			continue;
+		}
+		if(pInfoPrev->dwStart > pInfoPrev->dwEnd) {
+			WARN_LOG("ipinfo check failed:%d, %u > %u", i, pInfoPrev->dwStart, pInfoPrev->dwEnd);
+			return SLOG_ERROR_LINE;
+		}
+		if(pInfoPrev->dwEnd >= pInfoShm->ips[i].dwStart) {
+			WARN_LOG("ipinfo check failed:%d, %u >= %u", i, pInfoPrev->dwEnd, pInfoShm->ips[i].dwStart);
+			return SLOG_ERROR_LINE;
+		}
+		pInfoPrev = pInfoShm->ips+i;
+	}
+	return 0;
+}
+
+int32_t ReadIpInfo(const char *pip_info_file, bool bReset=false)
+{
+	TIpInfoShm * pInfoShm = slog.GetIpInfoShm();
+	if(pInfoShm == NULL)
+	{
+		ERR_LOG("GetIpInfoShm failed");
+		return SLOG_ERROR_LINE;
+	}
+	if(bReset) {
+		pInfoShm->iCount = 0;
+	}
+
+	FILE *fp = fopen(pip_info_file, "rb");
+	if(fp == NULL) {
+		ERR_LOG("open ipinfo file:%s failed, msg:%s", pip_info_file, strerror(errno));
+		return SLOG_ERROR_LINE;
+	}
+
+	char sMagicStr[128] = {0};
+	int iReadLen = 0;
+	iReadLen = fread(sMagicStr, 1, 128, fp);
+	if(iReadLen != 128 || strcmp(sMagicStr, IPINFO_FILE_MAGIC_STR)) {
+		ERR_LOG("read file:%s check magic failed:(%d, %s, %s)", 
+			pip_info_file, iReadLen,  sMagicStr, IPINFO_FILE_MAGIC_STR);
+		fclose(fp);
+		return SLOG_ERROR_LINE;
+	}
+
+	TIpInfoInFile sFileIpinfo;
+	uint32_t start = 0, end = 0, dwIpCounts = 0;
+	const char *ptmp = NULL, *ptmp2 = NULL;
+	TIpInfo *pInfo = NULL;
+	int iIpNewCount = 0;
+
+	while((iReadLen=fread(&sFileIpinfo, 1, sizeof(sFileIpinfo), fp)) == (int)sizeof(sFileIpinfo))
+	{
+		start = strtoul(sFileIpinfo.sStart, NULL, 10);
+		end = strtoul(sFileIpinfo.sEnd, NULL, 10);
+		dwIpCounts += end-start+1;
+
+#define SAVE_IP_INFO(pf, pflag, vidx) \
+		ptmp = sFileIpinfo.pf; \
+		if(ptmp[0] != '\0' && strlen(ptmp) < sizeof(pInfo->pf)) \
+			strcpy(pInfo->pf, ptmp); \
+		else { \
+			pInfo->bSaveFlag |= pflag; \
+			pInfo->vidx = MtReport_SaveToVmem(ptmp, strlen(ptmp)+1); \
+		}
+
+		if(pInfoShm->iCount == 0) {
+			pInfo = pInfoShm->ips + iIpNewCount;
+			memset(pInfo, 0, sizeof(*pInfo));
+			pInfo->dwStart = start;
+			pInfo->dwEnd = end;
+			SAVE_IP_INFO(sprov, IPINFO_FLAG_PROV_VMEM, iProvVmemIdx);
+			SAVE_IP_INFO(scity, IPINFO_FLAG_CITY_VMEM, iCityVmemIdx);
+			SAVE_IP_INFO(sowner, IPINFO_FLAG_OWNER_VMEM, iOwnerVmemIdx);
+			iIpNewCount++;
+			if(iIpNewCount >= IPINFO_HASH_NODE_COUNT) {
+				WARN_LOG("need more buffer to save ip info, read:%d", iIpNewCount);
+				break;
+			}
+			continue;
+		}
+
+		pInfo = slog.GetIpInfo(start, IpInfoInitCmp);
+		if(pInfo == NULL) {
+			if(pInfoShm->iCount >= IPINFO_HASH_NODE_COUNT) {
+				WARN_LOG("need more buffer to save ip info");
+				break;
+			}
+			pInfo = pInfoShm->ips + pInfoShm->iCount;
+			memset(pInfo, 0, sizeof(*pInfo));
+			pInfo->dwStart = start;
+			pInfo->dwEnd = end;
+			SAVE_IP_INFO(sprov, IPINFO_FLAG_PROV_VMEM, iProvVmemIdx);
+			SAVE_IP_INFO(scity, IPINFO_FLAG_CITY_VMEM, iCityVmemIdx);
+			SAVE_IP_INFO(sowner, IPINFO_FLAG_OWNER_VMEM, iOwnerVmemIdx);
+			pInfoShm->iCount++;
+			qsort(pInfoShm->ips, pInfoShm->iCount, MYSIZEOF(TIpInfo), IpInfoInitCmp);
+		}
+		else {
+#define CHECK_IP_UPDATE_INFO(pf, pflag, vidx) \
+		ptmp = sFileIpinfo.pf; \
+		if(pInfo->bSaveFlag & pflag) \
+			ptmp2 = MtReport_GetFromVmem_Local(pInfo->vidx); \
+		else \
+			ptmp2 = pInfo->pf; \
+		if(ptmp2 == NULL || (ptmp2 != NULL && strcmp(ptmp, ptmp))) { \
+			if(pInfo->bSaveFlag & pflag) { \
+				MtReport_FreeVmem(pInfo->vidx); \
+				pInfo->bSaveFlag = clear_bit(pInfo->bSaveFlag, pflag); \
+			} \
+			if(ptmp != NULL && ptmp[0] != '\0' && strlen(ptmp) < sizeof(pInfo->pf)) \
+				strcpy(pInfo->pf, ptmp); \
+			else { \
+				pInfo->bSaveFlag |= pflag; \
+				pInfo->vidx = MtReport_SaveToVmem(ptmp, strlen(ptmp)+1); \
+			} \
+		}
+			if(pInfo->dwEnd != end)
+				pInfo->dwEnd = end;
+			CHECK_IP_UPDATE_INFO(sprov, IPINFO_FLAG_PROV_VMEM, iProvVmemIdx);
+			CHECK_IP_UPDATE_INFO(scity, IPINFO_FLAG_CITY_VMEM, iCityVmemIdx);
+			CHECK_IP_UPDATE_INFO(sowner, IPINFO_FLAG_OWNER_VMEM, iOwnerVmemIdx);
+#undef CHECK_IP_UPDATE_INFO 
+		}
+	}
+#undef SAVE_IP_INFO
+	fclose(fp);
+
+	if(iIpNewCount > 0) {
+		pInfoShm->iCount = iIpNewCount;
+		qsort(pInfoShm->ips, iIpNewCount, MYSIZEOF(TIpInfo), IpInfoInitCmp);
+	}
+
+	if(pInfoShm->iCount > 0) {
+		INFO_LOG("read ipinfo count:%d, ips:%u, first:%u-%u, last:%u-%u", 
+			pInfoShm->iCount,  dwIpCounts,
+			pInfoShm->ips[0].dwStart, pInfoShm->ips[0].dwEnd,
+			pInfoShm->ips[pInfoShm->iCount-1].dwStart, pInfoShm->ips[pInfoShm->iCount-1].dwEnd);
+	}
+	return 0;
+}
+
 
 /*
    *
@@ -176,6 +331,7 @@ int Init(const char *pFile = NULL)
 		"NEED_STR_ATTR_SHM", CFG_INT, &stConfig.iNeedStrAttrShm, 1,
 		"DELETE_DB_RECORD_TIME", CFG_INT, &stConfig.iDelRecordTime, 24*60*60,
 		"SYSTEM_FLAG_DAEMON", CFG_INT, &iSysDaemon, 0,
+		"LOAD_IPINFO", CFG_INT, &stConfig.iLoadIp, 0,
 		(void*)NULL)) < 0)
 	{   
 		ERR_LOG("LoadConfig:%s failed ! ret:%d", pConfFile, iRet);
@@ -966,6 +1122,7 @@ int32_t ReadTableConfigInfo(Database &db, uint32_t *pCustCfgId=NULL, uint32_t ri
 			}
 			else if(iMatch >= 0)
 			{
+				bool bChanged = false;
 				if(stConfig.pShmConfig->stConfig[iMatch].iAppId != stLogConfig.iAppId
 					|| stConfig.pShmConfig->stConfig[iMatch].iModuleId != stLogConfig.iModuleId) 
 				{
@@ -976,15 +1133,20 @@ int32_t ReadTableConfigInfo(Database &db, uint32_t *pCustCfgId=NULL, uint32_t ri
 
 					stConfig.pShmConfig->stConfig[iMatch].iAppId = stLogConfig.iAppId;
 					stConfig.pShmConfig->stConfig[iMatch].iModuleId = stLogConfig.iModuleId;
+					bChanged = true;
 				}
 
 				if(stConfig.pShmConfig->stConfig[iMatch].dwSpeedFreq != stLogConfig.dwSpeedFreq) {
 					stConfig.pShmConfig->stConfig[iMatch].dwSpeedFreq = stLogConfig.dwSpeedFreq;
+					bChanged = true;
 				}
 
 				if(stConfig.pShmConfig->stConfig[iMatch].iLogType != stLogConfig.iLogType) {
 					stConfig.pShmConfig->stConfig[iMatch].iLogType = stLogConfig.iLogType;
+					bChanged = true;
 				}
+				if(bChanged)
+					stConfig.pShmConfig->stConfig[iMatch].dwConfigSeq++;
 			}
 		}
 		else if(iStatus == RECORD_STATUS_USE && (iMatchApp < 0 || iMatchModule < 0))
@@ -1581,10 +1743,6 @@ int32_t ReadTableAttr(Database &db, uint32_t uid=0)
 				pInfo->id = iAttrId;
 				pInfo->iAttrType = iAttrType;
 				pInfo->iDataType = qu.getval("data_type");
-				// 字符串型监控点
-				if(pInfo->iDataType == STR_REPORT_D) {
-					pInfo->bStrAttrStrType = qu.getval("str_attr_type");
-				}
 
 				if(ptmp != NULL && ptmp[0] != '\0')
 					pInfo->iNameVmemIdx = MtReport_SaveToVmem(ptmp, strlen(ptmp)+1);
@@ -1659,15 +1817,9 @@ int32_t ReadTableAttr(Database &db, uint32_t uid=0)
 				pInfo->iAttrType = iAttrType;
 			}
 
-			if(pInfo->iDataType != qu.getval("data_type"))
+			if(pInfo->iDataType != (uint8_t)qu.getval("data_type"))
 			{
 				pInfo->iDataType = qu.getval("data_type");
-			}
-
-			if(pInfo->iDataType == STR_REPORT_D 
-				&& pInfo->bStrAttrStrType != qu.getval("str_attr_type"))
-			{
-				pInfo->bStrAttrStrType = qu.getval("str_attr_type");
 			}
 
 			const char *pvname = NULL;
@@ -2822,6 +2974,21 @@ int main(int argc, char *argv[])
 
 	slog.Daemon(1, 1, 1);
 	INFO_LOG("slog_config start !");
+
+	if(stConfig.iLoadIp) {
+		if(slog.InitIpInfo(true) < 0) {
+			ERR_LOG("init ip shm info failed !");
+			return SLOG_ERROR_LINE;
+		}
+		if(ReadIpInfo("xrkmonitor_ip_info") < 0) {
+			ERR_LOG("ReadIpInfo failed !");
+			return SLOG_ERROR_LINE;
+		}
+		if(CheckIpInfo() < 0) {
+			INFO_LOG("check ip info failed, reinit ip info");
+			ReadIpInfo("xrkmonitor_ip_info", true);
+		}
+	}
 
 	// for read table records
 	Database db(stConfig.szDbHost, stConfig.szUserName, stConfig.szPass, stConfig.szDbName, &slog, stConfig.iDbPort);

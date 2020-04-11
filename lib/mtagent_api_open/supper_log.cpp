@@ -122,6 +122,93 @@ void CSLogSearch::InitDefaultSearch()
 	m_strLogFile.clear();
 }
 
+/*-----------------------------------------
+  局域网IP地址范围
+  A类：10.0.0.0-10.255.255.255
+B类：172.16.0.0-172.31.255.255 
+C类：192.168.0.0-192.168.255.255
+-------------------------------------------*/
+bool isLAN(const char * ipstring)
+{
+    char sIpLocal[20] = {0}; 
+    strncpy(sIpLocal, ipstring, 20); 
+    int ip1 = 0, ip2 = 0; 
+    char *ptmp = strchr(sIpLocal, '.');
+    if(ptmp != NULL) {
+        *ptmp = '\0';
+        ip1 = atoi(sIpLocal);
+        ptmp++;
+    }    
+	else 
+		return false;
+
+    char *ptmp2 = strchr(ptmp, '.');
+    if(ptmp != NULL) {
+        *ptmp2 = '\0';
+        ip2 = atoi(ptmp);
+    } 
+	else
+		return false;
+
+    if((ip1==10) || (ip1 ==172 && ip2 >=16 && ip2 <= 31) || (ip1==192 && ip2==168))
+        return true;
+    return false;
+}
+
+std::string & GetRemoteRegionInfoNew(const char *premote, int flag)
+{           
+    static std::string s_strIpReg;
+	const char *ptmp = NULL;
+    uint32_t ip = ntohl( inet_addr(premote) );
+    TIpInfo *pInfo = slog.GetIpInfo( ip );
+    if(pInfo != NULL) {
+		if(flag & IPINFO_FLAG_PROV_VMEM) {
+			if(pInfo->bSaveFlag & IPINFO_FLAG_PROV_VMEM)
+				ptmp = MtReport_GetFromVmem_Local(pInfo->iProvVmemIdx);
+			else
+				ptmp = pInfo->sprov;
+			s_strIpReg = ptmp;
+		}
+		else
+			s_strIpReg = "";
+            
+		if(flag & IPINFO_FLAG_CITY_VMEM) {
+        	if(pInfo->bSaveFlag & IPINFO_FLAG_CITY_VMEM)
+        	    ptmp = MtReport_GetFromVmem_Local(pInfo->iCityVmemIdx);
+        	else
+        	    ptmp = pInfo->scity; 
+        	if(ptmp != NULL && ptmp[0] != '*') {
+        	    s_strIpReg += " ";
+        	    s_strIpReg += ptmp;
+        	}
+			else {
+        	    s_strIpReg += " ";
+        	    s_strIpReg += "未知";
+			}
+		}
+
+		if(flag & IPINFO_FLAG_OWNER_VMEM) {
+			if(pInfo->bSaveFlag & IPINFO_FLAG_OWNER_VMEM)
+				ptmp = MtReport_GetFromVmem_Local(pInfo->iOwnerVmemIdx);
+			else
+				ptmp = pInfo->sowner;
+			if(ptmp != NULL && ptmp[0] != '*') {
+				s_strIpReg += " ";
+				s_strIpReg += ptmp;
+			}
+			else {
+        	    s_strIpReg += " ";
+        	    s_strIpReg += "未知";
+			}
+		}
+    }
+    else if(isLAN(premote))
+        s_strIpReg = "本地局域网";
+    else
+        s_strIpReg = "未知";
+    return s_strIpReg;
+}
+
 char * GetShmLog(TSLog *pLog, int32_t iLogIndex)
 {
 	static char sLogBuf[BWORLD_SLOG_MAX_LINE_LEN+TOO_LONG_TRUNC_STR_LEN];
@@ -752,6 +839,63 @@ void ShowShmLogContent(TSLogShm *m_pShmLog, int iStartIndex, int iModuleId=0)
 	}
 }
 
+int IpInfoSearchCmp(const void *pKey, const void *pNode)
+{
+	if(((TIpInfo*)pKey)->dwStart <  ((TIpInfo*)pNode)->dwStart)
+		return -1;
+	if(((TIpInfo*)pKey)->dwStart >= ((TIpInfo*)pNode)->dwStart
+			&& ((TIpInfo*)pKey)->dwStart <= ((TIpInfo*)pNode)->dwEnd)
+		return 0;
+	return 1;
+}
+
+int IpInfoInitCmp(const void *pKey, const void *pNode)
+{
+	if(((TIpInfo*)pKey)->dwStart <  ((TIpInfo*)pNode)->dwStart)
+		return -1;
+	else if(((TIpInfo*)pKey)->dwStart > ((TIpInfo*)pNode)->dwStart)
+		return 1;
+	return 0;
+}
+
+TIpInfo * CSupperLog::GetIpInfo(uint32_t dwIpAddr, T_FUN_IP_CMP pfun)
+{
+	if(InitIpInfo() < 0 || m_pIpInfoShm->iCount <= 0)
+		return NULL;
+
+	TIpInfo stKey;
+	stKey.dwStart = dwIpAddr;
+	return (TIpInfo*)bsearch(&stKey, m_pIpInfoShm->ips, m_pIpInfoShm->iCount, sizeof(TIpInfo), pfun);
+}
+
+int CSupperLog::InitIpInfo(bool bCreate)
+{
+	static bool s_bInit = false;
+	if(s_bInit)
+		return 0;
+
+	if(!(m_pIpInfoShm=(TIpInfoShm*)GetShm(m_iIpInfoShmKey, sizeof(TIpInfoShm), 0666)) && bCreate) {
+		// 尝试创建
+		if(!(m_pIpInfoShm=(TIpInfoShm*)GetShm(m_iIpInfoShmKey, sizeof(TIpInfoShm), 0666|IPC_CREAT))) {
+			WARN_LOG("try get ipinfo shm failed, shmkey:%d, size:%u", m_iIpInfoShmKey, (int)sizeof(TIpInfoShm));
+			return SLOG_ERROR_LINE;
+		}
+		else {
+			m_pIpInfoShm->iCount = 0;
+		}
+	}
+
+	if(m_pIpInfoShm == NULL) {
+		WARN_LOG("try get ipinfo shm failed, shmkey:%d, size:%u", m_iIpInfoShmKey, (int)sizeof(TIpInfoShm));
+
+		return SLOG_ERROR_LINE;
+	}
+
+	INFO_LOG("init ipinfo shm ok, key:%d, size:%lu", m_iIpInfoShmKey, sizeof(TIpInfoShm));
+	s_bInit = true;
+	return 0;
+}
+
 MtClientInfo * CSupperLog::GetMtClientInfo(int32_t iMachineId, uint32_t *piIsFind)
 {
 	MtClientInfo stKey;
@@ -1115,6 +1259,9 @@ CSupperLog::CSupperLog():memcache(s_memcache)
 
 	m_iAttrViewConfigShmKey = DEF_ATTR_VIEW_CONFIG_SHM_KEY;
 	memset(&m_stHashAttrViewConfig, 0, MYSIZEOF(m_stHashAttrViewConfig));
+
+	m_iIpInfoShmKey = IPINFO_HASH_SHM_DEF_KEY;
+	m_pIpInfoShm = NULL;
 
 	m_iWarnInfoShmKey = DEF_WARN_INFO_SHM_KEY;
 	memset(&m_stHashWarnInfo, 0, MYSIZEOF(m_stHashWarnInfo));
@@ -3059,6 +3206,7 @@ int CSupperLog::Init(const char *pszLocalIP)
 		"MT_MACHINE_VIEW_SHM_KEY", CFG_INT, &m_iMachineViewConfigShmKey, DEF_MACHINE_VIEW_CONFIG_SHM_KEY,
 		"MT_ATTR_VIEW_SHM_KEY", CFG_INT, &m_iAttrViewConfigShmKey, DEF_ATTR_VIEW_CONFIG_SHM_KEY,
 		"MT_WARN_INFO_SHM_KEY", CFG_INT, &m_iWarnInfoShmKey, DEF_WARN_INFO_SHM_KEY,
+		"MT_IPINFO_SHM_KEY", CFG_INT, &m_iIpInfoShmKey, IPINFO_HASH_SHM_DEF_KEY,
 		"SLOG_SET_TEST", CFG_INT, &m_bIsTestLog, 0,
 		"SLOG_OUT_TYPE", CFG_INT, &m_iLogOutType, 2,
 		"SLOG_TYPE", CFG_STRING, szLogTypeStr, "", MYSIZEOF(szLogTypeStr),

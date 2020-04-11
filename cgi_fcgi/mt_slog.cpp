@@ -2613,7 +2613,6 @@ static int AddPluginLogConfig(Query &qu, Json & js_plugin)
 	const int32_t iLogType = SLOG_LEVEL_INFO
 		|SLOG_LEVEL_WARNING|SLOG_LEVEL_REQERROR|SLOG_LEVEL_ERROR|SLOG_LEVEL_FATAL;
 	const char *pname = js_plugin["plus_name"];
-	const char *pdesc = js_plugin["plus_desc"];
 
 	IM_SQL_PARA* ppara = NULL;
 	if(InitParameter(&ppara) < 0) {
@@ -2629,7 +2628,12 @@ static int AddPluginLogConfig(Query &qu, Json & js_plugin)
 	AddParameter(&ppara, "update_time", uitodate(stConfig.dwCurTime), NULL);
 	AddParameter(&ppara, "user_add", pUserInfo->szUserName, NULL);
 	AddParameter(&ppara, "user_add_id", pUserInfo->iUserId, "DB_CAL");
-	AddParameter(&ppara, "config_desc", pdesc, NULL);
+
+	std::string strDesc("插件：");
+	strDesc += pname;
+	strDesc += " 日志配置";
+	AddParameter(&ppara, "config_desc", strDesc.c_str(), NULL);
+
 	AddParameter(&ppara, "app_id", PLUGIN_PARENT_APP_ID, "DB_CAL");
 	AddParameter(&ppara, "module_id", (int)(js_plugin["module_id"]), "DB_CAL");
 	AddParameter(&ppara, "log_types", iLogType, "DB_CAL");

@@ -1545,7 +1545,7 @@ int CUdpSock::CheckClearStrAttrNodeShm(TStrAttrReportInfo* pStrAttrShm)
 
 		// 跨天了，清掉数据重新统计
 		DEBUG_LOG("clear all str attr report, attr:%d, type:%d, count:%d, idx:%d, time:%u(%u), day:%d(%d)",
-			pStrAttrShm->iAttrId, pStrAttrShm->bStrAttrStrType, pStrAttrShm->bStrCount, pStrAttrShm->iReportIdx,
+			pStrAttrShm->iAttrId, pStrAttrShm->bAttrDataType, pStrAttrShm->bStrCount, pStrAttrShm->iReportIdx,
 			pStrAttrShm->dwLastReportTime, (uint32_t)slog.m_stNow.tv_sec, pStrAttrShm->bLastReportDayOfMonth,
 			m_currDateTime.tm_mday);
 
@@ -1564,7 +1564,7 @@ int CUdpSock::CheckClearStrAttrNodeShm(TStrAttrReportInfo* pStrAttrShm)
 }
 
 TStrAttrReportInfo * CUdpSock::AddStrAttrReportToShm(
-	const ::comm::AttrInfo & reportInfo, int32_t iMachineId, uint8_t bStrAttrStrType)
+	const ::comm::AttrInfo & reportInfo, int32_t iMachineId, uint8_t bAttrDataType)
 {
 	uint32_t dwIsFind = 0;
 	uint32_t dwAttrId = reportInfo.uint32_attr_id();
@@ -1580,28 +1580,24 @@ TStrAttrReportInfo * CUdpSock::AddStrAttrReportToShm(
 	}
 	CheckClearStrAttrNodeShm(pAttrShm);
 
-	// 根据字符串类型转换字符串
 	const char *pstr = reportInfo.str().c_str();
-	/*
-	if(bStrAttrStrType == STR_ATTR_STR_IP) {
-		pstr = GetRemoteRegionInfo(reportInfo.str().c_str()).c_str();
+	if(bAttrDataType == STR_REPORT_D_IP) {
+		pstr = GetRemoteRegionInfoNew(reportInfo.str().c_str(), IPINFO_FLAG_PROV_VMEM).c_str();
 		DEBUG_LOG("change str attr:%d, ip str from:%s to:%s", 
 			reportInfo.uint32_attr_id(), reportInfo.str().c_str(), pstr);
 	}
-	*/
 
 	if(!dwIsFind)
 	{
-		// 初始化字符串型监控点
 		pAttrShm->iAttrId = (int32_t)dwAttrId;
 		pAttrShm->iMachineId = iMachineId;
 		pAttrShm->bStrCount = 0;
 		pAttrShm->iReportIdx = -1;
-		pAttrShm->bStrAttrStrType = bStrAttrStrType;
+		pAttrShm->bAttrDataType = bAttrDataType;
 		INFO_LOG("init add str attr report info, attrid:%d, machineid:%d", (int32_t)dwAttrId, iMachineId);
 	}
-	if(pAttrShm->bStrAttrStrType != bStrAttrStrType)
-		pAttrShm->bStrAttrStrType = bStrAttrStrType;
+	if(pAttrShm->bAttrDataType != bAttrDataType)
+		pAttrShm->bAttrDataType = bAttrDataType;
 
 	StrAttrNodeVal *pNodeShm = NULL;
 	int idx = pAttrShm->iReportIdx, i = 0, iLastIdx = -1;
@@ -1741,7 +1737,6 @@ void CUdpSock::DealReportAttr(::comm::ReportAttr &stReport)
 	TStrAttrReportInfo *pStrInfoShm = NULL;
 	int idx = GetDayOfMin();
 	int iDataType = 0;
-	uint8_t bStrAttrStrType = 0;
 
 	for(int i=0; i < stReport.msg_attr_info().size(); i++)
 	{
@@ -1759,13 +1754,12 @@ void CUdpSock::DealReportAttr(::comm::ReportAttr &stReport)
 			continue;
 		}
 		iDataType = pAttrInfo->iDataType;
-		bStrAttrStrType = pAttrInfo->bStrAttrStrType;
 		m_pcltMachine->dwLastReportAttrTime = time(NULL);
 
 		// 字符串型监控点
-		if(iDataType == STR_REPORT_D) 
+		if(iDataType == STR_REPORT_D || iDataType == STR_REPORT_D_IP) 
 		{
-			pStrInfoShm = AddStrAttrReportToShm(stReport.msg_attr_info(i), m_pcltMachine->id, bStrAttrStrType);
+			pStrInfoShm = AddStrAttrReportToShm(stReport.msg_attr_info(i), m_pcltMachine->id, iDataType);
 			if(pStrInfoShm != NULL) 
 			{
 				// 更新需要在上报时检查的相关字段
