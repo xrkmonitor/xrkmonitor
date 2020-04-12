@@ -18,7 +18,7 @@
    ![](http://xrkmonitor.com/monitor/images/china_map.png)    
 
 1. 监控插件市场，让监控成为可以复用的组件，更多监控插件持续开发中      
-   ![](http://xrkmonitor.com/monitor/images/plugin_show.png.png)    
+   ![](http://xrkmonitor.com/monitor/images/plugin_show.png)    
 
 
 **在线部署:**   
