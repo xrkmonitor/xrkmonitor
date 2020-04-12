@@ -17,10 +17,8 @@
    一个监控API 即可轻松生成监控数据的物理地址分布图，参考插件：[monitor_apache_log](https://gitee.com/xrkmonitorcom/monitor_apache_log)  
    ![](http://xrkmonitor.com/monitor/images/china_map.png)    
 
-1. 开源监控插件，全部开源免费，1分钟完成监控需求，更多插件持续开发中      
-	1. linux 操作系统基础监控插件：[plugin_linux_base](https://gitee.com/xrkmonitorcom/plugin_linux_base)  
-	1. apache 网站监控: [monitor_apache_log](https://gitee.com/xrkmonitorcom/monitor_apache_log) 
-
+1. 监控插件市场，让监控成为可以复用的组件，更多监控插件持续开发中      
+   ![](http://xrkmonitor.com/monitor/images/plugin_show.png.png)    
 
 
 **在线部署:**   
