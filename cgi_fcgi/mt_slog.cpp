@@ -3146,6 +3146,9 @@ static int DealDownloadPluginConf(CGI *cgi)
 
 static int DealUpdatePlugin(CGI *cgi)
 {
+	if(IsDaemonDenyOp(stConfig))
+		return 0;
+
 	const char *pinfo = hdf_get_value(cgi->hdf, "Query.plugin", NULL);
 	if(pinfo == NULL) {
 		REQERR_LOG("invalid parameter");
@@ -3369,6 +3372,9 @@ static int DealUpdatePlugin(CGI *cgi)
 
 static int DealInstallPlugin(CGI *cgi)
 {
+	if(IsDaemonDenyOp(stConfig))
+		return 0;
+
 	const char *pinfo = hdf_get_value(cgi->hdf, "Query.plugin", NULL);
 	if(pinfo == NULL) {
 		REQERR_LOG("invalid parameter");
