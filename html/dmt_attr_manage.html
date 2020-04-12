@@ -120,6 +120,12 @@ $(document).ready(function(){
 				$('#dam_excep').css('display', 'none');
 				$('#dam_show_opr_msg').css('display', 'none').css('margin-top', '2px');
 				break;
+			case '<?cs var:config.str_report_d_ip ?>':
+				$('#dam_data_type').css('height', '21px');
+				$('#dam_attr_type_note_txt label').css('width', '260px').text('按天累计字符串为IP地址');
+				$('#dam_excep').css('display', 'none');
+				$('#dam_show_opr_msg').css('display', 'none').css('margin-top', '2px');
+				break;
 
 			default:
 				$('#dam_attr_type_note_txt label').css('width', '270px').text('脚本错误！');			
