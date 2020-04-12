@@ -817,8 +817,7 @@ void CUdpSock::WriteAttrDataToMemcache()
 			else
 				dwLastVal = 0;
 		}
-		// 上报值为 0 无需处理  memcache 缓存
-		if(dwLastVal <= 0 && pReportShm->bAttrDataType != STR_REPORT_D)
+		if(dwLastVal <= 0)
 			continue;
 
 		pMachInfo = slog.GetMachineInfo(pReportShm->iMachineId, NULL);
@@ -979,7 +978,7 @@ void CUdpSock::WriteAttrDataToMemcache()
 			}
 		}
 
-		if(pReportShm->bAttrDataType == STR_REPORT_D)
+		if(pReportShm->bAttrDataType == STR_REPORT_D || pReportShm->bAttrDataType == STR_REPORT_D_IP)
 		    continue;
 
 		comm::MonitorMemcache memInfo;
@@ -1103,15 +1102,17 @@ void CUdpSock::InitTotalAttrReportShm(int32_t iAttrId, int iMachineId, comm::Mon
 		return ;
 	}
 
+	int i = memInfo.machine_attr_day_val().attr_val_size() - 1;
+	uint32_t dwMemcacheVal = memInfo.machine_attr_day_val().attr_val(i).val();
 	if(!dwIsFind)
 	{
 		pAttrShm->iAttrId = iAttrId;
 		pAttrShm->iMachineId = iMachineId;
 		pAttrShm->bAttrDataType = SUM_REPORT_TOTAL;
+		pAttrShm->dwPreLastVal = dwMemcacheVal;
+		pAttrShm->dwLastVal = dwMemcacheVal;
+		pAttrShm->dwCurVal = dwMemcacheVal;
 	}
-
-	int i = memInfo.machine_attr_day_val().attr_val_size() - 1;
-	uint32_t dwMemcacheVal = memInfo.machine_attr_day_val().attr_val(i).val();
 
 	if(dwMemcacheVal > pAttrShm->dwCurVal)
 		pAttrShm->dwCurVal = dwMemcacheVal;
@@ -1303,6 +1304,7 @@ int CUdpSock::ReadStrAttrInfoFromDbToShm()
 	comm::ReportAttr stAttrInfoPb;
 	unsigned long* lengths = NULL;
 	int iAttrId = 0;
+	AttrInfoBin *pAttrInfo = NULL;
 
 	for(int i=0; i < qu.num_rows() && qu.fetch_row(); i++)
 	{
@@ -1315,6 +1317,12 @@ int CUdpSock::ReadStrAttrInfoFromDbToShm()
 			continue;
 		}
 		iAttrId = qu.getval("attr_id"); 
+		pAttrInfo = slog.GetAttrInfo(iAttrId, NULL);
+		if(pAttrInfo == NULL) {
+			ERR_LOG("not find attr:%d", iAttrId);
+			continue;
+		}
+
 		DEBUG_LOG("read str attr id:%d, info:%s, from db", iAttrId, stAttrInfoPb.ShortDebugString().c_str());
 		for(int j=0; j < stAttrInfoPb.msg_attr_info().size(); j++)
 		{
@@ -1324,6 +1332,7 @@ int CUdpSock::ReadStrAttrInfoFromDbToShm()
 			pStrAttrShm = AddStrAttrReportToShm(stAttrInfoPb.msg_attr_info(j), stAttrInfoPb.report_host_id(), 0);
 			if(pStrAttrShm != NULL) {
 				pStrAttrShm->dwLastReportTime = qu.getuval("report_time");
+				pStrAttrShm->bAttrDataType = pAttrInfo->iDataType;
 				DealMachineAttrReport(pStrAttrShm);
 			}
 		}
@@ -1720,10 +1729,18 @@ void CUdpSock::DealMachineAttrReport(TStrAttrReportInfo *pAttrShm)
 	{
 		pAttrShmRep->iAttrId = pAttrShm->iAttrId;
 		pAttrShmRep->iMachineId = pAttrShm->iMachineId;
-		pAttrShmRep->bAttrDataType = STR_REPORT_D;
+		pAttrShmRep->bAttrDataType = pAttrShm->bAttrDataType;
 		DEBUG_LOG("add str attr info to TWarnAttrReportInfo, attrid:%d, machineid:%d",
 			pAttrShm->iAttrId, pAttrShm->iMachineId);
 	}
+
+	if(!pAttrShmRep->dwPreLastVal || !pAttrShmRep->dwLastVal || !pAttrShmRep->dwCurVal)
+	{
+		pAttrShmRep->dwPreLastVal = 1;
+		pAttrShmRep->dwLastVal = 1;
+		pAttrShmRep->dwCurVal = 1;
+	}
+
 }
 
 void CUdpSock::DealReportAttr(::comm::ReportAttr &stReport)
@@ -1916,6 +1933,7 @@ int32_t CUdpSock::OnRawDataClientAttr(const char *buf, size_t len)
 	::comm::AttrInfo *pstAttr = NULL;
 	stReport.set_uint32_client_rep_time(time(NULL));
 	stReport.set_bytes_report_ip(ipv4_addr_str(m_pcltMachine->ip1));
+	stReport.set_report_host_id(m_pcltMachine->id);
 
 	if(m_dwReqCmd == CMD_MONI_SEND_ATTR) {
 		AttrNodeClient *pInfo= NULL;
