@@ -80,7 +80,7 @@ tar rvf ${TarP} html
 dirlist=`find . -maxdepth 1 -type d`
 for dr in $dirlist
 do 
-        if [ -f $dr/$dr ] ; then
+        if [ -f $dr/$dr -a -f $dr/$dr.conf ] ; then
                 tar rvf ${TarP} $dr/*.sh
                 tar rvf ${TarP} $dr/*.conf
                 tar rvf ${TarP} $dr/$dr
