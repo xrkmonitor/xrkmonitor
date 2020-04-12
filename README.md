@@ -11,6 +11,12 @@
 1.  支持多用户访问
 1.  支持插件功能, 无需开发即可使用监控插件完成监控需求
 
+**特色功能推荐**
+1. 内含IP地址库，支持通过IP地址上报时将IP地址转为物理地址，相同物理地址归并展示  
+   一个监控API 即可轻松生成监控数据的物理地址分布图，参考插件：[monitor_apache_log](https://gitee.com/xrkmonitorcom/monitor_apache_log)  
+   ![](http://xrkmonitor.com/monitor/images/china_map.png)  
+
+
 **在线部署:**   
 
 安装脚本: install.sh  
@@ -50,7 +56,8 @@
 
 
 **插件市场当前插件列表:**  
-1.  linux 操作系统基础监控插件：[plugin_linux_base](https://gitee.com/xrkmonitorcom/plugin_linux_base)  
+1. linux 操作系统基础监控插件：[plugin_linux_base](https://gitee.com/xrkmonitorcom/plugin_linux_base)  
+1. apache 网站监控: [monitor_apache_log](https://gitee.com/xrkmonitorcom/monitor_apache_log) 
    
 **当前监控上报API支持的语言如下(更多语言支持在开发中):**   
 1. c/c++ 
