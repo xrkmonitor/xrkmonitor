@@ -648,6 +648,7 @@ static int DealUserCenter()
 		Json login;
 		login["time"] = uitodate(qu.getuval("login_time"));
 		login["remote"] = qu.getstr("login_remote_address");
+		login["remote_region"] = GetRemoteRegionInfoNew(login["remote"]).c_str();
 
 		login["method"] = qu.getval("method");
 		login["valid_time"] = uitodate(qu.getuval("valid_time"));
