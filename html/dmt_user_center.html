@@ -128,6 +128,7 @@ tton></div></div></li>
 							<th class="ucPageTdVal">序 号</th>
 							<th class="ucPageTdVal">登录时间</th>
 							<th class="ucPageTdVal">登录IP</th>
+							<th class="ucPageTdVal">IP归属地</th>
 							<th class="ucPageTdVal">登录有效期</th>
 						</tr>
 					</thead>
@@ -216,6 +217,7 @@ $(document).ready(function(){
 		uhtml += '<td>'+ j + '</td>';
 		uhtml += '<td>'+ ulist[i].time + '</td>';
 		uhtml += '<td>'+ ulist[i].remote + '</td>';
+		uhtml += '<td>'+ ulist[i].remote_region + '</td>';
 		if(i > 0)
 			uhtml += '<td>'+ ulist[i].valid_time + '&nbsp;&nbsp;&nbsp;[已失效]</td>';
 		else
