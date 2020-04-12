@@ -817,7 +817,8 @@ void CUdpSock::WriteAttrDataToMemcache()
 			else
 				dwLastVal = 0;
 		}
-		if(dwLastVal <= 0)
+		if(dwLastVal <= 0
+			&& pReportShm->bAttrDataType != STR_REPORT_D && pReportShm->bAttrDataType != STR_REPORT_D_IP)
 			continue;
 
 		pMachInfo = slog.GetMachineInfo(pReportShm->iMachineId, NULL);
@@ -1733,14 +1734,6 @@ void CUdpSock::DealMachineAttrReport(TStrAttrReportInfo *pAttrShm)
 		DEBUG_LOG("add str attr info to TWarnAttrReportInfo, attrid:%d, machineid:%d",
 			pAttrShm->iAttrId, pAttrShm->iMachineId);
 	}
-
-	if(!pAttrShmRep->dwPreLastVal || !pAttrShmRep->dwLastVal || !pAttrShmRep->dwCurVal)
-	{
-		pAttrShmRep->dwPreLastVal = 1;
-		pAttrShmRep->dwLastVal = 1;
-		pAttrShmRep->dwCurVal = 1;
-	}
-
 }
 
 void CUdpSock::DealReportAttr(::comm::ReportAttr &stReport)
