@@ -52,7 +52,7 @@
 控制台默认账号密码: sadmin/sadmin  
 
 
-**使用的技术方案:**  
+### 使用的技术方案
 1. apache + mysql(监控点数据、配置信息使用 mysql 存储, 支持分布式部署)   
 2. 前端 web 控制台采用 [dwz 开源框架](http://jui.org/)   
 3. 前端监控图表采用开源 [echarts](https://www.echartsjs.com/zh/index.html) 绘制
@@ -61,11 +61,11 @@
 
 
   
-**当前监控上报API支持的语言如下(更多语言支持在开发中):**   
+### 当前监控上报API支持的语言如下(更多语言支持在开发中)
 1. c/c++ 
 2. php
 	   
-**web 控制台页面展示:**     
+### web 控制台页面展示
 ![字符云监控系统](http://xrkmonitor.com/monitor/images/web_page.gif)
 
 **分布式日志系统日志查看演示:**   
@@ -84,7 +84,7 @@
 **在线文档：- [在线文档 http://xrkmonitor.com/monitor/dmt_open_doc.html](http://xrkmonitor.com/monitor/dmt_open_doc.html)**   
 
 
-## 联系我们
+### 联系我们
 QQ 群 699014295 (加群密码：xrkmonitor):   
 ![字符云监控系统QQ群](http://xrkmonitor.com/monitor/main/img/new_qq_group.png)  
 
