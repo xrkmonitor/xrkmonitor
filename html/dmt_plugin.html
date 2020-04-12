@@ -135,7 +135,12 @@ function <?cs var:config.plugin_pre ?>_GetInstallPluginShowInfo(idx, plugin, loc
 
 	shtml += "<div style='float:left;'>";
 	shtml += "<div class='pluginName'>" + local_plugin.plugin_name + "</div>";
-	shtml += "<div class='pluginItem'>安装情况: <font color='blue'>已安装(" + local_plugin.ver + ")</font></div>";
+	shtml += "<div class='pluginItem'>安装情况: <font color='blue'>已安装(" + local_plugin.ver + ")</font>";
+	if(plugin.ver != local_plugin.ver)
+		shtml += "<font color='red'>&nbsp;-&nbsp;可更新</font></div>";
+	else
+		shtml += "</div>";
+
 	shtml += "<div class='pluginItem'>开发语言: " + local_plugin.dev_language + "</div>";
 	shtml += "<div class='pluginItem'>运行平台: " + local_plugin.dest_os + "</div>";
 	if(local_plugin.set_method != 0)
