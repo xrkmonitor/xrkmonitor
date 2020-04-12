@@ -14,7 +14,7 @@
 **特色功能推荐**
 1. 内含IP地址库，支持通过IP地址上报时将IP地址转为物理地址，相同物理地址归并展示  
    一个监控API 即可轻松生成监控数据的物理地址分布图，参考插件：[monitor_apache_log](https://gitee.com/xrkmonitorcom/monitor_apache_log)  
-   ![](http://xrkmonitor.com/monitor/images/china_map.png)  
+   ![](http://xrkmonitor.com/monitor/images/china_map.png)    
 
 
 **在线部署:**   
