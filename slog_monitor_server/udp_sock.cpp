@@ -645,7 +645,7 @@ void CUdpSock::GetMonitorAttrMemcache(
 	}
 
 	int iTmpIdx = memInfo.machine_attr_day_val().attr_val_size() - 1;
-	if(memInfo.machine_attr_day_val().attr_val(iTmpIdx).val() < iMaxVal)
+	if(iTmpIdx >= 0 && memInfo.machine_attr_day_val().attr_val(iTmpIdx).val() < iMaxVal)
 		memInfo.mutable_machine_attr_day_val()->mutable_attr_val(iTmpIdx)->set_val(iMaxVal);
 	qu.free_result();
 }
@@ -1122,8 +1122,10 @@ void CUdpSock::InitTotalAttrReportShm(int32_t iAttrId, int iMachineId, comm::Mon
 		pAttrShm->dwCurVal = dwMemcacheVal;
 	}
 
-	if(dwMemcacheVal > pAttrShm->dwCurVal)
+	if(dwMemcacheVal > pAttrShm->dwCurVal) {
+		pAttrShm->dwLastVal = dwMemcacheVal;
 		pAttrShm->dwCurVal = dwMemcacheVal;
+	}
 	pAttrShm->iMinIdx = iMinIdx;
 	pAttrShm->dwLastReportTime = slog.m_stNow.tv_sec;
 	INFO_LOG("set total history attr report shm info, attrid:%d, machineid:%d, val:%u(%u), minidx:%d",
