@@ -20,7 +20,22 @@
 
 1. 监控插件市场，让监控成为可以复用的组件，更多监控插件持续开发中      
    ![](http://xrkmonitor.com/monitor/images/plugin_show.png)    
+   <br >
 
+1. 分布式日志系统支持，日志上报支持频率限制、日志染色、自定义字段等高级功能，控制台   
+   控制台日志查看支持按关键字、排除关键字、上报时间、上报机器等方式过滤日志，从茫茫   
+   日志中轻松找到您需要的日志
+   ![](http://xrkmonitor.com/monitor/images/web_log.gif)
+   <br >
+
+1. 监控图表支持视图定制模式，视图可按上报服务器、监控点随意组合，轻松   
+   定制您需要的监控视图，并可在监控图表上直接设置告警值
+   ![](http://xrkmonitor.com/monitor/images/web_attr_git.gif)
+   <br >
+
+1. 集成告警功能, 支持邮件、短信、微信、PC客户端等告警方式，告警功能无需开发直接可用
+   ![](http://xrkmonitor.com/monitor/images/open_warn_git.png)
+   <br >
 
 ### 在线部署
 
@@ -59,24 +74,10 @@
 4. 后台 cgi 使用开源的cgi模板引擎 - [clearsilver](http://www.clearsilver.net/), 所有cgi支持以fastcgi方式部署    
 5. 后台服务使用了开源的 socket 开发框架 - [C++ Sockets](http://www.alhem.net/Sockets/)   
 
-
-  
 ### 当前监控上报API支持的语言如下(更多语言支持在开发中)
 1. c/c++ 
 2. php
 	   
-### web 控制台页面展示
-![字符云监控系统](http://xrkmonitor.com/monitor/images/web_page.gif)
-
-**分布式日志系统日志查看演示:**   
-![开源版监控系统](http://xrkmonitor.com/monitor/images/web_log.gif)
-
-**监控点数据图表查看演示:**   
-![开源版监控系统](http://xrkmonitor.com/monitor/images/web_attr.gif)
-
-**微信告警示例:**(支持邮件、短信、微信、PC客户端等告警方式，告警功能无需开发直接可用)  
-![开源版监控系统告警示例](http://xrkmonitor.com/monitor/images/open_wx_2.png)
-
 
 **项目演示链接：[字符云监控项目演示 http://open.xrkmonitor.com](http://open.xrkmonitor.com)**   
 
