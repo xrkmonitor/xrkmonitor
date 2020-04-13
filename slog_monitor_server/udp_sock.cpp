@@ -627,6 +627,7 @@ void CUdpSock::GetMonitorAttrMemcache(
 	const char *prepTime = NULL;
 	int iDayOfMinTmp = 0;
 	comm::AttrVal *pAttrVal = NULL;
+	uint32_t iMaxVal = 0;
 	for(int i=0; i < qu.num_rows() && qu.fetch_row() != NULL; i++)
 	{
 		if(qu.getval("value") <= 0)
@@ -639,7 +640,13 @@ void CUdpSock::GetMonitorAttrMemcache(
 			memInfo.mutable_machine_attr_day_val()->set_max_idx(iDayOfMinTmp);
 		pAttrVal->set_idx(iDayOfMinTmp);
 		pAttrVal->set_val(qu.getval("value"));
+		if(pAttrVal->val() > iMaxVal)
+			iMaxVal = pAttrVal->val();
 	}
+
+	int iTmpIdx = memInfo.machine_attr_day_val().attr_val_size() - 1;
+	if(memInfo.machine_attr_day_val().attr_val(iTmpIdx).val() < iMaxVal)
+		memInfo.mutable_machine_attr_day_val()->mutable_attr_val(iTmpIdx)->set_val(iMaxVal);
 	qu.free_result();
 }
 
