@@ -34,6 +34,7 @@
 							<th width="10">序号</th>
 							<th width="40">用户名</th>
 							<th width="40">登录 IP</th>
+							<th width="40">IP归属地</th>
 							<th width="40">登录时间</th>
 							<th width="40">最后访问时间</th>
 							<th width="40">登录过期时间</th>
@@ -84,6 +85,7 @@ function duliSetUserList()
 		uhtml += "<td>" + (i+j) + "</td>";
 		uhtml += "<td>" + ulist[i].user_name + "</td>";
 		uhtml += "<td>" + ulist[i].login_addr + "</td>";
+		uhtml += "<td>" + ulist[i].login_addr_region + "</td>";
 		uhtml += "<td>" + ulist[i].login_time + "</td>";
 		uhtml += "<td>" + ulist[i].last_access_time + "</td>";
 		if(ulist[i].expire_time == 0)
