@@ -161,17 +161,17 @@ check_again:
 		return -2;
 	}
 
-	for(j=0; j < MTATTR_SHM_DEF_COUNT; j++)
+	for(; j < MTATTR_SHM_DEF_COUNT; j++)
 	{
 		pNode = (AttrNode*)HashTableSearchEx(&g_mtReport.stAttrHash[j], &stRecord, attr, &isFind);
-		if(isFind) // 已有节点
+		if(isFind) 
 		{
 			pNode->iCurValue += iValue;
 			break;
 		}
-		else if(pNode != NULL) // 新建节点
+		else if(pNode != NULL) 
 		{
-			if(VARMEM_CAS_GET(&pNode->bSyncProcess))
+			if(VARMEM_CAS_GET(&pNode->bSyncProcess) || pNode->bSyncProcess>=10)
 			{
 				pNode->iCurValue = iValue;
 				pNode->iAttrID = attr;
@@ -180,7 +180,9 @@ check_again:
 			}
 			else
 			{
+				pNode->bSyncProcess++;
 				bCheckCount++;
+				j++;
 				goto check_again;
 			}
 		}
@@ -210,17 +212,17 @@ check_again:
 		return -2;
 	}
 
-	for(j=0; j < MTATTR_SHM_DEF_COUNT; j++)
+	for(; j < MTATTR_SHM_DEF_COUNT; j++)
 	{
 		pNode = (AttrNode*)HashTableSearchEx(&g_mtReport.stAttrHash[j], &stRecord, attr, &isFind);
-		if(isFind) // 已有节点
+		if(isFind)
 		{
 			pNode->iCurValue = iValue;
 			break;
 		}
-		else if(pNode != NULL) // 新建节点
+		else if(pNode != NULL)
 		{
-			if(VARMEM_CAS_GET(&pNode->bSyncProcess))
+			if(VARMEM_CAS_GET(&pNode->bSyncProcess) || pNode->bSyncProcess >= 10)
 			{
 				pNode->iCurValue = iValue;
 				pNode->iAttrID = attr;
@@ -229,7 +231,9 @@ check_again:
 			}
 			else
 			{
+				pNode->bSyncProcess++;
 				bCheckCount++;
+				j++;
 				goto check_again;
 			}
 		}
@@ -265,7 +269,7 @@ check_again:
 		pNode->iStrVal += iValue;
 	else if(pNode != NULL)
 	{
-		if(VARMEM_CAS_GET(&pNode->bSyncProcess))
+		if(VARMEM_CAS_GET(&pNode->bSyncProcess) || pNode->bSyncProcess >= 120)
 		{
 			pNode->iStrVal = iValue;
 			pNode->iStrAttrId = attr;
@@ -274,6 +278,7 @@ check_again:
 		}
 		else
 		{
+			pNode->bSyncProcess++;
 			bCheckCount++;
 			goto check_again;
 		}
@@ -305,7 +310,7 @@ check_again:
 		pNode->iStrVal = iValue;
 	else if(pNode != NULL)
 	{
-		if(VARMEM_CAS_GET(&pNode->bSyncProcess))
+		if(VARMEM_CAS_GET(&pNode->bSyncProcess) || pNode->bSyncProcess >= 120)
 		{
 			pNode->iStrVal = iValue;
 			pNode->iStrAttrId = attr;
@@ -314,6 +319,7 @@ check_again:
 		}
 		else
 		{
+			pNode->bSyncProcess++;
 			bCheckCount++;
 			goto check_again;
 		}

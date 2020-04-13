@@ -42,10 +42,11 @@ int main(int argc, char *argv[])
 		printf("MtReport_Init failed !\n");
 		return -2;
 	}
+	printf("init ok\n");
 	if(argc >= 4)
 		printf("%d\n", MtReport_Str_Attr_Add(atoi(argv[1]), argv[2], atoi(argv[3])));
 	else
-		MtReport_Attr_Add(atoi(argv[1]), atoi(argv[2]));
+		printf("%d\n", MtReport_Attr_Add(atoi(argv[1]), atoi(argv[2])));
 	return 0;
 }
 
