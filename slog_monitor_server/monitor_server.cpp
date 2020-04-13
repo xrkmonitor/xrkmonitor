@@ -296,8 +296,9 @@ void CheckWarnAttrHashNode()
 	}
 	for(; pNode != NULL; )
 	{
-		// 10 min 无上报回收节点
-		if(pNode->iAttrId != 0 && pNode->iMachineId != 0 && pNode->dwLastReportTime+60*10 <= now)
+		// fix bug @ 2020-04-13 历史累计监控点不能回收
+		if(pNode->bAttrDataType != SUM_REPORT_TOTAL
+			&& pNode->iAttrId != 0 && pNode->iMachineId != 0 && pNode->dwLastReportTime+60*10 <= now)
 		{
 			INFO_LOG("recycle warn attr hash node - machine id:%d , attr id:%d , last report time:%s",
 				pNode->iMachineId, pNode->iAttrId, uitodate(pNode->dwLastReportTime));
