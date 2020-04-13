@@ -171,6 +171,7 @@ static int GetUserList(Json &js, UserSearchInfo *pinfo=NULL)
 		user["remark"] = qu.getstr("rmark");
 		user["last_login_time"] = uitodate(qu.getuval("last_login_time"));
 		user["last_login_address"] = qu.getstr("last_login_address");
+		user["last_login_address_region"] = GetRemoteRegionInfoNew(user["last_login_address"]);
 		js["list"].Add(user);
 	}
 	js["count"] = i; 
@@ -491,6 +492,7 @@ static int DealListLoginInfo()
 		info["type_id"] = stConfig.pshmLoginList->stLoginList[j].bLoginType;
 		info["user_name"] = stConfig.pshmLoginList->stLoginList[j].szUserName;
 		info["login_addr"] = ipv4_addr_str(stConfig.pshmLoginList->stLoginList[j].dwLoginIP);
+		info["login_addr_region"] = GetRemoteRegionInfoNew(info["login_addr"]);
 		info["login_time"] = uitodate(stConfig.pshmLoginList->stLoginList[j].dwLoginTime);
 		info["last_access_time"] = uitodate(stConfig.pshmLoginList->stLoginList[j].dwLastAccessTime);
 		if(stConfig.pshmLoginList->stLoginList[j].dwLastAccessTime
