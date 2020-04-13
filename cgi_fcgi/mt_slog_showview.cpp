@@ -1356,7 +1356,7 @@ static int GetAttrDayVal(Json &js, Json &attr, const char *pattrTab, const Json 
 			if(iReport[i] > dwHisVal)
 				dwHisVal = iReport[i];
 			else
-				iReport[i] = dwHisVal;
+				iReport[i] += dwHisVal;
 		}
 
 		if(iReport[i] > iValueMax)
