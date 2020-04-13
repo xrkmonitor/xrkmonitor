@@ -1,5 +1,6 @@
 ## 项目简介
 集监控点监控、日志监控、数据可视化以及监控告警为一体的国产开源监控系统，直接部署即可使用。    
+实现插件机制，让监控不再重复造轮子，成为可以复用的组件。
 
 ### 相比其它开源监控系统优势  
 1.	集成告警功能, 支持多种告警方式   
@@ -13,27 +14,26 @@
 
 
 ### 特色功能推荐
-1. 内含IP地址库，支持通过IP地址上报时将IP地址转为物理地址，相同物理地址归并展示  
-   一个监控API 即可轻松生成监控数据的物理地址分布图，参考插件：[monitor_apache_log](https://gitee.com/xrkmonitorcom/monitor_apache_log)  
+1. IP地址库: 支持通过IP地址上报时将IP地址转为物理地址，相同物理地址归并展示一个监控API 即可轻松生成监控   
+   数据的物理地址分布图，插件示例：[monitor_apache_log](https://gitee.com/xrkmonitorcom/monitor_apache_log)  
    ![](http://xrkmonitor.com/monitor/images/china_map.png)    
    <br >
 
-1. 监控插件市场，让监控成为可以复用的组件，更多监控插件持续开发中      
+1. 监控插件市场: 让监控成为可以复用的组件，更多监控插件持续开发中      
    ![](http://xrkmonitor.com/monitor/images/plugin_show.png)    
    <br >
 
-1. 分布式日志系统支持，日志上报支持频率限制、日志染色、自定义字段等高级功能，控制台   
-   控制台日志查看支持按关键字、排除关键字、上报时间、上报机器等方式过滤日志，从茫茫   
-   日志中轻松找到您需要的日志
+1. 分布式日志系统: 支持大规模系统日志上报，日志上报支持频率限制、日志染色、自定义字段等高级功能，控制台   
+   日志查看支持按关键字、排除关键字、上报时间、上报机器等方式过滤日志，从茫茫日志中轻松找到您需要的日志       
    ![](http://xrkmonitor.com/monitor/images/web_log.gif)
    <br >
 
-1. 监控图表支持视图定制模式，视图可按上报服务器、监控点随意组合，轻松   
-   定制您需要的监控视图，并可在监控图表上直接设置告警值
+1. 视图机制: 监控图表支持视图定制模式，视图可按上报服务器、监控点随意组合，轻松定制您需要的监控视图，并   
+   可在监控图表上直接设置告警值   
    ![](http://xrkmonitor.com/monitor/images/web_attr_git.gif)
    <br >
 
-1. 集成告警功能, 支持邮件、短信、微信、PC客户端等告警方式，告警功能无需开发直接可用
+1. 告警集成: 集成告警功能, 支持邮件、短信、微信、PC客户端等告警方式，告警功能无需开发直接可用
    ![](http://xrkmonitor.com/monitor/images/open_warn_git.png)
    <br >
 
@@ -75,8 +75,8 @@
 5. 后台服务使用了开源的 socket 开发框架 - [C++ Sockets](http://www.alhem.net/Sockets/)   
 
 ### 当前监控上报API支持的语言如下(更多语言支持在开发中)
-1. c/c++ 
-2. php
+1. ![c/c++ 开发接口](http://xrkmonitor.com//monitor/showdoc/showdoc/web/#/4?page_id=45) 
+2. ![php 开发接口](http://xrkmonitor.com//monitor/showdoc/showdoc/web/#/4?page_id=51)
 	   
 
 **项目演示链接：[字符云监控项目演示 http://open.xrkmonitor.com](http://open.xrkmonitor.com)**   
