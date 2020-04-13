@@ -113,6 +113,10 @@ int CUdpSock::ChangeAttrSaveType(const char *ptable, Query &qu)
 			WARN_LOG("attr no report - attr:%d machine:%d , table:%s", iAttrId, iMachineId, ptable);
 			continue;
 		}
+
+		if(dwMax <= 0)
+			continue;
+
 		DEBUG_LOG("change attr:%d machine:%d save type , count report:%d, min:%u, max:%u, total:%u",
 			iAttrId, iMachineId, iReportCount, dwMin, dwMax, dwTotal);
 
@@ -577,46 +581,36 @@ void CUdpSock::GetMonitorAttrMemcache(
 	qu.get_result(stConfig.szBinSql);
 	const char *prepTime = NULL;
 	int iDayOfMinTmp = 0;
-	uint32_t uiTmp = 0;
+	uiMin = uiMax = uiTotal = 0;
 	iReportCount = 0;
-	uiMin = UINT_MAX;
 	for(int i=0; qu.fetch_row() != NULL; i++)
 	{
 		if(0 == i)
 		{
-			uiTotal = uiTmp;
-			uiMax = uiTmp;
-			iReportCount = 1;
+			uiMax = qu.getuval("value");;
+			uiMin = uiMax;
+			uiTotal = 0;
 			memset(puiValArry, 0, sizeof(uint32_t)*COUNT_MIN_PER_DAY);
-			if(uiTmp < uiMin && uiTmp != 0)
-				uiMin = uiTmp;
 		}
-		else
-		{
-			iReportCount++;
-		}
+		iReportCount++;
+
 		prepTime = qu.getstr("report_time");
 		iDayOfMinTmp = GetDayOfMin(prepTime);
-		assert(iDayOfMinTmp < COUNT_MIN_PER_DAY);
 		puiValArry[iDayOfMinTmp] += qu.getuval("value");
+
+		if(uiMax < puiValArry[iDayOfMinTmp])
+			uiMax = puiValArry[iDayOfMinTmp];
+		if(uiMin > puiValArry[iDayOfMinTmp])
+			uiMin = puiValArry[iDayOfMinTmp];
+		uiTotal += puiValArry[iDayOfMinTmp];
 
 		if(i+1 >= qu.num_rows() && puiLastIp != NULL) {
 			*puiLastIp = inet_addr(qu.getstr("client_ip"));
 			break;
 		}
 	}
-
-	for(int i=0; i < COUNT_MIN_PER_DAY; i++)
-	{
-		uiTmp = puiValArry[i];
-		if(uiTmp > uiMax)
-			uiMax = uiTmp;
-		if(uiTmp < uiMin && uiTmp != 0)
-			uiMin = uiTmp;
-		uiTotal += uiTmp;
-	}
 	qu.free_result();
-}
+} 
 
 void CUdpSock::GetMonitorAttrMemcache(
 	Query &qu, int attr_id, int machine_id, const char *ptable, comm::MonitorMemcache & memInfo)
