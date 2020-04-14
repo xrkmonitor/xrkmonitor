@@ -370,6 +370,9 @@ int main(int argc, char* argv[])
 			if(CheckDbConnect(stSock) < 0)
 				break;
 
+			// fix bug @2020-04-14
+			stSock.SetLocalTimeInfo();
+
 			stSock.CheckAllAttrTotal();
 			stSock.WriteAttrDataToMemcache();
 			stSock.WriteAttrDataToDb();
