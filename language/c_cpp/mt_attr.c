@@ -119,7 +119,7 @@ int MtReport_Attr_Spec(int32_t attr, int32_t iValue)
 {
 	int i = 0;
 
-	if(MtReport_InitAttr() < 0)
+	if(MtReport_InitAttr() < 0 || attr <= 0)
 		return -1;
 
 	g_mtReport.pMtShm->dwAttrReportBySpecCount++;
@@ -145,7 +145,7 @@ int MtReport_Attr_Add(int32_t attr, int32_t iValue)
 {
 	static AttrNode stRecord;
 
-	if(MtReport_InitAttr() < 0)
+	if(MtReport_InitAttr() < 0 || attr <= 0)
 		return -1;
 	g_mtReport.pMtShm->dwAttrReportCount++;
 
@@ -196,7 +196,7 @@ int MtReport_Attr_Set(int32_t attr, int32_t iValue)
 {
 	static AttrNode stRecord;
 
-	if(MtReport_InitAttr() < 0)
+	if(MtReport_InitAttr() < 0 || attr <= 0)
 		return -1;
 	g_mtReport.pMtShm->dwAttrReportCount++;
 
@@ -247,7 +247,7 @@ int MtReport_Str_Attr_Add(int32_t attr, const char *pstr, int32_t iValue)
 {
 	static StrAttrNode stRecord;
 
-	if(MtReport_InitAttr() < 0)
+	if(MtReport_InitAttr() < 0 || attr <= 0)
 		return -1;
 	g_mtReport.pMtShm->dwAttrReportCount++;
 
@@ -289,7 +289,7 @@ check_again:
 int MtReport_Str_Attr_Set(int32_t attr, const char *pstr, int32_t iValue)
 {
 	static StrAttrNode stRecord;
-	if (MtReport_InitAttr() < 0)
+	if (MtReport_InitAttr() < 0 || attr <= 0)
 		return -1;
 
 	uint32_t isFind = 0;
