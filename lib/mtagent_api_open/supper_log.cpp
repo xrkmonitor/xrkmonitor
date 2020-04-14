@@ -4786,11 +4786,8 @@ int CSLogServerWriteFile::WriteLogRecord(int iLogIndex)
 	TSLog *pShmLog = m_pShmLog->sLogList+iLogIndex;
 
 	// add check --- 可能数据未写入完整，记录日志报个错，下次再尝试 --
-	if(0==pShmLog->dwLogSeq) {
-		FATAL_LOG("WriteLogRecord check failed -- appid:%d module id:%d, index:%d",
-			pShmLog->iAppId, pShmLog->iModuleId, iLogIndex);
+	if(0==pShmLog->dwLogSeq) 
 		return SLOG_ERROR_LINE;
-	}
 
 	pszLogTxt = GetShmLog(pShmLog, iLogIndex);
 	if(NULL == pszLogTxt)
