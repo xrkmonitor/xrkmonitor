@@ -4974,13 +4974,13 @@ int CSLogServerWriteFile::WriteFile(int iWriteRecords, uint32_t dwCurTime)
 		if(WriteLogRecord(iLastWriteIndex) < 0)
 			break;
 		i++;
-
 		SLOG_NEXT_INDEX(iLastWriteIndex, iNextIndex);
-
-		// 是否有其它进程改过 iLogStarIndex
-		if(iLastWriteIndex != m_pShmLog->iLogStarIndex || CSupperLog::InitGetShmLogIndex(m_pShmLog) < 0)
+		if(iLastWriteIndex != m_pShmLog->iLogStarIndex)
 			break;
 
+		// fix bug @2020-04-14 iLogStarIndex 字段更新问题
+		if(CSupperLog::InitGetShmLogIndex(m_pShmLog) < 0)
+			break;
 		if(iNextIndex == m_pShmLog->iWriteIndex)
 		{
 			m_pShmLog->iLogStarIndex = -1;
@@ -4989,6 +4989,7 @@ int CSLogServerWriteFile::WriteFile(int iWriteRecords, uint32_t dwCurTime)
 		}
 		m_pShmLog->iLogStarIndex = iNextIndex;
 		CSupperLog::EndGetShmLogIndex(m_pShmLog);
+
 		iLastWriteIndex = iNextIndex;
 	}
 	if(m_iWriteLogBytes > 0)
