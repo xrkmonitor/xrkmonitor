@@ -4785,7 +4785,6 @@ int CSLogServerWriteFile::WriteLogRecord(int iLogIndex)
 	const char *pszLogTxt = NULL;
 	TSLog *pShmLog = m_pShmLog->sLogList+iLogIndex;
 
-	// add check --- 可能数据未写入完整，记录日志报个错，下次再尝试 --
 	if(0==pShmLog->dwLogSeq) 
 		return SLOG_ERROR_LINE;
 
