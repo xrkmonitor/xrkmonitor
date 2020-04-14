@@ -5,7 +5,7 @@
 echo "/" > _tmp
 fc=`expr substr "$0" 1 1`
 echo "$fc" > _tmp_2
-cmp _tmp _tmp_2 > /dev/null; 2>&1
+cmp _tmp _tmp_2 > /dev/null 2>&1
 if [ $? -eq 0 ];then
         cscript=$0
 else
