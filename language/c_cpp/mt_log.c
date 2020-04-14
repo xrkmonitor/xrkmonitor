@@ -283,10 +283,11 @@ static int MtReport_Log_To_Spec(int iLogType, const char *pszFmt, va_list ap)
 		g_mtReport.pMtShm->dwLogSeq = 2;
 	}
 
-	g_mtReport.pMtShm->sLogListSpec[iIndex].dwLogSeq = dwSeq;
+	g_mtReport.pMtShm->sLogListSpec[iIndex].qwLogTime = stNow.tv_sec*1000000ULL+stNow.tv_usec;
+	g_mtReport.pMtShm->sLogListSpec[iIndex].dwLogSeq = 0;
+
 	g_mtReport.pMtShm->sLogListSpec[iIndex].wLogType = iLogType;
 	g_mtReport.pMtShm->sLogListSpec[iIndex].dwLogConfigId = g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].dwLogCfgId;
-	g_mtReport.pMtShm->sLogListSpec[iIndex].qwLogTime = stNow.tv_sec*1000000ULL+stNow.tv_usec;
 
 	if(g_mtReport.pMtShm->dwFirstLogWriteTime == 0)
 		g_mtReport.pMtShm->dwFirstLogWriteTime = stNow.tv_sec;
@@ -318,6 +319,7 @@ static int MtReport_Log_To_Spec(int iLogType, const char *pszFmt, va_list ap)
 			g_mtReport.pMtShm->sLogListSpec[iIndex].iVarmemIndex = iWrite;
 		}
 	}
+	g_mtReport.pMtShm->sLogListSpec[iIndex].dwLogSeq = dwSeq;
 	return 0;
 }
 
@@ -587,6 +589,9 @@ int MtReport_Log(int iLogType, const char *pszFmt, ...)
 		pShmLog->iLogStarIndex = iIndex;
 	else if(iIndex == pShmLog->iLogStarIndex)
 		g_mtReport.pMtShm->wLogInShmFull++;
+
+	pShmLog->sLogList[iIndex].qwLogTime = stNow.tv_sec*1000000ULL+stNow.tv_usec;
+	pShmLog->sLogList[iIndex].dwLogSeq = 0;
 	VARMEM_CAS_FREE(pShmLog->bTryGetLogIndex);
 
 	uint32_t dwSeq = g_mtReport.pMtShm->dwLogSeq++;
@@ -596,12 +601,10 @@ int MtReport_Log(int iLogType, const char *pszFmt, ...)
 		g_mtReport.pMtShm->dwLogSeq = 2;
 	}
 
-	pShmLog->sLogList[iIndex].dwLogSeq = dwSeq;
 	pShmLog->sLogList[iIndex].iAppId = pCurConfigInfo->iAppId;
 	pShmLog->sLogList[iIndex].iModuleId = pCurConfigInfo->iModuleId;
 	pShmLog->sLogList[iIndex].wLogType = iLogType;
 	pShmLog->sLogList[iIndex].dwLogConfigId = pCurConfigInfo->dwCfgId;
-	pShmLog->sLogList[iIndex].qwLogTime = stNow.tv_sec*1000000ULL+stNow.tv_usec;
 
 	if(g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].stCust.bCustFlag != 0) 
 		pShmLog->sLogList[iIndex].iCustVmemIndex = MtReport_Save_LogCust(); 
@@ -636,6 +639,7 @@ int MtReport_Log(int iLogType, const char *pszFmt, ...)
 			g_mtReport.pMtShm->wLogWriteInVmem++;
 		}
 	}
+	pShmLog->sLogList[iIndex].dwLogSeq = dwSeq;
 	return 0;
 }
 

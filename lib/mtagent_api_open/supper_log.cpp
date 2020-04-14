@@ -794,6 +794,9 @@ void ShowShmLogContent(TSLogShm *m_pShmLog, int iStartIndex, int iModuleId=0)
 		if(iModuleId != 0 && m_pShmLog->sLogList[iStartIndex].iModuleId != iModuleId)
 			continue;
 
+		if(m_pShmLog->sLogList[iStartIndex].dwLogSeq == 0)
+			break;
+
 		if(m_pShmLog->sLogList[iStartIndex].iContentIndex < 0)
 		{
 			// 日志存在固定长度字符数组中
@@ -3440,6 +3443,7 @@ int CSupperLog::WriteAppLogToShm(TSLogShm* pShmLog, LogInfo *pLog, int32_t dwLog
 			dwSeq = 1;
 			pShmLog->dwLogSeq = 2;
 		}
+		pShmLog->sLogList[iIndex].dwStartWriteLogTime = m_stNow.tv_sec;
 		pShmLog->sLogList[iIndex].dwLogSeq = 0;
 	}
 	EndGetShmLogIndex(pShmLog);
@@ -3675,7 +3679,8 @@ void CSupperLog::RemoteShmLog(TSLogOut &stLog, TSLogShm* pShmLog)
 			dwSeq = 1;
 			pShmLog->dwLogSeq = 2;
 		}
-		// 先设置为 0
+
+		pShmLog->sLogList[iIndex].dwStartWriteLogTime = m_stNow.tv_sec;
 		pShmLog->sLogList[iIndex].dwLogSeq = 0;
 	}
 	EndGetShmLogIndex(pShmLog);
@@ -3737,7 +3742,6 @@ void CSupperLog::RemoteShmLog(TSLogOut &stLog, TSLogShm* pShmLog)
 				MtReport_Attr_Add(87, 1);
 				ERR_LOG("MtReport_SaveToVmem failed, ret:%d, lost log info -- (appid:%d, moduleid:%d, loglen:%u)",
 						iWrite, stLog.iAppId, stLog.iModuleId, (unsigned)MYSTRLEN(stLog.pszLog));
-
 				// 超长 log 改为失败 log ，保留部分 log 信息
 				pShmLog->sLogList[iIndex].wLogType = SLOG_TYPE_ERROR;
 				pShmLog->sLogList[iIndex].sLogContent[BWORLD_MEMLOG_BUF_LENGTH-1] = '\0';
@@ -3748,10 +3752,8 @@ void CSupperLog::RemoteShmLog(TSLogOut &stLog, TSLogShm* pShmLog)
 		}
 	}
 
-	ModifyLogStartIndexCmpAndSwap(pShmLog, -1, iIndex);
-
-	// modify by rock -- seq 最后设置，作为数据完全写入标志
 	pShmLog->sLogList[iIndex].dwLogSeq = dwSeq;
+	ModifyLogStartIndexCmpAndSwap(pShmLog, -1, iIndex);
 
 	if(m_iRemoteLogToStd)
 		printf("remote log info appid:%d module id:%d ConfigId:%u Remote addr:%s logtype:%d ---- \n\t\t%s\n",
@@ -3924,7 +3926,7 @@ void CSupperLog::ShmLog(int wLogType , const char *pszFmt, ...)
 			dwSeq = 1;
 			m_pShmLog->dwLogSeq = 2;
 		}
-		// 先设置为 0
+		m_pShmLog->sLogList[iIndex].dwStartWriteLogTime = m_stNow.tv_sec;
 		m_pShmLog->sLogList[iIndex].dwLogSeq = 0;
 	}
 	EndGetShmLogIndex(m_pShmLog);
@@ -4786,7 +4788,11 @@ int CSLogServerWriteFile::WriteLogRecord(int iLogIndex)
 	TSLog *pShmLog = m_pShmLog->sLogList+iLogIndex;
 
 	if(0==pShmLog->dwLogSeq) 
-		return SLOG_ERROR_LINE;
+	{   
+	    if(pShmLog->dwStartWriteLogTime+5 < time(NULL))
+	        return 0;
+	    return SLOG_ERROR_LINE;
+	}
 
 	pszLogTxt = GetShmLog(pShmLog, iLogIndex);
 	if(NULL == pszLogTxt)
@@ -5173,6 +5179,16 @@ TSLogOut * CSLogClient::GetLog()
 	int32_t iLastIndex = m_pShmLog->iLogStarIndex;
 	if(iLastIndex >= 0)
 	{
+		if(m_pShmLog->sLogList[iLastIndex].dwLogSeq == 0) 
+		{
+			if(m_pShmLog->sLogList[iLastIndex].dwStartWriteLogTime+5 < time(NULL)) {
+				int iNewIndex;
+				SLOG_NEXT_INDEX(iLastIndex, iNewIndex);
+				CSupperLog::ModifyLogStartIndexCmpAndSwap(m_pShmLog, iLastIndex, iNewIndex);
+			}
+			return NULL;
+		}
+
 		stLogOut.iAppId = m_pShmLog->sLogList[iLastIndex].iAppId;
 		stLogOut.iModuleId = m_pShmLog->sLogList[iLastIndex].iModuleId;
 		stLogOut.wLogType = m_pShmLog->sLogList[iLastIndex].wLogType;

@@ -1378,7 +1378,8 @@ typedef struct
 	int32_t iModuleId;
 	uint16_t wLogType;
 	int32_t  iContentIndex; // 内容超过 BWORLD_MEMLOG_BUF_LENGTH 部分存储在 vmem 中的位置索引
-	char cReserved[16];
+	uint32_t dwStartWriteLogTime;
+	char cReserved[12];
 	char sLogContent[BWORLD_MEMLOG_BUF_LENGTH];
 }TSLog; // 内存日志
 

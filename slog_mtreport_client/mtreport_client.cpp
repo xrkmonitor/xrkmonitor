@@ -948,6 +948,17 @@ void ReadAppLog()
 	{
 		bReadSpecLog = true;
 		plog = stConfig.pReportShm->sLogListSpec+stConfig.pReportShm->iLogSpecialReadIdx;
+		if(plog->dwLogSeq == 0) {
+			uint64_t qwTime = (time(NULL)+5)*1000000ULL;
+			if(plog->qwLogTime >= qwTime) {
+				if(stConfig.pReportShm->iLogSpecialReadIdx+1 >= MTLOG_LOG_SPECIAL_COUNT)
+					stConfig.pReportShm->iLogSpecialReadIdx = 0;
+				else
+					stConfig.pReportShm->iLogSpecialReadIdx++;
+			}
+			break;
+		}
+
 		if(0 == plog->iAppId) {
 			SLogConfig *pcfg = NULL;
 			for(int i=0; i < g_mtReport.pMtShm->wLogConfigCount; i++)
@@ -978,9 +989,10 @@ void ReadAppLog()
 		if(bReadSpecLog && ReadAppLogToBuf(plog) < 0) {
 			return;
 		}
-		stConfig.pReportShm->iLogSpecialReadIdx++;
-		if(stConfig.pReportShm->iLogSpecialReadIdx >= MTLOG_LOG_SPECIAL_COUNT)
+		if(stConfig.pReportShm->iLogSpecialReadIdx+1 >= MTLOG_LOG_SPECIAL_COUNT)
 			stConfig.pReportShm->iLogSpecialReadIdx = 0;
+		else
+			stConfig.pReportShm->iLogSpecialReadIdx++;
 	}
 	if(stConfig.pReportShm->iLogSpecialReadIdx == g_mtReport.pMtShm->iLogSpecialWriteIdx)
 		stConfig.pReportShm->iLogSpecialReadIdx = -1;
@@ -992,13 +1004,27 @@ void ReadAppLog()
 				&& stConfig.pReportShm->stLogShm[i].iLogStarIndex!=stConfig.pReportShm->stLogShm[i].iWriteIndex)
 			{
 				plog = stConfig.pReportShm->stLogShm[i].sLogList+stConfig.pReportShm->stLogShm[i].iLogStarIndex;
+				if(plog->dwLogSeq == 0)
+				{
+					uint64_t qwTime = (time(NULL)+5)*1000000ULL;
+					if(plog->qwLogTime >= qwTime) {
+						if(stConfig.pReportShm->stLogShm[i].iLogStarIndex+1 >= MTLOG_SHM_RECORDS_COUNT)
+							stConfig.pReportShm->stLogShm[i].iLogStarIndex = 0;
+						else
+							stConfig.pReportShm->stLogShm[i].iLogStarIndex++;
+					}
+					SYNC_CAS_FREE(stConfig.pReportShm->stLogShm[i].bTryGetLogIndex);
+					continue;
+				}
+
 				if(ReadAppLogToBuf(plog) < 0) {
 					SYNC_CAS_FREE(stConfig.pReportShm->stLogShm[i].bTryGetLogIndex);
 					return;
 				}
-				stConfig.pReportShm->stLogShm[i].iLogStarIndex++;
-				if(stConfig.pReportShm->stLogShm[i].iLogStarIndex >= MTLOG_SHM_RECORDS_COUNT)
+				if(stConfig.pReportShm->stLogShm[i].iLogStarIndex+1 >= MTLOG_SHM_RECORDS_COUNT)
 					stConfig.pReportShm->stLogShm[i].iLogStarIndex = 0;
+				else
+					stConfig.pReportShm->stLogShm[i].iLogStarIndex++;
 			}
 			if(stConfig.pReportShm->stLogShm[i].iLogStarIndex==stConfig.pReportShm->stLogShm[i].iWriteIndex)
 				stConfig.pReportShm->stLogShm[i].iLogStarIndex = -1;
