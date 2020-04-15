@@ -129,13 +129,13 @@ function ddapSetPluginInfo(js)
 		fhtml += ddapFormSplit; 
 		fhtml += "<table class='list' style='word-break:break-all; word-wrap:break-all;'>";
 		fhtml += "<thead><tr>"
-		fhtml += "<th align='left' valign='top' style='width:60px'>AID</th>";
-		fhtml += "<th align='left' valign='top' style='width:60px'>PAID</th>";
-		fhtml += "<th align='left' valign='top' style='width:45px'>TID</th>";
-		fhtml += "<th align='left' valign='top' style='width:45px'>DT</th>";
-		fhtml += "<th align='left' valign='top' style='width:200px'>监控点名称</th>";
-		fhtml += "<th align='left' valign='top' style='width:200px'>监控点宏名</th>";
-		fhtml += "<th align='left' valign='top' style='width:140px'>监控点描述</th>";
+		fhtml += "<th align='left' valign='top' style='width:10%'>AID</th>";
+		fhtml += "<th align='left' valign='top' style='width:10%'>PAID</th>";
+		fhtml += "<th align='left' valign='top' style='width:6%'>TID</th>";
+		fhtml += "<th align='left' valign='top' style='width:5%'>DT</th>";
+		fhtml += "<th align='left' valign='top' style='width:24%'>监控点名称</th>";
+		fhtml += "<th align='left' valign='top' style='width:20%'>监控点宏名</th>";
+		fhtml += "<th align='left' valign='top' style='width:35%'>监控点描述</th>";
 		fhtml += "</tr></thead><tbody>";
 
 		for(var i=js.attrs.length-1; i >= 0; i--) {
@@ -164,10 +164,10 @@ function ddapSetPluginInfo(js)
 		fhtml += "插件配置如下共 (<font id='dapmar_cfgs'>"+js.cfgs.length+"</font>) 个: <br />";
 		fhtml += ddapFormSplit; 
 		fhtml += "<table class='list' style='word-break:break-all; word-wrap:break-all;'><thead><tr>";
-		fhtml += "<th align='left' valign='top' style='width:200px'>配置名称</th>";
-		fhtml += "<th align='left' valign='top' style='width:200px'>配置值</th>";
-		fhtml += "<th align='left' valign='top' style='width:60px'>MDF</th>";
-		fhtml += "<th align='left' valign='top' style='width:240px'>配置说明</th>";
+		fhtml += "<th align='left' valign='top' style='width:30%'>配置名称</th>";
+		fhtml += "<th align='left' valign='top' style='width:30%'>配置值</th>";
+		fhtml += "<th align='left' valign='top' style='width:10%'>MDF</th>";
+		fhtml += "<th align='left' valign='top' style='width:40%'>配置说明</th>";
 		fhtml += "</tr></thead><tbody>";
 
 		for(var i=js.cfgs.length-1; i >= 0; i--) {
