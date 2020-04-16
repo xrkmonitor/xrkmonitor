@@ -2,22 +2,65 @@
 #
 #function: check process number 
 #
-echo "/" > _tmp
-fc=`expr substr "$0" 1 1`
-echo "$fc" > _tmp_2
-cmp _tmp _tmp_2 > /dev/null 2>&1
-if [ $? -eq 0 ];then
-        cscript=$0
-else
-        cscript=$(pwd)/$0
-fi
-rm -f _tmp _tmp_2
 
-ppath=`dirname $cscript`
-cd $ppath
+# 进入脚本所在目录
+script_path=''
+script_name=''
+function in_script_path()
+{
+    echo "/" > _tmp
+    fc=`expr substr "$0" 1 1`
+    echo "$fc" > _tmp_2
+    cmp _tmp _tmp_2 > /dev/null 2>&1
+    if [ $? -eq 0 ];then
+        cscript=$0
+    else
+        cscript=$(pwd)/$0
+    fi
+    rm -f _tmp _tmp_2
+    script_path=`dirname $cscript`
+    script_name=`basename $cscript`
+    cd "$script_path"
+}
+in_script_path
+
+# 确保同一时间只运行一个文件目录监控脚本
+function check_process_run()
+{
+    pname=$1
+    if [ -f "${pname}.pid" ]; then
+        oldpid=`cat ${pname}.pid`
+        pgrep -f ${pname}|grep $oldpid > /dev/null 2>&1
+        if [ $? -eq 0 ]; then
+            echo "already run, pid:$oldpid !"
+			dinfo=`date`
+			if [ -f "check_process-${pname}.log" ]; then
+			    clogsize=`stat --format %s check_process-${pname}.log`
+			    if [ $clogsize -lt 1048576 ]; then
+			        rm "check_process-${pname}.log"
+			        touch "check_process-${pname}.log"
+			    fi
+			fi
+			echo "$dinfo: already run, pid:$oldpid ! - $$ -" >> "check_process-${pname}.log"
+            exit $LINENO
+        fi  
+    fi  
+    rm -f "${pname}.pid" 
+    touch "${pname}.pid"
+    echo $$ > "${pname}.pid"
+}
+
+function check_process_atexit()
+{
+	cd "$script_path"
+	if [ -f "${script_name}.pid" ]; then
+		rm -f "${script_name}.pid"
+	fi
+}
+check_process_run "$script_name" 
+
 cd ..
 ppath=`pwd`
-
 ACTION=0
 TMPFILE=/tmp/check_proc_last.log
 RESULTDIR=$ppath/slog_check_proc
@@ -134,5 +177,10 @@ if [ $ACTION -eq 1 ] ; then
 	RESTARTINFO="${RESTARTINFO}; host name:${ADDRESS}"
 	usleep 50000 > /dev/null 2>&1 || sleep 1
 	#${MONITORBASEDIR}/slog_deal_warn/slog_deal_warn $MAILTOADDR "$MAILSUBJECT" "$RESTARTINFO"
+	check_process_atexit
+	exit 1
+else
+	check_process_atexit
+	exit 0
 fi
 
