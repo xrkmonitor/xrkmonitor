@@ -2572,15 +2572,14 @@ static int AddPluginLogModule(Query &qu, Json & js_plugin)
 	IM_SQL_PARA* ppara = NULL;
 
 	const char *pname = js_plugin["plus_name"];
-	const char *pdesc = js_plugin["plus_desc"];
-
 	if(InitParameter(&ppara) < 0) {
 		ERR_LOG("sql parameter init failed !");
 		return SLOG_ERROR_LINE;
 	}
 
-	if(pdesc != NULL)
-		AddParameter(&ppara, "module_desc", pdesc, NULL);
+	std::ostringstream strdesc;
+	strdesc << "插件: " << pname << " 日志模块";
+	AddParameter(&ppara, "module_desc", strdesc.str().c_str(), NULL);
 	if(pname != NULL)
 		AddParameter(&ppara, "module_name", pname, NULL);
 	std::string strSql;
