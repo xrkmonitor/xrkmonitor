@@ -3075,7 +3075,7 @@ static int MakePluginConfFile(Json &plug_info, ostringstream &oAbsFile)
 	Json::json_list_t::iterator it_cfg = jslist_cfg.begin();
 	for(; it_cfg != jslist_cfg.end(); it_cfg++) {
 		Json &cfg = *it_cfg;
-        if(!(int)(cfg["enable_modify"]))
+        if(!(bool)(cfg["enable_modify"]))
             continue;
         FCGI_fprintf(fp, "#%s\r\n", (const char*)(cfg["item_desc"]));
         FCGI_fprintf(fp, "%s %s\r\n",
