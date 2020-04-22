@@ -1,6 +1,8 @@
 ## 项目简介
 集监控点监控、日志监控、数据可视化以及监控告警为一体的国产开源监控系统，直接部署即可使用。    
-实现插件机制，让监控不再重复造轮子，成为可以复用的组件。
+实现插件机制，让监控项目成为可以复用的组件。  
+监控数据类型丰富，对应多种图表类型，目前通过api可生成折线图、饼图、地理位置图，后续会引入  
+更多富有表现力的图表以加强对数据可视化的支持。
 
 ### 相比其它开源监控系统优势  
 1.	集成告警功能, 支持多种告警方式   
@@ -77,7 +79,12 @@
 ### 当前监控上报API支持的语言如下(更多语言支持在开发中)
 1. [c/c++ 开发接口](http://xrkmonitor.com//monitor/showdoc/showdoc/web/#/4?page_id=45) 
 2. [php 开发接口](http://xrkmonitor.com//monitor/showdoc/showdoc/web/#/4?page_id=51)
+3. [linux shell 开发接口](http://xrkmonitor.com//monitor/showdoc/showdoc/web/#/4?page_id=72)
 	   
+### 插件市场
+1. [linux_base](https://gitee.com/xrkmonitorcom/plugin_linux_base) c/c++语言开发，用于监控linux 系统 cpu/内存/磁盘/网络等资源
+2. [monitor_apache_log](https://gitee.com/xrkmonitorcom/monitor_apache_log) c/c++语言开发，用于监控apache 网站的流量访问量等
+3. [linux_file_monitor](https://gitee.com/xrkmonitorcom/linux_file_monitor) shell 语言开发，用于监控 linux系统文件目录的增删改变动
 
 **项目演示链接：[字符云监控项目演示 http://open.xrkmonitor.com](http://open.xrkmonitor.com)**   
 
