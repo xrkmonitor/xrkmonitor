@@ -53,7 +53,6 @@
 
 CSupperLog slog;
 SLogServer* g_pHttpTestServer = NULL;
-bool g_isShowViewAttr = false;
 CGIConfig stConfig;
 
 // ajax json 响应方式
@@ -1272,13 +1271,6 @@ static int GetAttrDayVal(Json &js, Json &attr, const char *pattrTab, const Json 
 		// 查询的是当天的数据
 		else if(bIsToday)
 		{
-			// 如果是视图的查询且启用了 memcache 缓存机制，则不查数据库
-			if(g_isShowViewAttr && slog.IsEnableMemcache()) {
-				DEBUG_LOG("skip get attr info, day:%s|%s, attrid:%d, machine:%d, memkey:%s", 
-					pattrTab, pAttrTableToday, attr_id, (int)((*it)["id"]), slog.memcache.GetKey());
-				continue;
-			}
-
 			sprintf(sSqlBuf, "select value,report_time from %s where attr_id=%d and machine_id=%d",
 				pattrTab, attr_id, (int)((*it)["id"]));
 
@@ -3228,7 +3220,6 @@ int main(int argc, char **argv, char **envp)
 		{
 			hdf_set_int_value (stConfig.cgi->hdf, "Config.CompressionEnabled", 1);
 			hdf_get_value (stConfig.cgi->hdf, "cgiout.ContentType", "text/html");
-			g_isShowViewAttr = false;
 			iRet = ShowAttrMulti(ATTR_SHOW_TYPE_MACHINE); 
 		}
 
@@ -3237,7 +3228,6 @@ int main(int argc, char **argv, char **envp)
 		{
 			hdf_set_int_value (stConfig.cgi->hdf, "Config.CompressionEnabled", 1);
 			hdf_get_value (stConfig.cgi->hdf, "cgiout.ContentType", "text/html");
-			g_isShowViewAttr = true;
 			iRet = ShowAttrMulti(ATTR_SHOW_TYPE_VIEW); 
 		}
 		else if(!strcmp(pAction, "list"))
