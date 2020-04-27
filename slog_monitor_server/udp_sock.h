@@ -133,6 +133,7 @@ class CUdpSock: public UdpSocket, public CBasicPacket
 		struct tm m_currDateTime;
 
 	private:
+		int DealCgiReportAttr(const char *buf, size_t len);
 		void ResetRequest();
 		void DealViewAutoBindMachine(TWarnAttrReportInfo *pRepAttrInfo, Query &qu);
 		TWarnAttrReportInfo * AddReportToWarnAttrShm(
@@ -140,32 +141,6 @@ class CUdpSock: public UdpSocket, public CBasicPacket
 		TStrAttrReportInfo * AddStrAttrReportToShm(
 			const ::comm::AttrInfo & reportInfo, int32_t iMachineId, uint8_t bStrAttrStrType);
 };
-
-#define MAX_ATTR_PKG_LENGTH 1200 
-
-// mtreport_client report
-#pragma pack(1)
-typedef struct
-{
-	int32_t iAttrID;
-	int32_t iCurValue;
-} AttrNodeClient;
-
-typedef struct
-{
-	int32_t iStrAttrId;
-	int32_t iStrVal;
-	int iStrLen; // include '\0'
-	char szStrInfo[0];
-}StrAttrNodeClient;
-
-inline void AttrInfoNtoH(AttrNodeClient *pnode)
-{
-	pnode->iAttrID = ntohl(pnode->iAttrID);
-	pnode->iCurValue = ntohl(pnode->iCurValue);
-}
-#pragma pack()
-
 
 #endif
 

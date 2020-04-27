@@ -12,9 +12,8 @@
 #include <inttypes.h>
 #include <cgi_head.h>
 #include <cgi_comm.h>
-#include <cgi_hook.h>
 #include <sstream>
-#include <sv_attr.h>
+#include <cgi_attr.h>
 #include <basic_packet.h>
 
 #ifdef MAX_ATTR_READ_PER_EACH
@@ -24,6 +23,7 @@
 
 CSupperLog slog;
 CGIConfig stConfig;
+MtSystemConfig *g_psysConfig = NULL;
 
 int32_t g_iNeedDb = 0;
 static const char *s_JsonRequest [] = { 
@@ -72,22 +72,21 @@ static int InitFastCgi_first(CGIConfig &myConf)
 		return SLOG_ERROR_LINE;
 	}           
 
-	if(slog.InitGlobalAttr() < 0)
-	{
-		FATAL_LOG("InitGlobalAttr shm failed !");
-		return SLOG_ERROR_LINE;
-	}      
-
+	g_psysConfig = slog.GetSystemCfg();
+	if(g_psysConfig == NULL) {
+	    ERR_LOG("GetSystemCfg failed");
+	    return SLOG_ERROR_LINE;
+	}
 	return 0;
 }
 
-void SendLogToServer(MtUserMasterInfo *pum, SLogClientConfig *plogconfig, char *pContent, int iContentLen)
+void SendLogToServer(SLogClientConfig *plogconfig, char *pContent, int iContentLen)
 {
 	static uint32_t s_dwLoopIp = inet_addr("127.0.0.1");
 
 	SLogServer *psrv = slog.GetAppMasterSrv(plogconfig->iAppId);
 	if(!psrv) {
-		ERR_LOG("get user:%u app:%d, log server failed", pum->dwUserMasterId, plogconfig->iAppId);
+		ERR_LOG("get app:%d, log server failed", plogconfig->iAppId);
 		return;
 	}
 	CBasicPacket pkg;
@@ -95,7 +94,6 @@ void SendLogToServer(MtUserMasterInfo *pum, SLogClientConfig *plogconfig, char *
 	// ReqPkgHead 
 	ReqPkgHead stHead;
 	pkg.InitReqPkgHead(&stHead, CMD_CGI_SEND_LOG, slog.m_iRand);
-	*(uint32_t*)(stHead.sReserved) = htonl(pum->dwUserMasterId);
 
 	// TSignature - empty
 	// [cmd content]
@@ -121,15 +119,9 @@ void SendLogToServer(MtUserMasterInfo *pum, SLogClientConfig *plogconfig, char *
 	}
 }
 
-void SendAttrToServer(MtUserMasterInfo *pum, char *pContent, int iContentLen, bool bIsStrAttr)
+void SendAttrToServer(char *pContent, int iContentLen, bool bIsStrAttr)
 {
 	static uint32_t s_dwLoopIp = inet_addr("127.0.0.1");
-
-	SLogServer *psrv = slog.GetServerInfo(pum->iAttrSrvIndex);
-	if(!psrv) {
-		ERR_LOG("get user:%u attr server failed", pum->dwUserMasterId);
-		return;
-	}
 	CBasicPacket pkg;
 
 	// ReqPkgHead 
@@ -138,7 +130,6 @@ void SendAttrToServer(MtUserMasterInfo *pum, char *pContent, int iContentLen, bo
 	    pkg.InitReqPkgHead(&stHead, CMD_CGI_SEND_STR_ATTR, slog.m_iRand);
 	else
 	    pkg.InitReqPkgHead(&stHead, CMD_CGI_SEND_ATTR, slog.m_iRand);
-	*(uint32_t*)(stHead.sReserved) = htonl(pum->dwUserMasterId);
 
 	// TSignature - empty
 	// [cmd content]
@@ -149,17 +140,17 @@ void SendAttrToServer(MtUserMasterInfo *pum, char *pContent, int iContentLen, bo
 	int iPkgLen = MAX_ATTR_PKG_LENGTH;
 	if(pkg.MakeReqPkg(pkgBuf, &iPkgLen) > 0) {
 		Ipv4Address addr;
-		if(slog.IsIpMatchLocalMachine(psrv->dwIp))
-			addr.SetAddress(s_dwLoopIp, psrv->wPort);
+		if(slog.IsIpMatchLocalMachine(g_psysConfig->dwAttrSrvMasterIp))
+			addr.SetAddress(s_dwLoopIp, g_psysConfig->wAttrSrvPort);
 		else
-			addr.SetAddress(psrv->dwIp, psrv->wPort);
+			addr.SetAddress(g_psysConfig->dwAttrSrvMasterIp, g_psysConfig->wAttrSrvPort);
 		int iRet = SendUdpPacket(&addr, pkgBuf, iPkgLen, 800, &slog);
 		if(iRet != 0) {
-			ERR_LOG("SendUdpPacket failed, ret:%d, pkglen:%d, server:%s:%d",
-				iRet, iPkgLen, psrv->szIpV4, psrv->wPort);
+			ERR_LOG("SendUdpPacket failed, ret:%d, pkglen:%d, server:%s",
+				iRet, iPkgLen, addr.Convert(true).c_str());
 		}
 		else {
-			DEBUG_LOG("SendAttrToServer ok, server:%s:%d", psrv->szIpV4, psrv->wPort);
+			DEBUG_LOG("SendAttrToServer ok, server:%s", addr.Convert(true).c_str());
 		}
 	}
 }
@@ -184,17 +175,6 @@ int DealReport(CGI *cgi)
 		return SLOG_ERROR_LINE;
 	}
 
-	if(!jsdata.HasValue("master_user_id")) {
-		REQERR_LOG("have no master user id, req seq:%u", dwSeq);
-		return SLOG_ERROR_LINE;
-	}
-	uint32_t dwUserMaster = (uint32_t)(jsdata["master_user_id"]);
-	MtUserMasterInfo *pum = slog.GetUserMasterInfo(dwUserMaster, NULL);
-	if(!pum) {
-		REQERR_LOG("not find user master:%u", dwUserMaster);
-		return SLOG_ERROR_LINE;
-	}
-
 	AttrInfoBin *pAttrInfo = NULL;
 	Json::json_list_t::iterator it;
 	if(jsdata.HasValue("attrs")) {
@@ -204,9 +184,9 @@ int DealReport(CGI *cgi)
 		for(it = jslist.begin(); it != jslist.end(); it++) {
 			Json &attr = *it;
 			// 只允许上报用户自己私有的监控点数据
-			pAttrInfo = slog.GetAttrInfo((int)(attr["id"]), dwUserMaster, NULL);
+			pAttrInfo = slog.GetAttrInfo((int)(attr["id"]), NULL);
 			if(!pAttrInfo) {
-				REQERR_LOG("not find user:%u attr:%d", dwUserMaster, (int)(attr["id"]));
+				REQERR_LOG("not find attr:%d", (int)(attr["id"]));
 				continue;
 			}
 
@@ -216,19 +196,19 @@ int DealReport(CGI *cgi)
 			}
 
 			if((int)(attr["number"]) <= 0) {
-				REQERR_LOG("invalid cgi attr report info attr:%d, user:%u", (int)(attr["id"]), dwUserMaster);
+				REQERR_LOG("invalid cgi attr report info attr:%d", (int)(attr["id"]));
 				continue;
 			}
 	
 			stAttrRead[i].iAttrID = htonl((int)(attr["id"]));
 			stAttrRead[i].iCurValue = htonl((int)(attr["number"]));
-			DEBUG_LOG("js report attr:%d, value:%d, user:%u",
-				ntohl(stAttrRead[i].iAttrID), ntohl(stAttrRead[i].iCurValue), dwUserMaster);
+			DEBUG_LOG("js report attr:%d, value:%d",
+				ntohl(stAttrRead[i].iAttrID), ntohl(stAttrRead[i].iCurValue));
 			i++;
 		}
 
 		if(i > 0) {
-			SendAttrToServer(pum, (char*)stAttrRead, i*sizeof(AttrNodeClient), false);
+			SendAttrToServer((char*)stAttrRead, i*sizeof(AttrNodeClient), false);
 		}
 	}
 
@@ -241,10 +221,10 @@ int DealReport(CGI *cgi)
 		for(it = jslist.begin(); it != jslist.end(); it++) {
 			Json &strattr = *it;
 			// 只允许上报用户自己私有的监控点数据
-			pAttrInfo = slog.GetAttrInfo((int)(strattr["id"]), dwUserMaster, NULL);
+			pAttrInfo = slog.GetAttrInfo((int)(strattr["id"]), NULL);
 			if(!pAttrInfo || (pAttrInfo->iDataType != STR_REPORT_D && pAttrInfo->iDataType != STR_REPORT_D_IP))
 			{
-				REQERR_LOG("not find user:%u str attr:%d", dwUserMaster, (int)(strattr["id"]));
+				REQERR_LOG("not find str attr:%d", (int)(strattr["id"]));
 				continue;
 			}
 			if(!strattr.HasValue("strings"))
@@ -259,12 +239,12 @@ int DealReport(CGI *cgi)
 
 				iTmpLen = strlen(pstr)+1;
 				if(iTmpLen <= 1 || (int)(attr["number"]) <= 0) {
-					REQERR_LOG("invalid str attr report info: str attr:%d, user:%u", (int)(strattr["id"]), dwUserMaster);
+					REQERR_LOG("invalid str attr report info: str attr:%d", (int)(strattr["id"]));
 					continue;
 				}
 				if(sizeof(StrAttrNodeClient)+iTmpLen+iUseBufLen >= sizeof(strAttrSendBuf)) {
-					REQERR_LOG("need more space to save cgi str attr report, str attr:%d, user:%u, uselen:%d, tmplen:%d",
-						(int)(strattr["id"]), dwUserMaster, iUseBufLen, iTmpLen);
+					REQERR_LOG("need more space to save cgi str attr report, str attr:%d, uselen:%d, tmplen:%d",
+						(int)(strattr["id"]), iUseBufLen, iTmpLen);
 					break;
 				}
 
@@ -281,7 +261,7 @@ int DealReport(CGI *cgi)
 		}
 
 		if(iUseBufLen > 0) {
-			SendAttrToServer(pum, (char*)strAttrSendBuf, iUseBufLen, true);
+			SendAttrToServer((char*)strAttrSendBuf, iUseBufLen, true);
 		}
 	}
 
@@ -291,16 +271,16 @@ int DealReport(CGI *cgi)
 		Json::json_list_t & jslist = jsdata["logs"].GetArray();
 		int iUseBufLen = 0, iTmpLen = 0, iLogType = 0;
 		const char  *pstr = NULL, *plogtype = NULL;
-		SLogClientConfig *plogconfig = slog.GetSlogConfig(pum, (uint32_t)(jsdata["log_config_id"]));
+		SLogClientConfig *plogconfig = slog.GetSlogConfig((uint32_t)(jsdata["log_config_id"]));
 		if(!plogconfig) {
-			REQERR_LOG("not find user:%u, log config:%u", dwUserMaster, (uint32_t)(jsdata["log_config_id"]));
+			REQERR_LOG("not find log config:%u", (uint32_t)(jsdata["log_config_id"]));
 		}
 		else {
 			// 不允许上报全局应用的日志
 			AppInfo *pAppInfo = slog.GetAppInfo(plogconfig->iAppId);
-			if(!pAppInfo || pAppInfo->bGlobal) {
-				REQERR_LOG("not find app info, user:%u, log config:%u, appid:%d",
-					dwUserMaster, plogconfig->dwCfgId, plogconfig->iAppId); 
+			if(!pAppInfo) {
+				REQERR_LOG("not find app info, log config:%u, appid:%d",
+					plogconfig->dwCfgId, plogconfig->iAppId); 
 				plogconfig = NULL;
 			}
 		}
@@ -311,27 +291,25 @@ int DealReport(CGI *cgi)
 			plogtype = (const char*)(log["type"]);
 			pstr = (const char*)(log["msg"]);
 			iTmpLen = strlen(pstr)+1;
-			if(iTmpLen <= 1 || (!IsStrEqual(plogtype, "error") && !IsStrEqual(plogtype, "debug")
-				&& !IsStrEqual(plogtype, "warn") && !IsStrEqual(plogtype, "reqerr") && !IsStrEqual(plogtype, "info")))
+			iLogType = GetLogTypeByStr(plogtype);
+			if(iTmpLen <= 1 || iLogType == 0)
 			{
-				REQERR_LOG("invalid log report info - user:%u, configid:%u", dwUserMaster, plogconfig->dwCfgId);
+				REQERR_LOG("invalid log report info - configid:%u, logtype:%d", plogconfig->dwCfgId, iLogType);
+				continue;
+			}
+
+			if(!(iLogType & plogconfig->iLogType)) {
+				DEBUG_LOG("log type:%d(%s), not match:%d, config id:%u",
+					iLogType, plogtype, plogconfig->iLogType, plogconfig->dwCfgId);
 				continue;
 			}
 
 			if(iUseBufLen+sizeof(LogInfo)+iTmpLen >= sizeof(sAppLogBuf)) {
-				REQERR_LOG("need more space to save cgi log report, config id:%u, user:%u, uselen:%d, tmplen:%d",
-					plogconfig->dwCfgId, dwUserMaster, iUseBufLen, iTmpLen);
+				REQERR_LOG("need more space to save cgi log report, config id:%u, uselen:%d, tmplen:%d",
+					plogconfig->dwCfgId, iUseBufLen, iTmpLen);
 				break;
 			}
-			iLogType = GetLogTypeByStr(plogtype);
-			if(!(iLogType & plogconfig->iLogType)) {
-				DEBUG_LOG("log type:%d(%s), not match:%d, user:%u, config id:%u",
-					iLogType, plogtype, plogconfig->iLogType, dwUserMaster, plogconfig->dwCfgId);
-				continue;
-			}
-
-			DEBUG_LOG("cgi report log info - user:%u, config id:%u, log:%s",
-				dwUserMaster, plogconfig->dwCfgId, pstr);
+			DEBUG_LOG("cgi report log info - config id:%u, log:%s", plogconfig->dwCfgId, pstr);
 					
 			pLogBuf = (LogInfo*)(sAppLogBuf+iUseBufLen);
 			pLogBuf->qwLogTime = htonll((uint64_t)(log["time"]));
@@ -347,7 +325,7 @@ int DealReport(CGI *cgi)
 		}
 
 		if(iUseBufLen > 0) {
-			SendLogToServer(pum, plogconfig, sAppLogBuf, iUseBufLen);
+			SendLogToServer(plogconfig, sAppLogBuf, iUseBufLen);
 		}
 	}
 
@@ -376,16 +354,14 @@ int main(int argc, char **argv, char **envp)
 	int32_t iRet = 0;
 	stConfig.argc = argc;
 	stConfig.argv = argv;
-	if((iRet=InitFastCgi_first(stConfig) < 0))
+	if((iRet=InitFastCgi_first(stConfig)) < 0)
 	{
-		printf("InitCgi failed ! ret:%d", iRet);
+		printf("InitCgi failed ! ret:%d\n", iRet);
 		return -1;
 	}
 
 	INFO_LOG("fcgi:%s argc:%d start pid:%u", stConfig.pszCgiName, argc, stConfig.pid);
-
-	// hookfun
-	if(HookAfterCgiInit(stConfig) <= 0)
+	if(AfterCgiInit(stConfig) <= 0)
 		return SLOG_ERROR_LINE;
 
 	while(FCGI_Accept() >= 0)
@@ -394,8 +370,7 @@ int main(int argc, char **argv, char **envp)
 		stConfig.argv = argv;
 		stConfig.envp = envp;
 
-		// hookfun
-		iRet=HookBeforeCgiRequestInit(stConfig);
+		iRet=BeforeCgiRequestInit(stConfig);
 		if(iRet == 0)
 			continue;
 		else if(iRet < 0)
@@ -409,8 +384,7 @@ int main(int argc, char **argv, char **envp)
 		if(InitFastCgi(stConfig, stConfig.szDebugPath) < 0)
 			break;
 
-		// hookfun
-		iRet=HookAfterCgiRequestInit(stConfig);
+		iRet=AfterCgiRequestInit(stConfig);
 		if(iRet == 0)
 			continue;
 		else if(iRet < 0)
@@ -418,15 +392,6 @@ int main(int argc, char **argv, char **envp)
 		SetCgiResponseType(stConfig, s_JsonRequest);
 
 		const char *pAction = stConfig.pAction;
-		if(pAction != NULL && !strcmp(pAction, "daemon_heart"))
-		{
-			if(g_iNeedDb && DealDbConnect(stConfig) < 0)
-				DealCgiHeart(stConfig.cgi, HT_DB_CHECK_FAILED);
-			else
-				DealCgiHeart(stConfig.cgi, 0);
-			continue;
-		}
-
 		if(g_iNeedDb && DealDbConnect(stConfig) < 0) {
 			show_errpage(NULL, CGI_ERR_SERVER, stConfig);
 			continue;
@@ -451,8 +416,7 @@ int main(int argc, char **argv, char **envp)
 			}
 		}
 
-		// hookfun
-		iRet=HookAfterCgiResponse(stConfig);
+		iRet=AfterCgiResponse(stConfig);
 		if(iRet == 0)
 			continue;
 		else if(iRet < 0)
@@ -460,7 +424,7 @@ int main(int argc, char **argv, char **envp)
 	}
 
 	if(stConfig.cgi != NULL)
-		DealCgiFailedExit(stConfig.cgi, stConfig.err);
+		DealCgiFailedExit(stConfig, stConfig.err);
 
 	stConfig.dwEnd = time(NULL);
 	INFO_LOG("fcgi - %s stop at:%u run:%u pid:%u errmsg:%s",

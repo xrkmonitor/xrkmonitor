@@ -530,9 +530,8 @@ int MtReport_Log(int iLogType, const char *pszFmt, ...)
 	struct timeval stNow;
 	gettimeofday(&stNow, 0);
 
-	// 日志频率限制, 染色标志如果设置了，则不检查频率限制
-	// dwSpeedFreq 为 0 表示本地不限制写日志频率
-	if(!g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].cIsTest && pCurConfigInfo->dwSpeedFreq != 0) 
+	// 日志频率限制
+	if(pCurConfigInfo->dwSpeedFreq != 0) 
 	{
 		uint64_t qwTimeMs = stNow.tv_sec*1000 + stNow.tv_usec/1000;
 

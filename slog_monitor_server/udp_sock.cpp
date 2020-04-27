@@ -1737,6 +1737,12 @@ void CUdpSock::DealMachineAttrReport(TStrAttrReportInfo *pAttrShm)
 		DEBUG_LOG("add str attr info to TWarnAttrReportInfo, attrid:%d, machineid:%d",
 			pAttrShm->iAttrId, pAttrShm->iMachineId);
 	}
+	else if(pAttrShmRep->bAttrDataType != pAttrShm->bAttrDataType)
+	{
+		pAttrShmRep->bAttrDataType = pAttrShm->bAttrDataType;
+		DEBUG_LOG("change str attr info in TWarnAttrReportInfo, attrid:%d, machineid:%d, bAttrDataType:%d",
+			pAttrShmRep->iAttrId, pAttrShmRep->iMachineId, pAttrShmRep->bAttrDataType);
+	}
 }
 
 void CUdpSock::DealReportAttr(::comm::ReportAttr &stReport)
@@ -1878,10 +1884,81 @@ int32_t CUdpSock::CheckSignature()
 	return 0;
 }
 
+int CUdpSock::DealCgiReportAttr(const char *buf, size_t len)
+{
+	static char s_CommReportMachIp[] = "127.0.0.1";
+
+	m_pcltMachine = slog.GetMachineInfoByIp(s_CommReportMachIp);
+	if(!m_pcltMachine) {
+		ERR_LOG("have no common report machine(127.0.0.1)");
+		return ERR_SERVER;
+	}
+
+	int iReadAttrCount = 0;
+	::comm::ReportAttr stReport;
+	::comm::AttrInfo *pstAttr = NULL;
+	stReport.set_uint32_client_rep_time(time(NULL));
+	stReport.set_bytes_report_ip(s_CommReportMachIp);
+	stReport.set_report_host_id(m_pcltMachine->id);
+
+	if(m_dwReqCmd == CMD_CGI_SEND_ATTR) {
+		AttrNodeClient *pInfo= NULL;
+		for(int iRead=0; m_wCmdContentLen >= iRead+sizeof(AttrNodeClient); )  
+		{
+			pInfo = (AttrNodeClient*)((char*)m_pstCmdContent+iRead);
+			AttrInfoNtoH(pInfo);
+			iRead += sizeof(AttrNodeClient);
+			DEBUG_LOG("read cgi report attr from:%s id:%d, value:%d, iRead:%d, len:%d",
+				m_addrRemote.Convert().c_str(), pInfo->iAttrID, pInfo->iCurValue, iRead, m_wCmdContentLen);
+			pstAttr = stReport.add_msg_attr_info();
+			pstAttr->set_uint32_attr_id(pInfo->iAttrID);
+			pstAttr->set_uint32_attr_value(pInfo->iCurValue);
+			iReadAttrCount++;
+		}
+	}
+	else {
+		// 字符串型监控点
+		StrAttrNodeClient *pInfo = NULL;
+		for(int iRead=0; m_wCmdContentLen >= iRead+sizeof(StrAttrNodeClient); )  
+		{
+			pInfo = (StrAttrNodeClient*)((char*)m_pstCmdContent+iRead);
+			pInfo->iStrAttrId = ntohl(pInfo->iStrAttrId);
+			pInfo->iStrVal = ntohl(pInfo->iStrVal);
+			pInfo->iStrLen = ntohl(pInfo->iStrLen);
+			if(iRead+sizeof(StrAttrNodeClient)+pInfo->iStrLen > m_wCmdContentLen) {
+				REQERR_LOG("invalid packet from:%s, %d, %d, %d, %d", m_addrRemote.Convert(true).c_str(),
+					iRead, (int)sizeof(StrAttrNodeClient), pInfo->iStrLen, m_wCmdContentLen);
+				return ERR_INVALID_PACKET;
+			}
+
+			iRead += sizeof(StrAttrNodeClient)+pInfo->iStrLen;
+			DEBUG_LOG("read cgi report strattr from:%s, id:%d, str:%s, value:%d, iRead:%d, len:%d",
+				m_addrRemote.Convert().c_str(), pInfo->iStrAttrId, 
+				pInfo->szStrInfo, pInfo->iStrVal, iRead, m_wCmdContentLen);
+			pstAttr = stReport.add_msg_attr_info();
+			pstAttr->set_uint32_attr_id(pInfo->iStrAttrId);
+			pstAttr->set_uint32_attr_value(pInfo->iStrVal);
+			pstAttr->set_str(pInfo->szStrInfo);
+			iReadAttrCount++;
+		}
+	}
+
+	if(iReadAttrCount > 0)
+		DealReportAttr(stReport);
+	INFO_LOG("write attr count: %d(%d), from cgi report:%s", 
+		iReadAttrCount, (int)stReport.msg_attr_info_size(), m_addrRemote.Convert().c_str());
+	return NO_ERROR;
+}
+
 int32_t CUdpSock::OnRawDataClientAttr(const char *buf, size_t len)
 {
 	int iRet = 0;
-	if(NULL == m_pstBody ||
+	if(m_dwReqCmd == CMD_CGI_SEND_STR_ATTR || m_dwReqCmd == CMD_CGI_SEND_ATTR)
+	{
+		iRet = DealCgiReportAttr(buf, len);
+		return AckToReq(iRet);
+	}
+	else if(NULL == m_pstBody ||
 		(m_dwReqCmd != CMD_MONI_SEND_ATTR &&  m_dwReqCmd != CMD_MONI_SEND_STR_ATTR))
 	{  
 		REQERR_LOG("invalid packet cmd:%u, or pbody:%p", m_dwReqCmd, m_pstBody);

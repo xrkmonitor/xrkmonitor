@@ -292,6 +292,9 @@ int LoadConfig(const char *pszConfigFilePath, ...)
 int GetLogTypeByStr(const char *pstrType)
 {
 	int iType = 0;
+	if(!pstrType || pstrType[0] == '\0')
+		return 0;
+
 	if(strstr(pstrType, "all"))
 	    return 255;
 	if(strstr(pstrType, "debug"))

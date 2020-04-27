@@ -32,6 +32,8 @@
 
 #include <errno.h>
 #include "mt_report.h"
+#include "sv_time.h"
+#include "SocketHandler.h"
 #include "basic_packet.h"
 
 int CBasicPacket::SetPacketPb(std::string &strHead, std::string &strBody, char **ppack, int ibufLen)
@@ -636,5 +638,37 @@ int CTimeDiff::GetTimeDiffUs()
 	gettimeofday(&tv, NULL);
 	m_qwTimeEnd = tv.tv_sec*1000000+tv.tv_usec;
 	return (m_qwTimeEnd-m_qwTimeStart);
+}
+
+
+CUdpSock_Sync::CUdpSock_Sync(ISocketHandler&h): UdpSocket(h), CBasicPacket()
+{
+	Attach(CreateSocket(PF_INET, SOCK_DGRAM, "udp"));
+}   
+
+void CUdpSock_Sync::OnRawData(const char *buf, size_t len, struct sockaddr *sa, socklen_t sa_len)
+{
+	int iRet = 0;
+	if((iRet=CheckBasicPacket(buf, len, sa)) != 0)
+		m_bRetCode = iRet;
+}
+
+int SendUdpPacket(Ipv4Address *paddr, char *pkg, int iPkgLen, int iTimeoutMs, CSupperLog *pslog)
+{
+	SocketHandler h(pslog);
+	CUdpSock_Sync stSock(h);
+	h.Add(&stSock);
+	GetTimeDiffMs(true);
+	stSock.SendToBuf(*paddr, pkg, iPkgLen, 0);
+	stSock.m_bRetCode = ERR_MAX;
+	int iUseMs = 0;
+	do {
+		h.Select(0, 20000);
+		if(stSock.m_bRetCode != ERR_MAX)
+			break;
+	} while(h.GetCount() && (iUseMs=GetTimeDiffMs(false)) < iTimeoutMs);
+
+	DEBUG_LOG("SendUdpPacket to:%s use:%d ms, pkglen:%d", paddr->Convert(true).c_str(), iUseMs, iPkgLen);
+	return stSock.m_bRetCode;
 }
 

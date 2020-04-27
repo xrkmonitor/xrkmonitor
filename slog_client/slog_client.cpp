@@ -43,26 +43,25 @@ class TLogClientInfo
 {
 	public:
 		TLogClientInfo() {
-			tmLastSendHeartTime = 0;
 			pAppInfo = NULL;
 			pstLogClient = NULL;
 		}
 
 		TLogClientInfo & operator=(const TLogClientInfo &clt)
 		{
-			tmLastSendHeartTime = clt.tmLastSendHeartTime;
 			pAppInfo = clt.pAppInfo;
 			pstLogClient = clt.pstLogClient;
 			return *this;
 		}
 
-		time_t tmLastSendHeartTime;
 		AppInfo * pAppInfo;
 		CSLogClient *pstLogClient;
 };
 
 typedef std::map<int, TLogClientInfo> TMapLogClientInfo;
 typedef std::map<int, TLogClientInfo>::iterator TMapLogClientInfoIt;
+typedef std::map<uint32_t, uint32_t> TMapHeartToServerInfo;
+typedef std::map<uint32_t, uint32_t>::iterator TMapHeartToServerInfoIt;
 
 typedef struct _CONFIG
 {
@@ -70,6 +69,8 @@ typedef struct _CONFIG
 
 	int iLocalMachineId;
 	MachineInfo *pLocalMachineInfo;
+
+	TMapHeartToServerInfo stMapHeartInfo;
 
 	uint32_t dwSendLogCount;
 	uint32_t dwCurrentTime;
@@ -301,13 +302,20 @@ static int SendLogInfo(
 	return iPackLen; 
 }
 
-void SendHeart(CUdpSock &sock, TLogClientInfo & clt)
+void SendHeart(CUdpSock &sock, TLogClientInfo & clt, uint32_t dwSrvIp)
 {
 	static uint32_t s_dwSeq = rand();
 
-	if(clt.tmLastSendHeartTime+stConfig.iSendHeartTimeSec >= stConfig.dwCurrentTime)
+	TMapHeartToServerInfoIt it = stConfig.stMapHeartInfo.find(dwSrvIp);
+	if(it != stConfig.stMapHeartInfo.end() 
+	    && it->second+stConfig.iSendHeartTimeSec >= stConfig.dwCurrentTime)
 		return;
-	clt.tmLastSendHeartTime = stConfig.dwCurrentTime;
+	if(it == stConfig.stMapHeartInfo.end()) {
+		stConfig.stMapHeartInfo[dwSrvIp] = stConfig.dwCurrentTime;
+	}
+	else {
+		it->second = stConfig.dwCurrentTime;
+	}
 
 	::comm::PkgHead head;
 	head.set_en_cmd(::comm::CMD_SLOG_CLIENT_HEART);
@@ -522,7 +530,7 @@ int main(int argc, char *argv[])
 					pLocalMachineInfo->ip1, pLocalMachineInfo->ip2, pLocalMachineInfo->ip3,
 					pLocalMachineInfo->ip4, ipv4_addr_str(it->second.pAppInfo->dwAppSrvMaster),
 					it->second.pAppInfo->dwAppSrvMaster, it->first);
-				SendHeart(stSock, it->second);
+				SendHeart(stSock, it->second, it->second.pAppInfo->dwAppSrvMaster);
 				continue;
 			}
 
@@ -532,7 +540,7 @@ int main(int argc, char *argv[])
 					iSendCount += iRet;
 			}while(iRet >= MAX_LOG_COUNT_PER_SEND);
 			if(iSendCount <= 0)
-				SendHeart(stSock, it->second);
+				SendHeart(stSock, it->second, it->second.pAppInfo->dwAppSrvMaster);
 		}
 	}
 	INFO_LOG("slog_client exit !");

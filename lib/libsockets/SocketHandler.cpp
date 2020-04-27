@@ -720,7 +720,6 @@ void SocketHandler::Remove(Socket *p)
 	{
 		if (it -> second == p)
 		{
-			LogError(p, "Remove", -1, "Socket destructor called while still in use", LOG_LEVEL_WARNING);
 			m_sockets.erase(it);
 			return;
 		}
@@ -729,7 +728,6 @@ void SocketHandler::Remove(Socket *p)
 	{
 		if (*it2 == p)
 		{
-			LogError(p, "Remove", -2, "Socket destructor called while still in use", LOG_LEVEL_WARNING);
 			m_add.erase(it2);
 			return;
 		}
@@ -738,7 +736,6 @@ void SocketHandler::Remove(Socket *p)
 	{
 		if (*it3 == p)
 		{
-			LogError(p, "Remove", -3, "Socket destructor called while still in use", LOG_LEVEL_WARNING);
 			m_delete.erase(it3);
 			return;
 		}

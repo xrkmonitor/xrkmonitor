@@ -525,7 +525,7 @@ int main(int argc, char **argv, char **envp)
 	stConfig.argv = argv;
 	if((iRet=InitFastCgi_first(stConfig)) < 0)
 	{
-		printf("InitCgi failed ! ret:%d, argc:%d", iRet, argc);
+		printf("InitCgi failed ! ret:%d, argc:%d\n", iRet, argc);
 		MtReport_Attr_Add(108, 1);
 		return -1;
 	}

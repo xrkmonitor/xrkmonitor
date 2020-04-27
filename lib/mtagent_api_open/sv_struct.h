@@ -38,6 +38,8 @@
 #include <unistd.h>
 #include <stdlib.h>
 
+#define MAX_APP_LOG_PKG_LENGTH 1400
+
 // 输出 [C++] 结构体成员信息 -- start
 #define SHOW_FIELD_VALUE_INT(para_f) printf("\t " #para_f " :%d\n", para_f)
 #define SHOW_FIELD_VALUE_UINT(para_f) printf("\t " #para_f " :%u\n", para_f)
@@ -168,6 +170,9 @@
 #define CMD_MONI_GET_SERVICE_SERVER 212
 #define CMD_MONI_CHECK_SYSTEM_CONFIG 213
 #define CMD_MONI_SEND_STR_ATTR 214 // client send str attr
+#define CMD_CGI_SEND_ATTR 215 
+#define CMD_CGI_SEND_STR_ATTR 216 
+#define CMD_CGI_SEND_LOG 217 
 
 // monitor system cmd: 400 - 500 用于 pc 告警客户端
 #define CMD_MONI_PC_DETECT_SERVER 400

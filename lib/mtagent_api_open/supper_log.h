@@ -563,7 +563,9 @@ typedef struct
 	uint16_t wTestKeyCount;
 	SLogTestKey stTestKeys[MAX_SLOG_TEST_KEYS_PER_CONFIG];
 
-	char sReserved[31];
+	uint32_t dwLogFreqStartTime;
+	int32_t iLogWriteCount; 
+	char sReserved[23];
 
 	// 用于在 MtSystemConfig 中连接所有 SLogClientConfig 
 	int32_t iPreIndex;
@@ -578,7 +580,8 @@ typedef struct
 		SHOW_FIELD_VALUE_UINT(dwSpeedFreq);
 		SHOW_FIELD_VALUE_UINT(wTestKeyCount);
 		SHOW_FIELD_VALUE_STR_COUNT(wTestKeyCount, bKeyType, MAX_SLOG_TEST_KEYS_PER_CONFIG, stTestKeys);
-		SHOW_FIELD_VALUE_BIN(32, sReserved);
+		SHOW_FIELD_VALUE_UINT_TIME(dwLogFreqStartTime);
+		SHOW_FIELD_VALUE_INT(iLogWriteCount);
 		SHOW_FIELD_VALUE_INT(iPreIndex);
 		SHOW_FIELD_VALUE_INT(iNextIndex);
 	}

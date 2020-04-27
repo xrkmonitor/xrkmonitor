@@ -63,6 +63,46 @@ int32_t CUdpSock::SendResponsePacket(const char*pkg, int len)
 	return 0;
 }
 
+bool CUdpSock::IsLogFreqOver(uint32_t dwLogConfigId)
+{
+	static std::map<uint32_t, SLogClientConfig*> st_mapLogConfig;
+	static SLogClientConfig *s_pLogConfig = NULL;
+
+	if(!s_pLogConfig || s_pLogConfig->dwCfgId != dwLogConfigId) {
+		std::map<uint32_t, SLogClientConfig*>::iterator it = st_mapLogConfig.find(dwLogConfigId);
+		if(it == st_mapLogConfig.end()) {
+			s_pLogConfig = slog.GetSlogConfig(dwLogConfigId);
+			if(!s_pLogConfig) {
+				ERR_LOG("not find log config:%u", dwLogConfigId);
+				return false;
+			}
+			st_mapLogConfig[dwLogConfigId] = s_pLogConfig;
+		}  
+		else
+			s_pLogConfig = it->second;
+	}
+
+	if(s_pLogConfig->dwSpeedFreq != 0){
+		if(s_pLogConfig->dwLogFreqStartTime <= 0
+			|| s_pLogConfig->dwLogFreqStartTime+60 <= stConfig.dwCurrentTime)
+		{
+			s_pLogConfig->dwLogFreqStartTime = stConfig.dwCurrentTime;
+			s_pLogConfig->iLogWriteCount = 1;
+		}
+		else if(s_pLogConfig->iLogWriteCount+1 >= (int)(s_pLogConfig->dwSpeedFreq)) {
+			REQERR_LOG("(config:%u) - log freq over limit:%d >= %d",
+				dwLogConfigId, s_pLogConfig->iLogWriteCount+1, s_pLogConfig->dwSpeedFreq);
+			return true;
+		}
+		else
+			s_pLogConfig->iLogWriteCount++;
+		DEBUG_LOG("log freq info - freq config(%u - %u - %d - %u)", 
+			s_pLogConfig->dwLogFreqStartTime, dwLogConfigId, 
+			s_pLogConfig->iLogWriteCount, s_pLogConfig->dwSpeedFreq);
+	}
+	return 0;
+}
+
 void CUdpSock::DealGetAppLogSizeRsp(top::SlogGetAppLogSizeRsp &rspinfo)
 {
 	if(rspinfo.req_app_count() != rspinfo.app_log_size_info_size())
@@ -217,10 +257,110 @@ int32_t CUdpSock::CheckSignature()
 	return 0;
 }
 
+int CUdpSock::DealCgiReportLog(const char *buf, size_t len)
+{
+	static char s_CommReportMachIp[] = "127.0.0.1";
+
+	DEBUG_LOG("get cgi log request from :%s", m_addrRemote.Convert(true).c_str());
+
+	m_pcltMachine = slog.GetMachineInfoByIp(s_CommReportMachIp);
+	if(!m_pcltMachine) {
+		ERR_LOG("have no common report machine(127.0.0.1)");
+		return ERR_SERVER;
+	}
+
+	int iWriteLogCount = 0;
+	LogInfo *pInfo= NULL;
+	TSLogShm *pLogShm = NULL;
+	AppInfo *pAppInfo = NULL;
+	uint32_t tmNow = time(NULL);
+	int iRead = 0, iRet = 0;
+
+	for(iRead=0; m_wCmdContentLen > iRead+sizeof(LogInfo); )  
+	{
+		pInfo = (LogInfo*)((char*)m_pstCmdContent+iRead);
+		LogInfoNtoH(pInfo);
+		if(iRead+sizeof(LogInfo)+pInfo->wCustDataLen+pInfo->wLogDataLen > m_wCmdContentLen) {
+			REQERR_LOG("invalid log packet %d > %d (custlen:%d, loglen:%d)",
+				(int)(iRead+sizeof(LogInfo)+pInfo->wCustDataLen+pInfo->wLogDataLen),
+				m_wCmdContentLen, pInfo->wCustDataLen, pInfo->wLogDataLen);
+			return ERR_INVALID_PACKET;
+		}
+		iRead += sizeof(LogInfo)+pInfo->wCustDataLen+pInfo->wLogDataLen;
+
+		// cgi report 只允许同时上报一个应用的日志
+		if(pAppInfo == NULL || pLogShm == NULL) {
+			pAppInfo = slog.GetAppInfo(pInfo->iAppId);
+			if(pAppInfo == NULL)
+			{
+				REQERR_LOG("get appinfo failed, appid:%d", pInfo->iAppId);
+				return ERR_INVALID_APPID;
+			}
+
+			if(!slog.IsIpMatchMachine(stConfig.pLocalMachineInfo, pAppInfo->dwAppSrvMaster))
+			{
+				ERR_LOG("cgi report log dispatch invalid info, appsvrip:%s, appid:%d",
+					ipv4_addr_str(pAppInfo->dwAppSrvMaster), pAppInfo->iAppId); 
+				MtReport_Attr_Add(260, 1);
+				return ERR_APP_LOG_DISPATCH_INVALID;
+			}
+
+			std::map<int , TSLogShm *>::iterator it = stConfig.mapAppLogShm.find(pInfo->iAppId);
+			if(it != stConfig.mapAppLogShm.end())
+				pLogShm =  it->second;
+			if(pLogShm == NULL)
+			{
+				pLogShm=slog.GetAppLogShm(pAppInfo, true);
+				if(pLogShm == NULL) 
+				{
+					WARN_LOG("get applog shm failed, appid:%d", pInfo->iAppId);
+					return ERR_INVALID_APPID;
+				} 
+				stConfig.mapAppLogShm[pInfo->iAppId] = pLogShm;
+			}
+		}
+		if(IsLogFreqOver(pInfo->dwLogConfigId))
+			break;
+
+		SET_BIT(pAppInfo->dwAppLogFlag, APPLOG_FLAG_LOG_WRITED);
+
+		if((pInfo->qwLogTime/1000000+120) < tmNow)
+		{
+			struct timeval stNow; 
+			gettimeofday(&stNow, 0);
+			pInfo->qwLogTime = stNow.tv_sec*1000000ULL+stNow.tv_usec;
+		}
+
+		if((iRet=slog.WriteAppLogToShm(pLogShm, pInfo, m_pcltMachine->id)) >= 0)
+		{
+			iWriteLogCount++;
+		}
+		else {
+			ERR_LOG("WriteAppLogToShm failed - appid:%d, module id:%d, ret:%d",
+				pInfo->iAppId, pInfo->iModuleId, iRet);
+		}
+	}
+
+	if(iWriteLogCount > 0)
+		MtReport_Attr_Add(330, iWriteLogCount);
+
+	INFO_LOG("cgi report log count: %d, from:%s, freq over:%d",
+		iWriteLogCount, m_addrRemote.Convert(true).c_str(), (m_wCmdContentLen > iRead+sizeof(LogInfo)));
+
+	if(m_wCmdContentLen > iRead+sizeof(LogInfo))  
+		return ERR_LOG_FREQ_OVER_LIMIT; 
+
+	return NO_ERROR;
+}
+
 int32_t CUdpSock::OnRawDataClientLog(const char *buf, size_t len)
 {
 	int iRet = 0;
-	if(m_dwReqCmd != CMD_MONI_SEND_LOG || NULL == m_pstBody)
+	if(m_dwReqCmd == CMD_CGI_SEND_LOG) {
+		iRet = DealCgiReportLog(buf, len);
+		return AckToReq(iRet);
+	}
+	else if(m_dwReqCmd != CMD_MONI_SEND_LOG || NULL == m_pstBody)
 	{  
 		REQERR_LOG("invalid packet cmd:%u != %u, or pbody:%p", m_dwReqCmd, CMD_MONI_SEND_LOG, m_pstBody);
 		return AckToReq(ERR_INVALID_PACKET);
@@ -268,6 +408,10 @@ int32_t CUdpSock::OnRawDataClientLog(const char *buf, size_t len)
 	{
 		pInfo = (LogInfo*)((char*)m_pstCmdContent+iRead);
 		LogInfoNtoH(pInfo);
+		   
+		if(IsLogFreqOver(pInfo->dwLogConfigId))
+		    break;
+
 		if(iRead+sizeof(LogInfo)+pInfo->wCustDataLen+pInfo->wLogDataLen > m_wCmdContentLen) {
 			REQERR_LOG("invalid log packet %d > %d (custlen:%d, loglen:%d)",
 				(int)(iRead+sizeof(LogInfo)+pInfo->wCustDataLen+pInfo->wLogDataLen),
@@ -331,8 +475,14 @@ int32_t CUdpSock::OnRawDataClientLog(const char *buf, size_t len)
 		}
 	}
 
-	MtReport_Attr_Add(330, 1);
-	INFO_LOG("write user client log count: %d, from:%s", iWriteLogCount, m_addrRemote.Convert(true).c_str());
+	if(iWriteLogCount > 0)
+		MtReport_Attr_Add(330, iWriteLogCount);
+
+	INFO_LOG("write user client log count: %d, from:%s, freq over:%d", 
+		iWriteLogCount, m_addrRemote.Convert(true).c_str(), (m_wCmdContentLen > iRead+sizeof(LogInfo)));
+	if(m_wCmdContentLen > iRead+sizeof(LogInfo)) { 
+		return AckToReq(ERR_LOG_FREQ_OVER_LIMIT);
+	}
 	return AckToReq(NO_ERROR);
 }
 
@@ -356,7 +506,6 @@ void CUdpSock::OnRawData(const char *buf, size_t len, struct sockaddr *sa, sockl
 
 	if(!PacketPb())
 	{
-		// 来自 slog_mtreport_client 的请求包
 		OnRawDataClientLog(buf, len);
 		return ;
 	}
@@ -539,7 +688,13 @@ void CUdpSock::OnRawDataLocalPkg(
 	for(i=0; i < logs.log().size(); i++)
 	{
 		const ::top::SlogLogInfo & log = logs.log(i);
+
+		// 日志频率限制检查（按每分钟计算）
+		if(IsLogFreqOver(log.uint32_log_config_id()))
+		    break;
+
 		PB_LOG_TO_SLOG_OUT(log, stLog);
+
 		// 时间校准 --- client 时间与server 时间相差超过2分钟则用server 的时间
 		if((stLog.qwLogTime/1000000+120) < tmNow)
 		{
@@ -551,9 +706,14 @@ void CUdpSock::OnRawDataLocalPkg(
 		slog.RemoteShmLog(stLog, pLogShm);
 	}
 
-	DEBUG_LOG("get recv log:%d appid:%d module id:%d head length:%d body length:%d", 
+	DEBUG_LOG("get recv log:%d appid:%d module id:%d head length:%d body length:%d, freq over:%d", 
 		logs.log().size(), logs.log(0).uint32_app_id(), logs.log(0).uint32_module_id(),
-		m_iPbHeadLen, m_iPbBodyLen);
-	AckToReq(NO_ERROR); 
+		m_iPbHeadLen, m_iPbBodyLen, (i < logs.log().size()));
+
+	if(i < logs.log().size()) {
+		AckToReq(ERR_LOG_FREQ_OVER_LIMIT);
+	}
+	else
+		AckToReq(NO_ERROR); 
 }
 

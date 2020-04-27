@@ -87,6 +87,31 @@ enum
 	ERR_MAX=100,
 };
 
+#define MAX_ATTR_PKG_LENGTH 1200 
+#ifndef MAX_ATTR_READ_PER_EACH
+#define MAX_ATTR_READ_PER_EAC 120
+#endif
+#pragma pack(1)
+typedef struct
+{
+	int32_t iAttrID;
+	int32_t iCurValue;
+} AttrNodeClient;
+
+typedef struct
+{
+	int32_t iStrAttrId;
+	int32_t iStrVal;
+	int iStrLen; // include '\0'
+	char szStrInfo[0];
+}StrAttrNodeClient;
+
+inline void AttrInfoNtoH(AttrNodeClient *pnode)
+{
+	pnode->iAttrID = ntohl(pnode->iAttrID);
+	pnode->iCurValue = ntohl(pnode->iCurValue);
+}
+#pragma pack()
 
 /*
    *  重要： 使用 CBasicPacket 注意事项
@@ -188,6 +213,18 @@ class CBasicPacket
 		int32_t m_iPbHeadLen;
 		int32_t m_iPbBodyLen;
 };
+
+class CUdpSock_Sync: public UdpSocket, public CBasicPacket
+{
+	public:
+		CUdpSock_Sync(ISocketHandler& h);
+		~CUdpSock_Sync() {}
+		void OnRawData(const char *buf, size_t len, struct sockaddr *sa, socklen_t sa_len);
+		int32_t SendResponsePacket(const char *pkg, int len) { return 0; }
+
+};
+
+int SendUdpPacket(Ipv4Address *paddr, char *pkg, int iPkgLen, int iTimeoutMs, CSupperLog *pslog);
 
 class CTimeDiff
 {

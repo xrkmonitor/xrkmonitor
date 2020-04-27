@@ -712,16 +712,16 @@ int EnvSendStrAttrToServer()
 		DEBUG_LOG("report str attr:%d, str:%s, value:%d", 
 			stConfig.stStrAttrRead[i].iStrAttrId, stConfig.stStrAttrRead[i].szStrInfo,
 			stConfig.stStrAttrRead[i].iStrVal);
+		iTmpLen = strlen(stConfig.stStrAttrRead[i].szStrInfo)+1;
+		if(iTmpLen+iUseBufLen+sizeof(StrAttrNodeClient) >= sizeof(strAttrSendBuf))
+		    break;
 
 		pNodeBuf = (StrAttrNodeClient*)(strAttrSendBuf+iUseBufLen);
 		pNodeBuf->iStrAttrId = htonl(stConfig.stStrAttrRead[i].iStrAttrId);
 		pNodeBuf->iStrVal = htonl(stConfig.stStrAttrRead[i].iStrVal);
-		iTmpLen = strlen(stConfig.stStrAttrRead[i].szStrInfo)+1;
 		pNodeBuf->iStrLen = htonl(iTmpLen);
 		memcpy(pNodeBuf->szStrInfo, stConfig.stStrAttrRead[i].szStrInfo, iTmpLen);
 		iUseBufLen += sizeof(StrAttrNodeClient) + iTmpLen;
-		if(iUseBufLen+sizeof(AttrNodeClient)+4 >= sizeof(strAttrSendBuf))
-			break;
 	}
 
 	if(i < stConfig.wReadStrAttrCount) {
@@ -799,7 +799,7 @@ int EnvSendAttrToServer()
 	}
 
 	static AttrNodeClient stAttrRead[MAX_ATTR_READ_PER_EACH];
-	for(int i=0; i < stConfig.wReadAttrCount; i++){
+	for(int i=0; i < stConfig.wReadAttrCount && i < MAX_ATTR_READ_PER_EACH; i++){
 		DEBUG_LOG("report attr:%d value:%d", 
 			stConfig.stAttrRead[i].iAttrID, stConfig.stAttrRead[i].iCurValue);
 		stAttrRead[i].iAttrID = htonl(stConfig.stAttrRead[i].iAttrID);

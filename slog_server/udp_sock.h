@@ -38,8 +38,6 @@
 #include <map> 
 #include "top_proto.pb.h"
 
-#define MAX_APP_LOG_PKG_LENGTH 1400 
-
 typedef struct {
 	AppInfo *papp_info;
 	TSLogShm *plog_shm;
@@ -76,7 +74,8 @@ class CUdpSock: public UdpSocket, public CBasicPacket
 
 		int SendPacketPb(top::SlogRemoveAppLogFile &req, AppInfo * pAppInfo);
 		void DealDeleteAppLogFile(top::SlogRemoveAppLogFile &req);
-		bool IsLogFreqOver(TSLogShm * pLogShm);
+		bool IsLogFreqOver(uint32_t dwLogConfigId);
+		int DealCgiReportLog(const char *buf, size_t len);
 
 	private:
 		char m_sDecryptBuf[MAX_SIGNATURE_LEN+16];

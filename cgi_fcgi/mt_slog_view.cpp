@@ -540,9 +540,9 @@ int main(int argc, char **argv, char **envp)
 	int32_t iRet = 0;
 	stConfig.argc = argc;
 	stConfig.argv = argv;
-	if((iRet=InitFastCgi_first(stConfig) < 0))
+	if((iRet=InitFastCgi_first(stConfig)) < 0)
 	{
-		printf("InitCgi failed ! ret:%d", iRet);
+		printf("InitCgi failed ! ret:%d\n", iRet);
 		return -1;
 	}
 
