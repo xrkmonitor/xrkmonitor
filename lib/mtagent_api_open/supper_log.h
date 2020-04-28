@@ -1841,6 +1841,7 @@ class CSupperLog: public StdLog, public IError
 				return MtReport_GetFromVmem_Local(pMachinfo->iNameVmemIdx);
 			return g_str_unknow.c_str();
 		}
+		int GetLocalMachineId() { return (m_pShmConfig ? m_pShmConfig->stSysCfg.iMachineId : 0); }
 		int IsIpMatchMachine(MachineInfo*pMach, uint32_t dwIp);
 		int IsIpMatchLocalMachine(uint32_t dwIp);
 		int IsIpMatchMachine(uint32_t dwIp, int32_t iMachineId);

@@ -94,6 +94,7 @@ void SendLogToServer(SLogClientConfig *plogconfig, char *pContent, int iContentL
 	// ReqPkgHead 
 	ReqPkgHead stHead;
 	pkg.InitReqPkgHead(&stHead, CMD_CGI_SEND_LOG, slog.m_iRand);
+	*(int32_t*)(stHead.sReserved) = htonl(slog.GetLocalMachineId());
 
 	// TSignature - empty
 	// [cmd content]
@@ -114,7 +115,7 @@ void SendLogToServer(SLogClientConfig *plogconfig, char *pContent, int iContentL
 				iRet, iPkgLen, psrv->szIpV4, psrv->wPort);
 		}
 		else {
-			DEBUG_LOG("SendAttrToServer ok, server:%s:%d", psrv->szIpV4, psrv->wPort);
+			DEBUG_LOG("SendLogToServer ok, server:%s:%d", psrv->szIpV4, psrv->wPort);
 		}
 	}
 }
@@ -130,6 +131,7 @@ void SendAttrToServer(char *pContent, int iContentLen, bool bIsStrAttr)
 	    pkg.InitReqPkgHead(&stHead, CMD_CGI_SEND_STR_ATTR, slog.m_iRand);
 	else
 	    pkg.InitReqPkgHead(&stHead, CMD_CGI_SEND_ATTR, slog.m_iRand);
+	*(int32_t*)(stHead.sReserved) = htonl(slog.GetLocalMachineId());
 
 	// TSignature - empty
 	// [cmd content]
@@ -329,9 +331,14 @@ int DealReport(CGI *cgi)
 		}
 	}
 
+	stConfig.cgi->time_end = ne_timef();
+	int iUseMs = (int)(((stConfig.cgi->time_end-stConfig.cgi->time_start)*1000000+500)/1000);
+
 	Json js;
 	js["ret"] = 0;
 	js["seq"] = dwSeq;
+	js["cgi_run_time"] = iUseMs;
+	js["client_ip"] = stConfig.remote;
 
 	std::string strResp = js.ToString();
 	STRING str;
@@ -400,8 +407,15 @@ int main(int argc, char **argv, char **envp)
 		DEBUG_LOG("get action :%s from :%s", pAction, stConfig.remote);
 		if(!strcmp(pAction, "http_report_data"))
 			iRet = DealReport(stConfig.cgi);
-		else
-			WARN_LOG("unknow action:%s", pAction);
+		else {
+			REQERR_LOG("unknow action:%s", pAction);
+			iRet = -1;
+		}
+		if(iRet < 0)
+		{
+			show_errpage(NULL, CGI_REQERR, stConfig);
+			continue;
+		}
 
 		const char *pcsTemplate = NULL;
 		if(pcsTemplate != NULL)

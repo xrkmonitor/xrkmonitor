@@ -261,13 +261,19 @@ int CUdpSock::DealCgiReportLog(const char *buf, size_t len)
 {
 	static char s_CommReportMachIp[] = "127.0.0.1";
 
-	DEBUG_LOG("get cgi log request from :%s", m_addrRemote.Convert(true).c_str());
-
 	m_pcltMachine = slog.GetMachineInfoByIp(s_CommReportMachIp);
 	if(!m_pcltMachine) {
 		ERR_LOG("have no common report machine(127.0.0.1)");
 		return ERR_SERVER;
 	}
+
+	int iReqMachineId = ntohl(*(int32_t*)(m_pstReqHead->sReserved));
+	if(0 == iReqMachineId || NULL == slog.GetMachineInfo(iReqMachineId, NULL)) {
+		REQERR_LOG("not find server machine, id:%d", iReqMachineId);
+		return ERR_INVALID_PACKET;
+	}
+
+
 
 	int iWriteLogCount = 0;
 	LogInfo *pInfo= NULL;
@@ -344,8 +350,8 @@ int CUdpSock::DealCgiReportLog(const char *buf, size_t len)
 	if(iWriteLogCount > 0)
 		MtReport_Attr_Add(330, iWriteLogCount);
 
-	INFO_LOG("cgi report log count: %d, from:%s, freq over:%d",
-		iWriteLogCount, m_addrRemote.Convert(true).c_str(), (m_wCmdContentLen > iRead+sizeof(LogInfo)));
+	INFO_LOG("cgi report log count: %d, from:%s, freq over:%d, from server:%d", iWriteLogCount, 
+		m_addrRemote.Convert(true).c_str(), (m_wCmdContentLen > iRead+sizeof(LogInfo)), iReqMachineId);
 
 	if(m_wCmdContentLen > iRead+sizeof(LogInfo))  
 		return ERR_LOG_FREQ_OVER_LIMIT; 

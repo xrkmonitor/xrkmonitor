@@ -1894,6 +1894,13 @@ int CUdpSock::DealCgiReportAttr(const char *buf, size_t len)
 		return ERR_SERVER;
 	}
 
+	// 请求来自服务器
+	int iReqMachineId = ntohl(*(int32_t*)(m_pstReqHead->sReserved));
+	if(iReqMachineId == 0 || NULL == slog.GetMachineInfo(iReqMachineId, NULL)) {
+		REQERR_LOG("not find server machine, id:%d", iReqMachineId);
+		return ERR_INVALID_PACKET;
+	}
+
 	int iReadAttrCount = 0;
 	::comm::ReportAttr stReport;
 	::comm::AttrInfo *pstAttr = NULL;
@@ -1945,8 +1952,8 @@ int CUdpSock::DealCgiReportAttr(const char *buf, size_t len)
 
 	if(iReadAttrCount > 0)
 		DealReportAttr(stReport);
-	INFO_LOG("write attr count: %d(%d), from cgi report:%s", 
-		iReadAttrCount, (int)stReport.msg_attr_info_size(), m_addrRemote.Convert().c_str());
+	INFO_LOG("write attr count: %d(%d), from cgi report:%s, from server:%d", 
+		iReadAttrCount, (int)stReport.msg_attr_info_size(), m_addrRemote.Convert().c_str(), iReqMachineId);
 	return NO_ERROR;
 }
 
