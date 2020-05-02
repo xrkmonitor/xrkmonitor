@@ -192,16 +192,16 @@ function dcMainPageSetChartSize()
 	else {
 		var xWidth = g_dcChartMinWidth+20+20;
 		var xLeft = iContentW % xWidth;
-		var xCount = Math.trunc(iContentW/xWidth);
-		var xBlank = Math.trunc(xLeft/xCount);
+		var xCount = dmtMathtrunc(iContentW/xWidth);
+		var xBlank = dmtMathtrunc(xLeft/xCount);
 		g_dcMainChartWidth = g_dcChartMinWidth+xBlank;
 
 		// 第一行的图表宽度计算，需要减去表格的占用
 		iContentW -= g_dcMainPageInfoWidth+20+20;
 		xLeft = iContentW % xWidth;
-		xCount = Math.trunc(iContentW/xWidth);
+		xCount = dmtMathtrunc(iContentW/xWidth);
 		if(xCount > 0) {
-			xBlank = Math.trunc(xLeft/xCount);
+			xBlank = dmtMathtrunc(xLeft/xCount);
 			g_dcMainFirstChartWidth = g_dcChartMinWidth+xBlank;
 			g_dcMainFirstChartCount = xCount;
 		}
