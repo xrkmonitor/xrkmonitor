@@ -81,9 +81,9 @@ function dmtSetPluginMarginInfo(tab)
 // 判断浏览器类型是否支持
 function dmtIsExplorerSupport()
 {
-	var ua = navigator.userAgent.toLowerCase();
-	if(ua.indexOf("firefox") == -1 && ua.indexOf("chrome") == -1)
-		return false;
+	//var ua = navigator.userAgent.toLowerCase();
+	//if(ua.indexOf("firefox") == -1 && ua.indexOf("chrome") == -1)
+	//	return false;
 	return true;
 }
 
