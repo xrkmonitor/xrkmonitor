@@ -874,24 +874,20 @@ function dmtSetStrAttrInfoChart(ct_id, attr_info, js, attr_val_list, showtype)
 		legend : {
 			type:'scroll',
 			orient: 'vertical',
-			left:'left',
+			right:'right',
 			top:'70',
 			show:true
 		},
 		series: [
 			{
 				type:'pie',
-				radius:'75%',
-				center:['70%', '55%'],
+				radius:'55%',
+				center:['40%', '55%'],
 				data:[],
 				label: { 
-					show: false,
-	        		normal: {
-            	        show: false,
-            	        position: 'inside'
-            	    },
+					show: true,
             	    emphasis: {
-            	        show: false,
+            	        show: true,
             	    }
             	},
 				itemStyle: {
@@ -912,7 +908,7 @@ function dmtSetStrAttrInfoChart(ct_id, attr_info, js, attr_val_list, showtype)
 		op.title.text = '服务器ID【'+attr_val_list.machine_id+'】'+'字符串型监控点：'+attr_info.name;
 
 	if(js.str_count > 0) {
-		op.title.subtext = '统计时间：'+attr_val_list.date_time_cur+'\n 显示排名前 20 个';
+		op.title.subtext = '统计时间：'+attr_val_list.date_time_cur+', 显示排名前 20 个';
 		op.series[0].data = js.str_list;
 	}
 	else {
