@@ -222,7 +222,6 @@ int DealReport(CGI *cgi)
 		int iUseBufLen = 0, iTmpLen = 0;
 		for(it = jslist.begin(); it != jslist.end(); it++) {
 			Json &strattr = *it;
-			// 只允许上报用户自己私有的监控点数据
 			pAttrInfo = slog.GetAttrInfo((int)(strattr["id"]), NULL);
 			if(!pAttrInfo || (pAttrInfo->iDataType != STR_REPORT_D && pAttrInfo->iDataType != STR_REPORT_D_IP))
 			{
@@ -278,7 +277,6 @@ int DealReport(CGI *cgi)
 			REQERR_LOG("not find log config:%u", (uint32_t)(jsdata["log_config_id"]));
 		}
 		else {
-			// 不允许上报全局应用的日志
 			AppInfo *pAppInfo = slog.GetAppInfo(plogconfig->iAppId);
 			if(!pAppInfo) {
 				REQERR_LOG("not find app info, log config:%u, appid:%d",
@@ -399,14 +397,23 @@ int main(int argc, char **argv, char **envp)
 		SetCgiResponseType(stConfig, s_JsonRequest);
 
 		const char *pAction = stConfig.pAction;
+		if(NULL == pAction)
+		{
+			REQERR_LOG("have no action from :%s", stConfig.remote);
+			show_errpage(NULL, CGI_REQERR, stConfig);
+			continue;
+		}
+	
 		if(g_iNeedDb && DealDbConnect(stConfig) < 0) {
 			show_errpage(NULL, CGI_ERR_SERVER, stConfig);
 			continue;
 		}
 
 		DEBUG_LOG("get action :%s from :%s", pAction, stConfig.remote);
-		if(!strcmp(pAction, "http_report_data"))
+		if(!strcmp(pAction, "http_report_data")) {
+			hdf_set_value(stConfig.cgi->hdf, "cgiout.other.cros", "Access-Control-Allow-Origin:*");
 			iRet = DealReport(stConfig.cgi);
+		}
 		else {
 			REQERR_LOG("unknow action:%s", pAction);
 			iRet = -1;

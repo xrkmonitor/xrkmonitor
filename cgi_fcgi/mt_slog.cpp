@@ -3039,7 +3039,7 @@ static int GetLocalPlugin(Json &js_plugin, int iPluginId)
 	return 0;
 }
 
-static int MakePluginConfFile(Json &plug_info, ostringstream &oAbsFile)
+static int MakePluginConfFile_def(Json &plug_info, ostringstream &oAbsFile)
 {
     FCGI_FILE * fp = FCGI_fopen(oAbsFile.str().c_str(), "w+");
     if(fp == NULL) {
@@ -3100,6 +3100,105 @@ static int MakePluginConfFile(Json &plug_info, ostringstream &oAbsFile)
     return 0;
 }
 
+static const char* GetLogTypeStr(int iLogConfigId)
+{
+	static std::string s_type;
+
+	SLogClientConfig *plogconfig = slog.GetSlogConfig(iLogConfigId);
+	if(!plogconfig) {
+		ERR_LOG("not find logconfig:%d", iLogConfigId);
+		return "no";
+	}
+
+	s_type = "";
+	if(plogconfig->iLogType & SLOG_LEVEL_DEBUG)
+		s_type += "debug ";
+	if(plogconfig->iLogType & SLOG_LEVEL_INFO)
+		s_type += "info ";
+	if(plogconfig->iLogType & SLOG_LEVEL_OTHER)
+		s_type += "other ";
+	if(plogconfig->iLogType & SLOG_LEVEL_WARNING)
+		s_type += "warn ";
+	if(plogconfig->iLogType & SLOG_LEVEL_REQERROR)
+		s_type += "reqerr ";
+	if(plogconfig->iLogType & SLOG_LEVEL_ERROR)
+		s_type += "error ";
+	if(plogconfig->iLogType & SLOG_LEVEL_FATAL)
+		s_type += "fatal ";
+	return s_type.c_str();
+}
+
+static int MakePluginConfFile_js(Json & plug_info, ostringstream &oAbsFile)
+{
+	FCGI_FILE * fp = FCGI_fopen(oAbsFile.str().c_str(), "w+");
+	if(fp == NULL) {
+		ERR_LOG("create plugin config file:%s failed, msg:%s", oAbsFile.str().c_str(), strerror(errno));
+		stConfig.pErrMsg = "文件创建失败";
+		return SLOG_ERROR_LINE;
+	}
+	const char *psrv_addr = hdf_get_value(stConfig.cgi->hdf, "CGI.ServerAddress", "");
+
+	FCGI_fprintf(fp, "///////////////////////////////////////////////////////////////////////////\r\n");
+	FCGI_fprintf(fp, "//该文件为字符云监控系统 js 插件部署配置文件, 在部署插件时需要该文件\r\n");
+	FCGI_fprintf(fp, "//如您修改了该文件, 插件升级重新部署时注意合并修改到新配置文件\r\n");
+	FCGI_fprintf(fp, "//\r\n");
+	FCGI_fprintf(fp, "//插件名: %s\r\n", (const char*)(plug_info["plus_name"]));
+	FCGI_fprintf(fp, "//插件ID: %u\r\n", (int)(plug_info["plugin_id"]));
+	FCGI_fprintf(fp, "//文件版本: %s\r\n", (const char*)(plug_info["plus_version"]));
+	FCGI_fprintf(fp, "//\r\n");
+	FCGI_fprintf(fp, "///////////////////////////////////////////////////////////////////////////\r\n");
+	FCGI_fprintf(fp, "\r\n");
+	FCGI_fprintf(fp, "\r\n");
+	FCGI_fprintf(fp, "var xrk_config_%s = { \r\n", (const char*)(plug_info["plus_name"]));
+	FCGI_fprintf(fp, "    report_url:\'http://%s%s/mt_slog_reportinfo\', // 上报地址\r\n", psrv_addr, stConfig.szCgiPath);
+	FCGI_fprintf(fp, "    plugin_name:\'%s\', // 插件名\r\n", (const char*)(plug_info["plus_name"]));
+	FCGI_fprintf(fp, "    plugin_ver:\'%s\', // 配置文件版本\r\n", (const char*)(plug_info["plus_version"]));
+	FCGI_fprintf(fp, "    logconfig_id:%u, // 插件日志配置ID, 为0表示不上报插件日志\r\n", (int)(plug_info["log_config_id"]));
+	FCGI_fprintf(fp, "    logconfig_type:\'%s\', // 插件日志记录类型\r\n", GetLogTypeStr((int)(plug_info["log_config_id"])));
+
+	// 配置
+	Json::json_list_t & jslist_cfg = plug_info["cfgs"].GetArray();
+	Json::json_list_t::iterator it_cfg = jslist_cfg.begin();
+	for(; it_cfg != jslist_cfg.end(); it_cfg++) {
+		Json &cfg = *it_cfg;
+        if(!(bool)(cfg["enable_modify"]))
+			FCGI_fprintf(fp, "    %s: \'%s\', // [不可修改] %s\r\n", 
+				(const char*)(cfg["item_name"]), (const char*)(cfg["item_value"]),
+				(const char*)(cfg["item_desc"]));
+		else
+			FCGI_fprintf(fp, "    %s: \'%s\', // %s\r\n", 
+				(const char*)(cfg["item_name"]), (const char*)(cfg["item_value"]),
+				(const char*)(cfg["item_desc"]));
+	}
+
+	// 监控点
+	Json::json_list_t & jslist_attr = plug_info["attrs"].GetArray();
+	Json::json_list_t::iterator it_attr = jslist_attr.begin();
+	for(; it_attr != jslist_attr.end(); it_attr++) {
+		Json & attr = *it_attr;
+		FCGI_fprintf(fp, "    %s: %d, // 监控点: %s\r\n", 
+			(const char*)(attr["attr_id_macro"]), (int)(attr["attr_id"]),
+			(const char*)(attr["attr_name"]));
+	}
+
+	FCGI_fprintf(fp, "    xrk_end:0 \r\n");
+	FCGI_fprintf(fp, "}; \r\n");
+	FCGI_fprintf(fp, "\r\n");
+	FCGI_fclose(fp);
+	DEBUG_LOG("create config file:%s ok", oAbsFile.str().c_str());
+	return 0;
+}
+
+static int MakePluginConfFile(Json &plug_info, ostringstream &oAbsFile)
+{
+	int iRet=0;
+	if(!strcmp((const char*)(plug_info["dev_language"]), "javascript")) 
+		iRet=MakePluginConfFile_js(plug_info, oAbsFile);
+	else
+		iRet=MakePluginConfFile_def(plug_info, oAbsFile);
+	return iRet;
+}
+
 static int DealDownloadPluginConf(CGI *cgi)
 {
 	int iPluginId = hdf_get_int_value(cgi->hdf, "Query.plugin_id", 0);
@@ -3113,16 +3212,23 @@ static int DealDownloadPluginConf(CGI *cgi)
 		return SLOG_ERROR_LINE;
 
 	ostringstream ostrFile;
-	ostrFile << stConfig.szCsPath << "download/xrk_" << (const char*)(js_local["plus_name"]);
-	ostrFile << ".conf";
+	ostringstream oDownUrl;
+	ostringstream oFile;
+	if(!strcmp((const char*)(js_local["dev_language"]), "javascript"))  {
+		ostrFile << stConfig.szCsPath << "download/" << (const char*)(js_local["plus_name"]);
+		ostrFile << "_conf.js";
+		oFile << (const char*)(js_local["plus_name"]) << "_conf.js";
+		oDownUrl << stConfig.szDocPath << "download/" << oFile.str();
+	}
+	else {
+		ostrFile << stConfig.szCsPath << "download/xrk_" << (const char*)(js_local["plus_name"]);
+		ostrFile << ".conf";
+		oFile << "xrk_" << (const char*)(js_local["plus_name"]) << ".conf";
+		oDownUrl << stConfig.szDocPath << "download/" << oFile.str();
+	}
 
 	if(MakePluginConfFile(js_local, ostrFile) < 0)
 		return SLOG_ERROR_LINE;
-
-	ostringstream oDownUrl;
-	ostringstream oFile;
-	oFile << "xrk_" << (const char*)(js_local["plus_name"]) << ".conf";
-	oDownUrl << stConfig.szDocPath << "download/" << oFile.str();
 
 	Json js;
 	js["ret"] = 0;
