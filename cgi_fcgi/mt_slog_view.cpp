@@ -263,7 +263,8 @@ static int DeleteView()
 static int DealUnAutoBindMachine()
 {
 	int32_t id = hdf_get_int_value(stConfig.cgi->hdf, "Query.view_id", 0);
-	TViewInfo *pView = slog.GetViewInfo(id);
+	int idx = slog.GetViewInfoIndex(id);
+	TViewInfo *pView = slog.GetViewInfo(idx);
 	if(id == 0 || pView == NULL)
 	{
 		REQERR_LOG("invalid view id or not find view:%d", id);
