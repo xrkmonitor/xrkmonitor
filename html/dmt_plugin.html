@@ -66,6 +66,7 @@ function <?cs var:config.plugin_pre ?>OnDownConf()
 	}
     var requrl = "<?cs var:config.cgipath?>mt_slog?action=down_plugin_conf";
     requrl += "&plugin_id=" + <?cs var:config.plugin_pre ?>_sel_plugin.plugin_id; 
+	requrl += "&self_domain=" + window.document.domain;
     $.ajax({
         type: "get",
         url: requrl,
