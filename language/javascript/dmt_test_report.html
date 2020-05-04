@@ -12,8 +12,8 @@
 <script src="/monitor/js/dmt_xrkmonitor.js"></script>
 <script type="text/javascript">
 
-// 调试时可以打开，正式部署请关闭debug, 云版本
 var xrk = window.self_xrk; 
+// 调试时可以打开，正式部署请关闭debug, 云版本
 xrk.set_debug();
 
 // 开源版本初始化
@@ -29,6 +29,7 @@ xrk.set_debug();
 //xrk.cloud_init_report(250);
 xrk.cloud_init_report(250);
 
+/*
 xrk.report_attr_add(210, 1230);
 xrk.report_attr_add(211, 230);
 xrk.report_attr_add(212, 30);
@@ -44,6 +45,7 @@ xrk.report_strattr_set(329, "setrock中国", 305);
 xrk.report_strattr_set(329, "setrock22", 305);
 xrk.report_strattr_set(329, "中国--%s rock", 305);
 xrk.report_strattr_set(329, "set-=rock22", 305);
+*/
 xrk.report_error_log('test report log - id :222');
 xrk.report_warn_log('test report warn log - id :222');
 xrk.report_info_log('test report info log - id :222');
