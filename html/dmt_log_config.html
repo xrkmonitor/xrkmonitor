@@ -28,7 +28,7 @@
 							</select>
 						</td>
 						<td>
-							<button type="submit" class="sexybutton" id="dlc_btn_submit"><span><span><span class="search">查找</span></span></span></button>
+							<button class="sexybutton" onclick='dlcOnSearch();' ><span><span><span class="search">查找</span></span></span></button>
 						</td>
 					</tr>
 				</table>
@@ -150,8 +150,15 @@ function dlcSetConfiglist()
 		return "";
 	var ulist = dlc_config_list.configlist;
 	var uhtml = "";
+	var app_sel = window.localStorage.getItem('dlc_app_sel');
+	var module_sel = window.localStorage.getItem('dlc_module_sel');
 	for(var i=0, j=1; i < ulist.length; i++,j++)
 	{
+		if(app_sel != null && app_sel != 0 && app_sel != ulist[i].app_id)
+			continue;
+		if(module_sel != null && module_sel != 0 && module_sel != ulist[i].module_id)
+			continue;
+
 		uhtml += "<tr onclick='dlcSetSelConfig("+i+")'>";
 		uhtml += "<td>" + j + "</td>";
 		uhtml += "<td>" + ulist[i].config_id + "</td>";
@@ -208,9 +215,17 @@ var dlc_init_module = <?cs var:config.dlc_module_id ?>;
 function dlcAppChange()
 {
 	var app_id = $('#dlc_app_id').val();
+	if(app_id == 0 || app_id != window.localStorage.getItem('dlc_app_sel')) {
+		window.localStorage.removeItem('dlc_module_sel');
+	}
+
 	var app_list = dlc_app_modules.applist;
 	var modules = $('#dlc_module_id');
-	modules.html('<option value="0"> 全 部 </option>');
+	var module_sel = window.localStorage.getItem('dlc_module_sel');
+	if(module_sel == null)
+		modules.html('<option value="0" selected> - 全部 - </option>');
+	else
+		modules.html('<option value="0"> - 全部 - </option>');
 	for(var i=0; i < app_list.length; ++i) {
 		if(app_list[i].app_id == app_id) {
 			var app = app_list[i];
@@ -247,9 +262,24 @@ function dlcModConfig()
 	$.pdialog.open(url, "dlc_dlg_mod_config", "修改日志配置", op); 
 }
 
+function dlcOnSearch()
+{
+	var app_id = $('#dlc_app_id').val();
+	if(app_id == 0)
+		window.localStorage.removeItem('dlc_app_sel');
+	else if(window.localStorage.getItem('dlc_app_sel') != app_id)
+		window.localStorage.setItem('dlc_app_sel', app_id);
+
+	var module_id = $('#dlc_module_id').val();
+	if(module_id == 0)
+		window.localStorage.removeItem('dlc_module_sel');
+	else if(window.localStorage.getItem('dlc_module_sel') != module_id)
+		window.localStorage.setItem('dlc_module_sel', module_id);
+
+	return true;
+}
+
 $(document).ready(function(){
-	var ulist = dlcSetConfiglist();
-	$("#dlc_config_list_tbody").html(ulist);
 	dlc_sel_config = "";
 	dlc_detail_sel_config = "";
 
@@ -257,27 +287,32 @@ $(document).ready(function(){
 		alertMsg.warn("应用数目为0，请先添加应用！");
 	}
 	else {
+		var app_sel = window.localStorage.getItem('dlc_app_sel');
 		var app = $('#dlc_app_id');
 		app.change(dlcAppChange);
+		if(app_sel == null)
+			app.html('<option value="0" selected> - 全部 - </option>');
+		else
+			app.html('<option value="0"> - 全部 - </option>');
+	
 		var app_list = dlc_app_modules.applist;
 		for(var i=0; i < app_list.length; ++i) {
 			var op = $('<option></option>');
 			op.val(app_list[i].app_id).text(app_list[i].app_name);
-			if(<?cs var:config.dlc_app_id ?> == app_list[i].app_id)
-			{
+			if(app_sel == app_list[i].app_id)
 				op.attr("selected", true);
-				app.append(op);
-				dlcAppChange();
-			}
-			else
-				app.append(op);
+			app.append(op);
 		}
+		dlcAppChange();
 	}
 
 	$("select[name=numPerPage] option").each(function(){
 		if(this.value == <?cs var:config.numPerPage ?>)
 			$(this).attr("selected", true);
 	});
+
+	var ulist = dlcSetConfiglist();
+	$("#dlc_config_list_tbody").html(ulist);
 });
 
 </script>
