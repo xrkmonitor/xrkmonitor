@@ -3136,7 +3136,6 @@ static int MakePluginConfFile_js(Json & plug_info, ostringstream &oAbsFile)
 		stConfig.pErrMsg = "文件创建失败";
 		return SLOG_ERROR_LINE;
 	}
-	const char *psrv_addr = hdf_get_value(stConfig.cgi->hdf, "CGI.ServerAddress", "");
 
 	FCGI_fprintf(fp, "///////////////////////////////////////////////////////////////////////////\r\n");
 	FCGI_fprintf(fp, "//该文件为字符云监控系统 js 插件部署配置文件, 在部署插件时需要该文件\r\n");
@@ -3150,7 +3149,8 @@ static int MakePluginConfFile_js(Json & plug_info, ostringstream &oAbsFile)
 	FCGI_fprintf(fp, "\r\n");
 	FCGI_fprintf(fp, "\r\n");
 	FCGI_fprintf(fp, "var xrk_config_%s = { \r\n", (const char*)(plug_info["plus_name"]));
-	FCGI_fprintf(fp, "    report_url:\'http://%s%s/mt_slog_reportinfo\', // 上报地址\r\n", psrv_addr, stConfig.szCgiPath);
+	FCGI_fprintf(fp, "    report_url:\'http://%s%s/mt_slog_reportinfo\', // 上报地址\r\n", 
+		(const char*)(plug_info["self_domain"]), stConfig.szCgiPath);
 	FCGI_fprintf(fp, "    plugin_name:\'%s\', // 插件名\r\n", (const char*)(plug_info["plus_name"]));
 	FCGI_fprintf(fp, "    plugin_ver:\'%s\', // 配置文件版本\r\n", (const char*)(plug_info["plus_version"]));
 	FCGI_fprintf(fp, "    logconfig_id:%u, // 插件日志配置ID, 为0表示不上报插件日志\r\n", (int)(plug_info["log_config_id"]));
@@ -3201,6 +3201,7 @@ static int MakePluginConfFile(Json &plug_info, ostringstream &oAbsFile)
 
 static int DealDownloadPluginConf(CGI *cgi)
 {
+	const char *pself_domain = hdf_get_value(cgi->hdf, "Query.self_domain", NULL);
 	int iPluginId = hdf_get_int_value(cgi->hdf, "Query.plugin_id", 0);
 	if(iPluginId <= 0) {
 		REQERR_LOG("invalid plugin id:%d", iPluginId);
@@ -3210,6 +3211,10 @@ static int DealDownloadPluginConf(CGI *cgi)
 	Json js_local;
 	if(GetLocalPlugin(js_local, iPluginId) < 0)
 		return SLOG_ERROR_LINE;
+
+	if(pself_domain != NULL)
+		pself_domain = hdf_get_value(stConfig.cgi->hdf, "CGI.ServerAddress", "");
+	js_local["self_domain"] = pself_domain;
 
 	ostringstream ostrFile;
 	ostringstream oDownUrl;
