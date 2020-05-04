@@ -1,8 +1,8 @@
--- MySQL dump 10.13  Distrib 5.6.26, for Linux (x86_64)
+-- MySQL dump 10.15  Distrib 10.0.30-MariaDB, for Linux (x86_64)
 --
 -- Host: localhost    Database: mtreport_db
 -- ------------------------------------------------------
--- Server version	5.6.26
+-- Server version	10.0.30-MariaDB
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -18,6 +18,8 @@
 --
 -- Current Database: `mtreport_db`
 --
+
+/*!40000 DROP DATABASE IF EXISTS `mtreport_db`*/;
 
 CREATE DATABASE /*!32312 IF NOT EXISTS*/ `mtreport_db` /*!40100 DEFAULT CHARACTER SET utf8 */;
 
@@ -42,7 +44,7 @@ CREATE TABLE `flogin_history` (
   `valid_time` int(11) unsigned DEFAULT NULL,
   PRIMARY KEY (`xrk_id`),
   KEY `user_id` (`user_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=316 DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM AUTO_INCREMENT=317 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -51,7 +53,7 @@ CREATE TABLE `flogin_history` (
 
 LOCK TABLES `flogin_history` WRITE;
 /*!40000 ALTER TABLE `flogin_history` DISABLE KEYS */;
-INSERT INTO `flogin_history` VALUES (315,1,1586612798,'192.168.128.1','192.168.128.128','http://192.168.128.128/cgi-bin/slog_flogin?action=show_main','Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:70.0) Gecko/20100101 Firefox/70.0',0,1587217598);
+INSERT INTO `flogin_history` VALUES (316,1,1588630651,'192.168.128.1','192.168.128.3','http://192.168.128.3/cgi-bin/slog_flogin?action=show_main','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36',0,1589235451);
 /*!40000 ALTER TABLE `flogin_history` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -96,7 +98,7 @@ CREATE TABLE `flogin_user` (
 
 LOCK TABLES `flogin_user` WRITE;
 /*!40000 ALTER TABLE `flogin_user` DISABLE KEYS */;
-INSERT INTO `flogin_user` VALUES (1,'sadmin','c5edac1b8c1d58bad90a246d8f08f53b',1,'2020-04-11 13:46:38','supperuser',1552345835,152,NULL,'0c96aa43ce31757758c40be976c20d34',1,1586612798,0,'192.168.128.1',1,1,0,'4033@qq.com',0,'c5edac1b8c1d58bad90a246d8f08f53b','192.168.128.128',0);
+INSERT INTO `flogin_user` VALUES (1,'sadmin','c5edac1b8c1d58bad90a246d8f08f53b',1,'2020-05-04 22:19:40','supperuser',1552345835,152,NULL,'0c96aa43ce31757758c40be976c20d34',1,1588630651,0,'192.168.128.1',1,1,0,'4033@qq.com',-1,'','192.168.128.3',0);
 /*!40000 ALTER TABLE `flogin_user` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
@@ -331,7 +333,7 @@ CREATE TABLE `mt_log_config` (
   `user_mod_id` int(11) unsigned DEFAULT '1',
   `write_speed` int(10) unsigned DEFAULT '0',
   PRIMARY KEY (`config_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=178 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=179 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -340,7 +342,7 @@ CREATE TABLE `mt_log_config` (
 
 LOCK TABLES `mt_log_config` WRITE;
 /*!40000 ALTER TABLE `mt_log_config` DISABLE KEYS */;
-INSERT INTO `mt_log_config` VALUES (30,26,127,'fcgi_mt_slog',34,'2019-08-26 12:47:52',0,'sadmin','sadmin',0,'fcgi_mt_slog',1,1,0),(30,25,127,'fcgi_slog_flogin',35,'2019-08-26 12:47:38',0,'sadmin','sadmin',0,'fcgi_slog_flogin',1,1,0),(30,24,127,'slog_client',36,'2019-08-26 12:47:25',0,'sadmin','sadmin',0,'slog_client',1,1,0),(30,23,127,'slog_write',37,'2019-08-26 12:47:15',0,'sadmin','sadmin',0,'slog_write',1,1,0),(30,22,127,'slog_server',38,'2019-08-26 12:47:03',0,'sadmin','sadmin',0,'slog_server',1,1,0),(30,21,127,'slog_config',39,'2019-08-26 12:46:54',0,'sadmin','sadmin',0,'slog_config',1,1,0),(30,27,127,'slog_mtreport_server',40,'2019-08-26 12:48:09',0,'sadmin','sadmin',0,'slog_mtreport_server',1,1,0),(30,28,127,'fcgi_mt_slog_monitor',41,'2019-08-26 12:46:43',0,'sadmin','sadmin',0,'cgi_monitor',1,1,0),(30,29,127,'fcgi_mt_slog_attr',42,'2019-08-26 12:46:29',0,'sadmin','sadmin',0,'mt_slog_attr',1,1,0),(30,30,127,'fcgi_mt_slog_machine',43,'2019-08-26 12:48:29',0,'sadmin','sadmin',0,'fcgi_mt_slog_machine',1,1,0),(30,31,127,'fcgi_mt_slog_view',44,'2019-08-26 12:49:26',0,'sadmin','sadmin',0,'fcgi_mt_slog_view',1,1,0),(30,33,127,'slog_monitor_server',46,'2019-08-26 12:45:58',0,'sadmin','sadmin',0,'config_monitor_server',1,1,0),(30,34,127,'fcgi_mt_slog_showview',47,'2019-08-26 12:49:43',0,'sadmin','sadmin',0,'fcgi_mt_slog_showview',1,1,0),(30,35,127,'fcgi_mt_slog_warn',48,'2019-08-31 11:06:51',0,'sadmin','sadmin',0,'fcgi_mt_slog_warn',1,1,0),(30,39,127,'fcgi_mt_slog_user',52,'2019-08-31 11:06:59',0,'sadmin','sadmin',0,'fcgi_mt_slog_user',1,1,222),(30,47,255,'slog_monitor_client',62,'2019-05-24 02:43:17',1501204510,'sadmin','sadmin',0,'server attr client',1,1,0),(30,33,127,'slog_monitor_server',63,'2019-08-27 00:14:59',1501219043,'sadmin','sadmin',0,' attr server',1,1,4200),(30,48,127,'slog_deal_warn',64,'2019-08-26 12:45:20',1502026252,'sadmin','sadmin',0,'mail',1,1,0),(30,59,127,'slog_check_warn',74,'2019-08-26 12:45:27',1533356355,'sadmin','sadmin',0,'å‘Šè­¦æ¨¡å—',1,1,0);
+INSERT INTO `mt_log_config` VALUES (30,26,127,'fcgi_mt_slog',34,'2019-08-26 12:47:52',0,'sadmin','sadmin',0,'fcgi_mt_slog',1,1,0),(30,25,127,'fcgi_slog_flogin',35,'2019-08-26 12:47:38',0,'sadmin','sadmin',0,'fcgi_slog_flogin',1,1,0),(30,24,127,'slog_client',36,'2019-08-26 12:47:25',0,'sadmin','sadmin',0,'slog_client',1,1,0),(30,23,127,'slog_write',37,'2019-08-26 12:47:15',0,'sadmin','sadmin',0,'slog_write',1,1,0),(30,22,127,'slog_server',38,'2019-08-26 12:47:03',0,'sadmin','sadmin',0,'slog_server',1,1,0),(30,21,127,'slog_config',39,'2019-08-26 12:46:54',0,'sadmin','sadmin',0,'slog_config',1,1,0),(30,27,127,'slog_mtreport_server',40,'2019-08-26 12:48:09',0,'sadmin','sadmin',0,'slog_mtreport_server',1,1,0),(30,28,127,'fcgi_mt_slog_monitor',41,'2019-08-26 12:46:43',0,'sadmin','sadmin',0,'cgi_monitor',1,1,0),(30,29,127,'fcgi_mt_slog_attr',42,'2019-08-26 12:46:29',0,'sadmin','sadmin',0,'mt_slog_attr',1,1,0),(30,30,127,'fcgi_mt_slog_machine',43,'2019-08-26 12:48:29',0,'sadmin','sadmin',0,'fcgi_mt_slog_machine',1,1,0),(30,31,127,'fcgi_mt_slog_view',44,'2019-08-26 12:49:26',0,'sadmin','sadmin',0,'fcgi_mt_slog_view',1,1,0),(30,33,127,'slog_monitor_server',46,'2019-08-26 12:45:58',0,'sadmin','sadmin',0,'config_monitor_server',1,1,0),(30,34,127,'fcgi_mt_slog_showview',47,'2019-08-26 12:49:43',0,'sadmin','sadmin',0,'fcgi_mt_slog_showview',1,1,0),(30,35,127,'fcgi_mt_slog_warn',48,'2019-08-31 11:06:51',0,'sadmin','sadmin',0,'fcgi_mt_slog_warn',1,1,0),(30,39,127,'fcgi_mt_slog_user',52,'2019-08-31 11:06:59',0,'sadmin','sadmin',0,'fcgi_mt_slog_user',1,1,222),(30,47,255,'slog_monitor_client',62,'2019-05-24 02:43:17',1501204510,'sadmin','sadmin',0,'server attr client',1,1,0),(30,33,127,'slog_monitor_server',63,'2019-08-27 00:14:59',1501219043,'sadmin','sadmin',0,' attr server',1,1,4200),(30,48,127,'slog_deal_warn',64,'2019-08-26 12:45:20',1502026252,'sadmin','sadmin',0,'mail',1,1,0),(30,59,127,'slog_check_warn',74,'2019-08-26 12:45:27',1533356355,'sadmin','sadmin',0,'å‘Šè­¦æ¨¡å—',1,1,0),(30,150,108,'fcgi_mt_slog_reportinfo',178,'2020-05-04 22:19:28',1588630768,'sadmin','sadmin',0,'å…¬å…±ä¸ŠæŠ¥cgi æ—¥å¿—é…ç½®',1,1,0);
 /*!40000 ALTER TABLE `mt_log_config` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
@@ -400,7 +402,7 @@ CREATE TABLE `mt_machine` (
   `create_time` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
   PRIMARY KEY (`xrk_id`),
   KEY `ip1` (`ip1`)
-) ENGINE=InnoDB AUTO_INCREMENT=122 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=123 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -409,7 +411,7 @@ CREATE TABLE `mt_machine` (
 
 LOCK TABLES `mt_machine` WRITE;
 /*!40000 ALTER TABLE `mt_machine` DISABLE KEYS */;
-INSERT INTO `mt_machine` VALUES (121,'192.168.128.128',2155915456,NULL,NULL,NULL,'rock','rock','2020-04-11 13:40:27','auto add',0,0,0,1,1,'2020-04-11 13:40:27');
+INSERT INTO `mt_machine` VALUES (122,'192.168.128.3',58763456,NULL,NULL,NULL,'rock','rock','2020-05-04 22:17:17','auto add',0,0,0,1,1,'2020-05-04 22:17:17');
 /*!40000 ALTER TABLE `mt_machine` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
@@ -463,7 +465,7 @@ CREATE TABLE `mt_module_info` (
   `user_add_id` int(11) unsigned DEFAULT '1',
   `create_time` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
   PRIMARY KEY (`module_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=150 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=151 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -472,7 +474,7 @@ CREATE TABLE `mt_module_info` (
 
 LOCK TABLES `mt_module_info` WRITE;
 /*!40000 ALTER TABLE `mt_module_info` DISABLE KEYS */;
-INSERT INTO `mt_module_info` VALUES ('slog_config','å¤„ç†ç›‘æŽ§ç³»ç»Ÿç›¸å…³é…ç½®ï¼Œæœ‰æ›´æ–°æ—¶å°†é…ç½®ä»Žæ•°æ®åº“æ›´æ–°åˆ°å…±äº«å†…å­˜',30,21,0,'sadmin','sadmin','2019-08-26 12:50:24',1,1,'0000-00-00 00:00:00'),('slog_server','æ—¥å¿—æœåŠ¡ï¼ŒæŽ¥æ”¶è¿œç¨‹logå¹¶å†™å…¥æœåŠ¡å™¨å…±äº«å†…å­˜ä¸­',30,22,0,'sadmin','sadmin','2019-08-26 12:50:17',1,1,'0000-00-00 00:00:00'),('slog_write','æ—¥å¿—å†™å…¥ç£ç›˜æœåŠ¡',30,23,0,'sadmin','sadmin','2019-08-26 12:50:12',1,1,'0000-00-00 00:00:00'),('slog_client','ç”¨äºŽæ”¶é›†å¤šæœºéƒ¨ç½²æ—¶ï¼Œç›‘æŽ§ç³»ç»Ÿè‡ªèº«äº§ç”Ÿçš„æ—¥å¿—',30,24,0,'sadmin','sadmin','2019-08-26 12:50:07',1,1,'0000-00-00 00:00:00'),('fcgi_slog_flogin','ç”¨äºŽå¤„ç†ç”¨æˆ·ç™»å½•æŽˆæƒ',30,25,0,'sadmin','sadmin','2017-07-28 01:19:56',1,1,'0000-00-00 00:00:00'),('fcgi_mt_slog','ç”¨äºŽå¤„ç†ç³»ç»Ÿæ—¥å¿—å±•ç¤ºï¼Œåº”ç”¨æ¨¡å—é…ç½®ç­‰',30,26,0,'sadmin','sadmin','2014-12-14 04:04:29',1,1,'0000-00-00 00:00:00'),('slog_mtreport_server','ç®¡ç†ç›‘æŽ§ agent slog_mtreport_client çš„æŽ¥å…¥ï¼Œä»¥åŠä¸‹å‘é…ç½®',30,27,0,'sadmin','sadmin','2019-08-26 12:44:40',1,1,'0000-00-00 00:00:00'),('fcgi_mt_slog_monitor','ç›‘æŽ§ç³»ç»Ÿä¸»é¡µ',30,28,0,'sadmin','sadmin','2019-07-02 07:53:44',1,1,'0000-00-00 00:00:00'),('fcgi_mt_slog_attr','ç”¨äºŽç®¡ç†ç›‘æŽ§ç‚¹å’Œç›‘æŽ§ç‚¹ç±»åž‹',30,29,0,'sadmin','sadmin','2019-08-26 12:43:33',1,1,'0000-00-00 00:00:00'),('fcgi_mt_slog_machine','ç”¨äºŽç®¡ç†ç³»ç»Ÿæœºå™¨é…ç½®',30,30,0,'sadmin','sadmin','2019-07-02 07:51:56',1,1,'0000-00-00 00:00:00'),('fcgi_mt_slog_view','ç”¨äºŽå¤„ç†è§†å›¾é…ç½®',30,31,0,'sadmin','sadmin','2019-07-02 07:51:44',1,1,'0000-00-00 00:00:00'),('slog_monitor_server','ç”¨äºŽå¤„ç†ç›‘æŽ§ç‚¹ä¸ŠæŠ¥',30,33,0,'sadmin','sadmin','2019-08-26 12:12:09',1,1,'0000-00-00 00:00:00'),('fcgi_mt_slog_showview','å¤„ç†webç³»ç»Ÿè§†å›¾å±•ç¤º',30,34,0,'sadmin','sadmin','2018-05-23 11:11:49',1,1,'0000-00-00 00:00:00'),('fcgi_mt_slog_warn','å‘Šè­¦é…ç½®',30,35,0,'sadmin','sadmin','2019-08-31 11:07:39',1,1,'0000-00-00 00:00:00'),('fcgi_mt_slog_user','ç›‘æŽ§ç³»ç»Ÿç”¨æˆ·ç®¡ç†cgi',30,39,0,'sadmin','sadmin','2019-08-31 11:07:26',1,1,'0000-00-00 00:00:00'),('slog_monitor_client','ç›‘æŽ§ç³»ç»Ÿæœ¬èº«çš„ç›‘æŽ§ç‚¹ä¸ŠæŠ¥æœåŠ¡',30,47,0,'sadmin','sadmin','2019-08-26 12:11:46',1,1,'0000-00-00 00:00:00'),('slog_deal_warn','ç›‘æŽ§å‘Šè­¦å¤„ç†æ¨¡å—',30,48,0,'sadmin','sadmin','2019-08-26 12:11:00',1,1,'0000-00-00 00:00:00'),('slog_check_warn','å‘Šè­¦æ£€æŸ¥æ¨¡å—',30,59,0,'sadmin','sadmin','2019-08-26 12:11:26',1,1,'0000-00-00 00:00:00');
+INSERT INTO `mt_module_info` VALUES ('slog_config','å¤„ç†ç›‘æŽ§ç³»ç»Ÿç›¸å…³é…ç½®ï¼Œæœ‰æ›´æ–°æ—¶å°†é…ç½®ä»Žæ•°æ®åº“æ›´æ–°åˆ°å…±äº«å†…å­˜',30,21,0,'sadmin','sadmin','2019-08-26 12:50:24',1,1,'0000-00-00 00:00:00'),('slog_server','æ—¥å¿—æœåŠ¡ï¼ŒæŽ¥æ”¶è¿œç¨‹logå¹¶å†™å…¥æœåŠ¡å™¨å…±äº«å†…å­˜ä¸­',30,22,0,'sadmin','sadmin','2019-08-26 12:50:17',1,1,'0000-00-00 00:00:00'),('slog_write','æ—¥å¿—å†™å…¥ç£ç›˜æœåŠ¡',30,23,0,'sadmin','sadmin','2019-08-26 12:50:12',1,1,'0000-00-00 00:00:00'),('slog_client','ç”¨äºŽæ”¶é›†å¤šæœºéƒ¨ç½²æ—¶ï¼Œç›‘æŽ§ç³»ç»Ÿè‡ªèº«äº§ç”Ÿçš„æ—¥å¿—',30,24,0,'sadmin','sadmin','2019-08-26 12:50:07',1,1,'0000-00-00 00:00:00'),('fcgi_slog_flogin','ç”¨äºŽå¤„ç†ç”¨æˆ·ç™»å½•æŽˆæƒ',30,25,0,'sadmin','sadmin','2017-07-28 01:19:56',1,1,'0000-00-00 00:00:00'),('fcgi_mt_slog','ç”¨äºŽå¤„ç†ç³»ç»Ÿæ—¥å¿—å±•ç¤ºï¼Œåº”ç”¨æ¨¡å—é…ç½®ç­‰',30,26,0,'sadmin','sadmin','2014-12-14 04:04:29',1,1,'0000-00-00 00:00:00'),('slog_mtreport_server','ç®¡ç†ç›‘æŽ§ agent slog_mtreport_client çš„æŽ¥å…¥ï¼Œä»¥åŠä¸‹å‘é…ç½®',30,27,0,'sadmin','sadmin','2019-08-26 12:44:40',1,1,'0000-00-00 00:00:00'),('fcgi_mt_slog_monitor','ç›‘æŽ§ç³»ç»Ÿä¸»é¡µ',30,28,0,'sadmin','sadmin','2019-07-02 07:53:44',1,1,'0000-00-00 00:00:00'),('fcgi_mt_slog_attr','ç”¨äºŽç®¡ç†ç›‘æŽ§ç‚¹å’Œç›‘æŽ§ç‚¹ç±»åž‹',30,29,0,'sadmin','sadmin','2019-08-26 12:43:33',1,1,'0000-00-00 00:00:00'),('fcgi_mt_slog_machine','ç”¨äºŽç®¡ç†ç³»ç»Ÿæœºå™¨é…ç½®',30,30,0,'sadmin','sadmin','2019-07-02 07:51:56',1,1,'0000-00-00 00:00:00'),('fcgi_mt_slog_view','ç”¨äºŽå¤„ç†è§†å›¾é…ç½®',30,31,0,'sadmin','sadmin','2019-07-02 07:51:44',1,1,'0000-00-00 00:00:00'),('slog_monitor_server','ç”¨äºŽå¤„ç†ç›‘æŽ§ç‚¹ä¸ŠæŠ¥',30,33,0,'sadmin','sadmin','2019-08-26 12:12:09',1,1,'0000-00-00 00:00:00'),('fcgi_mt_slog_showview','å¤„ç†webç³»ç»Ÿè§†å›¾å±•ç¤º',30,34,0,'sadmin','sadmin','2018-05-23 11:11:49',1,1,'0000-00-00 00:00:00'),('fcgi_mt_slog_warn','å‘Šè­¦é…ç½®',30,35,0,'sadmin','sadmin','2019-08-31 11:07:39',1,1,'0000-00-00 00:00:00'),('fcgi_mt_slog_user','ç›‘æŽ§ç³»ç»Ÿç”¨æˆ·ç®¡ç†cgi',30,39,0,'sadmin','sadmin','2019-08-31 11:07:26',1,1,'0000-00-00 00:00:00'),('slog_monitor_client','ç›‘æŽ§ç³»ç»Ÿæœ¬èº«çš„ç›‘æŽ§ç‚¹ä¸ŠæŠ¥æœåŠ¡',30,47,0,'sadmin','sadmin','2019-08-26 12:11:46',1,1,'0000-00-00 00:00:00'),('slog_deal_warn','ç›‘æŽ§å‘Šè­¦å¤„ç†æ¨¡å—',30,48,0,'sadmin','sadmin','2019-08-26 12:11:00',1,1,'0000-00-00 00:00:00'),('slog_check_warn','å‘Šè­¦æ£€æŸ¥æ¨¡å—',30,59,0,'sadmin','sadmin','2019-08-26 12:11:26',1,1,'0000-00-00 00:00:00'),('fcgi_mt_slog_reportinfo','ç”¨äºŽå…¬å…±ä¸ŠæŠ¥çš„ fastcgi æ¨¡å—',30,150,0,'sadmin','sadmin','2020-05-04 22:18:17',1,1,'2020-05-04 22:18:17');
 /*!40000 ALTER TABLE `mt_module_info` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
@@ -581,7 +583,7 @@ CREATE TABLE `mt_server` (
 
 LOCK TABLES `mt_server` WRITE;
 /*!40000 ALTER TABLE `mt_server` DISABLE KEYS */;
-INSERT INTO `mt_server` VALUES ('192.168.128.128',28080,1,3,0,0,0,0,'30,119',1000,1584529976,'sadmin','sadmin',1474811820,'2020-04-08 08:33:16','ç»‘å®šåº”ç”¨idï¼Œå¤„ç†æ—¥å¿—ä¸ŠæŠ¥ï¼Œå¯éƒ¨ç½²å¤šå°'),('192.168.128.128',38080,2,6,0,0,0,0,'',1000,1567504630,'sadmin','sadmin',1475408172,'2020-04-08 08:33:16','å¤„ç†ç›‘æŽ§ç‚¹æ•°æ®ä¸ŠæŠ¥ã€å¯éƒ¨ç½²å¤šå°'),('192.168.128.128',3306,3,4,0,0,0,0,'',1000,1567577833,'sadmin','sadmin',1475152894,'2020-04-08 08:33:16','mysql ç›‘æŽ§ç‚¹æœåŠ¡å™¨ï¼Œéƒ¨ç½²1å°'),('192.168.128.128',12121,11,23,0,0,0,0,'',1000,1567504613,'sadmin','sadmin',1561962711,'2020-04-08 08:33:16','web æŽ§åˆ¶å°æœåŠ¡å™¨ï¼Œéƒ¨ç½²1å°');
+INSERT INTO `mt_server` VALUES ('192.168.128.3',28080,1,3,0,0,0,0,'30,119',1000,1584529976,'sadmin','sadmin',1474811820,'2020-05-04 22:17:17','ç»‘å®šåº”ç”¨idï¼Œå¤„ç†æ—¥å¿—ä¸ŠæŠ¥ï¼Œå¯éƒ¨ç½²å¤šå°'),('192.168.128.3',38080,2,6,0,0,0,0,'',1000,1567504630,'sadmin','sadmin',1475408172,'2020-05-04 22:17:17','å¤„ç†ç›‘æŽ§ç‚¹æ•°æ®ä¸ŠæŠ¥ã€å¯éƒ¨ç½²å¤šå°'),('192.168.128.3',3306,3,4,0,0,0,0,'',1000,1567577833,'sadmin','sadmin',1475152894,'2020-05-04 22:17:17','mysql ç›‘æŽ§ç‚¹æœåŠ¡å™¨ï¼Œéƒ¨ç½²1å°'),('192.168.128.3',12121,11,23,0,0,0,0,'',1000,1567504613,'sadmin','sadmin',1561962711,'2020-05-04 22:17:17','web æŽ§åˆ¶å°æœåŠ¡å™¨ï¼Œéƒ¨ç½²1å°');
 /*!40000 ALTER TABLE `mt_server` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
@@ -629,7 +631,7 @@ CREATE TABLE `mt_table_upate_monitor` (
   `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `r_change_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   PRIMARY KEY (`r_change_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=39997 DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM AUTO_INCREMENT=40009 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -638,7 +640,7 @@ CREATE TABLE `mt_table_upate_monitor` (
 
 LOCK TABLES `mt_table_upate_monitor` WRITE;
 /*!40000 ALTER TABLE `mt_table_upate_monitor` DISABLE KEYS */;
-INSERT INTO `mt_table_upate_monitor` VALUES ('mt_server',3,0,'2020-04-11 13:40:27',39988),('mt_server',6,0,'2020-04-11 13:40:27',39989),('mt_server',4,0,'2020-04-11 13:40:27',39990),('mt_server',23,0,'2020-04-11 13:40:27',39991),('mt_machine',121,0,'2020-04-11 13:40:27',39992),('mt_view_bmach',23,121,'2020-04-11 13:41:00',39993),('mt_view_bmach',22,121,'2020-04-11 13:41:00',39994),('flogin_user',1,0,'2020-04-11 13:46:38',39995),('mt_view_bmach',26,121,'2020-04-11 13:47:00',39996);
+INSERT INTO `mt_table_upate_monitor` VALUES ('mt_server',3,0,'2020-05-04 22:17:17',39997),('mt_server',6,0,'2020-05-04 22:17:17',39998),('mt_server',4,0,'2020-05-04 22:17:17',39999),('mt_server',23,0,'2020-05-04 22:17:17',40000),('mt_machine',122,0,'2020-05-04 22:17:17',40001),('flogin_user',1,0,'2020-05-04 22:17:31',40002),('mt_view_bmach',23,122,'2020-05-04 22:18:00',40003),('mt_view_bmach',26,122,'2020-05-04 22:18:00',40004),('mt_module_info',150,0,'2020-05-04 22:18:17',40005),('mt_view_bmach',22,122,'2020-05-04 22:19:00',40006),('mt_log_config',178,0,'2020-05-04 22:19:28',40007),('flogin_user',1,0,'2020-05-04 22:19:40',40008);
 /*!40000 ALTER TABLE `mt_table_upate_monitor` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -784,7 +786,7 @@ CREATE TABLE `mt_view_bmach` (
 
 LOCK TABLES `mt_view_bmach` WRITE;
 /*!40000 ALTER TABLE `mt_view_bmach` DISABLE KEYS */;
-INSERT INTO `mt_view_bmach` VALUES (23,121,0,1,'2020-04-11 13:41:00'),(22,121,0,1,'2020-04-11 13:41:00'),(26,121,0,1,'2020-04-11 13:47:00');
+INSERT INTO `mt_view_bmach` VALUES (23,122,0,1,'2020-05-04 22:18:00'),(26,122,0,1,'2020-05-04 22:18:00'),(22,122,0,1,'2020-05-04 22:19:00');
 /*!40000 ALTER TABLE `mt_view_bmach` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
@@ -1019,4 +1021,4 @@ DELIMITER ;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2020-04-11 21:48:06
+-- Dump completed on 2020-05-05  6:20:55
