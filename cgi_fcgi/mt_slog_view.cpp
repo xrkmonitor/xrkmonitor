@@ -262,6 +262,9 @@ static int DeleteView()
 
 static int DealUnAutoBindMachine()
 {
+	if(IsDaemonDenyOp(stConfig))
+		return 0;
+	 
 	int32_t id = hdf_get_int_value(stConfig.cgi->hdf, "Query.view_id", 0);
 	int idx = slog.GetViewInfoIndex(id);
 	TViewInfo *pView = slog.GetViewInfo(idx);
