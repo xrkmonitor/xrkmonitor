@@ -18,7 +18,7 @@
 							</select>
 						</td>
 						<td>
-							<button class="sexybutton" id="dm_btn_submit"><span><span><span class="search">查找</span></span></span></button>
+							<button class="sexybutton" onclick='dmOnSearch();'><span><span><span class="search">查找</span></span></span></button>
 						</td>
 					</tr>
 				</table>
@@ -166,10 +166,17 @@ function dmDeleteModule()
 function dmAppChange()
 {
 	var app_id = $('#dm_app_id').val();
+	if(app_id == 0 || app_id != window.localStorage.getItem('dm_app_sel')) {
+		window.localStorage.removeItem('dm_module_sel');
+	}
+
 	var app_list = dm_module_list.applist;
 	var modules = $('#dm_module_id');
-	modules.html('<option value="0"> - 请选择 - </option>');
-	var module_sel = <?cs var:config.dm_module_id ?>+0;
+	var module_sel = window.localStorage.getItem('dm_module_sel');
+	if(module_sel == null)
+		modules.html('<option value="0" selected> - 全部 - </option>');
+	else
+		modules.html('<option value="0"> - 全部 - </option>');
 	for(var i=0; i < app_list.length; ++i) 
 	{
 		if(app_list[i].app_id == app_id) {
@@ -185,6 +192,23 @@ function dmAppChange()
 			break;
 		}
 	}
+}
+
+function dmOnSearch()
+{
+	var app_id = $('#dm_app_id').val();
+	if(app_id == 0)
+		window.localStorage.removeItem('dm_app_sel');
+	else if(window.localStorage.getItem('dm_app_sel') != app_id)
+		window.localStorage.setItem('dm_app_sel', app_id);
+
+	var module_id = $('#dm_module_id').val();
+	if(module_id == 0)
+		window.localStorage.removeItem('dm_module_sel');
+	else if(window.localStorage.getItem('dm_module_sel') != module_id)
+		window.localStorage.setItem('dm_module_sel', module_id);
+
+	return true;
 }
 
 function dmModModule()
@@ -212,18 +236,18 @@ $(document).ready(function(){
 		return;
 	}
 	else {
-		var app_sel = <?cs var:config.dm_app_id ?>+0;
-
+		var app_sel = window.localStorage.getItem('dm_app_sel');
 		var app = $('#dm_app_id');
 		app.change(dmAppChange); 
-		app.html('<option value="0"> - 请选择 - </option>');
+		if(app_sel == null)
+			app.html('<option value="0" selected> - 全部 - </option>');
+		else
+			app.html('<option value="0"> - 全部 - </option>');
 		var app_list = dm_module_list.applist;
 		for(var i=0; i < app_list.length; ++i) {
 			var op = $('<option></option>');
 			op.val(app_list[i].app_id).text(app_list[i].app_name);
-			if(i==0 && app_sel == 0)
-				op.attr("selected", true);
-			else if(app_sel == app_list[i].app_id)
+			if(app_sel == app_list[i].app_id)
 				op.attr("selected", true);
 			app.append(op);
 		}

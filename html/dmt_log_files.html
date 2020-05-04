@@ -193,6 +193,7 @@ function dlfOpAppChange()
 	requrl += app.log_server_port;
 	requrl += "<?cs var:config.cgipath?>mt_slog?action=show_log_files";
 	requrl += "&app_id="+app.app_id;
+	window.localStorage.setItem('dlf_app_sel', app.app_id);
 
 	var para = new Object();
 	para.ex_flogin_user = $.cookie("flogin_user");
@@ -219,10 +220,11 @@ $(document).ready(function(){
 	var op_app = $('#dlf_appName');
 	op_app.html('');
 	op_app.change(dlfOpAppChange);
+	var app_sel = window.localStorage.getItem('dlf_app_sel');
 	for (var i = 0; i < dlf_app_list.length; ++i) { 
 		var op = $('<option></option>');
 		op.val(i).text(dlf_app_list[i].app_name);
-		if(i == 0) {
+		if((app_sel == null && i == 0) || app_sel == dlf_app_list[i].app_id) {
 			op.attr("selected", true);
 		}
 		op_app.append(op);

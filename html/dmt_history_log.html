@@ -355,6 +355,8 @@ function dhlShowHistory()
 
 	if(!dhlShowHistoryLog())
 		return false;
+	var appIdx = $("#dhl_appName").val();
+	window.localStorage.setItem('dhl_app_sel', dhl_app_module_list.applist[appIdx].app_id);
 
 	dhl_interval_id = setTimeout("dhlShowHistoryStatus();", 300);
 	dhl_time_id = setTimeout(function(){
@@ -862,12 +864,15 @@ $(document).ready(function(){
 	op_app.html('');
 	op_app.change(dhlOpAppChange);
 	var app_list = dhl_app_module_list.applist;
+	var app_sel = window.localStorage.getItem('dhl_app_sel');
 	for (var i = 0; i < app_list.length; ++i) { 
 		var op = $('<option></option>');
 		op.val(i).text(app_list[i].app_name);
-		if(dhl_query_app_id == 0 && i == 0)
-			op.attr("selected", true);
-		if(app_list[i].app_id == dhl_query_app_id)
+		if(dhl_query_app_id != 0) {
+			if(app_list[i].app_id == dhl_query_app_id)
+				op.attr("selected", true);
+		}
+		else if((app_sel == null && i==0) || app_sel == app_list[i].app_id)
 			op.attr("selected", true);
 		op_app.append(op);
 	}
