@@ -12,10 +12,23 @@
 <script src="/monitor/js/dmt_xrkmonitor.js"></script>
 <script type="text/javascript">
 
-// 调试时可以打开，正式部署请关闭debug
+// 调试时可以打开，正式部署请关闭debug, 云版本
+var xrk = window.self_xrk; 
 xrk.set_debug();
 
-xrk.init_report('http://192.168.128.110/cgi-bin/mt_slog_reportinfo', 171, 23, '8DMkJ2r2MQ');
+// 开源版本初始化
+// 如果有加载插件, 上报地址优先使用插件中的配置, 初始化接口可以不指定
+// 参数：上报地址, 日志配置 id
+//xrk.open_init_report(171, 'http://192.168.128.110/cgi-bin/mt_slog_reportinfo'); //未加载插件时使用
+//xrk.open_init_report(171);
+
+// 云版本初始化
+// 如果有加载插件，主账号和访问key 优先使用插件配置, 初始化时可以不指定
+// 参数：日志配置 id, 用户主账号, 访问key
+//xrk.cloud_init_report(171, 23, '8DMkJ2r2MQ'); - //未加载插件时使用
+//xrk.cloud_init_report(250);
+xrk.cloud_init_report(250);
+
 xrk.report_attr_add(210, 1230);
 xrk.report_attr_add(211, 230);
 xrk.report_attr_add(212, 30);
@@ -31,12 +44,13 @@ xrk.report_strattr_set(329, "setrock中国", 305);
 xrk.report_strattr_set(329, "setrock22", 305);
 xrk.report_strattr_set(329, "中国--%s rock", 305);
 xrk.report_strattr_set(329, "set-=rock22", 305);
-xrk.report_log('error', 'test report log - id :222');
-xrk.report_log('warn', 'test report warn log - id :222');
-xrk.report_log('info', 'test report info log - id :222');
-xrk.report_log('reqerr', 'test report reqerr log - id :222');
-xrk.report_log('error', 'test report error2 log - id :222');
-xrk.report_to_server();
+xrk.report_error_log('test report log - id :222');
+xrk.report_warn_log('test report warn log - id :222');
+xrk.report_info_log('test report info log - id :222');
+xrk.report_reqerr_log('test report reqerr log - id :222');
+xrk.report_error_log('test report error2 log - id :222');
+
+setTimeout(xrk.report_to_server, 500);
 
 </script>
 
