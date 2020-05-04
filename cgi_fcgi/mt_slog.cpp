@@ -3212,7 +3212,7 @@ static int DealDownloadPluginConf(CGI *cgi)
 	if(GetLocalPlugin(js_local, iPluginId) < 0)
 		return SLOG_ERROR_LINE;
 
-	if(pself_domain != NULL)
+	if(pself_domain == NULL)
 		pself_domain = hdf_get_value(stConfig.cgi->hdf, "CGI.ServerAddress", "");
 	js_local["self_domain"] = pself_domain;
 
