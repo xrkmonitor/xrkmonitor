@@ -303,6 +303,8 @@ function drlShowPause(bPause)
 		drl_show_pause = false;
 		$("#drl_button_pause").html("&nbsp;&nbsp;暂&nbsp;停&nbsp;&nbsp;");
 		drl_request_time_info = (new Date()).valueOf();
+		var appIdx = $("#drl_appName").val();
+		window.localStorage.setItem('drl_app_sel', drl_app_module_list.applist[appIdx].app_id);
 		drlShowRealTimeLog();
 	}
 	else {
@@ -712,10 +714,11 @@ $(document).ready(function(){
 	op_app.html('');
 	op_app.change(drlOpAppChange);
 	var app_list = drl_app_module_list.applist;
+	var app_sel = window.localStorage.getItem('drl_app_sel');
 	for (var i = 0; i < app_list.length; ++i) { 
 		var op = $('<option></option>');
 		op.val(i).text(app_list[i].app_name);
-		if(i == 0)
+		if((app_sel == null && i == 0) || app_sel == app_list[i].app_id)
 			op.attr("selected", true);
 		op_app.append(op);
 	}
