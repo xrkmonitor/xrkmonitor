@@ -7,8 +7,6 @@ var <?cs var:config.plugin_pre ?>_sel_plugin = null;
 var g_LocalOpenPluginList = $.parseJSON('<?cs var:config.local_open_list ?>');
 <?cs /if ?>
 
-var <?cs var:config.plugin_pre ?>_sel_detail_idx = ""; // 用于弹出详情对话框时设置数据
-
 function <?cs var:config.plugin_pre ?>SetSelplugin(selIndex)
 {
 	var pid;
@@ -555,58 +553,5 @@ $(document).ready(function(){
 		<div layoutH="100" class="unitBox" id="<?cs var:config.plugin_pre ?>_plugin_list">
 		</div> 
 	</div> <!-- unitBox -->
-</div>
-
-<div id='<?cs var:config.plugin_pre ?>_show_detail' style='display:none'>
-	<div layoutH="36">
-		<table> 
-			<tr height="25">
-				<td width="120" align="right">插件名称：</td>
-				<td width="140" id="<?cs var:config.plugin_pre ?>_plugin_name"></td>
-				<td width="120" align="right">插件 id：</td>
-				<td width="180" id="<?cs var:config.plugin_pre ?>_plugin_id"></td>
-			</tr>
-
-			<tr height="25">
-				<td  align="right">更新时间：</td>
-				<td id="<?cs var:config.plugin_pre ?>_mod_time"></td>
-				<td  align="right">创建时间：</td>
-				<td id="<?cs var:config.plugin_pre ?>_add_time"></td>
-			</tr>
-
-			<tr height="25">
-				<td  align="right">当前版本：</td>
-				<td id="<?cs var:config.plugin_pre ?>_ver"></td>
-				<td  align="right">开发者：</td>
-				<td id="<?cs var:config.plugin_pre ?>_auth"></td>
-			</tr>
-
-			<tr height="25">
-				<td  align="right">开源情况：</td>
-				<td id="<?cs var:config.plugin_pre ?>_open"></td>
-				<td  align="right">部署方式：</td>
-				<td id="<?cs var:config.plugin_pre ?>_set_method"></td>
-			</tr>
-
-			<tr height="25">
-				<td  align="right">开发语言：</td>
-				<td id="<?cs var:config.plugin_pre ?>_language"></td>
-				<td  align="right">运行平台：</td>
-				<td id="<?cs var:config.plugin_pre ?>_dest_os"></td>
-			</tr>
-
-			<tr height="28">
-				<td align="right">插件描述：</td>
-				<td colspan="3">
-				<textarea rows="4" cols="40" id='<?cs var:config.plugin_pre ?>_plugin_desc' readonly></textarea>
-				</td>
-			</tr>
-		</table>
-	</div>
-
-	<div class="formBar">
-		<ul> <li><div class="button"><div class="buttonContent"><button type="button" class="close">&nbsp;&nbsp;关&nbsp;闭&nbsp;&nbsp;</button></div></div></li>
-		</ul>
-	</div>
 </div>
 
