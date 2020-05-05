@@ -3,6 +3,11 @@
 <head>
 	<title>字符云监控系统</title>
 	<meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+	<?cs if:config.daemon ?>
+	<script language="javascript" src="<?cs var:config.docpath?>js/dmt_xrkmonitor.js"></script>
+	<?cs /if ?>
+
+
 	<script language="javascript" src="<?cs var:config.docpath?>js/jquery-1.7.2.js"></script>
 	<script src="<?cs var:config.docpath?>js/dmt.comm.20200502.js" type="text/javascript"></script>
 	<script language="javascript" src="<?cs var:config.docpath?>js/jquery.md5.js"></script>
