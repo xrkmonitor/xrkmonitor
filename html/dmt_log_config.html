@@ -138,7 +138,7 @@ function dlcSetSelConfig(configIdx)
 function dlcOnDetail(idx)
 {
 	dlc_detail_sel_config = dlc_config_list.configlist[idx];
-	var op = $.parseJSON('{"mask":true,"maxable":false,"height":360,"width":600}');
+	var op = $.parseJSON('{"mask":true,"maxable":false,"height":370,"width":600}');
 	var url = "<?cs var:config.cgipath?>mt_slog?action=detail_log_config";
 	url += "&config_id=" + dlc_detail_sel_config.config_id;
 	$.pdialog.open(url, "dlc_dlg_detail", "日志配置："+dlc_detail_sel_config.config_name+" 详情", op);
