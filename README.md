@@ -5,14 +5,15 @@
 更多富有表现力的图表以加强对数据可视化的支持。
 
 ### 相比其它开源监控系统优势  
+1.  支持插件功能, 监控插件无需开发，自由选择监控插件，安装即可使用
 1.	集成告警功能, 支持多种告警方式   
 1.	集成分布式日志系统功能    
 1.  支持多种部署方式    
-	a.支持集中部署, 小规模需求只需一台服务器即可部署   
-	b.支持分布式部署
-1.	支持自动化配置
-1.  支持多用户访问
-1.  支持插件功能, 无需开发即可使用监控插件完成监控需求
+	a.集中部署（全部服务部署在一台机器，适合个人或者小团队开发者） 
+	b.分布式部署（分布式部署在多台机器，适合小中型企业大规模监控需求）
+1.	支持自动化配置（机器部署agent后自动注册到监控系统无需在控制台配置、视图根据上报自动绑定相关上报机器）
+1.  支持多用户访问（子账号由管理员账号在控制台添加）
+1.  上报接口支持主流开发语言，数据上报api 提供类似公共库接口的便捷
 
 
 ### 特色功能推荐
@@ -62,8 +63,13 @@
 ### 离线部署(自行编译源码)
 
 如果在线安装失败或者需要二次开发, 可以使用源码编译方式安装  
-安装脚本: local_install.sh  
-卸载脚本: uninstall_xrkmonitor.sh   
+
+三部完成部署：
+1. 执行 make 完成源码编译
+2. 进入 tools_sh 目录，执行 make_all.sh 生成部署包
+3. 在安装目录解压部署包，执行 local_install.sh 完成安装
+  
+监控系统卸载脚本: uninstall_xrkmonitor.sh，移除彻底不留丝毫痕迹
 
 安装环境变量同在线安装一样, 具体可以查看说明文档: [源码编译-集中部署](http://xrkmonitor.com/monitor/showdoc/showdoc/web/#/4?page_id=38)  
 控制台默认账号密码: sadmin/sadmin  
@@ -80,11 +86,12 @@
 1. [c/c++ 开发接口](http://xrkmonitor.com//monitor/showdoc/showdoc/web/#/4?page_id=45) 
 2. [php 开发接口](http://xrkmonitor.com//monitor/showdoc/showdoc/web/#/4?page_id=51)
 3. [linux shell 开发接口](http://xrkmonitor.com//monitor/showdoc/showdoc/web/#/4?page_id=72)
+4. [javascript 开发接口]
 	   
 ### 插件市场
-1. [linux_base](https://gitee.com/xrkmonitorcom/plugin_linux_base) c/c++语言开发，用于监控linux 系统 cpu/内存/磁盘/网络等资源
-2. [monitor_apache_log](https://gitee.com/xrkmonitorcom/monitor_apache_log) c/c++语言开发，用于监控apache 网站的流量访问量等
-3. [linux_file_monitor](https://gitee.com/xrkmonitorcom/linux_file_monitor) shell 语言开发，用于监控 linux系统文件目录的增删改变动
+1. [linux_base](https://gitee.com/xrkmonitorcom/plugin_linux_base) - c/c++语言开发，用于监控linux 系统 cpu/内存/磁盘/网络等资源
+2. [monitor_apache_log](https://gitee.com/xrkmonitorcom/monitor_apache_log) - c/c++语言开发，用于监控apache 网站的流量访问量等
+3. [linux_file_monitor](https://gitee.com/xrkmonitorcom/linux_file_monitor) - shell 语言开发，用于监控 linux系统文件目录的增删改变动
 
 **项目演示链接：[字符云监控项目演示 http://open.xrkmonitor.com](http://open.xrkmonitor.com)**   
 
