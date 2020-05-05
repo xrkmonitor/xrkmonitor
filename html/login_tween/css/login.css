@@ -35,6 +35,7 @@
 
 .kit-login-main .layui-form-item {
 	position: relative;
+	margin-bottom:20px;
 }
 
 .kit-login-main .layui-form-item .kit-login-icon {
@@ -49,13 +50,7 @@
 }
 
 .kit-login-box footer {
-    height: 85px;
-    /*padding: 10px 10px 0 10px;*/
-}
-
-.kit-login-box footer p {
-	line-height: 35px;
-	text-align: center;
+    height: 35px;
 }
 
 .kit-pull-right {

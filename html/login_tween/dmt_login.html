@@ -23,7 +23,11 @@
             <canvas id="demo-canvas"></canvas>
             <div class="kit-login-box">
                 <header>
+					<?cs if:config.isdaemon == 1 ?>
+                    <h1>字符云监控系统 - 开源演示版</h1>
+					<?cs else ?>
                     <h1>字符云监控系统</h1>
+					<?cs /if ?>
                 </header>
                 <div class="kit-login-main">
                     <form action="#" class="layui-form" method="get">
@@ -33,29 +37,30 @@
                             </label>
                             <input type="text" id="username" lay-verify="userKey" autocomplete="off" placeholder="输入用户名" class="layui-input">              
                         </div>
-                        
                         <div class="layui-form-item">
                             <label class="kit-login-icon">
                                 <i class="layui-icon">&#xe6b1;</i>
                             </label>
                             <input type="password" id="password" lay-verify="password" placeholder="输入密码" autocomplete="off" class="layui-input">             
                         </div>
-						<div id="loginmsg" style='font-weight:bold'></div>
                         <div class="layui-form-item">
                             <div class="kit-pull-right">
                                 <button id='btn_login' onClick='login_submit()' class="layui-btn layui-btn-primary" lay-submit lay-filter="login">
-                                    <i class="fa fa-sign-in" aria-hidden="true"></i> 登入
+                                    <i class="fa fa-sign-in " aria-hidden="true"></i> 登入
                                 </button>                               
                                 <button id='btn_clear' onClick='clear_input()' class="layui-btn layui-btn-primary" lay-submit lay-filter="login">
                                     <i class="fa fa-sign-in" aria-hidden="true"></i> 重填 
                                 </button>                               
                             </div>
                         </div>
+                        <div class="layui-form-item" style='height:20px'>
+							<font id="loginmsg" style='font-weight:bold;font-size:14px;'></font>
+						</div>
                     </form>
 
 					<footer>
 						<a target='_blank' href='https://gitee.com/xrkmonitorcom/open/stargazers'><img src='https://gitee.com/xrkmonitorcom/open/badge/star.svg?theme=dark' alt='star'></img></a>
-						<button type="button" class="layui-btn layui-btn-radius layui-btn-primary layui-btn-xs"><i class="layui-icon layui-icon-upload-drag"></i></button>
+						<button style='float:right' type="button" class="layui-btn layui-btn-radius layui-btn-primary layui-btn-xs"><i class="layui-icon layui-icon-home "></i>在线云版本</button>
 					</footer>
                 </div>
             </div>
@@ -150,7 +155,20 @@
 	}
 
 	$(document).ready(function(){
+		<?cs if:config.isdaemon == 1 ?>
+			<?cs if:config.free_uname_1 ?>
+			$('#username').val('<?cs var:config.free_uname_1 ?>');
+			$('#password').val('<?cs var:config.free_upass_1 ?>');
+			<?cs elif:config.free_uname_2 ?>
+			$('#username').val('<?cs var:config.free_uname_2 ?>');
+			$('#password').val('<?cs var:config.free_upass_2 ?>');
+			<?cs else ?>
+			$('#loginmsg').html('<font color="#ff0000">当前无可用演示账号, 请稍后再试 ...</font>');
+			<?cs /if ?>
+		$('#btn_login').focus();
+		<?cs else ?>
 		$('#username').focus();
+		<?cs /if ?>
 	}).keydown(function(event){
 		if(event.keyCode==13){
 			login_submit();
