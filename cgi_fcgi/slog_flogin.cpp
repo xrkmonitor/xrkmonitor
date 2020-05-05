@@ -101,9 +101,8 @@ static int SetFreeAccountInfo(CGI *cgi, HDF *hdf)
 {
 	uint32_t dwCurTime = time(NULL);
 	char sBuf[256] = {0};
-	snprintf(sBuf, sizeof(sBuf), 
-		"select user_name,user_id,login_type,login_index from flogin_user where last_login_time<%u or login_index<0",
-		dwCurTime-60); 
+	snprintf(sBuf, sizeof(sBuf), "select user_name,user_id,login_type,login_index "
+		" from flogin_user where xrk_status=0 and (last_login_time<%u or login_index<0)", dwCurTime-60); 
 	if(stConfig.qu->get_result(sBuf)) 
 	{
 		int32_t iUserId = 0, iLoginType = 0, iLoginIdx = 0;
@@ -143,25 +142,23 @@ static int SetFreeAccountInfo(CGI *cgi, HDF *hdf)
 			}
 		}
 
-		int iFreeCount = 0;
 		int32_t iCommCount = 0, iManagerCount = 0;
-		char hdf_pex[32], hdf_name[64];
 		std::multimap<uint32_t, TFreeAccountInfo>::iterator it = mapFreeUser.begin();
 		for(; it != mapFreeUser.end() && (iCommCount < 1 || iManagerCount < 1); it++) 
 		{
 			if((iCommCount < 1 && it->second.iLoginType != 1)
 				|| (iManagerCount < 1 && it->second.iLoginType == 1))
 			{
-				sprintf(hdf_pex, "Output.freelists.%d", iFreeCount);
-				sprintf(hdf_name, "%s.uname", hdf_pex);
-				hdf_set_value(hdf, hdf_name, it->second.szUserName);
-				sprintf(hdf_name, "%s.utype", hdf_pex);
-				hdf_set_int_value(hdf, hdf_name, it->second.iLoginType);
-				iFreeCount++;
-				if(it->second.iLoginType != 1)
-					iCommCount++;
-				else
+				if(it->second.iLoginType == 1) {
+					hdf_set_value(hdf, "config.free_uname_1", it->second.szUserName);
+					hdf_set_value(hdf, "config.free_upass_1", it->second.szUserName);
 					iManagerCount++;
+				}
+				else {
+					hdf_set_value(hdf, "config.free_uname_2", it->second.szUserName);
+					hdf_set_value(hdf, "config.free_upass_2", it->second.szUserName);
+					iCommCount++;
+				}
 				DEBUG_LOG("set free user info - name:%s, type:%d, last actime:%u",
 					it->second.szUserName, it->second.iLoginType, it->first);
 			}
@@ -176,18 +173,14 @@ static int SetFreeAccountInfo(CGI *cgi, HDF *hdf)
 
 static int PopLoginWindow(CGI *cgi, HDF *hdf)
 {
-	static std::string s_page_dlg_login_dwz;
 	static std::string s_page_login_dwz;
 	static std::string s_page_login;
 
 	NEOERR *err = NULL;
 	if(s_page_login.empty()) {
 		s_page_login = stConfig.szCsPath;
-		s_page_login += "dmt_login.html";
-	}
-	if(s_page_dlg_login_dwz.empty()) {
-		s_page_dlg_login_dwz = stConfig.szCsPath;
-		s_page_dlg_login_dwz += "dmt_dlg_login_dwz.html";
+		s_page_login += "/login_tween/dmt_login.html";
+		//s_page_login += "dmt_login.html";
 	}
 	if(s_page_login_dwz.empty()) {
 		s_page_login_dwz = stConfig.szCsPath;
@@ -214,12 +207,6 @@ static int PopLoginWindow(CGI *cgi, HDF *hdf)
 		hdf_set_value(cgi->hdf, "cgiout.other.cros", "Access-Control-Allow-Origin:*");
 		err = cgi_display(cgi, s_page_login_dwz.c_str()); 
 	}
-	else if(stConfig.pAction != NULL && !strcmp(stConfig.pAction, "pop_dlg_dwz_login"))
-	{
-		// 日志系统重登可能需要跨站
-		hdf_set_value(cgi->hdf, "cgiout.other.cros", "Access-Control-Allow-Origin:*");
-		err = cgi_display(cgi, s_page_dlg_login_dwz.c_str()); 
-	}
 	else
 		err = cgi_display(cgi, s_page_login.c_str()); 
 
@@ -240,7 +227,8 @@ static int ResponseCheckResult(CGI *cgi, HDF *hdf, int32_t iResultCode)
 	static std::string s_page_login;
 	if(s_page_login.empty()) {
 		s_page_login = stConfig.szCsPath;
-		s_page_login += "dmt_login.html";
+		s_page_login += "/login_tween/dmt_login.html";
+		//s_page_login += "dmt_login.html";
 	}
 	
 	NEOERR *err = NULL;
