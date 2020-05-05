@@ -55,6 +55,7 @@
 
 					<footer>
 						<a target='_blank' href='https://gitee.com/xrkmonitorcom/open/stargazers'><img src='https://gitee.com/xrkmonitorcom/open/badge/star.svg?theme=dark' alt='star'></img></a>
+						<button type="button" class="layui-btn layui-btn-radius layui-btn-primary layui-btn-xs"><i class="layui-icon layui-icon-upload-drag"></i></button>
 					</footer>
                 </div>
             </div>
@@ -89,7 +90,7 @@
 			$('#password').focus();
 			return;
 		}
-		document.getElementById("btn_login").disabled = true;
+		$('#btn_login').addClass('layui-btn-disabled');
 		
 		var requrl = "<?cs var:config.cgipath?>slog_flogin";
 		var reqpara = {};
@@ -110,7 +111,7 @@
 			url:requrl, 
 			data:reqpara, 
 			success:function(result){
-				document.getElementById("btn_login").disabled = false;
+				$('#btn_login').removeClass('layui-btn-disabled');
 				switch (result.code) {
 					case 0:
 						document.location = result.redirect_url;
@@ -130,7 +131,7 @@
 					}
 				}, 
 			error:function(q,errmsg,err){
-					document.getElementById("btn_login").disabled = false;
+					$('#btn_login').removeClass('layui-btn-disabled');
 					var hm = '<font color="#ff0000">验证失败，服务器异常！';
 					hm += "错误信息：" + errmsg;
 					hm += '</font>'
