@@ -168,31 +168,6 @@ function initUI(_box){
 	
 	if ($.fn.combox) $("select.combox",$p).combox();
 	
-	if ($.fn.xheditor) {
-		$("textarea.editor", $p).each(function(){
-			var $this = $(this);
-			var op = {html5Upload:false, skin: 'vista',tools: $this.attr("tools") || 'full'};
-			var upAttrs = [
-				["upLinkUrl","upLinkExt","zip,rar,txt"],
-				["upImgUrl","upImgExt","jpg,jpeg,gif,png"],
-				["upFlashUrl","upFlashExt","swf"],
-				["upMediaUrl","upMediaExt","avi"]
-			];
-			
-			$(upAttrs).each(function(i){
-				var urlAttr = upAttrs[i][0];
-				var extAttr = upAttrs[i][1];
-				
-				if ($this.attr(urlAttr)) {
-					op[urlAttr] = $this.attr(urlAttr);
-					op[extAttr] = $this.attr(extAttr) || upAttrs[i][2];
-				}
-			});
-			
-			$this.xheditor(op);
-		});
-	}
-	
 	if ($.fn.uploadify) {
 		$(":file[uploaderOption]", $p).each(function(){
 			var $this = $(this);

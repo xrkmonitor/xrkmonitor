@@ -12,7 +12,7 @@ var DWZ = {
 		DELETE: 46, BACKSPACE:8
 	},
 	eventType: {
-		pageClear:"pageClear",	// 用于重新ajaxLoad、关闭nabTab, 关闭dialog时，去除xheditor等需要特殊处理的资源
+		pageClear:"pageClear",	// 用于重新ajaxLoad、关闭nabTab, 关闭dialog时，去除需要特殊处理的资源
 		resizeGrid:"resizeGrid"	// 用于窗口或dialog大小调整
 	},
 	isOverAxis: function(x, reference, size) {
@@ -168,10 +168,6 @@ var DWZ = {
 		var _doc = $(document);
 		if (!_doc.isBind(DWZ.eventType.pageClear)) {
 			_doc.bind(DWZ.eventType.pageClear, function(event){
-				var box = event.target;
-				if ($.fn.xheditor) {
-					$("textarea.editor", box).xheditor(false);
-				}
 			});
 		}
 	}
