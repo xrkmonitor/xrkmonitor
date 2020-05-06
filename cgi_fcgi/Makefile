@@ -28,10 +28,12 @@ libcomm:
 	make -C comm install
 
 install:
+	apachectl stop
 	sleep 1
 	cp $(OBJECT) $(MYCGI_PATH) 
 #	cp *.conf $(MYCGI_PATH)
 	chmod 777 $(MYCGI_PATH)/$(OBJECT)
+	apachectl start
 
 clean: 
 	rm -f *.o

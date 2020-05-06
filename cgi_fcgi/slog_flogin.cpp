@@ -143,6 +143,7 @@ static int SetFreeAccountInfo(CGI *cgi, HDF *hdf)
 		}
 
 		int32_t iCommCount = 0, iManagerCount = 0;
+		std::string strFreeUser_1, strFreeUser_2;
 		std::multimap<uint32_t, TFreeAccountInfo>::iterator it = mapFreeUser.begin();
 		for(; it != mapFreeUser.end() && (iCommCount < 1 || iManagerCount < 1); it++) 
 		{
@@ -150,18 +151,25 @@ static int SetFreeAccountInfo(CGI *cgi, HDF *hdf)
 				|| (iManagerCount < 1 && it->second.iLoginType == 1))
 			{
 				if(it->second.iLoginType == 1) {
-					hdf_set_value(hdf, "config.free_uname_1", it->second.szUserName);
-					hdf_set_value(hdf, "config.free_upass_1", it->second.szUserName);
+					strFreeUser_1 = it->second.szUserName;
 					iManagerCount++;
 				}
 				else {
-					hdf_set_value(hdf, "config.free_uname_2", it->second.szUserName);
-					hdf_set_value(hdf, "config.free_upass_2", it->second.szUserName);
+					strFreeUser_2 = it->second.szUserName;
 					iCommCount++;
 				}
 				DEBUG_LOG("set free user info - name:%s, type:%d, last actime:%u",
 					it->second.szUserName, it->second.iLoginType, it->first);
 			}
+		}
+
+		if(!strFreeUser_1.empty()) {
+			hdf_set_value(hdf, "config.free_uname", strFreeUser_1.c_str());
+			hdf_set_value(hdf, "config.free_upass", strFreeUser_1.c_str());
+		}
+		else if(!strFreeUser_2.empty()) {
+			hdf_set_value(hdf, "config.free_uname", strFreeUser_2.c_str());
+			hdf_set_value(hdf, "config.free_upass", strFreeUser_2.c_str());
 		}
 	}
 	else {
