@@ -39,13 +39,20 @@ var g_all_charts = new Array();
 var g_dmtRedrawChartCountShowProc = 5;
 
 var g_PluginMargin = 10;
+
+function dmtMathtrunc(d) {
+    if(typeof Math.trunc != 'function') 
+        return Math.round(d);
+    return Math.trunc(d);   
+}
+
 function dmtSetPluginMarginInfo(tab)
 {
 	var iSub = DWZ.ui.sbar ? $("#sidebar").width() + 10 : 24;
 	var iContentW = $(window).width() - iSub - 20 - 45;
 	var xLeft = iContentW % 452;
-	var xCount = Math.trunc(iContentW/452);
-	var newM = Math.trunc(xLeft/xCount/2);
+	var xCount = dmtMathtrunc(iContentW/452);
+	var newM = dmtMathtrunc(xLeft/xCount/2);
 
 	if(newM != g_PluginMargin) {
 		g_PluginMargin = newM;
@@ -74,9 +81,9 @@ function dmtSetPluginMarginInfo(tab)
 // 判断浏览器类型是否支持
 function dmtIsExplorerSupport()
 {
-	var ua = navigator.userAgent.toLowerCase();
-	if(ua.indexOf("firefox") == -1 && ua.indexOf("chrome") == -1)
-		return false;
+	//var ua = navigator.userAgent.toLowerCase();
+	//if(ua.indexOf("firefox") == -1 && ua.indexOf("chrome") == -1)
+	//	return false;
 	return true;
 }
 
@@ -107,8 +114,8 @@ function dmtSetChartSize()
 
 	var xWidth = g_dmtChartMinWidth+g_dmtChartMargin*2;
 	var xLeft = iContentW % xWidth;
-	var xCount = Math.trunc(iContentW/xWidth);
-	var xBlank = Math.trunc(xLeft/xCount);
+	var xCount = dmtMathtrunc(iContentW/xWidth);
+	var xBlank = dmtMathtrunc(xLeft/xCount);
 	g_dmtChartWidth = g_dmtChartMinWidth+xBlank;
 }
 
@@ -763,6 +770,91 @@ function dmtShowChangeValue(value)
 	return value;
 }
 
+function dmtSetStrAttrInfoChartIpGeo(ct_id, attr_info, js, attr_val_list, showtype)
+{
+	var op = {
+		title: {
+			x: 'left',
+			subtext:'',
+			top:'top',
+			subtextStyle: {},
+			show:true,
+			text:''
+		},
+		tooltip: {
+			trigger:'item',
+			confine:true,
+			formatter: '{b}<br/>访问次数: {c}' 
+		},
+		visualMap: {
+			min:0,
+			max:10000,
+			realtime:true,
+			calculable: true,
+			inRange: {
+				color: ['lightskyblue', 'yellow', 'orangered']
+			}
+		},
+		toolbox: {
+			show: true,
+			orient: 'vertical',
+			top: 'center',
+			right:20,
+			feature: {
+				dataView: {readOnly: false},
+				restore: {},
+				saveAsImage: {}
+			}
+		},
+		legend : {
+			type:'scroll',
+			orient: 'vertical',
+			left:'left',
+			top:'70',
+			show:true
+		},
+		series: [
+			{
+				type:'map',
+				mapType: 'china',
+				label: {
+					show:true
+				},
+				data:[],
+				geoIndex:0
+			}
+		]
+	};
+
+	$('#'+ct_id).css('height', g_dmtChartHeight);
+	if(showtype == 'view')
+		op.title.text = '视图ID【'+attr_val_list.view_id+'】'+'监控点：'+attr_info.name;
+	else
+		op.title.text = '服务器ID【'+attr_val_list.machine_id+'】'+'监控点：'+attr_info.name;
+	op.title.text += '-'+attr_info.id;
+
+	if(js.str_count > 0) {
+		var total = 0;
+		for(var i=0; i < js.str_count; i++) {
+			total += js.str_list[i].value;
+		}
+		op.title.subtext = '统计时间：' + attr_val_list.date_time_cur
+			+ '(总访问次数:' + total + ', 部分地理位置不能识别的访问将不显示在地图上) \n';
+		op.visualMap.max = js.str_list[0].value+100;
+		op.series[0].data = js.str_list;
+	}
+	else {
+		op.series[0].data = [];
+		op.title.subtextStyle.color = 'red';
+		op.title.subtextStyle.fontWeight = 'bold';
+		op.title.subtext = "暂无数据上报";
+	}
+	g_all_charts[ct_id] = echarts.init(document.getElementById(ct_id));
+	g_all_charts[ct_id].setOption(op);
+	g_all_charts[ct_id].setwidth = g_dmtChartWidth;
+}
+
+
 function dmtSetStrAttrInfoChart(ct_id, attr_info, js, attr_val_list, showtype)
 {
 	var op = {
@@ -782,24 +874,20 @@ function dmtSetStrAttrInfoChart(ct_id, attr_info, js, attr_val_list, showtype)
 		legend : {
 			type:'scroll',
 			orient: 'vertical',
-			left:'left',
+			right:'right',
 			top:'70',
 			show:true
 		},
 		series: [
 			{
 				type:'pie',
-				radius:'75%',
-				center:['70%', '55%'],
+				radius:'55%',
+				center:['40%', '55%'],
 				data:[],
 				label: { 
-					show: false,
-	        		normal: {
-            	        show: false,
-            	        position: 'inside'
-            	    },
+					show: true,
             	    emphasis: {
-            	        show: false,
+            	        show: true,
             	    }
             	},
 				itemStyle: {
@@ -820,7 +908,7 @@ function dmtSetStrAttrInfoChart(ct_id, attr_info, js, attr_val_list, showtype)
 		op.title.text = '服务器ID【'+attr_val_list.machine_id+'】'+'字符串型监控点：'+attr_info.name;
 
 	if(js.str_count > 0) {
-		op.title.subtext = '统计时间：'+attr_val_list.date_time_cur+'\n 显示排名前 20 个';
+		op.title.subtext = '统计时间：'+attr_val_list.date_time_cur+', 显示排名前 20 个';
 		op.series[0].data = js.str_list;
 	}
 	else {
@@ -866,6 +954,7 @@ function dmtGetYAxisData(time_info, dstr)
 
 function dmtShowAttrInfo(attr_list, attr_val_list, ct_div, showtype)
 {
+	var STR_REPORT_D = 6, STR_REPORT_D_IP = 7;
 	var op = {
 		legend: {
 			show:false,
@@ -1036,10 +1125,13 @@ function dmtShowAttrInfo(attr_list, attr_val_list, ct_div, showtype)
 
 		if(typeof(g_all_charts[attr_show_id]) != "undefined") 
 			g_all_charts[attr_show_id].dispose();
-	
+
 		// 字符串型监控点
-		if(attr_info.data_type == 6) 
-		{
+		if(attr_info.data_type == STR_REPORT_D_IP) {
+			dmtSetStrAttrInfoChartIpGeo(attr_show_id, attr_info, attr_vals[i], attr_val_list, showtype);
+			continue;
+		}
+		else if(attr_info.data_type == STR_REPORT_D) {
 			dmtSetStrAttrInfoChart(attr_show_id, attr_info, attr_vals[i], attr_val_list, showtype);
 			continue;
 		}
