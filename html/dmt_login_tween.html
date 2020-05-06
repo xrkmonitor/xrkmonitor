@@ -36,25 +36,33 @@
 					<?cs /if ?>
                 </header>
                 <div class="kit-login-main">
-                    <form action="#" class="layui-form" method="get">
+                    <div class="layui-form" method="get">
                         <div class="layui-form-item">
                             <label class="kit-login-icon">
                                 <i class="layui-icon">&#xe612;</i>
                             </label>
+							<?cs if:config.free_uname ?>
+                            <input type="text" id="username" lay-verify="userKey" autocomplete="off" value='<?cs var:config.free_uname ?>' class="layui-input">              
+							<?cs else ?>
                             <input type="text" id="username" lay-verify="userKey" autocomplete="off" placeholder="输入用户名" class="layui-input">              
+							<?cs /if ?>
                         </div>
                         <div class="layui-form-item">
                             <label class="kit-login-icon">
                                 <i class="layui-icon">&#xe6b1;</i>
                             </label>
+							<?cs if:config.free_upass ?>
+                            <input type="password" id="password" lay-verify="password" autocomplete="off" value='<?cs var:config.free_upass ?>' class="layui-input">             
+							<?cs else ?>
                             <input type="password" id="password" lay-verify="password" placeholder="输入密码" autocomplete="off" class="layui-input">             
+							<?cs /if ?>
                         </div>
                         <div class="layui-form-item">
                             <div class="kit-pull-right">
-                                <button id='btn_login' onClick='login_submit()' class="layui-btn layui-btn-primary" lay-submit lay-filter="login">
+                                <button id='btn_login' onClick='return login_submit();' class="layui-btn layui-btn-primary" lay-submit lay-filter="login">
                                     <i class="fa fa-sign-in " aria-hidden="true"></i> 登入
                                 </button>                               
-                                <button id='btn_clear' onClick='clear_input()' class="layui-btn layui-btn-primary" lay-submit lay-filter="login">
+                                <button id='btn_clear' onClick='return clear_input();' class="layui-btn layui-btn-primary" lay-submit lay-filter="login">
                                     <i class="fa fa-sign-in" aria-hidden="true"></i> 重填 
                                 </button>                               
                             </div>
@@ -62,7 +70,7 @@
                         <div class="layui-form-item" style='height:20px'>
 							<font id="loginmsg" style='font-weight:bold;font-size:14px;'></font>
 						</div>
-                    </form>
+                    </div>
 
 					<footer>
 						<a target='_blank' href='https://gitee.com/xrkmonitorcom/open/stargazers'><img src='https://gitee.com/xrkmonitorcom/open/badge/star.svg?theme=dark' alt='star'></img></a>
@@ -74,11 +82,10 @@
     </div>
 </div>
 
-<?cs if:config.isdaemon == 1 ?>
-<script src="<?cs var:config.docpath?>js/dmt_xrkmonitor.js?v=20200506"></script>
-<?cs /if ?>
-
 <?cs if:config.xrkmonitor_debug==1 ?>
+<?cs if:config.isdaemon == 1 ?>
+<script src="<?cs var:config.docpath?>js/dmt_xrkmonitor.js"></script>
+<?cs /if ?>
 <script src="<?cs var:config.docpath?>js/jquery-1.7.2.js"></script>
 <script src="<?cs var:config.docpath?>js/jquery.md5.js"></script>
 <script src="<?cs var:config.docpath?>js/jquery.cookie.js"></script>
@@ -87,6 +94,9 @@
 <script src="<?cs var:config.docpath?>js/sideshow/demo-2.js"></script>
 <script src="<?cs var:config.docpath?>js/dmt.comm.js" type="text/javascript"></script>
 <?cs else ?>
+<?cs if:config.isdaemon == 1 ?>
+<script src="<?cs var:config.docpath?>js/dmt_xrkmonitor.min.js?v=20200506"></script>
+<?cs /if ?>
 <script src="<?cs var:config.docpath?>js/jquery.min.js?v=2020506"></script>
 <script src="<?cs var:config.docpath?>js/jquery.other.min.js?v=2020506"></script>
 <script src="<?cs var:config.docpath?>js/dmt.comm.min.js?v=20200506" type="text/javascript"></script>
@@ -107,12 +117,12 @@
 		if ($('#username').val() == ""){
 			$('#loginmsg').html('<font color="#ff0000">请输入用户名</font>');
 			$('#username').focus();
-			return;
+			return false;
 		}
 		if ($('#password').val() == ""){
 			$('#loginmsg').html('<font color="#ff0000">请输入密码</font>');
 			$('#password').focus();
-			return;
+			return false;
 		}
 		$('#btn_login').addClass('layui-btn-disabled');
 		
@@ -163,6 +173,7 @@
 				},
 			dataType:'json'
 		});	
+		return false;
 	}
 
 	function clear_input()
@@ -171,20 +182,16 @@
 		$('#username').val("");
 		$('#loginmsg').html("");
 		$('#username').focus();
+		return false;
 	}
 
 	$(document).ready(function(){
-		<?cs if:config.isdaemon == 1 ?>
-			<?cs if:config.free_uname_1 ?>
-			$('#username').val('<?cs var:config.free_uname_1 ?>');
-			$('#password').val('<?cs var:config.free_upass_1 ?>');
-			<?cs elif:config.free_uname_2 ?>
-			$('#username').val('<?cs var:config.free_uname_2 ?>');
-			$('#password').val('<?cs var:config.free_upass_2 ?>');
+		<?cs if:config.isdaemon ?>
+			<?cs if:config.free_uname ?>
+			$('#btn_login').focus();
 			<?cs else ?>
 			$('#loginmsg').html('<font color="#ff0000">当前无可用演示账号, 请稍后再试 ...</font>');
 			<?cs /if ?>
-		$('#btn_login').focus();
 		<?cs else ?>
 		$('#username').focus();
 		<?cs /if ?>
