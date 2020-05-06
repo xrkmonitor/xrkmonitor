@@ -1020,6 +1020,7 @@ int InitFastCgiStart(CGIConfig &myConf)
 	   "SLOW_CGI_TIME_MS", CFG_INT, &myConf.iCgiSlowRunMs, 100,
 	   "UPLOAD_UNLINK", CFG_INT, &myConf.iUnLinkUpload, 0,
 	   "UPLOAD_DIR", CFG_STRING, myConf.szUploadDir, CGI_UPLOAD_PATH, MYSIZEOF(myConf.szUploadDir),
+	   "XRKMONITOR_DEBUG", CFG_INT, &myConf.iDebugHtmlJs, 0,
 		NULL) < 0){
 		ERR_LOG("loadconfig failed, from file:%s", myConf.szConfigFile);
 		return SLOG_ERROR_LINE;
@@ -1103,6 +1104,7 @@ int InitFastCgi(CGIConfig &myCfg, const char *pszLogPath)
 	hdf_set_value(myCfg.cgi->hdf, "config.docpath", myCfg.szDocPath); 
 	hdf_set_int_value(myCfg.cgi->hdf, "Config.Upload.Unlink", myCfg.iUnLinkUpload);
 	hdf_set_value(myCfg.cgi->hdf, "Config.Upload.TmpDir", myCfg.szUploadDir);
+	hdf_set_int_value(myCfg.cgi->hdf, "config.xrkmonitor_debug", myCfg.iDebugHtmlJs);
 
 	if((myCfg.err=cgi_parse(myCfg.cgi)) != STATUS_OK) {
 		FATAL_LOG("cgi_parse failed !");

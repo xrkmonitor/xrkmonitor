@@ -179,8 +179,7 @@ static int PopLoginWindow(CGI *cgi, HDF *hdf)
 	NEOERR *err = NULL;
 	if(s_page_login.empty()) {
 		s_page_login = stConfig.szCsPath;
-		s_page_login += "/login_tween/dmt_login.html";
-		//s_page_login += "dmt_login.html";
+		s_page_login += "dmt_login_tween.html";
 	}
 	if(s_page_login_dwz.empty()) {
 		s_page_login_dwz = stConfig.szCsPath;
@@ -227,8 +226,7 @@ static int ResponseCheckResult(CGI *cgi, HDF *hdf, int32_t iResultCode)
 	static std::string s_page_login;
 	if(s_page_login.empty()) {
 		s_page_login = stConfig.szCsPath;
-		s_page_login += "/login_tween/dmt_login.html";
-		//s_page_login += "dmt_login.html";
+		s_page_login += "dmt_login_tween.html";
 	}
 	
 	NEOERR *err = NULL;

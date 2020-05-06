@@ -159,7 +159,8 @@ typedef struct
 typedef struct _CGIConfig
 {
 	char szXrkmonitorSiteAddr[256];
-	int iDisableVmemCache; // 是否禁用 vmem 缓存
+	int iDisableVmemCache; 
+	int iDebugHtmlJs;
 
 	int argc;
 	char **argv;
