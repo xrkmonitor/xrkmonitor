@@ -168,25 +168,6 @@ function initUI(_box){
 	
 	if ($.fn.combox) $("select.combox",$p).combox();
 	
-	if ($.fn.uploadify) {
-		$(":file[uploaderOption]", $p).each(function(){
-			var $this = $(this);
-			var options = {
-				fileObjName: $this.attr("name") || "file",
-				auto: true,
-				multi: true,
-				onUploadError: uploadifyError
-			};
-			
-			var uploaderOption = DWZ.jsonEval($this.attr("uploaderOption"));
-			$.extend(options, uploaderOption);
-
-			DWZ.debug("uploaderOption: "+DWZ.obj2str(uploaderOption));
-			
-			$this.uploadify(options);
-		});
-	}
-	
 	// init styles
 	$("input[type=text], input[type=password], textarea", $p).addClass("textInput").focusClass("focus");
 
