@@ -1,10 +1,12 @@
 <!--[if lte IE 9]>
 <script src="<?cs var:config.docpath?>js/speedup.js" type="text/javascript"></script>
 <![endif]-->
-<?cs if:config.xrkmonitor_debug==1 ?>
+
 <?cs if:config.notify_daemon ?>
 <script language="javascript" src="<?cs var:config.docpath?>js/dmt_xrkmonitor.js"></script>
 <?cs /if ?>
+
+<?cs if:config.xrkmonitor_debug==1 ?>
 <script src="<?cs var:config.docpath?>js/dmt.comm.js" type="text/javascript"></script>
 <script src="<?cs var:config.docpath?>js/jquery-1.7.2.js" type="text/javascript"></script>
 <script src="<?cs var:config.docpath?>js/jquery.md5.js" type="text/javascript"></script>
@@ -49,9 +51,6 @@
 <script src="<?cs var:config.docpath?>js/echarts.min.js"></script>
 <script src="<?cs var:config.docpath?>js/china.js"></script>
 <?cs else ?>
-<?cs if:config.notify_daemon ?>
-<script language="javascript" src="<?cs var:config.docpath?>js/dmt_xrkmonitor.min.js?v=20200506"></script>
-<?cs /if ?>
 <script src="<?cs var:config.docpath?>js/dmt.comm.min.js?v=20200506" type="text/javascript"></script>
 <script src="<?cs var:config.docpath?>js/jquery.min.js?v=2020506"></script>
 <script src="<?cs var:config.docpath?>js/jquery.other.min.js?v=2020506"></script>
