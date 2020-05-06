@@ -993,7 +993,7 @@ int InitFastCgiStart(CGIConfig &myConf)
 	char *ptmp = NULL;
 	myConf.pszCgiName = strdup(myConf.argv[0]);
 	if((ptmp=strrchr(myConf.argv[0], '/')) != NULL) {
-		strGlobalConfgFile.assign(0, (int)(ptmp-myConf.argv[0])+1);
+		strGlobalConfgFile.assign(myConf.argv[0], (int)(ptmp-myConf.argv[0])+1);
 		strGlobalConfgFile += "xrk_fastcgi_global.conf";
 		strcpy(myConf.pszCgiName, ptmp+1);
 	}
