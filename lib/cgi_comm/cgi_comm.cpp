@@ -988,11 +988,19 @@ void InitCgiDebug(CGIConfig &myCfg)
 
 int InitFastCgiStart(CGIConfig &myConf)
 {
+	std::string strGlobalConfgFile;
 	int32_t iShmKey = 0;
 	char *ptmp = NULL;
 	myConf.pszCgiName = strdup(myConf.argv[0]);
-	if((ptmp=strrchr(myConf.argv[0], '/')) != NULL)
+	if((ptmp=strrchr(myConf.argv[0], '/')) != NULL) {
+		strGlobalConfgFile.assign(0, (int)(ptmp-myConf.argv[0])+1);
+		strGlobalConfgFile += "xrk_fastcgi_global.conf";
 		strcpy(myConf.pszCgiName, ptmp+1);
+	}
+	else {
+		ERR_LOG("invalid argument:%s, count:%d\n", myConf.argv[0], myConf.argc);
+		return SLOG_ERROR_LINE;
+	}
 	snprintf(myConf.szConfigFile, MYSIZEOF(myConf.szConfigFile)-1, "%s.conf", myConf.pszCgiName);
 
 	if(myConf.argc <= 1)
@@ -1000,27 +1008,34 @@ int InitFastCgiStart(CGIConfig &myConf)
 	else
 		slog.SetLogToStd(true);
 
-	if(LoadConfig(myConf.szConfigFile,
+	if(LoadConfig(strGlobalConfgFile.c_str(), 
+		"LOCAL_IP", CFG_STRING, myConf.szLocalIp, "", MYSIZEOF(myConf.szLocalIp),
+		"CGI_PATH", CFG_STRING, myConf.szCgiPath, CGI_PATH, MYSIZEOF(myConf.szCgiPath),
+		"CS_PATH", CFG_STRING, myConf.szCsPath, CS_PATH, MYSIZEOF(myConf.szCsPath),
+		"DOC_PATH", CFG_STRING, myConf.szDocPath, DOC_PATH, MYSIZEOF(myConf.szDocPath), 
+		"DELETE_RECORD_STATUS", CFG_INT, &myConf.iDeleteStatus, 1,
+		"XRKMONITOR_URL", CFG_STRING, myConf.szXrkmonitorSiteAddr, "http://xrkmonitor.com", MYSIZEOF(myConf.szXrkmonitorSiteAddr),
+		"SLOW_CGI_TIME_MS", CFG_INT, &myConf.iCgiSlowRunMs, 100,
+		"UPLOAD_DIR", CFG_STRING, myConf.szUploadDir, CGI_UPLOAD_PATH, MYSIZEOF(myConf.szUploadDir),
+		"XRKMONITOR_DEBUG", CFG_INT, &myConf.iDebugHtmlJs, 0, 
+		"FLOGIN_SHM_KEY", CFG_INT, &iShmKey, FLOGIN_SESSION_HASH_SHM_KEY,
+		"REDIRECT_URI", CFG_STRING, myConf.szRedirectUri, 
+			"/cgi-bin/slog_flogin?action=redirect_main", MYSIZEOF(myConf.szRedirectUri),
+		"DISABLE_VMEM_CACHE", CFG_INT, &myConf.iDisableVmemCache, 0,
+		NULL) < 0){
+		ERR_LOG("load fastcgi global config failed, file:%s, msg:%s\n", 
+			strGlobalConfgFile.c_str(), strerror(errno));
+		return SLOG_ERROR_LINE;
+	}
+
+	if(LoadConfig(myConf.szConfigFile, 
 	   "SLOG_SET_TEST", CFG_INT, &myConf.iCfgTestLog, 0,
-	   "LOCAL_IF", CFG_STRING, myConf.szLocalIp, "", MYSIZEOF(myConf.szLocalIp),
 	   "DEBUG_LOG_FILE", CFG_STRING, myConf.szDebugPath, CGI_COREDUMP_DEBUG_OUTPUT_PATH, MYSIZEOF(myConf.szDebugPath),
 	   "FAST_CGI_MAX_HITS", CFG_INT, &myConf.dwMaxHits, FAST_CGI_DEF_HITS_MAX,
 	   "FAST_CGI_RUN_MAX_HOURS", CFG_INT, &myConf.dwExitTime, FAST_CGI_DEF_RUN_MAX_TIME_HOURS,
-	   "FLOGIN_SHM_KEY", CFG_INT, &iShmKey, FLOGIN_SESSION_HASH_SHM_KEY,
-	   "REDIRECT_URI", CFG_STRING, myConf.szRedirectUri, 
-	   		"/cgi-bin/slog_flogin?action=redirect_main", MYSIZEOF(myConf.szRedirectUri),
-	   "CGI_PATH", CFG_STRING, myConf.szCgiPath, CGI_PATH, MYSIZEOF(myConf.szCgiPath),
-	   "CS_PATH", CFG_STRING, myConf.szCsPath, CS_PATH, MYSIZEOF(myConf.szCsPath),
-	   "DOC_PATH", CFG_STRING, myConf.szDocPath, DOC_PATH, MYSIZEOF(myConf.szDocPath),
 	   "ENABLE_CGI_DEBUG", CFG_INT, &myConf.iEnableCgiDebug, 0,
+		"UPLOAD_UNLINK", CFG_INT, &myConf.iUnLinkUpload, 0,
 	   "ENABLE_CGI_PAUSE", CFG_INT, &myConf.iEnableCgiPause, 0,
-	   "DISABLE_VMEM_CACHE", CFG_INT, &myConf.iDisableVmemCache, 0,
-	   "DELETE_RECORD_STATUS", CFG_INT, &myConf.iDeleteStatus, 1,
-	   "XRKMONITOR_URL", CFG_STRING, myConf.szXrkmonitorSiteAddr, "http://xrkmonitor.com", MYSIZEOF(myConf.szXrkmonitorSiteAddr),
-	   "SLOW_CGI_TIME_MS", CFG_INT, &myConf.iCgiSlowRunMs, 100,
-	   "UPLOAD_UNLINK", CFG_INT, &myConf.iUnLinkUpload, 0,
-	   "UPLOAD_DIR", CFG_STRING, myConf.szUploadDir, CGI_UPLOAD_PATH, MYSIZEOF(myConf.szUploadDir),
-	   "XRKMONITOR_DEBUG", CFG_INT, &myConf.iDebugHtmlJs, 0,
 		NULL) < 0){
 		ERR_LOG("loadconfig failed, from file:%s", myConf.szConfigFile);
 		return SLOG_ERROR_LINE;
@@ -1030,7 +1045,6 @@ int InitFastCgiStart(CGIConfig &myConf)
 	myConf.dwCurTime = myConf.dwStart;
 	myConf.pid = getpid();
 	myConf.dwExitTime = myConf.dwCurTime+myConf.dwExitTime*60*60 + rand()%60;
-
 	if(myConf.szLocalIp[0] == '\0' || INADDR_NONE == inet_addr(myConf.szLocalIp))
 		GetCustLocalIP(myConf.szLocalIp);
 	if(myConf.szLocalIp[0] == '\0' || INADDR_NONE == inet_addr(myConf.szLocalIp))
@@ -1048,10 +1062,9 @@ int InitFastCgiStart(CGIConfig &myConf)
 
 	INFO_LOG("attach shm FloginList ok size:%u, key:%d, ret:%d, testlog:%d",
 		MYSIZEOF(FloginList), iShmKey, iRet, myConf.iCfgTestLog);
-	INFO_LOG("fcgi - %s start at:%u pid:%u will exist at:%u(curis:%u) coredump file:%s debug:%d local:%s",
+	INFO_LOG("fcgi - %s start at:%u pid:%u will exist at:%u(curis:%u) debug js:%d debug:%d local:%s",
 		myConf.pszCgiName, myConf.dwStart, myConf.pid, myConf.dwExitTime, myConf.dwCurTime, 
-		myConf.szCoredumpFile, myConf.iEnableCgiDebug, myConf.szLocalIp);
-
+		myConf.iDebugHtmlJs, myConf.iEnableCgiDebug, myConf.szLocalIp);
 	char szCurDir[256];
 	if(NULL == getcwd(szCurDir, 256)) 
 		WARN_LOG("getcwd failed, msg:%s", strerror(errno));

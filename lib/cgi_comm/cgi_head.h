@@ -175,7 +175,6 @@ typedef struct _CGIConfig
 	const char *pAction;
 	char szLocalIp[20]; 
 	char szDebugPath[256];
-	char szCoredumpFile[256];
 	char szConfigFile[64];
 	Database *db;
 	Query *qu;
