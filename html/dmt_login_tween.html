@@ -9,11 +9,17 @@
 	<meta name="description" content="字符云监控系统-多云部署一站监控,一切尽在掌握!">
 	<meta name="author" content="rockdeng,1820140912@qq.com,qq:1820140912">
 	<meta name="renderer" content="webkit">
+	<?cs if:config.xrkmonitor_debug==1 ?>
 	<link href="<?cs var:config.docpath?>/themes/css/login.css" rel="stylesheet" />
 	<link href="<?cs var:config.docpath?>/themes/layui/css/layui.css" rel="stylesheet" />
     <link href="<?cs var:config.docpath?>/themes/sideshow/css/normalize.css" rel="stylesheet" />
     <link href="<?cs var:config.docpath?>/themes/sideshow/css/demo.css" rel="stylesheet" />
     <link href="<?cs var:config.docpath?>/themes/sideshow/css/component.css" rel="stylesheet" />
+	<?cs else ?>
+	<link href="<?cs var:config.docpath?>/themes/css/login.min.css" rel="stylesheet" />
+	<link href="<?cs var:config.docpath?>/themes/layui/css/layui.min.css" rel="stylesheet" />
+    <link href="<?cs var:config.docpath?>/themes/sideshow/css/sideshow.min.css" rel="stylesheet" />
+	<?cs /if ?>
 </head>
 
 <body class="kit-login-bg">
