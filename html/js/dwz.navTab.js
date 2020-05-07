@@ -4,6 +4,7 @@
  */
 var navTab = {
 	componentBox: null, // tab component. contain tabBox, prevBut, nextBut, panelBox
+	_funlistOnSwitch: [],
 	_tabBox: null,
 	_prevBut: null,
 	_nextBut: null,
@@ -13,13 +14,18 @@ var navTab = {
 	_currentIndex: 0,
 	
 	_op: {id:"navTab", stTabBox:".navTab-tab", stPanelBox:".navTab-panel", mainTabId:"main", close$:"a.close", prevClass:"tabsLeft", nextClass:"tabsRight", stMore:".tabsMore", stMoreLi:"ul.tabsMoreList"},
-	
+
+	// add by ysy -- 2019-12-13
+	addFunOnSwitchTab: function(fun, para) {
+		this._funlistOnSwitch.push({fun:fun, para:para});
+	},
 	init: function(options){
 		if ($.History) $.History.init("#container");
 		var $this = this;
 		$.extend(this._op, options);
 
 		this.componentBox = $("#"+this._op.id);
+		this._funlistOnSwitch = [];
 		this._tabBox = this.componentBox.find(this._op.stTabBox);
 		this._panelBox = this.componentBox.find(this._op.stPanelBox);
 		this._prevBut = this.componentBox.find("."+this._op.prevClass);
@@ -209,8 +215,12 @@ var navTab = {
 	
 	_switchTab: function(iTabIndex){
 		var $tab = this._getTabs().removeClass("selected").eq(iTabIndex).addClass("selected");
-		this._getPanels().hide().eq(iTabIndex).show();
 
+		if (DWZ.ui.hideMode == 'offsets') {
+			this._getPanels().css({position: 'absolute', top:'-100000px', left:'-100000px'}).eq(iTabIndex).css({position: '', top:'', left:''});
+		} else {
+			this._getPanels().hide().eq(iTabIndex).show();
+		}
 		this._getMoreLi().removeClass("selected").eq(iTabIndex).addClass("selected");
 		this._currentIndex = iTabIndex;
 		
@@ -221,6 +231,11 @@ var navTab = {
 		if(iTabIndex == 0 && typeof dcOnMainPage == 'function')
 			dcOnMainPage(0);
 		redrawChartsOnSwitchTab();
+		for (ck in this._funlistOnSwitch) {
+			if(typeof this._funlistOnSwitch[ck].fun == 'function') {
+				this._funlistOnSwitch[ck].fun(this._funlistOnSwitch[ck].para);
+			}
+		}
 	},
 			
 	_closeTab: function(index, openTabid){
@@ -295,7 +310,7 @@ var navTab = {
 			}else {
 				//获取pagerForm参数
 				var $pagerForm = $("#pagerForm", $panel);
-				var args = $pagerForm.size()>0 ? $pagerForm.serializeArray() : {}
+				var args = $pagerForm.size()>0 ? $pagerForm.serializeArray() : {};
 				
 				$panel.loadUrl(url, args, function(){navTab._loadUrlCallback($panel);});
 			}
@@ -339,10 +354,14 @@ var navTab = {
 	getCurrentPanel: function() {
 		return this._getPanels().eq(this._currentIndex);
 	},
-	checkTimeout:function(){
-		var json = DWZ.jsonEval(this.getCurrentPanel().html());
-		if (json && json.statusCode == DWZ.statusCode.timeout) this.closeCurrentTab();
+	checkCloseCurrent:function(json){
+		if (!json) return;
+		if (json.statusCode == DWZ.statusCode.timeout
+			|| (json.statusCode == DWZ.statusCode.error && "closeCurrentNavTab" == json.callbackType) ) {
+			this.closeCurrentTab();
+		}
 	},
+
 	openExternal:function(url, $panel){
 		var ih = navTab._panelBox.height();
 		$panel.html(DWZ.frag["externalFrag"].replaceAll("{url}", url).replaceAll("{height}", ih+"px"));
@@ -356,16 +375,16 @@ var navTab = {
 	openTab: function(tabid, url, options){ //if found tabid replace tab, else create a new tab.
 		// ysy -- modify
 		//var op = $.extend({title:"New Tab", data:{}, fresh:true, external:false}, options);
-		var op = $.extend({title:"New Tab", data:{}, fresh:true, external:false, global:true, async:true}, options);
+		var op = $.extend({title:"New Tab", type:'GET', data:{}, fresh:true, external:false, global:true, async:true}, options);
 
 		var iOpenIndex = this._indexTabId(tabid);
 
 		if (iOpenIndex >= 0){
 			var $tab = this._getTabs().eq(iOpenIndex);
 			var span$ = $tab.attr("tabid") == this._op.mainTabId ? "> span > span" : "> span";
-			$tab.find(">a").attr("title", op.title).find(span$).text(op.title);
+			$tab.find(">a").attr("title", op.title).find(span$).html(op.title);
 			var $panel = this._getPanels().eq(iOpenIndex);
-			if(op.fresh || $tab.attr("url") != url) {
+			if(url && (op.fresh || $tab.attr("url") != url)) {
 				$tab.attr("url", url);
 				if (op.external || url.isExternalUrl()) {
 					$tab.addClass("external");
@@ -374,8 +393,7 @@ var navTab = {
 					$tab.removeClass("external");
 					$panel.ajaxUrl({
 						// ysy -- modify
-						//type:"GET", url:url, data:op.data, callback:function(){
-						type:"GET", url:url, data:op.data, global:op.global, async:op.async, callback:function(){
+						type:op.type, url:url, data:op.data, global:op.global, async:op.async, callback:function(){
 							navTab._loadUrlCallback($panel);
 						}
 					});
@@ -392,18 +410,19 @@ var navTab = {
 			var $tab = $tabs.filter(":last");
 			var $panel = this._getPanels().filter(":last");
 			
-			if (op.external || url.isExternalUrl()) {
-				$tab.addClass("external");
-				navTab.openExternal(url, $panel);
-			} else {
-				$tab.removeClass("external");
-				$panel.ajaxUrl({
-					// ysy -- modify
-					//type:"GET", url:url, data:op.data, callback:function(){ 
-					type:"GET", url:url, global:op.global, data:op.data, async:op.async, callback:function(){
-						navTab._loadUrlCallback($panel);
-					}
-				});
+			if(url) {
+				if (op.external || url.isExternalUrl()) {
+					$tab.addClass("external");
+					navTab.openExternal(url, $panel);
+				} else {
+					$tab.removeClass("external");
+					$panel.ajaxUrl({
+						// ysy -- modify
+						type:op.type, url:url, global:op.global, data:op.data, async:op.async, callback:function(){
+							navTab._loadUrlCallback($panel);
+						}
+					});
+				}
 			}
 			
 			if ($.History) {

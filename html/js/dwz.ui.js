@@ -66,16 +66,6 @@ function redrawCharts()
 function initEnv() {
 	$("body").append(DWZ.frag["dwzFrag"]);
 
-	if ( $.browser.msie && /6.0/.test(navigator.userAgent) ) {
-		try {
-			document.execCommand("BackgroundImageCache", false, true);
-		}catch(e){}
-	}
-	//清理浏览器内存,只对IE起效
-	if ($.browser.msie) {
-		window.setInterval("CollectGarbage();", 10000);
-	}
-
 	$(window).resize(function(){
 		initLayout();
 		$(this).trigger(DWZ.eventType.resizeGrid);
@@ -107,7 +97,6 @@ function initEnv() {
 	$("#leftside").jBar({minW:150, maxW:700});
 	
 	if ($.taskBar) $.taskBar.init();
-	navTab.init();
 
 	// ysy -- modify
 	//if ($.fn.switchEnv) $("#switchEnvBox").switchEnv();
@@ -118,6 +107,9 @@ function initEnv() {
 	setTimeout(function(){
 		initLayout();
 		initUI();
+
+		if (window.navTab) 
+			navTab.init();
 		
 		// navTab styles
 		var jTabsPH = $("div.tabsPageHeader");
@@ -125,7 +117,7 @@ function initEnv() {
 		jTabsPH.find(".tabsRight").hoverClass("tabsRightHover");
 		jTabsPH.find(".tabsMore").hoverClass("tabsMoreHover");
 	
-	}, 60);
+	}, 10);
 
 }
 function initLayout(){

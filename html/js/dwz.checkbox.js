@@ -1,5 +1,5 @@
 /**
- * @author ZhangHuihua@msn.com
+ * @author 张慧华 z@j-ui.com
  */
 (function($){
 	$.fn.extend({
@@ -32,22 +32,26 @@
 			this.select(_name, "invert", _parent);
 		},
 		select: function(_name, _type, _parent){
-			$parent = $(_parent || document);
+			var $parent = $(_parent || document);
 			$checkboxLi = $parent.find(":checkbox[name='"+_name+"']");
 			switch(_type){
 				case "invert":
 					$checkboxLi.each(function(){
-						$checkbox = $(this);
-						$checkbox.attr('checked', !$checkbox.is(":checked"));
+						this.checked = !this.checked;
 					});
 					break;
 				case "none":
-					$checkboxLi.attr('checked', false);
+					$checkboxLi.removeAttr('checked');
 					break;
 				default:
-					$checkboxLi.attr('checked', true);
+					$checkboxLi.each(function(){
+						this.checked = true;
+					});
+
 					break;
 			}
+
+			$checkboxLi.trigger('change');
 		}
 	};
 })(jQuery);

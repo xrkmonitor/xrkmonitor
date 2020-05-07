@@ -25,9 +25,9 @@ function noValidateCallback(form, callback, confirmMsg, bGlobal) {
 			global: bGlobal,
 			cache: false,
 			success: function(js) {
-				if(dmtFirstDealAjaxResponse(js))
-					return;
-				ckfun(js);
+			    if(dmtFirstDealAjaxResponse(js))
+			       return;
+			    ckfun(js);
 			},
 			error: DWZ.ajaxError
 		});
@@ -59,6 +59,8 @@ function validateCallback(form, callback, confirmMsg, bGlobal) {
 		bGlobal = false;
 	
 	var _submitFn = function(){
+		$form.find(':focus').blur();
+
 		$.ajax({
 			type: form.method || 'POST',
 			url:$form.attr("action"),
@@ -96,9 +98,12 @@ function iframeCallback(form, callback){
 	}
 	form.target = "callbackframe";
 	
+	$form.find(':focus').blur();
+
 	_iframeResponse($iframe[0], callback || DWZ.ajaxDone);
 }
-function _iframeResponse(iframe, callback){
+
+function _iframeResponse(iframe, callback, dataType){
 	var $iframe = $(iframe), $document = $(document);
 	
 	$document.trigger("ajaxStart");
@@ -126,8 +131,12 @@ function _iframeResponse(iframe, callback){
 			response = doc.XMLDocument;
 		} else if (doc.body){
 			try{
-				response = $iframe.contents().find("body").text();
-				response = jQuery.parseJSON(response);
+				if (dataType == 'html') {
+					response = $iframe.contents().find("body").html();
+				} else {
+					response = $iframe.contents().find("body").text();
+					response = jQuery.parseJSON(response);
+				}
 			} catch (e){ // response is html document or plain text
 				response = doc.body.innerHTML;
 			}
@@ -170,7 +179,7 @@ function navTabAjaxDone(json){
 			var args = $pagerForm.size()>0 ? $pagerForm.serializeArray() : {}
 			navTabPageBreak(args, json.rel);
 		}
-		
+
 		if ("closeCurrent" == json.callbackType) {
 			setTimeout(function(){navTab.closeCurrentTab(json.navTabId);}, 100);
 		} else if ("forward" == json.callbackType) {
@@ -179,6 +188,9 @@ function navTabAjaxDone(json){
 			alertMsg.confirm(json.confirmMsg || DWZ.msg("forwardConfirmMsg"), {
 				okCall: function(){
 					navTab.reload(json.forwardUrl);
+				},
+				cancelCall: function(){
+					navTab.closeCurrentTab(json.navTabId);
 				}
 			});
 		} else {
@@ -382,13 +394,39 @@ function ajaxTodo(url, callback){
 	});
 }
 
+DWZ.pargerFormExport = function (url, $form) {
+
+	if ($form.size() == 0) {
+		window.location = url;
+		return;
+	}
+
+	var $iframe = $("#callbackframe");
+	if ($iframe.size() == 0) {
+		$iframe = $("<iframe id='callbackframe' name='callbackframe' src='about:blank' style='display:none'></iframe>").appendTo("body");
+	}
+
+	var pagerFormUrl = $form[0].action,
+		pagerFormOnSubmit = $form.attr('onsubmit');
+
+	$form[0].action = url;
+	$form[0].target = "callbackframe";
+	$form.removeAttr('onsubmit');
+	$form.submit();
+
+	$form[0].action = pagerFormUrl;
+	$form.attr('onsubmit', pagerFormOnSubmit);
+};
+
 $.fn.extend({
 	ajaxTodo:function(){
 		return this.each(function(){
 			var $this = $(this);
 			$this.click(function(event){
+				if ($this.hasClass('disabled') || $this.hasClass('buttonDisabled')) {
+					return false;
+				}
 				var url = unescape($this.attr("href")).replaceTmById($(event.target).parents(".unitBox:first"));
-				DWZ.debug(url);
 				if (!url.isFinishedTm()) {
 					alertMsg.error($this.attr("warn") || DWZ.msg("alertSelectMsg"));
 					return false;
@@ -412,12 +450,17 @@ $.fn.extend({
 			var $p = $this.attr("targetType") == "dialog" ? $.pdialog.getCurrent() : navTab.getCurrentPanel();
 			var $form = $("#pagerForm", $p);
 			var url = $this.attr("href");
-			window.location = url+(url.indexOf('?') == -1 ? "?" : "&")+$form.serialize();
+
+			DWZ.pargerFormExport(url, $form);
 		}
 		
 		return this.each(function(){
 			var $this = $(this);
 			$this.click(function(event){
+				if ($this.hasClass('disabled') || $this.hasClass('buttonDisabled')) {
+					return false;
+				}
+
 				var title = $this.attr("title");
 				if (title) {
 					alertMsg.confirm(title, {

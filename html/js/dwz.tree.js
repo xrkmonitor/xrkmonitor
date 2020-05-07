@@ -127,7 +127,7 @@
 					if(op.showSub) tree.subTree(op, op.level + 1);
 				} else {
 					node.children().wrap("<div></div>");			
-					$(">div", node).prepend("<div class='node'></div>"+(op.ckbox?"<div class='ckbox "+checked+"'></div>":"")+(op.icon?"<div class='file'></div>":""));
+					$(">div", node).prepend('<div class="node"></div>'+(op.ckbox?'<div class="ckbox '+checked+'"></div>':'')+(op.icon?'<div class="'+(node.attr('data-icon') || 'file')+'"></div>':''));
 					addSpace(op.level, node);
 					if(op.isLast)$(node).addClass("last");
 				}
@@ -204,7 +204,7 @@
 			
 			var $checkbox = $(":checkbox", parent);
 			if (aClass == "checked") $checkbox.attr("checked","checked");
-			else $checkbox.removeAttr("checked");
+			else if (aClass == "unchecked") $checkbox.removeAttr("checked");
 			
 			parent._checkParent();
 		}
