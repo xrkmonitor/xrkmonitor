@@ -1722,13 +1722,14 @@ static int DealGetHistoryLog(CGI *cgi)
 
 	for(i=0; i < iGetRecords && (pstLog=logsearch.HistoryLog()) != NULL;)
 	{
-		stConfig.err = cgi_js_escape(pstLog->pszLog, &pszLogEscp);
-		if(stConfig.err != STATUS_OK)
-			return -1;
+		// fix bug @ 2020-05-07 -by rockdeng
+		//stConfig.err = cgi_js_escape(pstLog->pszLog, &pszLogEscp);
+		//if(stConfig.err != STATUS_OK)
+		//	return -1;
+		pszLogEscp = pstLog->pszLog;
 
 		i++;
 		char *ptmp = strchr(pszLogEscp, '[');
-		char *pMem = pszLogEscp;
 		const char *pszLogContent = NULL; 
 		const char *pszLogPos = NULL;
 		char *pszLogTime = NULL;
@@ -1810,7 +1811,6 @@ static int DealGetHistoryLog(CGI *cgi)
 		log["type"] = pstLog->wLogType;
 		log["s_time"] = pstLog->qwLogTime;
 		js["list"].Add(log);
-		free(pMem);
 	}
 
 	js["FileCount"] = (unsigned int)(logsearch.GetFileCount());
@@ -1878,12 +1878,12 @@ static int DealGetRealTimeLog(CGI *cgi)
 	{
 		if(++i < iMaxCount && (dwInnerSeq > pstLog->dwLogSeq || dwInnerSeq == 0))
 		{
-			stConfig.err = cgi_js_escape(pstLog->pszLog, (char**)&pszLogEscp);
-			if(stConfig.err != STATUS_OK)
-				return -1;
+			//stConfig.err = cgi_js_escape(pstLog->pszLog, (char**)&pszLogEscp);
+			//if(stConfig.err != STATUS_OK)
+			//	return -1;
+			pszLogEscp = pstLog->pszLog;
 
 			char *ptmp = (char*)strchr(pszLogEscp, '[');
-			char *pMem = pszLogEscp;
 			char *pszLogContent = NULL; 
 			const char *pszLogPos = NULL;
 			char *pszLogTime = NULL;
@@ -1967,7 +1967,6 @@ static int DealGetRealTimeLog(CGI *cgi)
 			js["list"].Add(log);
 
 			dwInnerSeq = pstLog->dwLogSeq;
-			free(pMem);
 		}
 		else  {
 			if(time(NULL) >= stNow.tv_sec+1) {
