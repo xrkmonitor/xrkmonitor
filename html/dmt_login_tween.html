@@ -15,10 +15,12 @@
     <link href="<?cs var:config.docpath?>/themes/sideshow/css/normalize.css" rel="stylesheet" />
     <link href="<?cs var:config.docpath?>/themes/sideshow/css/demo.css" rel="stylesheet" />
     <link href="<?cs var:config.docpath?>/themes/sideshow/css/component.css" rel="stylesheet" />
+	<link href="<?cs var:config.docpath?>themes/sexybuttons/sexybuttons.css" rel="stylesheet" /> 
 	<?cs else ?>
 	<link href="<?cs var:config.docpath?>/themes/css/login.min.css?v=20200506" rel="stylesheet" />
 	<link href="<?cs var:config.docpath?>/themes/layui/css/layui.min.css?v=20200506" rel="stylesheet" />
     <link href="<?cs var:config.docpath?>/themes/sideshow/css/sideshow.min.css?v=20200506" rel="stylesheet" />
+	<link href="<?cs var:config.docpath?>/themes/sexybuttons/sexybuttons.min.css?v=20200506" rel="stylesheet" /> 
 	<?cs /if ?>
 </head>
 
@@ -30,7 +32,7 @@
             <div class="kit-login-box">
                 <header>
 					<?cs if:config.isdaemon == 1 ?>
-                    <h1>字符云监控系统 - 演示版</h1>
+                    <h2>字符云监控系统 - 演示版</h2>
 					<?cs else ?>
                     <h1>字符云监控系统</h1>
 					<?cs /if ?>
@@ -60,23 +62,23 @@
                         <div class="layui-form-item">
                             <div class="kit-pull-right">
                                 <button id='btn_login' onClick='return login_submit();' class="layui-btn layui-btn-primary" lay-submit lay-filter="login">
-                                    <i class="fa fa-sign-in " aria-hidden="true"></i> 登入
+                                    <i class="fa fa-sign-in " aria-hidden="true"></i> 登 入
                                 </button>                               
                                 <button id='btn_clear' onClick='return clear_input();' class="layui-btn layui-btn-primary" lay-submit lay-filter="login">
-                                    <i class="fa fa-sign-in" aria-hidden="true"></i> 重填 
+                                    <i class="fa fa-sign-in" aria-hidden="true"></i> 重 填 
                                 </button>                               
                             </div>
                         </div>
-                        <div class="layui-form-item" style='height:20px'>
+                        <div class="layui-form-item" align='center' style='height:20px'>
 							<font id="loginmsg" style='font-weight:bold;font-size:14px;'></font>
 						</div>
                     </div>
-
-					<footer>
-						<a target='_blank' href='https://gitee.com/xrkmonitorcom/open/stargazers'><img src='https://gitee.com/xrkmonitorcom/open/badge/star.svg?theme=dark' alt='star'></img></a>
-						<button style='float:right' onClick='goto_online();' type="button" class="layui-btn layui-btn-radius layui-btn-primary layui-btn-xs"><i class="layui-icon layui-icon-home "></i>在线云版本</button>
-					</footer>
                 </div>
+				<footer>
+					<button style='float:left;width:120px;' title='站点访问数据' class="sexybutton sexysimple"><span class="chart_bar">0 / 0</span></button>
+					<a style='margin-left:30px; float:left; position:static;' title='码云源码链接' target='_blank' href='https://gitee.com/xrkmonitorcom/open/stargazers'><img src='https://gitee.com/xrkmonitorcom/open/badge/star.svg?theme=dark' alt='star'></img></a>
+					<button title='字符云监控系统云版本' style='position:static; margin-left:30px; float:left;' class="sexybutton sexysimple" onClick='goto_online();'><span class="home">云版本</span></button>
+				</footer>
             </div>
         </div>
     </div>

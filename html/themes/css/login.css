@@ -13,13 +13,13 @@
     box-shadow: 0px 0px 20px 0px #009688;
 }
 
-    .kit-login-box header {
+.kit-login-box header {
         height: 39px;
         padding: 10px;
         border-bottom: 1px solid rgba(0, 150, 136, 0.5);
     }
 
-.kit-login-box header h1 {
+.kit-login-box header h2 {
 	text-align: center;
 	font-size: 25px;
 	line-height: 40px;
@@ -49,9 +49,12 @@
 	padding-left: 34px;
 }
 
+
 .kit-login-box footer {
-    height: 35px;
-}
+        height: 35px;
+        margin: 0px 10px;
+        border-bottom: 1px solid rgba(0, 150, 136, 0.5);
+    }
 
 .kit-pull-right {
 	float: right !important;
@@ -103,7 +106,7 @@ canvas {
     position: absolute;
     z-index: -1;
 }
-.kit-login-box header h1 {
+.kit-login-box header h2 {
     line-height: normal;
 }
 .kit-login-box header {
