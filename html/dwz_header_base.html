@@ -1,5 +1,9 @@
 <div class="headerNav">
+	<?cs if:config.notify_daemon ?>
+	<div class='mainHeadLeftTitle mainHeadLeftColor'>【xrkmonitor】字符云监控系统 - 演示版</div>
+	<?cs else ?>
 	<div class='mainHeadLeftTitle mainHeadLeftColor'>【xrkmonitor】字符云监控系统</div>
+	<?cs /if ?>
 	<ul class="nav">
 		<li><a href="https://gitee.com/xrkmonitorcom/open" target='_blank'>码云源码下载</a></li>
 		<li><a href="<?cs var:config.xrkmonitor_url ?>" target='_blank'>云版本主页</a></li>
