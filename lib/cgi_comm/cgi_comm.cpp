@@ -986,6 +986,15 @@ void InitCgiDebug(CGIConfig &myCfg)
 	INFO_LOG("debug output file:%s", sBuf);
 }
 
+static inline void CheckLastChar(char *pstr, char c)
+{
+	int t = strlen(pstr);
+	if(pstr[t-1] != c) {
+		pstr[t] = c;
+		pstr[t+1] = '\0';
+	}
+}
+
 int InitFastCgiStart(CGIConfig &myConf)
 {
 	std::string strGlobalConfgFile;
@@ -1028,7 +1037,12 @@ int InitFastCgiStart(CGIConfig &myConf)
 		return SLOG_ERROR_LINE;
 	}
 
-	if(LoadConfig(myConf.szConfigFile, 
+	int iRet = 0;	
+	CheckLastChar(myConf.szCgiPath, '/');
+	CheckLastChar(myConf.szDocPath, '/');
+	CheckLastChar(myConf.szCsPath, '/');
+
+	if((iRet=LoadConfig(myConf.szConfigFile, 
 	   "SLOG_SET_TEST", CFG_INT, &myConf.iCfgTestLog, 0,
 	   "DEBUG_LOG_FILE", CFG_STRING, myConf.szDebugPath, CGI_COREDUMP_DEBUG_OUTPUT_PATH, MYSIZEOF(myConf.szDebugPath),
 	   "FAST_CGI_MAX_HITS", CFG_INT, &myConf.dwMaxHits, FAST_CGI_DEF_HITS_MAX,
@@ -1036,8 +1050,8 @@ int InitFastCgiStart(CGIConfig &myConf)
 	   "ENABLE_CGI_DEBUG", CFG_INT, &myConf.iEnableCgiDebug, 0,
 		"UPLOAD_UNLINK", CFG_INT, &myConf.iUnLinkUpload, 0,
 	   "ENABLE_CGI_PAUSE", CFG_INT, &myConf.iEnableCgiPause, 0,
-		NULL) < 0){
-		ERR_LOG("loadconfig failed, from file:%s", myConf.szConfigFile);
+		NULL)) < 0){
+		ERR_LOG("loadconfig failed, from file:%s, ret:%d", myConf.szConfigFile, iRet);
 		return SLOG_ERROR_LINE;
 	}
 
@@ -1053,7 +1067,6 @@ int InitFastCgiStart(CGIConfig &myConf)
 		return SLOG_ERROR_LINE;
 	}
 
-	int iRet = 0;
 	if((iRet=GetShm2((void**)(&myConf.pshmLoginList), iShmKey, MYSIZEOF(FloginList), 0666|IPC_CREAT)) < 0)
 	{
 		ERR_LOG("attach shm FloginList failed, size:%u, key:%d", MYSIZEOF(FloginList), iShmKey);
