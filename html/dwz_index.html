@@ -4,10 +4,17 @@
 
 <?cs include:config.cspath+"main_meta.html" ?>
 
+<?cs if:config.xrkmonitor_debug==1 ?>
 <link href="<?cs var:config.docpath?>themes/default/style.css" rel="stylesheet" type="text/css" media="screen"/>
 <link href="<?cs var:config.docpath?>themes/css/core.css" rel="stylesheet" type="text/css" media="screen"/>
 <link href="<?cs var:config.docpath?>themes/css/print.css" rel="stylesheet" type="text/css" media="print"/>
 <link href="<?cs var:config.docpath?>themes/sexybuttons/sexybuttons.css" rel="stylesheet" type="text/css" media="screen"/>
+<?cs else ?>
+<link href="<?cs var:config.docpath?>themes/default/style.min.css?v=20200506" rel="stylesheet" type="text/css" media="screen"/>
+<link href="<?cs var:config.docpath?>themes/css/core.min.css?v=20200506" rel="stylesheet" type="text/css" media="screen"/>
+<link href="<?cs var:config.docpath?>themes/css/print.min.css?v=20200506" rel="stylesheet" type="text/css" media="print"/>
+<link href="<?cs var:config.docpath?>themes/sexybuttons/sexybuttons.min.css?v=20200506" rel="stylesheet" type="text/css" media="screen"/>
+<?cs /if ?>
 
 <!--[if IE]>
 <link href="<?cs var:config.docpath?>themes/css/ieHack.css" rel="stylesheet" type="text/css" media="screen"/>
