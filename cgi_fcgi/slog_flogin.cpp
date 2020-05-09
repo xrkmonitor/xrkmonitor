@@ -184,13 +184,6 @@ static int PopLoginWindow(CGI *cgi, HDF *hdf)
 	static std::string s_page_login_dwz;
 	static std::string s_page_login;
 
-	TRealTimeInfoShm &stRealInfoShm = stConfig.pShmConfig->stSysCfg.stRealInfoShm;
-	if(slog.InitChangeRealInfoShm() >= 0) {
-		stRealInfoShm.wNewAccTimes++;
-		stRealInfoShm.dwReanInfoSeq++;
-		slog.EndChangeRealInfoShm();
-	}
-
 	NEOERR *err = NULL;
 	if(s_page_login.empty()) {
 		s_page_login = stConfig.szCsPath;
@@ -201,6 +194,7 @@ static int PopLoginWindow(CGI *cgi, HDF *hdf)
 		s_page_login_dwz += "dmt_login_dwz.html";
 	}
 
+	TRealTimeInfoShm &stRealInfoShm = stConfig.pShmConfig->stSysCfg.stRealInfoShm;
 	hdf_set_int_value(cgi->hdf, "config.total_acc", stRealInfoShm.dwTodayAccTimes+stRealInfoShm.wNewAccTimes);
 	hdf_set_int_value(cgi->hdf, "config.today_acc", stRealInfoShm.dwTodayAccTimes+stRealInfoShm.wNewAccTimes);
 	if(g_iLoginType != 0)
@@ -284,13 +278,6 @@ static int ResponseCheckResult(CGI *cgi, HDF *hdf, int32_t iResultCode)
 		else
 		{
 			cgi_redirect_uri(cgi, "%s", g_strRedirectUri);
-
-			TRealTimeInfoShm &stRealInfoShm = stConfig.pShmConfig->stSysCfg.stRealInfoShm;
-			if(slog.InitChangeRealInfoShm() >= 0) {
-				stRealInfoShm.wNewAccTimes++;
-				stRealInfoShm.dwReanInfoSeq++;
-				slog.EndChangeRealInfoShm();
-			}
 		}
 	}
 	return 0;
@@ -579,6 +566,18 @@ int main(int argc, char **argv, char **envp)
 
 		const char *paction = stConfig.pAction;
 		const char *puser = stConfig.stUser.puser;
+
+		// 统计访问量(按 从首页主框架进入的量算)
+		if(paction != NULL && !strcmp(paction, "show_main"))
+		{
+			TRealTimeInfoShm &stRealInfoShm = stConfig.pShmConfig->stSysCfg.stRealInfoShm;
+			if(slog.InitChangeRealInfoShm() >= 0) {
+				stRealInfoShm.wNewAccTimes++;
+				stRealInfoShm.dwReanInfoSeq++;
+				slog.EndChangeRealInfoShm();
+			}
+		}
+
 		if(puser != NULL && paction != NULL && !strcmp(paction, "logout")) {
 			if(CheckLoginByCookie(stConfig.cgi->hdf) > 0) {
 				FloginInfo *psess = stConfig.stUser.puser_info;
