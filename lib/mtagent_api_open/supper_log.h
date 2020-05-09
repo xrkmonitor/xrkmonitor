@@ -453,7 +453,7 @@ std::string & GetRemoteRegionInfoNew(const char *premote, int flag=IPINFO_FLAG_P
 #define SRV_TYPE_APP_LOG 1 // 服务器类型--app 日志服务器
 #define SRV_TYPE_ATTR 2 // 服务器类型-- 监控点服务器, 处理监控点上报
 #define SRV_TYPE_ATTR_DB 3 // 服务器类型-- 监控点 mysql 服务器
-#define SRV_TYPE_MT_CENTER 4 // 监控系统中心服务器
+#define SRV_TYPE_MT_CENTER 4 // 中心服务器
 #define SRV_TYPE_CONNECT 5 // 服务器类型-- 接入服务器，slog_mtreport_server
 #define SRV_TYPE_WEB 11 // 服务器类型-- memache 服务器，memcache 缓存服务器
 
