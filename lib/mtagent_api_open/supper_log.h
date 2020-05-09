@@ -54,6 +54,7 @@
 #include "sv_freq_ctrl.h"
 #include "sv_coredump.h"
 #include "sv_net.h"
+#include "comm.pb.h"
 #include "sv_struct.h"
 #include "mt_shared_hash.h"
 
@@ -100,6 +101,29 @@ typedef struct
 		SHOW_FIELD_VALUE_STR_COUNT(MAX_COMM_SEND_MAIL_NODE_COUNT, dwMailSeq, MAX_COMM_SEND_MAIL_NODE_COUNT, stInfo);
 	}
 }TCommSendMailInfoShm;
+
+// 系统实时信息展示用
+typedef struct 
+{
+	uint32_t dwReanInfoSeq;
+	uint8_t bTryChangeFlag;
+	uint32_t dwTotalAccTimes;
+	uint32_t dwTodayAccTimes;
+	uint16_t wNewAccTimes;
+
+	uint32_t dwNewAccStartTime;
+	uint8_t bNewAccStartDay;
+	char szReserved[4096];
+	void Show() {
+		SHOW_FIELD_VALUE_UINT(dwReanInfoSeq);
+		SHOW_FIELD_VALUE_UINT(bTryChangeFlag);
+		SHOW_FIELD_VALUE_UINT(dwTotalAccTimes);
+		SHOW_FIELD_VALUE_UINT(dwTodayAccTimes);
+		SHOW_FIELD_VALUE_UINT(wNewAccTimes);
+		SHOW_FIELD_VALUE_UINT_TIME(dwNewAccStartTime);
+		SHOW_FIELD_VALUE_UINT_TIME(bNewAccStartDay);
+	}
+}TRealTimeInfoShm;
 
 // 属性告警相关结构 ----------- start
 
@@ -429,6 +453,7 @@ std::string & GetRemoteRegionInfoNew(const char *premote, int flag=IPINFO_FLAG_P
 #define SRV_TYPE_APP_LOG 1 // 服务器类型--app 日志服务器
 #define SRV_TYPE_ATTR 2 // 服务器类型-- 监控点服务器, 处理监控点上报
 #define SRV_TYPE_ATTR_DB 3 // 服务器类型-- 监控点 mysql 服务器
+#define SRV_TYPE_MT_CENTER 4 // 监控系统中心服务器
 #define SRV_TYPE_CONNECT 5 // 服务器类型-- 接入服务器，slog_mtreport_server
 #define SRV_TYPE_WEB 11 // 服务器类型-- memache 服务器，memcache 缓存服务器
 
@@ -766,6 +791,8 @@ typedef struct
 	int32_t iReserved3;
 
 	uint32_t dwSystemFlag; // 系统标志位
+
+	TRealTimeInfoShm stRealInfoShm;
 
 	char sReserved[128];
 	void Show() {
@@ -1938,6 +1965,11 @@ class CSupperLog: public StdLog, public IError
 		// memcache
 		int InitMemcache();
 		bool IsEnableMemcache() { return m_bEnableMemcache; }
+
+		// realinfo
+		int InitChangeRealInfoShm();
+		void EndChangeRealInfoShm();
+		int GetRealInfoPb(::comm::SysconfigInfo &stSysPb);
 
 		static int InitGetShmLogIndex(TSLogShm *pShmLog); // 获取写 shmlog 索引前
 		static void EndGetShmLogIndex(TSLogShm *pShmLog);  // 获取写 shmlog 索引后

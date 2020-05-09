@@ -145,6 +145,7 @@ class CUdpSock: public UdpSocket, public CBasicPacket
 		~CUdpSock();
 		int32_t SendResponsePacket(const char*pkg, int len);
 		void OnRawData(const char *buf, size_t len, struct sockaddr *sa, socklen_t sa_len);
+		void SendRealInfo();
 
 	private:
 		int InitSignature(TSignature *psig, void *pdata, const char *pKey, int bSigType);

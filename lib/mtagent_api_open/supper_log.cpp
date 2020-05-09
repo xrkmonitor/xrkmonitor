@@ -3617,6 +3617,44 @@ void CSupperLog::ShowShmLog(int iCount)
 	}
 }
 
+int CSupperLog::GetRealInfoPb(::comm::SysconfigInfo &stSysPb)
+{
+	if(m_pShmConfig == NULL) {
+		WARN_LOG("m_pShmConfig is NULL");
+		return -1;
+	}
+
+	int iNewAddAcc = m_pShmConfig->stSysCfg.stRealInfoShm.wNewAccTimes;
+	stSysPb.set_total_access_times(m_pShmConfig->stSysCfg.stRealInfoShm.dwTotalAccTimes+iNewAddAcc);
+	stSysPb.set_today_access_times(m_pShmConfig->stSysCfg.stRealInfoShm.dwTodayAccTimes+iNewAddAcc);
+	return 0;
+}
+
+int CSupperLog::InitChangeRealInfoShm()
+{
+	if(m_pShmConfig == NULL) {
+		WARN_LOG("m_pShmConfig is NULL");
+		return -1;
+	}
+	for(int i = 0; i < 100; i++)
+	{
+		if(__sync_bool_compare_and_swap(&(m_pShmConfig->stSysCfg.stRealInfoShm.bTryChangeFlag), 0, 1))
+			return 0;
+		usleep(10);
+	}
+	FATAL_LOG("try change TRealTimeInfoShm failed !");
+	return -1;
+}
+
+void CSupperLog::EndChangeRealInfoShm()
+{
+	if(m_pShmConfig == NULL) {
+		WARN_LOG("m_pShmConfig is NULL");
+		return;
+	}
+	m_pShmConfig->stSysCfg.stRealInfoShm.bTryChangeFlag = 0;
+}
+
 // 获取 shmlog 索引， 失败返回-1
 int CSupperLog::InitGetShmLogIndex(TSLogShm *pShmLog)
 {
@@ -3626,7 +3664,6 @@ int CSupperLog::InitGetShmLogIndex(TSLogShm *pShmLog)
 			return 0;
 		usleep(10);
 	}
-	MtReport_Attr_Add(85, 1);
 	return -1;
 }
 

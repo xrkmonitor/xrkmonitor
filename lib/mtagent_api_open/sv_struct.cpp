@@ -156,42 +156,6 @@ void MonitorPkgLogInfoHtoN(MonitorPkgLogInfo *pinfo)
 	pinfo->wSrvWriteLogCount = htons(pinfo->wSrvWriteLogCount);
 }
 
-void PkgHeadNtoH(TBworldPkgHead *pNPkgHead, TBworldPkgHead *pHPkgHead)
-{
-	pHPkgHead->wPkgLen = ntohs(pNPkgHead->wPkgLen);
-	pHPkgHead->wMainCmd = ntohs(pNPkgHead->wMainCmd);
-	pHPkgHead->wSubCmd = ntohs(pNPkgHead->wSubCmd);
-	pHPkgHead->dwSeq = ntohl(pNPkgHead->dwSeq);
-	pHPkgHead->wResultCode = ntohl(pNPkgHead->wResultCode);
-	memcpy(pHPkgHead->bReserved, pNPkgHead->bReserved, sizeof(pNPkgHead->bReserved));
-	memcpy(pHPkgHead->bEchoBuf,  pNPkgHead->bEchoBuf, sizeof(pNPkgHead->bEchoBuf));
-}
-
-void PkgHeadHtoN(TBworldPkgHead *pNPkgHead, TBworldPkgHead *pHPkgHead)
-{
-	pNPkgHead->wPkgLen = htons(pHPkgHead->wPkgLen);
-	pNPkgHead->wMainCmd = htons(pHPkgHead->wMainCmd);
-	pNPkgHead->wSubCmd = htons(pHPkgHead->wSubCmd);
-	pNPkgHead->dwSeq = ntohl(pHPkgHead->dwSeq);
-	pNPkgHead->wResultCode = ntohl(pHPkgHead->wResultCode);
-	memcpy(pNPkgHead->bReserved, pHPkgHead->bReserved, sizeof(pNPkgHead->bReserved));
-	memcpy(pNPkgHead->bEchoBuf, pHPkgHead->bEchoBuf, sizeof(pNPkgHead->bEchoBuf));
-}
-
-void PkgSigNtoH(TBworldSignature *pNSig, TBworldSignature *pHSig)
-{
-	pHSig->bSigType = pNSig->bSigType;
-	pHSig->wSigLen = ntohs(pNSig->wSigLen);
-	memcpy(pHSig->sSigValue, pNSig->sSigValue, pHSig->wSigLen);
-}
-
-void PkgSigHtoN(TBworldSignature *pNSig, TBworldSignature *pHSig)
-{
-	pNSig->bSigType = pHSig->bSigType;
-	pNSig->wSigLen = htons(pHSig->wSigLen);
-	memcpy(pNSig->sSigValue, pHSig->sSigValue, pHSig->wSigLen);
-}
-
 // pkgbody is valid ret 0
 // pkgbody is invalid ret -1 
 int CheckPkgBody(TPkgBody *pstBody, uint16_t wBodyLen)

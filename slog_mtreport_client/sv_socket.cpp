@@ -221,7 +221,6 @@ int SendPacket(int iSockIdx, struct sockaddr_in *pDestAddr, const char *pdata, i
 	memcpy(&remote_addr, &g_socket.socks[iSockIdx].remote, MYSIZEOF(remote_addr));
 
 	ret = sendto(g_socket.socks[iSockIdx].isock, pdata, iDataLen, 0, (struct sockaddr *)&remote_addr, socklen);
-
 	if(ret != iDataLen && g_socket.onError) {
 		ERROR_LOG("sendto failed, packet len:%d to %s:%d, ret:%d, msg:%s", iDataLen, 
 			inet_ntoa(g_socket.socks[iSockIdx].remote.sin_addr),

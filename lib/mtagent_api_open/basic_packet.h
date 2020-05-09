@@ -143,10 +143,8 @@ class CBasicPacket
 		CBasicPacket(){ ResetPacketInfo(); }
 		virtual ~CBasicPacket(){}
 		virtual int32_t SendResponsePacket(const char *pkg, int len){ assert(0); return 0; }
-		bool IsHttpKeepAliveReq();
-		bool IsHttpKeepNextReq();
 		void ResetPacketInfo(); // 调用后可以再次用于分析数据包
-		int32_t MakeReqPkg(char *pBuf, int *piBufLen) { return MakePacket(pBuf, piBufLen, NO_ERROR); }
+		int32_t MakeReqPkg(char *pBuf=NULL, int *piBufLen=NULL) { return MakePacket(pBuf, piBufLen, NO_ERROR); }
 		int32_t CheckBasicPacket(const char *buf, size_t len, struct sockaddr *sa=NULL, bool bUseSelfBuf=false);
 		int32_t MakeErrAckPacket(const char *reqPkg, size_t reqLen, char *pBuf, int32_t iBufLen, uint8_t bErrCode);
 

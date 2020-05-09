@@ -145,17 +145,7 @@
 #define MAX_UDP_HTTP_RESP_BODY_SIZE 8192 
 #define TLV_HTTP_BODY_KV_CHAR '=' 
 
-
 // ------------- cmd define start --------------------
-// system cmd: 1-100
-#define CMD_HTTP_SHORT_REQ 1
-#define CMD_HTTP_KEEP_REQ 2
-
-// top api pkg cmd: 101-200
-#define CMD_TOP_HTTP_REQ_PKG 101
-#define CMD_TOP_HTTP_STREAM_REQ 102 
-#define CMD_TOP_HTTP_STREAM_DISCONN 103
-#define CMD_TOP_CONFIG_NOTIFY 104
 
 // monitor system cmd: 201-400
 #define CMD_MONI_SEND_HELLO_FIRST 201 // 首个 hello 命令
@@ -181,6 +171,7 @@
 #define CMD_MONI_PC_PUSH_WARN_NO_ACK 403
 
 // cmd for protobuf 501-1000 -- protobuf 协议使用命令范围
+#define CMD_INNER_SEND_REALINFO 501 
 
 // monitor system s2c cmd: 1001-1000
 #define CMD_MONI_S2C_LOG_CONFIG_NOTIFY 1001 
@@ -191,18 +182,9 @@
 
 
 // ------------- cmd define end --------------------
-
-// ------------------------------ tlv define start -------------------
-// system tlv: 1-100
-#define TLV_HTTP_RESP_HEADER 1
-#define TLV_HTTP_RESP_BODY 2
-#define TLV_HTTP_REQ_URL 3
-#define TLV_HTTP_REQ_BODY_KV 4
 #define TLV_ACK_ERROR 5
 
-// top tlv: 101-200
-#define TLV_TOP_CONFIG_NOTIFY 101
-
+// ------------------------------ tlv define start -------------------
 // monitor system tlv : 201 --- 1000
 #define TLV_MONI_SEND_LOG 201
 #define TLV_MONI_SEND_ATTR 202
@@ -274,33 +256,6 @@ typedef struct
 	char sSigValue[0];
 }TSignature;
 
-// top taobao struct define in here -------------------------------------
-typedef struct
-{
-	uint16_t wNotifyType;
-	uint32_t dwConfigIndex;
-	uint32_t dwUserId;
-	uint16_t wConfigLen;
-	uint8_t sConfigInfo[0];
-}TLVTopConfigNotify; // for tlv:  TLV_TOP_CONFIG_NOTIFY
-
-typedef struct
-{
-	uint32_t dwNextGetTime;
-	uint32_t dwNextGetSecond;
-	uint32_t dwGetTotalRecord;
-	uint32_t dwCurGetRecords;
-	uint16_t wCurPageNo;
-	uint16_t wPageSize;
-}TopGetTradesInfo;
-
-typedef struct
-{
-	uint16_t wApiType;
-	uint32_t dwUserId;
-	char sReserved[16];
-}TopApiPkgHead;
-
 typedef struct
 {
 	uint16_t wType;
@@ -313,9 +268,6 @@ typedef struct
 	uint8_t bTlvNum;
 	TWTlv stTlv[0];
 }TPkgBody;
-
-// ---------------------------- top end
-
 
 // for sys monitor  --- start
 // udp req packet is : SPKG + ReqPkgHead + TSignature + MonitorPkgLogInfo + vPkgBody + EPKG
@@ -438,41 +390,12 @@ typedef struct
 
 #define DIM(x) (sizeof(x) / sizeof((x)[0]))
 
-#pragma pack(1)
-
-typedef struct
-{
-	uint16_t wPkgLen;
-	uint16_t wMainCmd;
-	uint16_t wSubCmd;
-	uint32_t dwSeq;
-	uint16_t wResultCode;
-	uint8_t bReserved[32];
-	uint8_t bEchoBuf[64];
-}TBworldPkgHead;
-
-typedef struct
-{
-	uint8_t bSigType;
-	uint16_t wSigLen;
-	char sSigValue[0];
-}TBworldSignature;
-
-#pragma pack()
-
-// bworld main command define list here
-#define BWORLD_TALK_MAIN_CMD 1
-
 int SetWTlv(TWTlv *ptlv, uint16_t wType, uint16_t wLen, const char *pValue);
 TWTlv * GetWTlvByType(uint16_t wType, uint16_t wTlvNum, TWTlv *ptlv);
 void* GetWTlvValueByType(uint16_t wType, uint16_t wTlvNum, TWTlv *ptlv);
 void* GetWTlvValue(uint16_t wType, TWTlv *ptlv, int iTlvLen);
 TWTlv * GetWTlvByType2(uint16_t wType, TPkgBody *pstTlv);
 void* GetWTlvValueByType2(uint16_t wType, TPkgBody *pstTlv);
-void PkgHeadNtoH(TBworldPkgHead *pNPkgHead, TBworldPkgHead *pHPkgHead);
-void PkgHeadHtoN(TBworldPkgHead *pNPkgHead, TBworldPkgHead *pHPkgHead);
-void PkgSigHtoN(TBworldSignature *pNSig, TBworldSignature *pHSig);
-void PkgSigNtoH(TBworldSignature *pNSig, TBworldSignature *pHSig);
 int CheckPkgBody(TPkgBody *pstBody, uint16_t wBodyLen);
 TWTlv * GetWTlvByType2_list(uint16_t wType, TPkgBody *pstTlv, int *piStartNum);
 TWTlv * GetWTlvType2_list(TPkgBody *pstTlv, int *piStartNum);

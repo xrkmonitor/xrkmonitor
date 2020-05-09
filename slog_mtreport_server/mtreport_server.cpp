@@ -34,6 +34,7 @@
 #include "top_include_comm.h"
 #include "udp_sock.h"
 #include "pid_guard.h"
+#include "comm.pb.h"
 
 CONFIG stConfig;
 CSupperLog slog;
@@ -118,6 +119,7 @@ int Init(const char *pFile = NULL)
 		"LOCAL_IF_NAME", CFG_STRING, stConfig.szLocalIp, "eth0", MYSIZEOF(stConfig.szLocalIp),
 		"LISTEN_IP", CFG_STRING, stConfig.szListenIp, "0.0.0.0", MYSIZEOF(stConfig.szListenIp),
 		"TIMER_HASH_SHM_KEY", CFG_INT, &stConfig.iTimerHashKey, 2015031347,
+		"WRITE_REANINFO_TO_DB_PER_TIME", CFG_INT, &stConfig.iRealinfoToDbPerTime, 30,
 		(void*)NULL)) < 0)
 	{   
 		FATAL_LOG("LoadConfig:%s failed ! ret:%d", pConfFile, iRet);
@@ -151,7 +153,137 @@ int Init(const char *pFile = NULL)
 		return SLOG_ERROR_LINE;
 	}
 	stConfig.dwPkgSeq = slog.m_iRand;
+
+	stConfig.pCenterServer = slog.GetValidServerByType(SRV_TYPE_MT_CENTER);
+	if(stConfig.pCenterServer == NULL) {
+		ERR_LOG("Get center server failed !");
+		return SLOG_ERROR_LINE;
+	}
+	if(slog.IsIpMatchLocalMachine(stConfig.pCenterServer->dwIp))
+		stConfig.bSelfIsCenterServer = true;
+	else
+		stConfig.bSelfIsCenterServer = false;
+	DEBUG_LOG("get center server seq:%u, addr:%s:%d, is self:%d", stConfig.pCenterServer->dwCfgSeq, 
+		stConfig.pCenterServer->szIpV4, stConfig.pCenterServer->wPort, stConfig.bSelfIsCenterServer);
 	return 0;
+}
+
+void ReadRealInfoFromDb()
+{
+	snprintf(stConfig.szSql, MYSIZEOF(stConfig.szSql), 
+		"select other_info from flogin_user where xrk_status=0 and user_id=1");
+	MyQuery myqu(stConfig.qu, stConfig.db);
+	Query & qu = myqu.GetQuery();
+	if(!qu.get_result(stConfig.szSql)) {
+		ERR_LOG("execute sql:%s failed !", stConfig.szSql);
+		return ;
+	}
+	if(qu.num_rows() > 0 && qu.fetch_row() != NULL)
+	{
+		qu.fetch_lengths();
+		unsigned long* lengths = qu.fetch_lengths();
+		const char *pval = qu.getstr("other_info");
+		::comm::SysconfigInfo stInfo;
+		if(lengths[0] <= 0) {
+			WARN_LOG("get other info length 0");
+			return;
+		}
+		if(!stInfo.ParseFromArray(pval, lengths[0]))
+		{
+			WARN_LOG("ParseFromArray failed-%p-%lu", pval, lengths[0]);
+			return;
+		}
+		stConfig.psysConfig->stRealInfoShm.dwTotalAccTimes = stInfo.total_access_times();
+		stConfig.psysConfig->stRealInfoShm.dwTodayAccTimes = stInfo.today_access_times();
+
+		INFO_LOG("get real info from db- acc total:%u, acc today:%u",
+			stInfo.total_access_times(), stInfo.today_access_times());
+	}
+	qu.free_result();
+}
+
+void TryWriteRealinfoToDb() 
+{
+	static uint32_t s_dwLastRealInfoSeq = 0;
+
+	if(slog.m_stNow.tv_sec < stConfig.dwLastWriteRealinfoToDbTime+stConfig.iRealinfoToDbPerTime)
+		return;
+	stConfig.dwLastWriteRealinfoToDbTime = slog.m_stNow.tv_sec;
+
+	SLogServer *pCenterServer = slog.GetWebMasterSrv();
+	if(pCenterServer != stConfig.pCenterServer) {
+		stConfig.pCenterServer = pCenterServer;
+		if(slog.IsIpMatchLocalMachine(stConfig.pCenterServer->dwIp))
+			stConfig.bSelfIsCenterServer = true;
+		else 
+			stConfig.bSelfIsCenterServer = false;
+		INFO_LOG("web server change new - seq:%u, addr:%s:%d, is self:%d", stConfig.pCenterServer->dwCfgSeq, 
+			stConfig.pCenterServer->szIpV4, stConfig.pCenterServer->wPort, stConfig.bSelfIsCenterServer);
+	}
+	if(!stConfig.bSelfIsCenterServer)
+		return;
+
+	struct tm stTm;
+	localtime_r(&slog.m_stNow.tv_sec, &stTm);
+	if(stTm.tm_mday != stConfig.psysConfig->stRealInfoShm.bNewAccStartDay
+		|| slog.m_stNow.tv_sec > stConfig.psysConfig->stRealInfoShm.dwNewAccStartTime+24*60*60)
+	{
+		if(slog.InitChangeRealInfoShm()) {
+			stConfig.psysConfig->stRealInfoShm.bNewAccStartDay = stTm.tm_mday;
+			stConfig.psysConfig->stRealInfoShm.dwNewAccStartTime = slog.m_stNow.tv_sec;
+			stConfig.psysConfig->stRealInfoShm.dwReanInfoSeq++;
+			stConfig.psysConfig->stRealInfoShm.dwTotalAccTimes += stConfig.psysConfig->stRealInfoShm.dwTodayAccTimes;
+			stConfig.psysConfig->stRealInfoShm.dwTodayAccTimes = 0;
+			slog.EndChangeRealInfoShm();
+		}
+	}
+
+	if(s_dwLastRealInfoSeq == stConfig.psysConfig->stRealInfoShm.dwReanInfoSeq)
+		return;
+
+	::comm::SysconfigInfo stInfo;
+	if(slog.GetRealInfoPb(stInfo) < 0)
+		return;
+	std::string strval;
+	if(!stInfo.AppendToString(&strval)) {
+		ERR_LOG("AppendToString failed !");
+		return;
+	}
+
+	static char s_szBinSql[1024*10] = {0};
+	MyQuery myqu(stConfig.qu, stConfig.db);
+	Query & qu = myqu.GetQuery();
+	int iTmpLen = snprintf(s_szBinSql, sizeof(s_szBinSql), "update flogin_user set other_info=");
+	char *pbuf = (char*)s_szBinSql+iTmpLen;
+	int32_t iBinaryDataLen = qu.SetBinaryData(pbuf, strval.c_str(), strval.size());
+	if(iBinaryDataLen < 0)
+		return;
+	if(iTmpLen+iBinaryDataLen+40> (int)sizeof(s_szBinSql)) {
+		ERR_LOG("need more space %d < %d", iTmpLen+iBinaryDataLen, (int)sizeof(s_szBinSql));
+		return ;
+	}
+
+	pbuf += iBinaryDataLen;
+	int iSqlLen = (int32_t)(pbuf-s_szBinSql);
+	iTmpLen = snprintf(pbuf, sizeof(s_szBinSql)-iSqlLen, " where xrk_status=0 and user_id=1");
+	if(iTmpLen < (int)(sizeof(s_szBinSql)-iSqlLen))
+		iSqlLen += iTmpLen;
+	else
+	{
+		ERR_LOG("need more space %d < %d", iTmpLen, (int)(sizeof(s_szBinSql)-iSqlLen));
+		return ;
+	}
+	if(qu.ExecuteBinary(s_szBinSql, iSqlLen) < 0)
+		return ;
+
+	if(stConfig.psysConfig->stRealInfoShm.wNewAccTimes != 0 && slog.InitChangeRealInfoShm()) 
+	{
+		stConfig.psysConfig->stRealInfoShm.dwTotalAccTimes += stConfig.psysConfig->stRealInfoShm.wNewAccTimes;
+		stConfig.psysConfig->stRealInfoShm.dwTodayAccTimes += stConfig.psysConfig->stRealInfoShm.wNewAccTimes;
+		stConfig.psysConfig->stRealInfoShm.wNewAccTimes = 0;
+		slog.EndChangeRealInfoShm();
+	}
+	INFO_LOG("save realinfo to db, data length:%d, sql length:%d", iBinaryDataLen, iSqlLen);
 }
 
 int main(int argc, char *argv[])
@@ -178,6 +310,17 @@ int main(int argc, char *argv[])
 	}
 	h.Add(&stSock);
 
+	if(stConfig.psysConfig->stRealInfoShm.dwReanInfoSeq == 0) {
+		if((iRet=GetDatabaseServer()) < 0) {
+			ERR_LOG("GetDatabaseServer failed !");
+			return SLOG_ERROR_LINE;
+		}
+		ReadRealInfoFromDb();
+	}
+	else if(!stConfig.bSelfIsCenterServer){
+		stSock.SendRealInfo();
+	}
+
 	while(h.GetCount() && slog.TryRun())
 	{
 		if(slog.IsExitSet())
@@ -191,6 +334,7 @@ int main(int argc, char *argv[])
 		if((iRet=GetDatabaseServer()) < 0)
 			break;
 		h.Select(1, slog.m_iRand%SEC_USEC);
+		TryWriteRealinfoToDb();
 	}
 	INFO_LOG("slog_mtreport_server exit !");
 	return 0;

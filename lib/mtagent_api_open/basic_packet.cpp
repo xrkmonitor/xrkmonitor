@@ -144,16 +144,6 @@ const char * CBasicPacket::GetErrMsg(int32_t err)
 	}
 }
 
-bool CBasicPacket::IsHttpKeepAliveReq()
-{
-	return (CMD_HTTP_KEEP_REQ == m_dwReqCmd || CMD_TOP_HTTP_STREAM_REQ == m_dwReqCmd);
-}
-
-bool CBasicPacket::IsHttpKeepNextReq()
-{
-	return CMD_TOP_HTTP_STREAM_DISCONN == m_dwReqCmd;
-}
-
 void CBasicPacket::InitReqPkgHead(ReqPkgHead *pHead, uint32_t cmd, uint32_t dwSeq)
 {
     memset(pHead, 0, sizeof(ReqPkgHead));
@@ -514,6 +504,13 @@ int32_t CBasicPacket::AckToReq(int iRetCode)
 
 int32_t CBasicPacket::MakePacket(char *pBuf, int *piBufLen, int iRetCode)
 {
+    char *pdata = pBuf;
+	if(pdata == NULL || !piBufLen || *piBufLen == 0) {
+		pdata = (char*)m_sCommBuf;
+		m_iCommLen = (int)(sizeof(m_sCommBuf));
+		piBufLen = &m_iCommLen;
+	}
+
     if(*piBufLen < (int)(2+sizeof(ReqPkgHead)+sizeof(TSignature)+sizeof(TPkgBody)
             +m_wRespSigLen+m_wRespCmdContentLen+m_wRespBodyLen)){
         ERR_LOG("invalid buf len:%d < %d",
@@ -521,8 +518,6 @@ int32_t CBasicPacket::MakePacket(char *pBuf, int *piBufLen, int iRetCode)
                 +m_wRespSigLen+m_wRespCmdContentLen+m_wRespBodyLen));
         return 0;
     }   
-    char *pdata = pBuf;
-
     *pdata = SPKG;
     pdata++;
 

@@ -87,3 +87,13 @@ message SendWarnInfo
 
 // for monitor system ----------------- end 
 
+
+message SysconfigInfo
+{
+	optional uint32 total_access_times = 1;
+	optional uint32 today_access_times = 2;
+}
+
+
+
+

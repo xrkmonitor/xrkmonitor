@@ -1399,6 +1399,11 @@ int CUdpSock::SaveStrAttrInfoToDb(TStrAttrReportInfo* pStrAttrShm, Query &qu)
 		int32_t iBinaryDataLen = qu.SetBinaryData(pbuf, strval.c_str(), strval.size());
 		if(iBinaryDataLen < 0)
 			return SLOG_ERROR_LINE;
+		if(iTmpLen+iBinaryDataLen+40> (int)sizeof(stConfig.szBinSql)) {
+			ERR_LOG("need more space %d < %d", iTmpLen+iBinaryDataLen, (int)sizeof(stConfig.szBinSql));
+			return SLOG_ERROR_LINE;
+		}
+
 		pbuf += iBinaryDataLen;
 		iSqlLen = (int32_t)(pbuf-stConfig.szBinSql);
 		iTmpLen = snprintf(pbuf, sizeof(stConfig.szBinSql)-iSqlLen, " where id=%d", iDbId);

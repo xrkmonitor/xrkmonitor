@@ -54,8 +54,14 @@ typedef struct
 	int32_t iTimerHashKey;
 
 	char szSql[256];
+
 	Database *db;
 	Query *qu;
+
+	bool bSelfIsCenterServer;
+	SLogServer *pCenterServer;
+	uint32_t dwLastWriteRealinfoToDbTime;
+	int32_t iRealinfoToDbPerTime;
 
 	MtSystemConfig *psysConfig;
 }CONFIG;

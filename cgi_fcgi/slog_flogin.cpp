@@ -184,6 +184,13 @@ static int PopLoginWindow(CGI *cgi, HDF *hdf)
 	static std::string s_page_login_dwz;
 	static std::string s_page_login;
 
+	TRealTimeInfoShm &stRealInfoShm = stConfig.pShmConfig->stSysCfg.stRealInfoShm;
+	if(slog.InitChangeRealInfoShm() >= 0) {
+		stRealInfoShm.wNewAccTimes++;
+		stRealInfoShm.dwReanInfoSeq++;
+		slog.EndChangeRealInfoShm();
+	}
+
 	NEOERR *err = NULL;
 	if(s_page_login.empty()) {
 		s_page_login = stConfig.szCsPath;
@@ -194,6 +201,8 @@ static int PopLoginWindow(CGI *cgi, HDF *hdf)
 		s_page_login_dwz += "dmt_login_dwz.html";
 	}
 
+	hdf_set_int_value(cgi->hdf, "config.total_acc", stRealInfoShm.dwTodayAccTimes+stRealInfoShm.wNewAccTimes);
+	hdf_set_int_value(cgi->hdf, "config.today_acc", stRealInfoShm.dwTodayAccTimes+stRealInfoShm.wNewAccTimes);
 	if(g_iLoginType != 0)
 		hdf_set_int_value(hdf, "config.login_type", g_iLoginType);
 	hdf_set_value(hdf, "config.redirect_url", g_strRedirectUri);
@@ -232,10 +241,13 @@ static int PopLoginWindow(CGI *cgi, HDF *hdf)
 static int ResponseCheckResult(CGI *cgi, HDF *hdf, int32_t iResultCode)
 {
 	static std::string s_page_login;
+	TRealTimeInfoShm &stRealInfoShm = stConfig.pShmConfig->stSysCfg.stRealInfoShm;
 	if(s_page_login.empty()) {
 		s_page_login = stConfig.szCsPath;
 		s_page_login += "dmt_login_tween.html";
 	}
+	hdf_set_int_value(cgi->hdf, "config.total_acc", stRealInfoShm.dwTodayAccTimes+stRealInfoShm.wNewAccTimes);
+	hdf_set_int_value(cgi->hdf, "config.today_acc", stRealInfoShm.dwTodayAccTimes+stRealInfoShm.wNewAccTimes);
 	
 	NEOERR *err = NULL;
 	STRING str;
@@ -272,6 +284,13 @@ static int ResponseCheckResult(CGI *cgi, HDF *hdf, int32_t iResultCode)
 		else
 		{
 			cgi_redirect_uri(cgi, "%s", g_strRedirectUri);
+
+			TRealTimeInfoShm &stRealInfoShm = stConfig.pShmConfig->stSysCfg.stRealInfoShm;
+			if(slog.InitChangeRealInfoShm() >= 0) {
+				stRealInfoShm.wNewAccTimes++;
+				stRealInfoShm.dwReanInfoSeq++;
+				slog.EndChangeRealInfoShm();
+			}
 		}
 	}
 	return 0;

@@ -59,7 +59,7 @@ XRKLIB_INSTALL_HIS_FILE=_xrkmonitor_lib_install
 #
 #
 
-STEP_TOTAL=7
+STEP_TOTAL=9
 CUR_STEP=1
 APACHE_CMD=
 

@@ -40,6 +40,7 @@
 #include <sv_struct.h>
 #include "mtreport_server.h"
 #include "udp_sock.h"
+#include "comm.pb.h"
 
 
 #define LOG_CHECK_COPY_CONFIG_INFO(pCfgInfo) \
@@ -151,6 +152,33 @@ void CUdpSock::InitMtClientInfo()
 	m_pMtClient->dwFirstHelloTime = stConfig.dwCurrentTime;
 	m_pMtClient->dwAddress = m_addrRemote.GetAddr();
 	m_pMtClient->wBasePort = m_addrRemote.GetPort();
+}
+
+void CUdpSock::SendRealInfo()
+{
+	/*
+	::comm::SysconfigInfo stInfo;
+	std::string strContent;
+
+	CBasicPacket pkg;
+
+	// ReqPkgHead 
+	ReqPkgHead stHead;
+	pkg.InitReqPkgHead(&stHead, CMD_INNER_SEND_REALINFO, slog.m_iRand);
+	*(int32_t*)(stHead.sReserved) = htonl(slog.GetLocalMachineId());
+
+	// TSignature - empty
+	// [cmd content]
+	pkg.InitCmdContent((void*)strContent.c_str(), strContent.length());
+	// TPkgBody - empty
+
+	if(pkg.MakeReqPkg() > 0) {
+		Ipv4Address addr;
+		addr.SetAddress(stConfig.pCenterServer->dwIp, stConfig.pCenterServer->wPort);
+		SendToBuf(addr, pkg, iPkgLen, 0);
+		DEBUG_LOG("SendLogToServer ok, server:%s:%d", psrv->szIpV4, psrv->wPort);
+	}
+	*/
 }
 
 int CUdpSock::GetMtClientInfo()
@@ -901,9 +929,10 @@ void CUdpSock::OnRawData(const char *buf, size_t len, struct sockaddr *sa, sockl
 		return;
 	}
 
-	// 仅处理来自 slog_mtreport_client 的二进制协议
-	if(PacketPb())
+	if(PacketPb()) {
+
 		return;
+	}
 
 	switch(m_dwReqCmd) {
 		case CMD_MONI_SEND_HELLO_FIRST:
