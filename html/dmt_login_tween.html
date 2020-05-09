@@ -75,9 +75,14 @@
                     </div>
                 </div>
 				<footer>
-					<button style='float:left;width:120px;margin-left:10px;' title='站点访问数据' class="sexybutton sexysimple"><span class="chart_bar">0 / 0</span></button>
+					<?cs if:config.isdaemon == 1 ?>
+					<button style='float:left;width:120px;margin-left:10px;' title='站点访问数据' class="sexybutton sexysimple"><span class="chart_bar"><?cs var:config.today_acc ?> / <?cs var:config.total_acc ?></span></button>
+					<?cs else ?>
+					<button disabled style='float:left;width:120px;margin-left:10px;' title='站点访问数据' class="sexybutton sexysimple"><span class="chart_bar"><?cs var:config.today_acc ?> / <?cs var:config.total_acc ?></span></button>
+					<?cs /if ?>
+
 					<a style='margin-left:35px; float:left; position:static;' title='码云源码链接' target='_blank' href='https://gitee.com/xrkmonitorcom/open/stargazers'><img src='https://gitee.com/xrkmonitorcom/open/badge/star.svg?theme=dark' alt='star'></img></a>
-					<button title='字符云监控系统云版本' style='position:static; margin-left:35px; float:left;' class="sexybutton sexysimple" onClick='goto_online();'><span class="home">云版本</span></button>
+					<button title='监控系统云版本' style='position:static; margin-left:35px; float:left;' class="sexybutton sexysimple" onClick='goto_online();'><span class="home">云版本</span></button>
 				</footer>
             </div>
         </div>

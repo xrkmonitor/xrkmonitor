@@ -1210,6 +1210,7 @@ function dmtGetSyssetTypeHtml(shtmlid)
 	html += '<option value="1">日志服务器</option>';
 	html += '<option value="2">监控点服务器</option>';
 	html += '<option value="3">mysql 监控点服务器</option>';
+	html += '<option value="4">系统中心服务器</option>';
 	html += '<option value="11">web 服务器</option>';
 	html += '</select>';
 	g_html_systype = html;
