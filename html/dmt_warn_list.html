@@ -13,7 +13,7 @@
 			<ul class="searchContent" >
 				<li class="width:auto">
 					<label>告警状态：</label>
-					<select name="dwl_deal_status_sel" id="dwl_deal_status_sel">
+					<select class="xrk_combox" name="dwl_deal_status_sel" id="dwl_deal_status_sel">
 						<option value="-1">全部</option>
 						<option value="0">未处理</option>
 						<option value="1">处理中</option>
@@ -23,7 +23,7 @@
 				</li>
 				<li class="width:auto">
 					<label>告警对象：</label>
-					<select name="dwl_warn_obj_sel" id="dwl_warn_obj_sel">
+					<select class="xrk_combox" name="dwl_warn_obj_sel" id="dwl_warn_obj_sel">
 						<option value="0">全部</option>
 						<option value="8">单机告警</option>
 						<option value="16">视图告警</option>
@@ -31,7 +31,7 @@
 				</li>
 				<li class="width:auto">
 					<label>告警类型：</label>
-					<select name="dwl_warn_type_sel" id="dwl_warn_type_sel">
+					<select class="xrk_combox" style='height:26px' name="dwl_warn_type_sel" id="dwl_warn_type_sel">
 						<option value="0">全部</option>
 						<option value="1">最大值</option>
 						<option value="2">最小值</option>
@@ -202,7 +202,7 @@ $(document).ready(function(){
 		$("input[name=dwl_view_id]").val("");
 		$("input[name=dwl_attr_id]").val("");
 		$("select[name=dwl_deal_status_sel]").val(-1);
-		$("select[name=dwl_warn_type_sel]").val(0);
+		$("#dwl_warn_type_sel").val(0);
 		$("select[name=dwl_warn_obj_sel]").val(0);
 		return false;
 	});

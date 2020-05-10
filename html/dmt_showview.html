@@ -1,46 +1,42 @@
 <div class="pageContent">
-	<div class="unitBox" style="margin-left:1px;"> 
-		<div class="pageContent" style="border-left:1px #B8D0D6 solid;border-right:1px #B8D0D6 solid">
-			<div class="panelBar">
-				<ul class="toolBar">
-					<li><a class="edit" href="#" onclick="return dsAttrBind_<?cs var:config.view_id ?>();"><span>监控点绑定</span></a></li>
-					<li class="line">line</li>
-					<li><a class="edit" href="#" onclick="return dsMachineBind_<?cs var:config.view_id ?>();"><span>机器绑定</span></a></li>
-					<li class="line">line</li>
-					<li>指定日期：<input type="text" class="date" size="10" readonly="true" id="ds_date_<?cs var:config.view_id ?>" value="<?cs var:config.cust_date ?>" onblur="setTimeout(dsOnCustDateChange_<?cs var:config.view_id ?>, 600);" minDate="2014-01-01" maxDate="2088-12-31" /></li>
+	<div class="panelBar" style='background-color:#f2f6f9'>
+		<ul class="toolBar">
+			<li><a class="edit" href="#" onclick="return dsAttrBind_<?cs var:config.view_id ?>();"><span>监控点绑定</span></a></li>
+			<li class="line">line</li>
+			<li><a class="edit" href="#" onclick="return dsMachineBind_<?cs var:config.view_id ?>();"><span>机器绑定</span></a></li>
+			<li class="line">line</li>
+			<li>指定日期：<input type="text" class="date" size="10" readonly="true" id="ds_date_<?cs var:config.view_id ?>" value="<?cs var:config.cust_date ?>" onblur="setTimeout(dsOnCustDateChange_<?cs var:config.view_id ?>, 600);" minDate="2014-01-01" maxDate="2088-12-31" /></li>
 
-					<li class="line">line</li>
-					<li><a class="add" href="#" onclick="return dsAttrShow_<?cs var:config.view_id ?>(2);"><span>日图</span></a></li>
+			<li class="line">line</li>
+			<li><a class="add" href="#" onclick="return dsAttrShow_<?cs var:config.view_id ?>(2);"><span>日图</span></a></li>
 
-					<li class="line">line</li>
-					<li><a class="add" href="#" onclick="return dsAttrShow_<?cs var:config.view_id ?>(1);"><span>日同比图</span></a></li>
+			<li class="line">line</li>
+			<li><a class="add" href="#" onclick="return dsAttrShow_<?cs var:config.view_id ?>(1);"><span>日同比图</span></a></li>
 
-					<li class="line">line</li>
-					<li><a class="add" href="#" onclick="return dsAttrShow_<?cs var:config.view_id ?>(3);"><span>周图</span></a></li>
+			<li class="line">line</li>
+			<li><a class="add" href="#" onclick="return dsAttrShow_<?cs var:config.view_id ?>(3);"><span>周图</span></a></li>
 
-					<li class="line">line</li>
-					<li><a class="add" href="#" onclick="return dsLeftMenuShow_<?cs var:config.view_id ?>();"><span>导航菜单</span></a></li>
+			<li class="line">line</li>
+			<li><a class="add" href="#" onclick="return dsLeftMenuShow_<?cs var:config.view_id ?>();"><span>导航菜单</span></a></li>
 
-					<li class="line">line</li>
-					<li>
-						<input type="checkbox" id="ds_check_show_<?cs var:config.view_id ?>" onclick="return dsCheckShow_<?cs var:config.view_id ?>();"/>
-						<label class='for' for='ds_check_show_<?cs var:config.view_id ?>'>仅绘制有上报的监控点图表</label>
-					</li>
+			<li class="line">line</li>
+			<li>
+				<input type="checkbox" id="ds_check_show_<?cs var:config.view_id ?>" onclick="return dsCheckShow_<?cs var:config.view_id ?>();"/>
+				<label class='for' for='ds_check_show_<?cs var:config.view_id ?>'>仅绘制有上报的监控点图表</label>
+			</li>
 
-					<li style="display:none"><a id="ds_href_<?cs var:config.view_id ?>" href="#" target="navTab" rel="showview_<?cs var:config.view_id ?>" fresh="false"></a></li>
-				</ul>
-			</div>
+			<li style="display:none"><a id="ds_href_<?cs var:config.view_id ?>" href="#" target="navTab" rel="showview_<?cs var:config.view_id ?>" fresh="false"></a></li>
+		</ul>
+	</div>
 
-			<div> 
-				<div id='dsLeftMenu_<?cs var:config.view_id ?>' layoutH="28" class="chartLeftMenu">
-					<ul class="tree treeFolder" id="ds_attr_list_<?cs var:config.view_id ?>">
-					</ul>
-				</div> 
-				<div layoutH="28" id="ds_ct_attr_show_list_<?cs var:config.view_id ?>"> 
-				</div>
-			</div>
+	<div> 
+		<div id='dsLeftMenu_<?cs var:config.view_id ?>' layoutH="28" class="chartLeftMenu">
+			<ul class="tree treeFolder" id="ds_attr_list_<?cs var:config.view_id ?>">
+			</ul>
+		</div> 
+		<div layoutH="28" id="ds_ct_attr_show_list_<?cs var:config.view_id ?>"> 
 		</div>
-	</div> <!-- unitBox -->
+	</div>
 </div>
 
 <script language="javascript" type="text/javascript">
@@ -64,7 +60,7 @@ function dsAttrBind_<?cs var:config.view_id ?>()
 	url += "&view_id=" + view_id;
 	var dlg = "ds_dlg_bind_attr_" + view_id;
 
-	var op = $.parseJSON('{"mask":true,"maxable":false,"height":480,"width":780,"resizable":false}'); 
+	var op = $.parseJSON('{"mask":false,"maxable":true,"height":480,"width":780,"resizable":true}'); 
 	$.pdialog.open(url, dlg, "绑定监控点", op); 
 }
 
@@ -200,7 +196,6 @@ function dsAttrShowDate2_<?cs var:config.view_id ?>(idx)
 	else
 		reqpara.date = 'today';
 	reqpara._r = Math.random();
-
 	ds_attr_show_index_cur_<?cs var:config.view_id ?> = idx; 
 	ajaxTodoPost(requrl, reqpara, function(json) {
 		if(dmtFirstDealAjaxResponse(json))

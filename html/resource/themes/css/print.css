@@ -1,3 +1,22 @@
-header ,main , footer, #splitBar, #splitBarProxy, #alertBackground, #dialogBackground, #background, 
-.comboxop, .shadow, .panelBar{ display:none;}
-#printBox{ display:block;}
+/* rockdeng add style */
+
+.xrk_combox { height:26px; align-items: center; white-space: pre; font-size:12px;}
+.tips-text { color:gray; }
+.tips-text-box { width:100%; height:60px; border-color:#0099CC; }
+.detail {color:blue; } 
+.log-keyword { padding: 0 18px 0 3px; position: relative; border: 1px solid #ddd; margin-right: 5px; float:left; margin-bottom: 3px; white-space: nowrap }
+.log-keyword .close { background-image: url('../images/close.gif'); float: right; width: 15px; height: 15px; position: absolute; right: 0; top: 2px }
+.log-keyword .close:hover { background-position: 0 -30px }
+.highlight { background-color:#fc0; }
+.note-text { color:#7F7F7F; }
+.hreflink { color:blue; }
+.accountInfo { margin-bottom:2px; padding:0 5px; } 
+.ucPageTdVal { height:26px; font-size:14px; text-align:left; font-weight:bold; }
+.ucPageTdName { height:26px; font-size:14px; text-align:center; }
+.mainPageTdName { height:26px; font-size:14px; text-align:center; }
+.mainPageTdVal { height:26px; font-size:14px; text-align:center; font-weight:bold; }
+.mainPageChart { margin:10px 20px; float:left; height:420px; }
+.chartLeftMenu { float:left; display:block; overflow:auto; width:300px; border:solid 1px #CCC; line-height:21px; background:#fff; }
+.userPayColor { background-color:SpringGreen; }
+.mainHeadLeftTitle { font-size:18px;float:left;margin:15px 10px; letter-spacing: 1px; font-weight: bold; }
+

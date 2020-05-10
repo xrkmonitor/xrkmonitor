@@ -75,98 +75,90 @@ $(document).ready(function(){
 
 </script>
 
-<div class="pageContent">
-	<div class="unitBox" style="margin-left:1px;"> 
-		<form id="pagerForm" method="post" action="<?cs var:config.cgipath?>mt_slog_showview?action=not_bind_attr_search&view_id=<?cs var:config.view_id ?>">
-			<input type="hidden" name="pageNum" value="<?cs var:config.currentPage ?>" />
-			<input type="hidden" name="numPerPage" value="<?cs var:config.numPerPage ?>" />
-			<input type="hidden" name="orderField" value="<?cs var:config.orderField ?>" />
-			<input type="hidden" name="orderDirection" value="<?cs var:config.orderDirection ?>" />
+<div class="pageHeader" style="margin-left:1px;"> 
+	<form class="pagerForm" method="post" onsubmit='return dialogSearch(this);' action="<?cs var:config.cgipath?>mt_slog_showview?action=not_bind_attr_search&view_id=<?cs var:config.view_id ?>">
+		<?cs include:config.cspath+"dmt_page_para.html" ?>
+		<input type="hidden" name="dsnba_attr_data_type" value="<?cs var:config.dsnba_attr_data_type ?>" />
+		<input type="hidden" name="dam_attr_type" value="<?cs var:config.dam_attr_type ?>">
+		<input type="hidden" name="dam_attr_type_name" value="<?cs var:config.dam_attr_type_name ?>">
+	</form>
 
-			<input type="hidden" name="dsnba_attr_data_type" value="<?cs var:config.dsnba_attr_data_type ?>" />
-			<input type="hidden" name="dam_attr_type" value="<?cs var:config.dam_attr_type ?>">
-			<input type="hidden" name="dam_attr_type_name" value="<?cs var:config.dam_attr_type_name ?>">
-		</form>
+	<form onsubmit="return divSearch(this, 'dsb_not_bind_attr_list_<?cs var:config.view_id ?>');" action="<?cs var:config.cgipath?>mt_slog_showview?action=not_bind_attr_search&view_id=<?cs var:config.view_id ?>" method="post">
+		<div class="searchBar">
+			<ul class="searchContent">
+				<li style='width:180px'>
+					<label style='width:60px'>数据类型：</label>
+					<select class="combox" name="dsnba_attr_data_type" id="dsnba_attr_data_type_<?cs var:config.view_id ?>">
+						<option value="0">全部</option>
+						<option value="<?cs var:config.sum_report_m ?>">累计量</option>
+						<option value="<?cs var:config.sum_report_his ?>">历史累计量</option>
+						<option value="<?cs var:config.sum_report_min ?>">取上报最小值</option>
+						<option value="<?cs var:config.sum_report_max ?>">取上报最大值</option>
+						<option value="<?cs var:config.ex_report ?>">异常量</option>
+						<option value="<?cs var:config.str_report_d ?>">字符串型</option>
+						<option value="<?cs var:config.str_report_d_ip ?>">字符串型-IP省级</option>
+					</select>
+				</li>
 
-		<div class="pageHeader" style="border:1px #B8D0D6 solid">
-			<form onsubmit="return divSearch(this, 'dsb_not_bind_attr_list_<?cs var:config.view_id ?>');" action="<?cs var:config.cgipath?>mt_slog_showview?action=not_bind_attr_search&view_id=<?cs var:config.view_id ?>" method="post">
-			<div class="searchBar">
-				<table class="searchContent">
-					<tr>
-						<td style='width:180px'>
-							<label style='width:60px'>数据类型：</label>
-							<select class="combox" name="dsnba_attr_data_type" id="dsnba_attr_data_type_<?cs var:config.view_id ?>">
-								<option value="0">全部</option>
-								<option value="<?cs var:config.sum_report_m ?>">累计量</option>
-								<option value="<?cs var:config.sum_report_his ?>">历史累计量</option>
-								<option value="<?cs var:config.sum_report_min ?>">取上报最小值</option>
-								<option value="<?cs var:config.sum_report_max ?>">取上报最大值</option>
-								<option value="<?cs var:config.ex_report ?>">异常量</option>
-								<option value="<?cs var:config.str_report_d ?>">字符串型</option>
-								<option value="<?cs var:config.str_report_d_ip ?>">字符串型-IP省级</option>
-							</select>
-						</td>
-						<td>
-						    <label style='width:60px'>监控点ID：</label>
-						    <input type="text" size='6' name="dam_attr_id" value="<?cs var:config.dam_attr_id ?>">
-						</td>
-						<td>
-							<label style='width:80px'>监控点类型：</label>
-							<input type="hidden" name="dam_attr_type" value="<?cs var:config.dam_attr_type ?>">
-							<input type="text" size="12" name="dam_attr_type_name" value="<?cs var:config.dam_attr_type_name ?>" readonly="readonly" />
-						</td>
-						<td align="left">
-							<a class="btnLook" href="<?cs var:config.cgipath ?>mt_slog_attr?action=lookUpAttrType" title="监控点类型选择" lookupGroup="" ></a>
-						</td>
-						<td>
-							<button type="submit" class="sexybutton" id="dsnba_btn_submit"><span><span><span class="search">查找</span></span></span></button>
-							<button class="sexybutton" id="dsnba_btn_erase" onclick="return dsnbaClearSearch_<?cs var:config.view_id ?>()"><span><span><span class="erase">重填</span></span></span></button>
-						</td>
-					</tr>
-				</table>
-			</div>
-			</form>
-		</div>
-		
-		<div layoutH="80" class="pageContent" style="border-left:1px #B8D0D6 solid;border-right:1px #B8D0D6 solid">
-			<div class="panelBar">
-				<ul class="toolBar">
-					<li><a class="edit" targetType="dialog" postType="string" callback="dsbAfterAttrOpr_<?cs var:config.view_id ?>" target="selectedTodo" rel="not_bind_attr_<?cs var:config.view_id ?>" href="<?cs var:config.cgipath ?>mt_slog_showview?action=save_bind_attr&view_id=<?cs var:config.view_id ?>"><span>绑定</span></a></li>
+				<li>
+				    <label style='width:60px'>监控点ID：</label>
+				    <input type="text" size='6' name="dam_attr_id" value="<?cs var:config.dam_attr_id ?>">
+				</li>
+				<li>
+					<label style='width:80px'>监控点类型：</label>
+					<input type="hidden" name="dam_attr_type" value="<?cs var:config.dam_attr_type ?>">
+					<input type="text" size="12" name="dam_attr_type_name" value="<?cs var:config.dam_attr_type_name ?>" readonly="readonly" />
+				</li>
+				<li align="left">
+					<a class="btnLook" href="<?cs var:config.cgipath ?>mt_slog_attr?action=lookUpAttrType" title="监控点类型选择" lookupGroup="" ></a>
+				</li>
+			</ul>
+			<div class='subBar'>
+				<ul>
+					<li><button type="submit" class="buttonActive" id="dsnba_btn_submit">查找</button></li>
+					<li><button class="buttonActive" id="dsnba_btn_erase" onclick="return dsnbaClearSearch_<?cs var:config.view_id ?>()"></button> </li>
 				</ul>
 			</div>
-
-			<div id="dsnba_attr_list">
-				<table class="table" width="100%" layoutH="156">
-					<thead>
-						<tr>
-							<th width="22"><input type="checkbox" group="not_bind_attr_<?cs var:config.view_id ?>" class="checkboxCtrl"></th>
-							<th width="40">序号</th>
-							<th width="40">监控点id</th>
-							<th width="140">监控点名称</th>
-							<th width="140">监控点类型</th>
-							<th width="120">数据类型</th>
-						</tr>
-					</thead>
-					<tbody id="dsnba_attr_list_info_<?cs var:config.view_id ?>">
-					</tbody>
-				</table>
-		
-				<div class="panelBar">
-					<div class="pages">
-						<span>每页显示</span>
-						<select class="combox" name="numPerPage" onchange="dialogPageBreak({numPerPage:this.value}, 'dsb_not_bind_attr_list_<?cs var:config.view_id ?>')">
-							<option value="10">10</option>
-							<option value="20">20</option>
-							<option value="50">50</option>
-							<option value="100">100</option>
-							<option value="200">200</option>
-						</select>
-						<span>条，共 <?cs var:config.totalCount ?>  条</span>
-					</div>
-					<div class="pagination" rel="dsb_not_bind_attr_list_<?cs var:config.view_id ?>" callback="dsbAfterAttrOpr_<?cs var:config.view_id ?>" targetType="dialog" totalCount="<?cs var:config.totalCount ?>" numPerPage="<?cs var:config.numPerPage ?>" pageNumShown="<?cs var:config.pageNumShown ?>" currentPage="<?cs var:config.currentPage ?>"></div>
-				</div>
-			</div> <!-- dsnba_attr_list -->
 		</div>
-	</div> <!-- unitBox -->
+	</form>
 </div>
+		
+<div class="pageContent"> 
+	<div class="panelBar">
+		<ul class="toolBar">
+			<li><a class="edit" targetType="dialog" postType="string" callback="dsbAfterAttrOpr_<?cs var:config.view_id ?>" target="selectedTodo" rel="not_bind_attr_<?cs var:config.view_id ?>" href="<?cs var:config.cgipath ?>mt_slog_showview?action=save_bind_attr&view_id=<?cs var:config.view_id ?>"><span>绑定</span></a></li>
+		</ul>
+	</div>
+
+	<table class="list" width="100%">
+		<thead>
+			<tr>
+				<th width="22"><input type="checkbox" group="not_bind_attr_<?cs var:config.view_id ?>" class="checkboxCtrl"></th>
+				<th width="40">序号</th>
+				<th width="40">监控点id</th>
+				<th width="140">监控点名称</th>
+				<th width="140">监控点类型</th>
+				<th width="120">数据类型</th>
+			</tr>
+		</thead>
+		<tbody id="dsnba_attr_list_info_<?cs var:config.view_id ?>">
+		</tbody>
+	</table>
+
+	<div class="panelBar">
+		<div class="pages">
+			<span>每页显示</span>
+			<select class="combox" name="numPerPage" onchange="dialogPageBreak({numPerPage:this.value}, 'dsb_not_bind_attr_list_<?cs var:config.view_id ?>')">
+				<option value="10">10</option>
+				<option value="20">20</option>
+				<option value="50">50</option>
+				<option value="100">100</option>
+				<option value="200">200</option>
+			</select>
+			<span>条，共 <?cs var:config.totalCount ?>  条</span>
+		</div>
+		<div class="pagination" rel="dsb_not_bind_attr_list_<?cs var:config.view_id ?>" callback="dsbAfterAttrOpr_<?cs var:config.view_id ?>" targetType="dialog" totalCount="<?cs var:config.totalCount ?>" numPerPage="<?cs var:config.numPerPage ?>" pageNumShown="<?cs var:config.pageNumShown ?>" currentPage="<?cs var:config.currentPage ?>"></div>
+	</div>
+</div> <!-- pageContent -->
+
 

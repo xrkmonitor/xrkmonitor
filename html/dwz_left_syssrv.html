@@ -1,7 +1,25 @@
 <div class="accordion" fillSpace="sidebar">
+	<div class="accordionHeader">
+		<h2><i class="icon-check-sign icon-large"></i>系统服务器<i class="icon icon-chevron-up"></i></h2>
+	</div>
+
 	<div class="accordionContent">
 		<ul class="tree treeFolder">
 			<li><a href="<?cs var:config.cgipath?>mt_slog_machine?action=list_sys_srv" target="navTab" rel="dmt_list_sys_srv">系统服务器列表</a></li>
+		</ul>
+	</div>
+
+	<div class="accordionHeader">
+		<h2><i class="icon-check-sign icon-large"></i>用户管理<i class="icon icon-chevron-up"></i></h2>
+	</div>
+
+	<div class="accordionContent">
+		<ul class="tree treeFolder">
+			<li><a href="<?cs var:config.cgipath?>mt_slog_user?action=user_center" target="navTab" rel="dmt_user_center">账号中心</a></li>
+			<?cs if:comm.user_type==1 ?>
+			<li><a href="<?cs var:config.cgipath?>mt_slog_user?action=login_info" target="navTab" rel="dmt_user_login">账号登录列表</a></li>
+			<li><a href="<?cs var:config.cgipath?>mt_slog_user?action=list_user" target="navTab" rel="dmt_user">用户列表</a></li>
+			<?cs /if ?>
 		</ul>
 	</div>
 </div>
