@@ -1,117 +1,90 @@
-<div class="pageContent">
-	<div class="unitBox" style="margin-left:1px;"> 
-		<form id="pagerForm" method="post" action="<?cs var:config.cgipath?>mt_slog_showview?action=search_page_warn_list">
-			<input type="hidden" name="pageNum" value="<?cs var:config.currentPage ?>" />
-			<input type="hidden" name="numPerPage" value="<?cs var:config.numPerPage ?>" />
+<div class="pageHeader">
+	<form class="pagerForm" autocomplete="off" method="post" onsubmit="return navTabSearch(this);" action='<?cs var:config.cgipath?>mt_slog_showview?action=search_warn_list' >
+		<?cs include:config.cspath+"dmt_page_para.html" ?>
+		<input type="hidden" name="dwl_view_id_page" value="<?cs var:config.dwl_view_id ?>" />
+		<input type="hidden" name="dwl_machine_id_page" value="<?cs var:config.dwl_machine_id ?>" />
+		<input type="hidden" name="dwl_attr_id_page" value="<?cs var:config.dwl_attr_id ?>" />
+		<input type="hidden" name="dwl_warn_obj" value="<?cs var:config.dwl_warn_obj ?>" />
+		<input type="hidden" name="dwl_warn_type" value="<?cs var:config.dwl_warn_type ?>" />
+		<input type="hidden" name="dwl_deal_status" value="<?cs var:config.dwl_deal_status ?>" />
+	</form>
+	<form onsubmit="return dwlBfSubmit(this);" action="<?cs var:config.cgipath?>mt_slog_showview?action=search_warn_list" method='post'>
+		<div class="searchBar"> 
+			<ul class="searchContent" >
+				<li class="width:auto">
+					<label>告警状态：</label>
+					<select name="dwl_deal_status_sel" id="dwl_deal_status_sel">
+						<option value="-1">全部</option>
+						<option value="0">未处理</option>
+						<option value="1">处理中</option>
+						<option value="2">处理完成</option>
+						<option value="3">已屏蔽</option>
+					</select>
+				</li>
+				<li class="width:auto">
+					<label>告警对象：</label>
+					<select name="dwl_warn_obj_sel" id="dwl_warn_obj_sel">
+						<option value="0">全部</option>
+						<option value="8">单机告警</option>
+						<option value="16">视图告警</option>
+					</select>
+				</li>
+				<li class="width:auto">
+					<label>告警类型：</label>
+					<select name="dwl_warn_type_sel" id="dwl_warn_type_sel">
+						<option value="0">全部</option>
+						<option value="1">最大值</option>
+						<option value="2">最小值</option>
+						<option value="4">波动值</option>
+						<option value="64">异常监控点</option>
+					</select>
+				</li>
 
-			<input type="hidden" name="dwl_view_id_page" value="<?cs var:config.dwl_view_id ?>" />
-			<input type="hidden" name="dwl_machine_id_page" value="<?cs var:config.dwl_machine_id ?>" />
-			<input type="hidden" name="dwl_attr_id_page" value="<?cs var:config.dwl_attr_id ?>" />
-			<input type="hidden" name="dwl_warn_obj" value="<?cs var:config.dwl_warn_obj ?>" />
-			<input type="hidden" name="dwl_warn_type" value="<?cs var:config.dwl_warn_type ?>" />
-			<input type="hidden" name="dwl_deal_status" value="<?cs var:config.dwl_deal_status ?>" />
-		</form>
+				<li class="width:auto">
+					<label>机器ID：</label><input type="text" name="dwl_machine_id" id="dwl_machine_id" size="8" value="<?cs var:config.dwl_machine_id?>" />
+					<label>视图ID：</label><input type="text" name="dwl_view_id" id="dwl_view_id" size="8" value="<?cs var:config.dwl_view_id?>" />
+					<label>监控点ID：</label><input type="text" name="dwl_attr_id" size="8" value="<?cs var:config.dwl_attr_id ?>" />
+				</li>
 
-		<div class="pageHeader" style="border:1px #B8D0D4 solid">
-			<form onsubmit="return dwlBfSubmit(this);" action="<?cs var:config.cgipath?>mt_slog_showview?action=search_warn_list" method="post">
-			<div class="searchBar">
-				<table class="searchContent" >
-					<tr>
-						<td>
-							机器ID：<input type="text" name="dwl_machine_id" id="dwl_machine_id" size="4" value="<?cs var:config.dwl_machine_id?>" />
-						</td>
-						<td>
-							视图ID：<input type="text" name="dwl_view_id" id="dwl_view_id" size="4" value="<?cs var:config.dwl_view_id?>" />
-						</td>
-						<td>
-							监控点ID：<input type="text" name="dwl_attr_id" size="4" value="<?cs var:config.dwl_attr_id ?>" />
-						</td>
-	
-						<td>
-							告警状态：
-							<select name="dwl_deal_status_sel" id="dwl_deal_status_sel">
-								<option value="-1">全部</option>
-								<option value="0">未处理</option>
-								<option value="1">处理中</option>
-								<option value="2">处理完成</option>
-								<option value="3">已屏蔽</option>
-							</select>
-						</td>
-						<td>
-							告警对象：
-							<select name="dwl_warn_obj_sel" id="dwl_warn_obj_sel">
-								<option value="0">全部</option>
-								<option value="8">单机告警</option>
-								<option value="16">视图告警</option>
-							</select>
-						</td>
-						<td>
-							告警类型：
-							<select name="dwl_warn_type_sel" id="dwl_warn_type_sel">
-								<option value="0">全部</option>
-								<option value="1">最大值</option>
-								<option value="2">最小值</option>
-								<option value="4">波动值</option>
-								<option value="64">异常监控点</option>
-							</select>
-						</td>
-						<td>
-							<button type="submit" class="sexybutton" id="dwl_btn_submit"><span><span><span class="search">查找</span></span></span></button>
-							<button class="sexybutton" id="dml_btn_erase" ><span><span><span class="erase">重置</span></span></span></button>
-						</td>
-					</tr>
-				</table>
-			</div>
-			</form>
-		</div>
-		
-		<div class="pageContent" style="border-left:1px #B8D0D6 solid;border-right:1px #B8D0D6 solid">
-			<div class="panelBar">
-				<ul class="toolBar">
-					<li><a class="edit" href="#" onclick="return dwlDealMultiWarns(1);"><span>批量处理告警</span></a></li>
-					<li class="line">line</li>
-					<li><a class="edit" href="#" onclick="return dwlDealMultiWarns(2);"><span>批量处理完成</span></a></li>
-					<li class="line">line</li>
+			</ul>
+			<div class="subBar">
+				<ul>
+					<li><button type="submit" class="buttonActive">查找</button></li>
+					<li><button type="button" class="buttonActive" id="dml_btn_erase">重置</button></li>
 				</ul>
 			</div>
-	
-			<div>
-				<table class="table" width="100%" layoutH="115">
-					<thead>
-						<tr>
-							<th width="50">序号</th>
-							<th width="120">最后告警时间</th>
-							<th width="240">告警监控点</th>
-							<th width="400">告警描述</th>
-							<th width="50">触发次数</th>
-							<th width="120">开始告警时间</th>
-							<th width="60">处理状态</th>
-							<th width="60">上报查看</th>
-							<th width="22"><input type="checkbox" group="warn_info_ids" class="checkboxCtrl"></th>
-						</tr>
-					</thead>
-					<tbody id="dwl_info_list">
-					</tbody>
-				</table>
-
-				<div class="panelBar" layoutH="0">
-					<div class="pages">
-						<span>每页显示</span>
-						<select name="numPerPage" onchange="navTabPageBreak({numPerPage:this.value})">
-							<option value="10">10</option>
-							<option value="20">20</option>
-							<option value="50">50</option>
-							<option value="100">100</option>
-							<option value="200">200</option>
-						</select>
-						<span>条，共 <?cs var:config.totalCount ?>  条</span>
-					</div>
-					<div class="pagination" targetType="navTab" totalCount="<?cs var:config.totalCount ?>" numPerPage="<?cs var:config.numPerPage ?>" pageNumShown="<?cs var:config.pageNumShown ?>" currentPage="<?cs var:config.currentPage ?>"></div>
-				</div>
-
-			</div> 
 		</div>
-	</div> <!-- unitBox -->
+	</form>
+</div>
+		
+<div class="pageContent" style="border-left:1px #B8D0D6 solid;border-right:1px #B8D0D6 solid">
+	<div class="panelBar">
+		<ul class="toolBar">
+			<li><a class="edit" href="#" onclick="return dwlDealMultiWarns(1);"><span>批量处理告警</span></a></li>
+			<li class="line">line</li>
+			<li><a class="edit" href="#" onclick="return dwlDealMultiWarns(2);"><span>批量处理完成</span></a></li>
+			<li class="line">line</li>
+		</ul>
+	</div>
+	
+	<table class="list" width="100%" layoutH="0">
+		<thead>
+			<tr>
+				<th width="50">序号</th>
+				<th width="120">最后告警时间</th>
+				<th width="240">告警监控点</th>
+				<th width="400">告警描述</th>
+				<th width="50">触发次数</th>
+				<th width="120">开始告警时间</th>
+				<th width="60">处理状态</th>
+				<th width="60">上报查看</th>
+				<th width="22"><input type="checkbox" group="warn_info_ids" class="checkboxCtrl"></th>
+			</tr>
+		</thead>
+		<tbody id="dwl_info_list">
+		</tbody>
+	</table>
+	<?cs include:config.cspath+"dmt_page.html" ?>
 </div>
 
 <script language="javascript" type="text/javascript">
@@ -128,7 +101,7 @@ function dwlBfSubmit(fm)
 		alertMsg.info('查询条件非法，请重新输入');
 		return false;
 	}
-	return navTabSearch(fm, 'dmt_warn_list');
+	return navTabSearch(fm);
 }
 
 function dwlSetWarnList(warninfo)

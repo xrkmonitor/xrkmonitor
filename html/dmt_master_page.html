@@ -1,0 +1,472 @@
+<div class="pageHeader">
+    <form class="pagerForm" autocomplete="off" onsubmit="return navTabSearch(this);" method="post">
+        <div class="searchBar">
+            <ul class="searchContent accountInfo">
+                <li style='float:left; width:210px; margin-top:2px;'>
+					<p>
+						<font style="font-size:18px; font-style:italic">
+							&nbsp;&nbsp;--&nbsp;&nbsp;一切尽在掌握&nbsp;&nbsp;--
+						</font>
+					</p>
+                </li>
+
+				<li style='float:left; font-size:16px; font-weight:500; color:red; width:600px; overflow:hidden;'> 
+					<?cs if:config.notify_daemon ?>
+					<span id='dcNotifyMsg' style="font-size:16px; font-weight:500; color:red;"></span>
+					<?cs else ?>
+					<marquee onMouseOut='start();' onMouseOver='stop();' scrollamount="2" align='middle' id='dcNotifyMsg' loop=-1 behavior="alternate" style='text-decoration:underline;'></marquee>
+					<?cs /if ?>
+				</li>
+			</ul>
+
+			<div class='subBar'>
+				<ul>
+					<li><button type='button' class='buttonActive' id="dc_btn_hidden_tip" style='display:none'>不再显示当前消息</button></li>
+					<li><button type="button" class='buttonActive' id="dc_btn_refresh">刷新</button></li>
+				</ul>
+            </div>
+        </div>
+    </form>
+</div>
+
+<div class="pageContent" layoutH="28">
+	<div id='accountUseExp' style='width:300px; margin:15px 20px; float:left; height:300px;'>
+		<div class="panel" align='center' style='margin-top:2px;'>
+			<table width="100%" align='center' class="list" style="margin-top:1px">
+				<thead>
+					<tr>
+						<th colspan="2" style='height:28px; font-size:16px; text-align:center;font-weight:bold;'>
+						账号概况
+						</th>
+					</tr>
+				</thead>
+				<tbody>
+				<tr>
+					<td class='mainPageTdName'>账号类型</td>
+					<td class='mainPageTdVal' id='dc_utype'><?cs var:config.type_name ?></td>
+				</tr>
+				<tr>
+					<td class='mainPageTdName'>已配置上报机器数</td>
+					<td class='mainPageTdVal' id="dc_umachine"></td>
+				</tr>
+				<tr>
+					<td class='mainPageTdName'>已创建应用数</td>
+					<td class='mainPageTdVal' id="dc_uapp"></td>
+				</tr>
+				<tr>
+					<td class='mainPageTdName'>已创建模块数</td>
+					<td class='mainPageTdVal' id="dc_umodule"></td>
+				</tr>
+				<tr>
+					<td class='mainPageTdName'>已使用磁盘空间</td>
+					<td class='mainPageTdVal' id="dc_udisk"></td>
+				</tr>
+				<tr>
+					<td class='mainPageTdName'>已上报日志记录数</td>
+					<td class='mainPageTdVal' id="dc_ulogrecords"></td>
+				</tr>
+				<tr>
+					<td class='mainPageTdName'>已创建监控点数</td>
+					<td class='mainPageTdVal' id="dc_uattr"></td>
+				</tr>
+				<tr>
+					<td class='mainPageTdName'>当前登陆有效期至</td>
+					<td class='mainPageTdVal'><?cs var:config.login_expire_time ?></td>
+				</tr>
+				<tr>
+					<td class='mainPageTdName'></td>
+					<td />
+				</tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+	<div id='mainResourceUse' class='mainPageChart'></div>
+	<div id='mainChartAttr' class='mainPageChart'></div>
+	<div id='mainChartDisk' class='mainPageChart'></div>
+</div>
+
+<script language="javascript" type="text/javascript">
+var g_dcAppInfoAddr = 'local'; //'<?cs var:config.app_info_addr ?>';
+var g_dcChartResourceUse = null;
+var g_dcChartDiskUse = null;
+var g_dcChartAttrUse = null;
+
+var g_dcChartMinWidth = 420;
+var g_dcMainPageInfoWidth = 300;
+var g_dcMainChartWidth = 420;
+var g_dcMainFirstChartWidth = 420;
+var g_dcMainFirstChartCount = 0;
+var g_dcLastContentW = 0;
+
+// navtab 切回到 - '我的主页'
+function dcOnMainPage(idx)
+{
+	if(typeof idx == 'undefined')
+		$('#navTab').find('.main').trigger('click');
+	dcMainPageSetChartSize();
+	dcMainPageRedrawChart();
+}
+
+function dcMainPageRedrawChart()
+{
+	if($('#mainResourceUse').css('width') == g_dcMainChartWidth)
+		return;
+
+	if(g_dcChartResourceUse != null) {
+		if(g_dcMainFirstChartCount > 0) {
+			$('#mainResourceUse').css('width', g_dcMainFirstChartWidth);
+			g_dcChartResourceUse.resize();
+		}
+		else {
+			$('#mainResourceUse').css('width', g_dcMainChartWidth);
+			g_dcChartResourceUse.resize();
+		}
+
+		if(g_dcMainFirstChartCount > 1) {
+			$('#mainChartAttr').css('width', g_dcMainFirstChartWidth);
+			g_dcChartAttrUse.resize();
+		}
+		else {
+			$('#mainChartAttr').css('width', g_dcMainChartWidth);
+			g_dcChartAttrUse.resize();
+		}
+
+		if(g_dcMainFirstChartCount > 2) {
+			$('#mainChartDisk').css('width', g_dcMainFirstChartWidth);
+			g_dcChartDiskUse.resize();
+		}
+		else {
+			$('#mainChartDisk').css('width', g_dcMainChartWidth);
+			g_dcChartDiskUse.resize();
+		}
+	}
+}
+
+function dcMainPageSetChartSize()
+{
+	// 25 -- 预留给滚动条
+	var iContentW = $(window).width() - (DWZ.ui.sbar ? $("#sidebar").width() + 10 : 34) - 5 - 25;
+	if(g_dcLastContentW == iContentW)
+		return;
+	g_dcLastContentW = iContentW;
+
+	if(iContentW <= g_dcChartMinWidth+20+20) {
+		g_dcMainChartWidth = g_dcChartMinWidth;
+		g_dcMainFirstChartWidth = g_dcChartMinWidth;
+	}
+	else {
+		var xWidth = g_dcChartMinWidth+20+20;
+		var xLeft = iContentW % xWidth;
+		var xCount = dmtMathtrunc(iContentW/xWidth);
+		var xBlank = dmtMathtrunc(xLeft/xCount);
+		g_dcMainChartWidth = g_dcChartMinWidth+xBlank;
+
+		// 第一行的图表宽度计算，需要减去表格的占用
+		iContentW -= g_dcMainPageInfoWidth+20+20;
+		xLeft = iContentW % xWidth;
+		xCount = dmtMathtrunc(iContentW/xWidth);
+		if(xCount > 0) {
+			xBlank = dmtMathtrunc(xLeft/xCount);
+			g_dcMainFirstChartWidth = g_dcChartMinWidth+xBlank;
+			g_dcMainFirstChartCount = xCount;
+		}
+	}
+}
+
+function dcSetAttrInfoEChart(result)
+{
+	var op = {
+		title: {
+			x: 'center',
+			text:'自定义监控点使用分布'
+		},
+		tooltip: {
+			trigger:'item',
+			formatter: '{a} <br/>{b} : {c} ({d}%)'
+		},
+		legend : {
+			type:'scroll',
+			padding:[5,20,30,20],
+			orient: 'horizontal',
+			left:'center',
+			top:'bottom',
+			show:true
+		},
+		grid: {
+		},
+		series: [
+			{
+				type:'pie',
+				name:'自定义监控点',
+				radius:'75%',
+				center:['50%', '45%'],
+				data:[],
+				label: { 
+					show: false,
+	        		normal: {
+            	        show: false,
+            	        position: 'outside'
+            	    },
+            	    emphasis: {
+            	        show: false,
+            	    }
+            	},
+				itemStyle: {
+					emphasis: {
+						shadowBlur: 10,
+						shadowOffsetX: 0,
+						shadowColor: 'rgba(0, 0, 0, 0.5)'
+					}
+				}
+			}
+		]
+	};
+
+	op.series[0].data = result.attr_info;
+	if(g_dcMainFirstChartCount > 1)
+		$('#mainChartAttr').css('width', g_dcMainFirstChartWidth);
+	else
+		$('#mainChartAttr').css('width', g_dcMainChartWidth);
+
+	if(g_dcChartAttrUse != null)
+		g_dcChartAttrUse.dispose();
+	g_dcChartAttrUse = echarts.init(document.getElementById('mainChartAttr'));
+	g_dcChartAttrUse.setOption(op);
+}
+
+function dcSetAppDiskInfoEChart(result)
+{
+	var op = {
+		title: {
+			x: 'center',
+			text:'日志系统磁盘空间使用分布（>=1K）'
+		},
+		tooltip: {
+			trigger:'item',
+			formatter: '{a} <br/>{b} : {c} ({d}%)'
+		},
+		legend : {
+			type:'scroll',
+			padding:[5,20,30,20],
+			orient: 'horizontal',
+			left:'center',
+			top:'bottom',
+			show:true
+		},
+		grid: {
+		},
+		series: [
+			{
+				type:'pie',
+				name:'应用名称',
+				radius:'75%',
+				center:['50%', '45%'],
+				data:[],
+				label: { 
+					show: false,
+	        		normal: {
+            	        show: false,
+            	    },
+            	    emphasis: {
+            	        show: false,
+            	    }
+            	},
+				itemStyle: {
+					emphasis: {
+						shadowBlur: 10,
+						shadowOffsetX: 0,
+						shadowColor: 'rgba(0, 0, 0, 0.5)'
+					}
+				}
+			}
+		]
+	};
+
+	op.series[0].data = result.app_disk_info;
+	if(g_dcMainFirstChartCount > 2)
+		$('#mainChartDisk').css('width', g_dcMainFirstChartWidth);
+	else
+		$('#mainChartDisk').css('width', g_dcMainChartWidth);
+
+	if(g_dcChartDiskUse != null)
+		g_dcChartDiskUse.dispose();
+	g_dcChartDiskUse = echarts.init(document.getElementById('mainChartDisk'));
+	g_dcChartDiskUse.setOption(op);
+}
+
+function dcSetResourceUseEChart(valUse, valNotUse)
+{
+	var op = {
+		title: {
+			x:'center',
+			text:'账号资源使用概况'
+		},
+		tooltip: {
+			trigger:'axis',
+			axisPointer: {
+				axis:'x',
+				label: {
+					formatter:function(p) {
+						return '资源名称：'+p.value;
+		  			}
+				},
+				type:'shadow'
+			}
+		},
+		legend : {
+			top:'top',
+			left:'right',
+			padding:[5,20,30,20],
+			show:true
+		},
+	    xAxis: {
+			axisTick: {
+				interval:0
+			},
+			axisLabel: {
+				verticalAlign:'top'
+			},
+			type: 'category', 
+			data: ['应用', '模块', '监控点', '上报机器', '磁盘空间(M)']
+	    },
+		yAxis: [ 
+			{
+				type: 'value',
+				axisPointer: {	
+					label: { 
+						formatter:function(p) { 
+							return p.value;
+						},
+					}
+				},
+				axisLabel: {
+					formatter:function(v, i) {
+						return v;
+					}
+				},
+			}
+		],
+		series: [
+			{
+				type:'bar',
+				data:[]
+			}
+		]
+	};
+
+	op.series[0].data = eval('['+valUse+']');
+
+	if(g_dcMainFirstChartCount > 0)
+		$('#mainResourceUse').css('width', g_dcMainFirstChartWidth);
+	else
+		$('#mainResourceUse').css('width', g_dcMainChartWidth);
+
+	if(g_dcChartResourceUse != null)
+		g_dcChartResourceUse.dispose();
+	g_dcChartResourceUse = echarts.init(document.getElementById('mainResourceUse'));
+	g_dcChartResourceUse.setOption(op);
+}
+
+function dcInitMainPage()
+{
+	$('#dc_btn_refresh').click(dcRefreshStatInfo);
+
+	<?cs if:config.notify_daemon ?>
+	$('#dcNotifyMsg').text("温馨提示：当前版本为演示版，某些操作已被禁止");
+	<?cs else ?>
+	$('#dc_btn_hidden_tip').click(function() {
+		$('#dcNotifyMsg').css('display', 'none');
+		window.localStorage.setItem('cur_hide_tips_id', $('#dcNotifyMsg').data('tips_news_id'));
+		$('#dc_btn_hidden_tip').css('display', 'none');
+	});
+
+	// 尝试从云版本中拉取最新的开源版本信息或者相关的技术文章，如果拉取到则在主页展示提示信息
+	// 用户如不需要可以自行删除该部分代码，建议您保留以便获取到最新的项目动态
+	var requrl = '<?cs var:config.xrkmonitor_url ?>/cgi-bin/mt_slog_open';
+	var reqdata = new Object();
+	reqdata.action = 'open_get_news';
+	reqdata.rhost = location.host;
+	reqdata.rurl = location.href;
+	$.ajax({
+		type:'post',
+		url: requrl,
+		data: reqdata,
+		global: false,
+		dataType: 'json',
+		success: function(js) {
+			var hId = window.localStorage.getItem('cur_hide_tips_id');
+			if(js.ret == 0 && hId != js.news_id) {
+				$('#dcNotifyMsg').text(js.news_text);
+				if(typeof js.news_title != 'undefined')
+					$('#dcNotifyMsg').attr('title', js.news_title);
+				var nlink = '<a style="font-size:16px; font-weight:500; cursor:pointer; color:red;"';
+				nlink += ' target="_blank" href="' + js.news_url + '"></a>';
+				$('#dcNotifyMsg').wrap(nlink);
+				$('#dcNotifyMsg').data('tips_news_id', js.news_id);
+				$('#dc_btn_hidden_tip').css('display', 'block');
+				$('.center').css('cursor', 'pointer');
+			}
+		}
+	});
+	<?cs /if ?>
+}
+
+function dcSetStatInfo(result)
+{
+	if(dmtFirstDealAjaxResponse(result))
+		return;
+
+	$('#dc_umachine').text(result.machine_count);
+	$('#dc_uapp').text(result.app_count);
+	$('#dc_uattr').text(result.attr_count);
+
+	if(result.log_space_kb > 0) {
+		var logSpace = dmtGetHumanReadDigitByKB(result.log_space_kb);
+		$('#dc_udisk').text(logSpace);
+	}
+	else { 
+		$('#dc_udisk').text(result.log_space_b+' B');
+	}
+
+	$('#dc_umodule').text(result.module_count);
+	$('#dc_ulogrecords').text(result.log_records);
+
+	dcSetResourceUseEChart(result.resource_use);
+	dcSetAttrInfoEChart(result);
+	dcSetAppDiskInfoEChart(result);
+}
+
+function dcRefreshStatInfo()
+{
+	var requrl = '';
+	var para = new Object();
+	para.action = 'refresh_main_info';
+
+	if(g_dcAppInfoAddr == 'local') {
+		requrl = g_siteInfo.cgi_path + "mt_slog?";
+	}
+	else {
+		para.ex_flogin_user = $.cookie("flogin_user");
+		para.ex_flogin_md5 = $.cookie("flogin_md5");
+		para.ex_flogin_type = $.cookie("flogin_type");
+		para.ex_flogin_uid = $.cookie("flogin_uid");
+		para.ex_flogin_index = $.cookie("flogin_index");
+		requrl = 'http://'+g_dcAppInfoAddr+g_siteInfo.cgi_path + "mt_slog?";
+	}
+
+	$.ajax({
+		type: "POST",
+		url: requrl,
+		data: para,
+		success: dcSetStatInfo,
+		dataType: 'json', 
+		global: false,
+		error: function() {
+		    alertMsg.warn("脚本请求出错");
+		}  
+	});
+}
+
+</script>
+

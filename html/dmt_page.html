@@ -1,0 +1,15 @@
+<div class="pageBar panelBar">
+	<div class="pages">
+		<span>每页显示</span>
+		<select class='combox' name="numPerPage" onchange="navTabPageBreak({numPerPage:this.value})">
+			<option value="10">10</option>
+			<option value="20">20</option>
+			<option value="50">50</option>
+			<option value="100">100</option>
+			<option value="200">200</option>
+		</select>
+		<span>条，共 <?cs var:config.totalCount ?>  条</span>
+	</div>
+	<div class="pagination" targetType="navTab" totalCount="<?cs var:config.totalCount ?>" numPerPage="<?cs var:config.numPerPage ?>" pageNumShown="<?cs var:config.pageNumShown ?>" currentPage="<?cs var:config.currentPage ?>"></div>
+</div>
+

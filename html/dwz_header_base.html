@@ -1,25 +1,19 @@
-<div class="headerNav">
-	<?cs if:config.notify_daemon ?>
-	<div class='mainHeadLeftTitle mainHeadLeftColor'>【xrkmonitor】字符云监控系统 - 演示版</div>
-	<?cs else ?>
-	<div class='mainHeadLeftTitle mainHeadLeftColor'>【xrkmonitor】字符云监控系统</div>
+<a class="logo" href="./"><img src="resource/logo.png"/></a>
+<ul class="nav">
+	<li><a href="#" id='dh_init_change_pwd'><i class="icon-user icon-large"></i> 修改密码</a></li>
+	<li><a href="#" id="a_logout"><i class="icon-user icon-large"></i> <?cs var:comm.user_name ?></a></li>
+	<li><a href="logout.do?userId=2" title="退出登录"><i class="icon-signout icon-large"></i> 退出</a></li>
+</ul>
+
+<ul id="navMenu">
+	<li class="selected"><a href="<?cs var:config.cgipath?>mt_slog_monitor?action=left_attr">监控点上报查看</a></li>
+	<li><a href="<?cs var:config.cgipath?>mt_slog_monitor?action=left_log">日志上报查看</a></li>
+	<li><a href="<?cs var:config.cgipath?>mt_slog_monitor?action=left_m">上报管理</a></li>
+	<li><a href="<?cs var:config.cgipath?>mt_slog_monitor?action=left_plus"><i class="icon-user icon-large"></i>监控插件</a></li>
+
+	<?cs if:comm.user_type == 1 ?>
+	<li><a href="<?cs var:config.cgipath?>mt_slog_monitor?action=left_user" id='dh_left_user'>用户管理</a></li>
+	<li><a href="<?cs var:config.cgipath?>mt_slog_monitor?action=left_syssrv">系统服务器</a></li>
 	<?cs /if ?>
-	<ul class="nav">
-		<li><a href="https://gitee.com/xrkmonitorcom/open" target='_blank'>码云源码下载</a></li>
-		<li><a href="<?cs var:config.xrkmonitor_url ?>" target='_blank'>云版本主页</a></li>
-		<li><a href="http://xrkmonitor.com/monitor/dmt_open_doc.html" target='_blank'>帮助文档</a></li>
-
-		<li><a href="<?cs var:config.cgipath?>mt_slog_user?action=init_change_pwd" mask=true maxable=false target="dialog" width="400" height="240"> 修改密码</a></li>
-
-		<li><a href="#" id="a_logout"><?cs var:comm.user_name ?>&nbsp;退&nbsp;出</a></li>
-	</ul>
-	<ul class="themeList" id="themeList">
-		<li theme="default"><div class="selected">蓝色</div></li>
-		<li theme="green"><div>绿色</div></li>
-		<li theme="purple"><div>紫色</div></li>
-		<li theme="silver"><div>银色</div></li>
-		<li theme="azure"><div>天蓝</div></li>
-	</ul>
-</div>
-
+</ul>
 

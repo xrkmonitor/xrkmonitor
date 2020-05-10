@@ -1,52 +1,34 @@
 <!doctype html>
 <html lang="zh-CN">
 <head>
-
 <?cs include:config.cspath+"main_meta.html" ?>
+<link href="<?cs var:config.docpath?>resource/font-awesome/css/font-awesome.min.css?v=1" rel="stylesheet"/>
 
-<?cs if:config.xrkmonitor_debug==1 ?>
-<link href="<?cs var:config.docpath?>themes/default/style.css" rel="stylesheet" type="text/css" media="screen"/>
-<link href="<?cs var:config.docpath?>themes/css/core.css" rel="stylesheet" type="text/css" media="screen"/>
-<link href="<?cs var:config.docpath?>themes/css/print.css" rel="stylesheet" type="text/css" media="print"/>
-<link href="<?cs var:config.docpath?>themes/sexybuttons/sexybuttons.css" rel="stylesheet" type="text/css" media="screen"/>
-<?cs else ?>
-<link href="<?cs var:config.docpath?>themes/default/style.min.css?v=20200506" rel="stylesheet" type="text/css" media="screen"/>
-<link href="<?cs var:config.docpath?>themes/css/core.min.css?v=20200506" rel="stylesheet" type="text/css" media="screen"/>
-<link href="<?cs var:config.docpath?>themes/css/print.min.css?v=20200506" rel="stylesheet" type="text/css" media="print"/>
-<link href="<?cs var:config.docpath?>themes/sexybuttons/sexybuttons.min.css?v=20200506" rel="stylesheet" type="text/css" media="screen"/>
-<?cs /if ?>
-
-<!--[if IE]>
-<link href="<?cs var:config.docpath?>themes/css/ieHack.css" rel="stylesheet" type="text/css" media="screen"/>
+<!--[if IE 7]>
+<link rel="stylesheet" href="resource/font-awesome/css/font-awesome-ie7.min.css?v=1">
 <![endif]-->
 
-<?cs include:config.cspath+"dwz_js.html" ?>
+<link href="<?cs var:config.docpath?>resource/themes/css/core.css?v=1" rel="stylesheet" media="screen"/>
+<link href="<?cs var:config.docpath?>resource/themes/css/print.css?v=1" rel="stylesheet" media="print"/>
 
-<!-- 控制横向导航条 -->
-<style type="text/css">
-    #header{height:85px}
-    #leftside, #container, #splitBar, #splitBarProxy{top:90px}
-</style>
-
+<!--[if lte IE 9]>
+    <link href="<?cs var:config.docpath?>resource/themes/css/ieHack.css" rel="stylesheet" media="screen"/>
+    <script src="<?cs var:config.docpath?>resource/js/html5shiv.min.js"></script>
+    <script src="<?cs var:config.docpath?>resource/js/respond.min.js"></script>
+<![endif]-->
 </head>
 
 <body scroll="no">
-	<div id="layout"> 
-		<div id="header">
+	<header>
 		<?cs include:config.cspath+"dwz_header_base.html" ?>
-		<?cs include:config.cspath+"dwz_header.html" ?>
-		</div>
-		<?cs include:config.cspath+"dwz_left.html" ?>
+	</header>
+	<main>
 		<?cs include:config.cspath+"dwz_container.html" ?>
-	</div>
-	<?cs include:config.cspath+"dwz_foot.html" ?>
+	</main>
+	<footer>
+		<?cs include:config.cspath+"dwz_foot.html" ?>
+	</footer>
+	<?cs include:config.cspath+"dwz_js.html" ?>
 </body>
-
-<script type="text/javascript">
-var g_di_cspath = '<?cs var:config.cspath ?>';
-var g_di_docpath = '<?cs var:config.docpath ?>';
-var g_di_cgipath = '<?cs var:config.cgipath?>';
-</script>
-
 </html>
 
