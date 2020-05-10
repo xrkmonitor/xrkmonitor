@@ -1410,3 +1410,69 @@ function dmtGetBytesLength(str)
 	return total;
 }
 
+// ysy add - 2019-01-31
+function redrawChartsOnSwitchTab()
+{
+	var nid = navTab.getCurrentTabId();
+	if(nid != null) {
+		var type_id;
+		var type;
+		var isLeftShow;
+		if(nid.match('showmachine_')) {
+			type = 'machine';
+			type_id = nid.split('_')[1];
+			if($('#dsmLeftMenu_'+type_id).css('display') == 'none')
+				isLeftShow = false;
+			else
+				isLeftShow = true;
+		}
+		else if(nid.match('innersite_')) {
+			type = 'site';
+			type_id = nid.split('_')[1];
+			if($('#dsLeftMenu_'+type_id).css('display') == 'none')
+				isLeftShow = false;
+			else
+				isLeftShow = true;
+		}
+		else if(nid.match('showview_')) {
+			type = 'view';
+			type_id = nid.split('_')[1];
+			if($('#dsLeftMenu_'+type_id).css('display') == 'none')
+				isLeftShow = false;
+			else
+				isLeftShow = true;
+		}
+		else  {
+			return;
+		}
+		dmtSetRedrawChartsInfo(type_id, type, isLeftShow);
+		dmtRedrawCharts();
+	}
+}
+
+// ysy add - 2019-02-08 --- 主页图表大小自适应
+function redrawChartsMain()
+{	
+	// 当前tab 是主页
+	if($('#navMenuLast').hasClass('selected')) {
+ 	   	dcMainPageSetChartSize();
+ 	   	dcMainPageRedrawChart();
+	}
+}
+
+// ysy add - 2019-01-30 --- 单机视图图表大小自适应
+function redrawCharts()
+{
+	var nid = navTab.getCurrentTabId();
+	if(nid != null) {
+		if(nid.match('showmachine_') || nid.match('showview_') || nid.match('innersite_')) {
+			dmtRedrawCharts();
+		}
+	}
+	else {
+		// 主页
+		dcOnMainPage('main');
+	}
+}
+
+
