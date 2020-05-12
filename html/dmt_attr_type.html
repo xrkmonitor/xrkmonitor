@@ -1,99 +1,90 @@
 <div class="pageContent">
-	<div layoutH="2" style="float:left; display:block; overflow:auto; width:250px; border:solid 1px #CCC; line-height:21p
-	    x; background:#fff">
+	<div layoutH='0' style="float:left; display:block; overflow:auto; width:380px; border:solid 1px #CCC; line-height:21px; background:#fff">
 	    <ul class="tree treeFolder" id="attr_type_list">
 			<li><a href='#'>-</a></li>
 		</ul>
 	</div>
 
+	<form method="get" action="<?cs var:config.cgipath?>mt_slog_attr?" class="pageForm required-validate" onsubmit=" return validateCallback(this, afterAjaxBack)">
 	<div class="panelBar">
 		<ul class="toolBar"> 
-			<li><a class="add" href="#" id="attr_type_add"><span>添加</span></a></li>
+			<li><a href="#" id="attr_type_add"><i class='icon-plus'></i>添加</a></li>
 			<li class="line">line</li>
-			<li><a class="delete" href="#" id="attr_type_del"><span>删除</span></a></li>
+			<li><a href="#" id="attr_type_del"><i class='icon-minus'></i>删除</a></li>
 			<li class="line">line</li>
-			<li><a class="edit" href="#" id="attr_type_mod"><span>修改</span></a></li>
+			<li><a href="#" id="attr_type_mod"><i class='icon-edit'></i>修改</a></li>
 			<li class="line">line</li>
+			<li style='float:right'>
+				<ul> 
+					<li><button type="submit" class="buttonActive" id="at_btn_submit"><i class='icon-ok icon-large'></i>提交</button></li>
+					<li><button type="button" class="buttonActive" id="at_btn_erase"><i class='icon-trash icon-large'></i>重填</button></li>
+					<li><button type='button' class="buttonActive" onclick="return OnBtnCancel()">取消</button></li>
+				</ul>
+			</li>
 		</ul>
 	</div>
 
-	<div id="js_attr_type" class="unitBox" style="margin-left:251px;">
-		<form method="get" action="<?cs var:config.cgipath?>mt_slog_attr?" class="pageForm required-validate" onsubmit=" return validateCallback(this, afterAjaxBack)">
-
-			<div class="pageFormContent nowrap" layoutH="83">
-				<input type="hidden" value="" id="action" name="action" />
-				<input type="hidden" value="" id="parent_attr_type" name="parent_attr_type" />
-				<input type="hidden" value="" id="attr_type_pos" name="attr_type_pos" />
-				<input type="hidden" value="" id="mod_attr_type" name="mod_attr_type" />
-				<dl>
-					<dt>当前选中的监控点类型：</dt>
-					<dd id="attr_type_cur_type_tip"></dd>
-				</dl>
-				<dl>
-					<dt>类型位置：</dt>
-					<dd>
-						<input type="text" value="系统分配" id="attr_type_mypos" name="attr_type_mypos" disabled />
-					</dd>
-				</dl>
-				<dl>
-					<dt>类型编号：</dt>
-					<dd>
-						<input type="text" value="系统分配" id="attr_type_type" disabled />
-					</dd>
-				</dl>
-				<dl>
-					<dt>创建人：</dt>
-					<dd>
-						<input type="text" value="系统分配" id="attr_type_cuser" disabled />
-					</dd>
-				</dl>
-				<dl>
-					<dt>创建时间：</dt>
-					<dd>
-						<input type="text" value="系统分配" id="attr_type_ctime" disabled />
-					</dd>
-				</dl>
-				<dl>
-					<dt>最后修改人：</dt>
-					<dd>
-						<input type="text" value="系统分配" id="attr_type_muser" disabled />
-					</dd>
-				</dl>
-				<dl>
-					<dt>最后修改时间：</dt>
-					<dd>
-						<input type="text" value="系统分配" id="attr_type_mtime" disabled />
-					</dd>
-				</dl>
-				<dl>
-					<dt>类型名称：</dt>
-					<dd>
-						<input type="text" id="attr_type_name" name="attr_type_name" class="required" maxlength="18" disabled /> 
-					</dd>
-				</dl>
-				<dl>
-					<dt>类型描述：</dt>
-					<dd>
-						<textarea rows="5" cols="30" id="attr_type_desc" name="attr_type_desc" maxlength="64" disabled></textarea>
-					</dd>
-				</dl>
-			</div>
-
-			<div class="formBar"> 
-				<ul> 
-					<li>
-						<button type="submit" class="sexybutton" id="at_btn_submit"><span><span><span class="report">提交</span></span></span></button>
-					</li>
-					<li>
-						<button class="sexybutton" id="at_btn_erase" onclick="return OnBtnClear()"><span><span><span class="erase">重填</span></span></span></button>
-					</li>
-					<li>
-						<button class="sexybutton" onclick="return OnBtnCancel()"><span><span><span class="cancel">取消</span></span></span></button>
-					</li>
-				</ul>
-			</div>
-		</form>
+	<div id="js_attr_type" class="unitBox"> 
+		<div class="pageFormContent nowrap">
+			<input type="hidden" value="" id="action" name="action" />
+			<input type="hidden" value="" id="parent_attr_type" name="parent_attr_type" />
+			<input type="hidden" value="" id="attr_type_pos" name="attr_type_pos" />
+			<input type="hidden" value="" id="mod_attr_type" name="mod_attr_type" />
+			<dl>
+				<dt>当前选中的监控点类型：</dt>
+				<dd id="attr_type_cur_type_tip"></dd>
+			</dl>
+			<dl>
+				<dt>类型位置：</dt>
+				<dd>
+					<input type="text" value="系统分配" id="attr_type_mypos" name="attr_type_mypos" disabled />
+				</dd>
+			</dl>
+			<dl>
+				<dt>类型编号：</dt>
+				<dd>
+					<input type="text" value="系统分配" id="attr_type_type" disabled />
+				</dd>
+			</dl>
+			<dl>
+				<dt>创建人：</dt>
+				<dd>
+					<input type="text" value="系统分配" id="attr_type_cuser" disabled />
+				</dd>
+			</dl>
+			<dl>
+				<dt>创建时间：</dt>
+				<dd>
+					<input type="text" value="系统分配" id="attr_type_ctime" disabled />
+				</dd>
+			</dl>
+			<dl>
+				<dt>最后修改人：</dt>
+				<dd>
+					<input type="text" value="系统分配" id="attr_type_muser" disabled />
+				</dd>
+			</dl>
+			<dl>
+				<dt>最后修改时间：</dt>
+				<dd>
+					<input type="text" value="系统分配" id="attr_type_mtime" disabled />
+				</dd>
+			</dl>
+			<dl>
+				<dt>类型名称：</dt>
+				<dd>
+					<input type="text" id="attr_type_name" name="attr_type_name" class="required" maxlength="18" disabled /> 
+				</dd>
+			</dl>
+			<dl>
+				<dt>类型描述：</dt>
+				<dd>
+					<textarea rows="5" cols="30" id="attr_type_desc" name="attr_type_desc" maxlength="64" disabled></textarea>
+				</dd>
+			</dl>
+		</div>
 	</div>
+	</form>
 </div>
 
 <script language="javascript" type="text/javascript">

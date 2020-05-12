@@ -314,7 +314,7 @@ function dmtSetWarnConfig(warn_type, warn_type_id, attr_id)
 	url += "&warn_type=" + warn_type ;
 
 	var dlg = "dc_dlg_set_warn_" + warn_type_id + "_" + attr_id;
-	var op = $.parseJSON('{"mask":true,"maxable":false,"height":240,"width":520,"resizable":false}'); 
+	var op = $.parseJSON('{"mask":true,"maxable":false,"height":260,"width":530,"resizable":false}'); 
 	var title = "";
 	if(warn_type == "view")
 		title = "设置视图告警：视图【" + warn_type_id + "】" + "监控点【" + attr_id + "_" + attr_name + "】";

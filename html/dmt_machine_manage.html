@@ -1,5 +1,4 @@
 <script language="javascript" type="text/javascript">
-
 $(document).ready(function(){
 	$("input[name=dmm_machine_name]").focus();
 	<?cs if:config.action == "save_mod_machine" ?>
@@ -18,12 +17,14 @@ $(document).ready(function(){
 	$("textarea[name=dmm_machine_desc]").val("<?cs var:machine.dmm_machine_desc ?>");
 	<?cs /if ?>
 });
-
 </script>
+<style>
+.pageFormContent p label { width:80px; }
+</style>
 
 <div class="pageContent">
 	<form method="get" action="<?cs var:config.cgipath?>mt_slog_machine?action=<?cs var:config.action ?>&navTabId=dmt_machine" class="pageForm required-validate" onsubmit="return validateCallback(this, dialogAjaxDone);">
-		<div class="pageFormContent" layoutH="56">
+		<div class="pageFormContent">
 			<input type="hidden" name="dmm_machine_id" value="<?cs var:machine.dmm_machine_id?>" />
 			<p>
 				<label>机器名称：</label>
@@ -61,10 +62,8 @@ $(document).ready(function(){
 		</div>
 		<div class="formBar">
 			<ul>
-				<li><div class="button"><div class="buttonContent"><button type="submit">&nbsp;&nbsp;保&nbsp;存&nbsp;&nbsp;</button></div></div></li>
-				<li>
-					<div class="button"><div class="buttonContent"><button type="button" class="close">&nbsp;&nbsp;取&nbsp;消&nbsp;&nbsp;</button></div></div>
-				</li>
+				<li><button type="submit" class="buttonActive">保存</button></li>
+				<li><button type="button" class="buttonActive close">关闭</button></li>
 			</ul>
 		</div>
 	</form>

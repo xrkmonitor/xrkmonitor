@@ -64,10 +64,8 @@
 		</div>
 		<div class="formBar">
 			<ul>
-				<li><div class="button"><div class="buttonContent"><button type="submit"><?cs if:config.action=="save_mod_attr" ?>&nbsp;&nbsp;修&nbsp;改&nbsp;&nbsp;<?cs else ?>&nbsp;&nbsp;新&nbsp;增&nbsp;&nbsp;<?cs /if ?></button></div></div></li>
-				<li>
-					<div class="button"><div class="buttonContent"><button type="button" class="close">&nbsp;&nbsp;关&nbsp;闭&nbsp;&nbsp;</button></div></div>
-				</li>
+				<li><button type="submit" class="buttonActive"><?cs if:config.action=="save_mod_attr" ?>修改<?cs else ?>新增<?cs /if ?></button></li>
+				<li><button type="button" class="buttonActive close">关闭</button></li>
 			</ul>
 		</div>
 	</form>

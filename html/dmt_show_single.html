@@ -4,24 +4,24 @@
 			<div class="searchBar"> 
 				<table class="searchContent" >
 					<tr>
-						<td>指定时间：<input type="text" class="date" size="10" readonly="true" id="dss_date_cust" value="<?cs var:config.cust_date ?>" minDate="2014-01-01" maxDate="2088-12-31" onblur="setTimeout(dssOnCustDateChange, 600);" />
+						<td><label style='float:left'>指定时间:</label><input type="text" class="date" size="10" readonly="true" id="dss_date_cust" value="<?cs var:config.cust_date ?>" minDate="2014-01-01" maxDate="2088-12-31" onblur="setTimeout(dssOnCustDateChange, 600);" />
 						</td>
 						<td>
-							<label style='width:80px'>曲线图类型：</label>
+							<label style='width:80px'>曲线图类型:</label>
 							<select name="dss_select_show_type" id="dss_select_show_type" style="width:80px">
 							</select>
 						</td>
 
 						<?cs if:config.show_type == "view" ?>
 						<td >
-							<label style='width:60px'>图表导航：</label>
+							<label style='width:60px'>图表导航:</label>
 							<select name="dss_select_show_chart" id="dss_select_show_chart">
 							</select>
 						</td>
 						<?cs /if ?>
 
 						<td>
-							<font class="note-text">- 通过 “区域缩放” 功能，可实现鼠标框选图表区域进行放大显示</font>
+							<font class="note-text">- 通过“区域缩放”，可实现鼠标框选图表区域进行放大显示</font>
 						</td>
 					</tr>
 				</table>

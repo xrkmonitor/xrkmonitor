@@ -1,8 +1,8 @@
 <div class='pageContent'>
-    <div align='center' layoutH="32">
+    <div align='center' layoutH="0">
 		<form id='ddama_file_form' action="<?cs var:config.cgipath?>mt_slog_attr?action=add_multi_attr" target='ddama_up_file_info' method="post" enctype="multipart/form-data">
             <input type="file" name="ddama_up_file" id="ddama_up_file" />
-            <input type="button" value="批量导入" id='ddama_btn_add_multi' />
+			<button type="button" class="buttonActive" id='ddama_btn_add_multi'><i class='icon-asterisk'></i>批量导入</button>
         </form>
 		<br />
 		<iframe name='ddama_up_file_info' id='ddama_up_file_info' height='360' width='520' src='<?cs var:config.cgipath ?>mt_slog_attr?action=add_multi_attr_tip'>
@@ -10,8 +10,7 @@
     </div>
     <div class="formBar">
         <ul>
-            <li><div class="button"><div class="buttonContent"><button type="button" class="close">&nbsp;&nbsp;关&nbsp;闭&nbsp;&nbsp;</bu
-tton></div></div></li>
+			<li><button type="button" class="buttonActive close">关闭</button></li>
         </ul>
     </div>
 </div>

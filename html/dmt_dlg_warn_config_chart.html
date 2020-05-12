@@ -99,13 +99,12 @@ $(document).ready(function(){
 
 <style type="text/css">
 .pageFormContent p { width:500px; }
-.pageFormContent p label { width:60px; }
+.pageFormContent p label { width:50px; }
 </style>
 
 <div class="pageContent">
 	<form method="get" action="<?cs var:config.cgipath?>mt_slog_warn" class="pageForm" id="ddwcc_form_submit">
-		<div class="pageFormContent" layoutH="56">
-
+		<div class="pageFormContent">
 			<input type="hidden" name="ddwc_warn_config_id" value="<?cs var:config.warn_config_id ?>" />
 			<input type="hidden" name="ddwc_warn_type_val" value="<?cs var:config.warn_type_id ?>" />
 			<input type="hidden" name="ddwc_attr_id" value="<?cs var:config.warn_attr_id ?>" />
@@ -113,9 +112,9 @@ $(document).ready(function(){
 			<input type="hidden" name="action" value="save_set_warn_chart" />
 
 			<p>
-				<label>清除告警：</label><input type="checkbox" name="c_warn_clear_not_sel" id="c_warn_clear_not_sel" />
+				<label style='width:60px'>清除告警：</label><input type="checkbox" name="c_warn_clear_not_sel" id="c_warn_clear_not_sel" />
 				<font class='note-text'>
-					<label class='for' style="float:right;width:400px;" for="c_warn_clear_not_sel"> 
+					<label class='for' style="float:right;width:380px;" for="c_warn_clear_not_sel"> 
 						- 清除以下未勾选的告警类型配置
 					</label>
 				</font>
@@ -123,7 +122,7 @@ $(document).ready(function(){
 
 			<p> 
 				<label>最大值：</label>
-				<input type="text" size="20" class="digits" name="ddwc_warn_max" value="<?cs var:config.warn_max ?>" />
+				<input type="text" size="16" class="digits" name="ddwc_warn_max" value="<?cs var:config.warn_max ?>" />
 				<input type="checkbox" name="c_warn_max" id='c_warn_max' />
 				<font class='note-text'>
 					<label class='for' style="float:right;width:240px;" for="c_warn_max">
@@ -133,7 +132,7 @@ $(document).ready(function(){
 			</p>
 			<p>
 				<label>最小值：</label>
-				<input type="text" size="20" name="ddwc_warn_min" value="<?cs var:config.warn_min ?>" />
+				<input type="text" size="16" name="ddwc_warn_min" value="<?cs var:config.warn_min ?>" />
 				<input type="checkbox" name="c_warn_min" id="c_warn_min" />
 				<font class='note-text'>
 					<label class='for' style="float:right;width:240px;" for="c_warn_min">
@@ -143,7 +142,7 @@ $(document).ready(function(){
 			</p>
 			<p>
 				<label>波动值：</label>
-				<input type="text" size="20" name="ddwc_warn_wave" value="<?cs var:config.warn_wave ?>" />
+				<input type="text" size="16" name="ddwc_warn_wave" value="<?cs var:config.warn_wave ?>" />
 				<input type="checkbox" name="c_warn_wave"  id="c_warn_wave" />
 				<font class='note-text'>
 					<label class='for' style="float:right;width:240px;" for="c_warn_wave">
@@ -151,15 +150,12 @@ $(document).ready(function(){
 					</label>
 				</font>
 			</p>
-
 		</div>
 
 		<div class="formBar">
 			<ul>
-				<li><div class="button"><div class="buttonContent"><button type="submit">&nbsp;&nbsp;设&nbsp;置&nbsp;&nbsp;</button></div></div></li>
-				<li>
-					<div class="button"><div class="buttonContent"><button type="button" class="close">&nbsp;&nbsp;关&nbsp;闭&nbsp;&nbsp;</button></div></div>
-				</li>
+				<li><button type="submit" class="buttonActive">设置</button></li>
+				<li><button type="button" class="buttonActive close">关闭</button></li>
 			</ul>
 		</div>
 	</form>

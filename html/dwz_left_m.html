@@ -1,25 +1,27 @@
 <div class="accordion" fillSpace="sidebar">
 	<div class="accordionHeader">
-		<h2><i class="icon-check-sign icon-large"></i>上报机器管理<i class="icon icon-chevron-up"></i></h2>
+		<h2><i class="icon-desktop icon-large"></i>上报机器管理<i class="icon icon-chevron-up"></i></h2>
 	</div>
 	<div class="accordionContent">
-		<ul class="tree treeFolder expand">
-			<li><a href="<?cs var:config.cgipath?>mt_slog_machine?action=list" target="navTab" rel="dmt_machine">上报机器管理</a></li>
+		<ul class="tree expand">
+			<li><a href="<?cs var:config.cgipath?>mt_slog_machine?action=list" target="navTab" rel="dmt_machine"><i class='icon-desktop'></i>上报机器管理</a></li>
 			</li>
 		<ul>
 	</div>
 
 	<div class="accordionHeader">
-		<h2><i class="icon-check-sign icon-large"></i>监控点管理<i class="icon icon-chevron-up"></i></h2>
+		<h2><i class="icon-screenshot icon-large"></i>监控点管理<i class="icon icon-chevron-up"></i></h2>
 	</div>
 	<div class="accordionContent">
-		<ul class="tree treeFolder expand">
-			<li><a href="<?cs var:config.cgipath?>mt_slog_attr?action=list" global_ajax="true" target="navTab" rel="dmt_slog_attr">监控点类型管理</a></li>
-
-			<li><a href="<?cs var:config.cgipath?>mt_slog_attr?action=attr_list" target="navTab" rel="dmt_attr">监控点管理</a></li>
-			<li><a href="<?cs var:config.cgipath?>mt_slog_view?action=list" target="navTab" rel="dmt_slog_view">监控点视图管理</a></li>
-
-			<li><a href="<?cs var:config.cgipath?>mt_slog_warn?action=list" target="navTab" rel="dmt_slog_warn">监控点告警配置</a></li>
+		<ul class="tree">
+			<li><a href="<?cs var:config.cgipath?>mt_slog_attr?action=list" global_ajax="true" target="navTab" rel="dmt_slog_attr">
+				<i class='icon-tasks'></i>监控点类型管理</a></li>
+			<li><a href="<?cs var:config.cgipath?>mt_slog_attr?action=attr_list" target="navTab" rel="dmt_attr">
+				<i class='icon-screenshot'></i>监控点管理</a></li>
+			<li><a href="<?cs var:config.cgipath?>mt_slog_view?action=list" target="navTab" rel="dmt_slog_view">
+				<i class='icon-area-chart'></i>监控点视图管理</a></li>
+			<li><a href="<?cs var:config.cgipath?>mt_slog_warn?action=list" target="navTab" rel="dmt_slog_warn">
+				<i class='icon-warning-sign'></i>监控点告警配置</a></li>
 		</ul>
 	</div>
 
