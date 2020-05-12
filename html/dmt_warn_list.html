@@ -12,7 +12,7 @@
 		<div class="searchBar"> 
 			<ul class="searchContent" >
 				<li class="width:auto">
-					<label>告警状态：</label>
+					<label>告警状态:</label>
 					<select class="xrk_combox" name="dwl_deal_status_sel" id="dwl_deal_status_sel">
 						<option value="-1">全部</option>
 						<option value="0">未处理</option>
@@ -22,7 +22,7 @@
 					</select>
 				</li>
 				<li class="width:auto">
-					<label>告警对象：</label>
+					<label>告警对象:</label>
 					<select class="xrk_combox" name="dwl_warn_obj_sel" id="dwl_warn_obj_sel">
 						<option value="0">全部</option>
 						<option value="8">单机告警</option>
@@ -30,7 +30,7 @@
 					</select>
 				</li>
 				<li class="width:auto">
-					<label>告警类型：</label>
+					<label>告警类型:</label>
 					<select class="xrk_combox" style='height:26px' name="dwl_warn_type_sel" id="dwl_warn_type_sel">
 						<option value="0">全部</option>
 						<option value="1">最大值</option>
@@ -41,28 +41,27 @@
 				</li>
 
 				<li class="width:auto">
-					<label>机器ID：</label><input type="text" name="dwl_machine_id" id="dwl_machine_id" size="8" value="<?cs var:config.dwl_machine_id?>" />
-					<label>视图ID：</label><input type="text" name="dwl_view_id" id="dwl_view_id" size="8" value="<?cs var:config.dwl_view_id?>" />
-					<label>监控点ID：</label><input type="text" name="dwl_attr_id" size="8" value="<?cs var:config.dwl_attr_id ?>" />
+					<label>机器ID:</label><input type="text" name="dwl_machine_id" id="dwl_machine_id" size="8" value="<?cs var:config.dwl_machine_id?>" />
+					<label>视图ID:</label><input type="text" name="dwl_view_id" id="dwl_view_id" size="8" value="<?cs var:config.dwl_view_id?>" />
+					<label>监控点ID:</label><input type="text" name="dwl_attr_id" size="8" value="<?cs var:config.dwl_attr_id ?>" />
 				</li>
-
 			</ul>
 			<div class="subBar">
 				<ul>
-					<li><button type="submit" class="buttonActive">查找</button></li>
-					<li><button type="button" class="buttonActive" id="dml_btn_erase">重置</button></li>
+					<li><button type="submit" class="buttonActive"><i class='icon-search icon-large '></i>查找</button></li>
+					<li><button type="button" class="buttonActive" id="dml_btn_erase"><i class='icon-trash icon-large '></i>重置</button></li>
 				</ul>
 			</div>
 		</div>
 	</form>
 </div>
 		
-<div class="pageContent" style="border-left:1px #B8D0D6 solid;border-right:1px #B8D0D6 solid">
+<div class="pageContent"> 
 	<div class="panelBar">
 		<ul class="toolBar">
-			<li><a class="edit" href="#" onclick="return dwlDealMultiWarns(1);"><span>批量处理告警</span></a></li>
+			<li><a href="#" onclick="return dwlDealMultiWarns(1);"><i class='icon-random'></i>批量处理告警</a></li>
 			<li class="line">line</li>
-			<li><a class="edit" href="#" onclick="return dwlDealMultiWarns(2);"><span>批量处理完成</span></a></li>
+			<li><a href="#" onclick="return dwlDealMultiWarns(2);"><i class='icon-check'></i>批量处理完成</a></li>
 			<li class="line">line</li>
 		</ul>
 	</div>
@@ -70,7 +69,7 @@
 	<table class="list" width="100%" layoutH="0">
 		<thead>
 			<tr>
-				<th width="50">序号</th>
+				<th width="22" align='left'><input type="checkbox" group="warn_info_ids" class="checkboxCtrl"></th>
 				<th width="120">最后告警时间</th>
 				<th width="240">告警监控点</th>
 				<th width="400">告警描述</th>
@@ -78,7 +77,6 @@
 				<th width="120">开始告警时间</th>
 				<th width="60">处理状态</th>
 				<th width="60">上报查看</th>
-				<th width="22"><input type="checkbox" group="warn_info_ids" class="checkboxCtrl"></th>
 			</tr>
 		</thead>
 		<tbody id="dwl_info_list">
@@ -112,7 +110,9 @@ function dwlSetWarnList(warninfo)
 	{
 		j = (<?cs var:config.currentPage ?>-1) * <?cs var:config.numPerPage ?> + 1;
 		list += "<tr>";
-		list += "<td>" + (i+j) + "</td>";
+		list += "<td><input name='warn_info_ids' value=";
+		list +=  listwarn[i].wid + " type='checkbox'></td>";
+
 		list += "<td>" + listwarn[i].last_warn_time + "</td>";
 
 		list += "<td>" + listwarn[i].attr_name +" 【" + listwarn[i].attr_id + "】</td>";
@@ -146,9 +146,6 @@ function dwlSetWarnList(warninfo)
 			list += "<td><a class='detail' href='#' onclick='dwlShowSingle("+i+");'>查看</a></td>";
 		else
 			list += "<td>查看</td>";
-
-		list += "<td><input name='warn_info_ids' value=";
-		list +=  listwarn[i].wid + " type='checkbox'></td>";
 
 		list += "</tr>";
 	}

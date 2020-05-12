@@ -1,40 +1,46 @@
 <div class="accordion" fillSpace="sidebar">
 	<div class="accordionHeader">
-		<h2><i class="icon-check-sign icon-large"></i>告警查看<i class="icon icon-chevron-up"></i></h2>
+		<h2><i class="icon-warning-sign icon-large "></i>监控告警查看<i class="icon icon-chevron-up"></i></h2>
 	</div>
 	<div class="accordionContent">
-		<ul class="tree treeFolder expand">
-			<li><a href="<?cs var:config.cgipath?>mt_slog_showview?action=show_warn_list" target="navTab" rel="dmt_warn_list">监控点告警列表</a></li>
+		<ul class="tree expand">
+			<li><a href="<?cs var:config.cgipath?>mt_slog_showview?action=show_warn_list" target="navTab" rel="dmt_warn_list">
+				<i class='icon icon-screenshot '></i>监控点告警列表</a></li>
+			<!--
+			<li><a href="<?cs var:config.cgipath?>mt_slog_showview?action=show_warn_list" target="navTab" rel="dmt_warn_list">
+				<i class='icon icon-reorder '></i>日志告警列表</a></li>
+			-->
 		</ul>
 	</div>
 	<div class="accordionHeader">
-		<h2><i class="icon-check-sign icon-large"></i>日志查看<i class="icon icon-chevron-up"></i></h2>
+		<h2><i class="icon-file-alt icon-large "></i>日志查看<i class="icon icon-chevron-up"></i></h2>
 	</div>
 	<div class="accordionContent">
-		<ul class="tree treeFolder">
-			<li><a href="<?cs var:config.cgipath?>mt_slog?action=show_realtime_log" target="navTab" fresh="true" rel="dmt_realtime_log">实时日志查看</a></li>
-			<li><a href="<?cs var:config.cgipath?>mt_slog?action=show_history_log" target="navTab" fresh="true" rel="dmt_history_log">历史日志查看</a></li>
-			<li><a href="<?cs var:config.cgipath?>mt_slog?action=log_files" target="navTab" fresh="true" rel="dmt_log_files">日志文件列表</a></li>
+		<ul class="tree ">
+			<li><a href="<?cs var:config.cgipath?>mt_slog?action=show_realtime_log" target="navTab" fresh="true" rel="dmt_realtime_log"><i class='icon icon-cloud-upload '></i>实时日志查看</a></li>
+			<li><a href="<?cs var:config.cgipath?>mt_slog?action=show_history_log" target="navTab" fresh="true" rel="dmt_history_log"><i class='icon icon-cloud-download '></i>历史日志查看</a></li>
+			<li><a href="<?cs var:config.cgipath?>mt_slog?action=log_files" target="navTab" fresh="true" rel="dmt_log_files"><i class='icon icon-copy'></i>日志文件列表</a></li>
 		</ul>
 	</div>
 
 	<div class="accordionHeader">
-		<h2><i class="icon-check-sign icon-large"></i>视图查看<i class="icon icon-chevron-up"></i></h2>
+		<h2><i class="icon-coffee  icon-large"></i>视图查看<i class="icon icon-chevron-up"></i></h2>
 	</div>
 	<div class="accordionContent">
-		<ul class="tree treeFolder expand">
+		<ul class="tree">
 			<?cs each:mlist=Output.amlists ?>
-				<li title='<?cs var:mlist.name ?>'><a href="<?cs var:config.cgipath ?>mt_slog_showview?action=list&view_id=<?cs var:mlist.id ?>&view_name=<?cs var:mlist.name ?>" rel="showview_<?cs var:mlist.id ?>" target="navTab" fresh="true"><?cs var:mlist.name ?></a></li>
+				<li title='<?cs var:mlist.name ?>'><a href="<?cs var:config.cgipath ?>mt_slog_showview?action=list&view_id=<?cs var:mlist.id ?>&view_name=<?cs var:mlist.name ?>" rel="showview_<?cs var:mlist.id ?>" target="navTab" fresh="true"><i class="icon-window-restore"></i> <?cs var:mlist.name ?></a></li>
 			<?cs /each ?>
 		</ul>
 	</div>
 	<div class="accordionHeader">
-		<h2><i class="icon-check-sign icon-large"></i>服务器查看<i class="icon icon-chevron-up"></i></h2>
+		<h2><i class="icon-desktop icon-large "></i>服务器查看<i class="icon icon-chevron-up"></i></h2>
 	</div>
 	<div class="accordionContent">
-		<ul class="tree treeFolder expand">
+		<ul class="tree">
 			<?cs each:mlist=Output.machlists ?>
-				<li title='<?cs var:mlist.name ?>'><a href="<?cs var:config.cgipath ?>mt_slog_showview?action=show_machine_attr&machine_id=<?cs var:mlist.id ?>&date=today" rel="showmachine_<?cs var:mlist.id ?>" target="navTab" fresh="true"><?cs var:mlist.name ?></a></li>
+				<li title='<?cs var:mlist.name ?>'><a href="<?cs var:config.cgipath ?>mt_slog_showview?action=show_machine_attr&machine_id=<?cs var:mlist.id ?>&date=today" rel="showmachine_<?cs var:mlist.id ?>" target="navTab" fresh="true">
+					<i class='icon-television'></i><?cs var:mlist.name ?></a></li>
 			<?cs /each ?>
 		</ul>
 	</div>

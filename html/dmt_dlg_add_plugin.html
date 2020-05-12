@@ -1,13 +1,12 @@
 <style type="text/css">
 .pageFormContent tr { height:25px}
-.pageFormContent tr label { width:65px}
+.pageFormContent tr label { width:60px}
 </style>
 <script language="javascript" type="text/javascript">
 
 /*
    * 引用 dmt_plugin.html 变量: <?cs var:config.plugin_pre ?>_sel_plugin
    */
-
 var g_ddap_mod_attr = false;
 var g_ddap_mod_attr_type = false;
 var g_ddap_mod_cfg = false;
@@ -246,7 +245,6 @@ function ddapGetPluginPbInfo()
 
 	<?cs /if ?>
 }
-
 </script>
 
 
@@ -264,7 +262,7 @@ function ddapGetPluginPbInfo()
 </div>
 
 <div class="pageContent">
-	<div class="pageFormContent" layoutH="56">
+	<div class="pageFormContent" layoutH="60">
 		<table>
 			<tr>
 			<td>
@@ -362,7 +360,7 @@ function ddapGetPluginPbInfo()
 				<label for='ddap_log_check'>日志配置：</label>
 				<input type="checkbox" name="ddap_log_check" id="ddap_log_check">
 				<font class="note-text">
-				<label style="float:right;width:160px" for='ddap_log_check'>为插件添加模块和日志配置</label>
+				<label style="float:right;width:120px" for='ddap_log_check'>该插件产生日志</label>
 				</font>
 			</td>
 			</tr>
@@ -383,13 +381,5 @@ function ddapGetPluginPbInfo()
 		</table>
 
 	</div>
-
-		<div class="formBar">
-			<ul>
-				<li>
-					<div class="button"><div class="buttonContent"><button type="button" class="close">&nbsp;&nbsp;关&nbsp;闭&nbsp;&nbsp;</button></div></div>
-				</li>
-			</ul>
-		</div>
 </div>
 

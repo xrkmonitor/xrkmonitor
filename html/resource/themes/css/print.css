@@ -16,7 +16,27 @@
 .mainPageTdName { height:26px; font-size:14px; text-align:center; }
 .mainPageTdVal { height:26px; font-size:14px; text-align:center; font-weight:bold; }
 .mainPageChart { margin:10px 20px; float:left; height:420px; }
-.chartLeftMenu { float:left; display:block; overflow:auto; width:300px; border:solid 1px #CCC; line-height:21px; background:#fff; }
+.chartLeftMenu { float:left; display:block; overflow:auto; width:350px; border:solid 1px #CCC; line-height:21px; background:#fff; }
 .userPayColor { background-color:SpringGreen; }
 .mainHeadLeftTitle { font-size:18px;float:left;margin:15px 10px; letter-spacing: 1px; font-weight: bold; }
+
+.log_type_debug { background-color:#CFC; font-size:20px; border-bottom:1px inset #000; }
+.log_type_info { background-color:#FFF; font-size:20px; border-bottom:1px inset #000; }
+.log_type_warn { background-color:#FCF; font-size:20px; border-bottom:1px inset #000; }
+.log_type_in_error { background-color:#F96; font-size:20px; border-bottom:1px inset #000; }
+.log_type_error { background-color:#F86; font-size:20px; border-bottom:1px inset #000; }
+.log_type_fatal { background-color:#C00; font-size:20px; border-bottom:1px inset #000; }
+.log_type_other { background-color:#C0C0C0; font-size:20px; border-bottom:1px inset #000; }
+.log_type_debug:hover, .log_type_info:hover, .log_type_warn:hover, .log_type_in_error:hover, .log_type_fatal:hover, .log_type_other:hover { font-weight:bolder; } 
+.log_status_info { color:blue; }
+
+/* rock add Panel */
+.panel, 
+.panel .panelHeader, .panel .panelHeaderContent, .panel .panelHeaderContent h1, 
+.panel .panelFooter, .panel .panelFooterContent { background:url(./images/panel.png) no-repeat;}
+.panel .expandable, .panel .collapsable { background:url(./images/panel_icon.png) no-repeat;}
+.panel .panelHeaderContent h1 { color:#183152; }
+.panel .panelContent { border-color:#b8d0d6; background:#eef4f5;}
+.panel .grid { border-color:#b8d0d6;}
+
 

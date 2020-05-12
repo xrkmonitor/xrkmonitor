@@ -115,8 +115,8 @@ $(document).ready(function(){
 			</ul>
 			<div class='subBar'>
 				<ul>
-					<li><button type="submit" class="buttonActive" id="dsnba_btn_submit">查找</button></li>
-					<li><button class="buttonActive" id="dsnba_btn_erase" onclick="return dsnbaClearSearch_<?cs var:config.view_id ?>()"></button> </li>
+					<li><button type="submit" class="buttonActive" id="dsnba_btn_submit"><i class='icon-search icon-large '></i>查找</button></li>
+					<li><button title='重置查询条件' class="buttonActive" id="dsnba_btn_erase" onclick="return dsnbaClearSearch_<?cs var:config.view_id ?>()"><i class='icon-trash icon-large '></i></button></li>
 				</ul>
 			</div>
 		</div>
@@ -126,7 +126,7 @@ $(document).ready(function(){
 <div class="pageContent"> 
 	<div class="panelBar">
 		<ul class="toolBar">
-			<li><a class="edit" targetType="dialog" postType="string" callback="dsbAfterAttrOpr_<?cs var:config.view_id ?>" target="selectedTodo" rel="not_bind_attr_<?cs var:config.view_id ?>" href="<?cs var:config.cgipath ?>mt_slog_showview?action=save_bind_attr&view_id=<?cs var:config.view_id ?>"><span>绑定</span></a></li>
+			<li><a class="edit" targetType="dialog" postType="string" callback="dsbAfterAttrOpr_<?cs var:config.view_id ?>" target="selectedTodo" rel="not_bind_attr_<?cs var:config.view_id ?>" href="<?cs var:config.cgipath ?>mt_slog_showview?action=save_bind_attr&view_id=<?cs var:config.view_id ?>"><i class='icon-lock icon-large'></i>绑定</a></li>
 		</ul>
 	</div>
 

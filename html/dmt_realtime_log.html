@@ -1,7 +1,5 @@
-<link href="<?cs var:config.docpath?>themes/css/showlog.css" rel="stylesheet" type="text/css" media="screen"/>
-
 <div class="pageContent">
-	<div class="panel collapse" style="width:99%; float:left;" id="drlLogFilter" defH="170" OnToggle="drlPanelFun">
+	<div class="panel collapse" style="width:99%; float:left; background-color:#d8e5f1;" id="drlLogFilter" defH="170" OnToggle="drlPanelFun">
 		<h1>实时日志查询参数</h1>
 		<div>
 			<fieldset style="width:205px; height:155px; float:left;" >
@@ -119,10 +117,10 @@
 				<legend>包含关键字【与】</legend>
 				<input id="drl_key_include" size="12" type="text" title="日志包含关键字，多个包含关键字之间的关系为与关系" value="" maxlength="16" onkeyup="this.value=this.value.replace(/[_]/g,'')" onafterpaste="this.value=this.value.replace(/[_]/g,'')" >
 				<span>
-					<button onclick="drlAddLogKey(true, 'drl_inc_keylist');">添加</button>
+					<button  onclick="drlAddLogKey(true, 'drl_inc_keylist');"><i class='icon-plus'></i>添加</button>
 				</span>
 				<span>
-					<button onclick="drlClearLogKey('drl_inc_keylist', 'drl_key_include');">清空</button>
+					<button onclick="drlClearLogKey('drl_inc_keylist', 'drl_key_include');"><i class='icon-trash'></i>清空</button>
 				</span>
 
 				<fieldset style="margin-top:5px; height:45px; overflow:auto">
@@ -134,10 +132,10 @@
 				<legend>排除关键字【或】</legend>
 				<input id="drl_key_exce" size="12" type="text" title="日志排除关键字，多个排除关键字之间的关系为或关系" value="" maxlength="10">
 				<span>
-					<button onclick="drlAddLogKey(false, 'drl_exce_keylist');">添加</button>
+					<button onclick="drlAddLogKey(false, 'drl_exce_keylist');"><i class='icon-plus'></i>添加</button>
 				</span>
 				<span>
-					<button onclick="drlClearLogKey('drl_exce_keylist', 'drl_key_exce');">清空</button>
+					<button onclick="drlClearLogKey('drl_exce_keylist', 'drl_key_exce');"><i class='icon-trash'></i>清空</button>
 				</span>
 				<fieldset style="margin-top:5px; height:45px; overflow:auto">
 					<div id="drl_exce_keylist"> </div>
@@ -183,9 +181,9 @@
 			<span>滚动丢弃: <span id="drl_ScrollLogTotal" style="color:red">0</span> 条</span>
 		</div>
 		<ul>
-	        <li><div class="buttonActive"><div class="buttonContent"><button type="button" onclick="drlShowPause();" id="drl_button_pause">&nbsp;&nbsp;查&nbsp;看&nbsp;&nbsp;</button></div></div></li>
-	        <li><div class="buttonActive"><div class="buttonContent"><button type="button" onclick="drlClearRealTimeLog();" >&nbsp;&nbsp;清&nbsp;空&nbsp;&nbsp;</button></div></div></li>
-	        <li><div class="buttonActive"><div class="buttonContent"><button type="button" onclick="drlShowMax();" id="drl_button_show">扩展显示区</button></div></div></li>
+	        <li><button type="button" class="buttonActive" onclick="drlShowPause();" id="drl_button_pause"><i class='icon-search icon-large '></i>查看</button></li>
+	        <li><button type="button" class="buttonActive" onclick="drlClearRealTimeLog();"><i class='icon-trash icon-large'></i>清空</button></li>
+	        <li><button type="button" class="buttonActive" onclick="drlShowMax();" id="drl_button_show"><i class="icon-move icon-large"></i>扩展显示区</button></li>
 	    </ul>
 	</div>
 
@@ -268,7 +266,7 @@ function drlShowMax()
 		$("#drl_button_show").text("扩展显示区");
 		$("#drlLogFilter").show(100);
 		if(DWZ.ui.sbar == false)
-		    $("#sidebar_s .toggleCollapse div").trigger("click");
+		    $("#navTab .tabsPageHeader a.toggleCollapse").trigger("click");
 		$("#drlLogShow").height(hshow-hshow_dapt);
 	}
 	else {
@@ -276,7 +274,7 @@ function drlShowMax()
 		$("#drl_button_show").text("收缩显示区");
 		$("#drlLogFilter").hide(100);
 		if(DWZ.ui.sbar == true)
-		    $("#sidebar .toggleCollapse div").trigger("click");
+		    $("#navTab .tabsPageHeader a.toggleCollapse").trigger("click");
 		$("#drlLogShow").height(hshow+hshow_dapt);
 	}
 }
@@ -301,7 +299,7 @@ function drlShowPause(bPause)
 	if(drl_show_pause) {
 		drl_interval_id = setTimeout("drlShowRealtimeStatus();", 300);
 		drl_show_pause = false;
-		$("#drl_button_pause").html("&nbsp;&nbsp;暂&nbsp;停&nbsp;&nbsp;");
+		$("#drl_button_pause").html("<i class='icon-refresh icon-large icon-spin'></i>暂停");
 		drl_request_time_info = (new Date()).valueOf();
 		var appIdx = $("#drl_appName").val();
 		window.localStorage.setItem('drl_app_sel', drl_app_module_list.applist[appIdx].app_id);
@@ -312,7 +310,7 @@ function drlShowPause(bPause)
 		clearTimeout(drl_time_id);
 		clearInterval(drl_interval_id);
 		drlShowRealtimeStatus();
-		$("#drl_button_pause").html("&nbsp;&nbsp;查&nbsp;看&nbsp;&nbsp;");
+		$("#drl_button_pause").html("<i class='icon-search icon-large'></i>查看");
 	}
 }
 

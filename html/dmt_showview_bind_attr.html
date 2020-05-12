@@ -15,7 +15,6 @@ function dsbaSetAttrList_<?cs var:config.view_id ?>(attrinfo)
 		j = (<?cs var:config.currentPage ?>-1) * <?cs var:config.numPerPage ?> + 1;
 		list += "<td><input name='bind_attr_<?cs var:config.view_id ?>' value='" ;
 		list += listattr[i].id + "' type='checkbox'></td>";
-		list += "<td>" + (i+j) + "</td>";
 		list += "<td>" + listattr[i].id + "</td>";
 		list += "<td>" + listattr[i].name + "</td>";
 		list += "<td>" + ds_attr_type_list_<?cs var:config.view_id ?>[listattr[i].attr_type] + "</td>";
@@ -113,10 +112,11 @@ $(document).ready(function(){
 			<div class='subBar'>
 				<ul>
 					<li>
-						<button type="submit" class="buttonActive" id="dsba_btn_submit_<?cs var:config.view_id ?>">查找</button>
+						<button type="submit" class="buttonActive" id="dsba_btn_submit_<?cs var:config.view_id ?>">
+							<i class='icon-search icon-large '></i>查找</button>
 					</li>
 					<li>
-						<button class="buttonActive" id="dsba_btn_erase_<?cs var:config.view_id ?>" onclick="return dsbaClearSearch_<?cs var:config.view_id ?>()">重填</button>
+						<button title='重置查询条件' class="buttonActive" id="dsba_btn_erase_<?cs var:config.view_id ?>" onclick="return dsbaClearSearch_<?cs var:config.view_id ?>()"><i class='icon-trash icon-large'></i></button>
 					</li>
 				</ul>
 			</div>
@@ -127,7 +127,7 @@ $(document).ready(function(){
 <div class="pageContent"> 
 	<div class="panelBar">
 		<ul class="toolBar">
-			<li><a class="edit" targetType="dialog" postType="string" callback="dsbAfterAttrOpr_<?cs var:config.view_id ?>" target="selectedTodo" rel="bind_attr_<?cs var:config.view_id ?>" href="<?cs var:config.cgipath ?>mt_slog_showview?action=save_not_bind_attr&view_id=<?cs var:config.view_id ?>"><span>解绑</span></a></li>
+			<li><a class="edit" targetType="dialog" postType="string" callback="dsbAfterAttrOpr_<?cs var:config.view_id ?>" target="selectedTodo" rel="bind_attr_<?cs var:config.view_id ?>" href="<?cs var:config.cgipath ?>mt_slog_showview?action=save_not_bind_attr&view_id=<?cs var:config.view_id ?>"><i class='icon-unlock icon-large'></i>解绑</a></li>
 			<li class="line">line</li>
 		</ul>
 	</div>
@@ -136,7 +136,6 @@ $(document).ready(function(){
 		<thead>
 			<tr>
 				<th width="22"><input type="checkbox" group="bind_attr_<?cs var:config.view_id ?>" class="checkboxCtrl"></th>
-				<th width="40">序号</th>
 				<th width="40">监控点id</th>
 				<th width="140">监控点名称</th>
 				<th width="140">监控点类型</th>

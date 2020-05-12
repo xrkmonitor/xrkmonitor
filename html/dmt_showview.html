@@ -1,23 +1,23 @@
 <div class="pageContent">
 	<div class="panelBar" style='background-color:#f2f6f9'>
 		<ul class="toolBar">
-			<li><a class="edit" href="#" onclick="return dsAttrBind_<?cs var:config.view_id ?>();"><span>监控点绑定</span></a></li>
+			<li><a class="add" href="#" onclick="return dsLeftMenuShow_<?cs var:config.view_id ?>();"><i class='icon-reorder icon-large'></i>导航菜单</a></li>
+
 			<li class="line">line</li>
-			<li><a class="edit" href="#" onclick="return dsMachineBind_<?cs var:config.view_id ?>();"><span>机器绑定</span></a></li>
+			<li><a class="edit" href="#" onclick="return dsAttrBind_<?cs var:config.view_id ?>();"><i class='icon-lock icon-large'></i>监控点绑定</a></li>
+			<li class="line">line</li>
+			<li><a class="edit" href="#" onclick="return dsMachineBind_<?cs var:config.view_id ?>();"><i class='icon-server icon-large'></i>机器绑定</a></li>
 			<li class="line">line</li>
 			<li>指定日期：<input type="text" class="date" size="10" readonly="true" id="ds_date_<?cs var:config.view_id ?>" value="<?cs var:config.cust_date ?>" onblur="setTimeout(dsOnCustDateChange_<?cs var:config.view_id ?>, 600);" minDate="2014-01-01" maxDate="2088-12-31" /></li>
 
 			<li class="line">line</li>
-			<li><a class="add" href="#" onclick="return dsAttrShow_<?cs var:config.view_id ?>(2);"><span>日图</span></a></li>
+			<li><a class="add" href="#" onclick="return dsAttrShow_<?cs var:config.view_id ?>(2);"><i class='icon-bar-chart icon-large'></i>日图</a></li>
 
 			<li class="line">line</li>
-			<li><a class="add" href="#" onclick="return dsAttrShow_<?cs var:config.view_id ?>(1);"><span>日同比图</span></a></li>
+			<li><a class="add" href="#" onclick="return dsAttrShow_<?cs var:config.view_id ?>(1);"><i class='icon-area-chart icon-large'></i>日同比图</a></li>
 
 			<li class="line">line</li>
-			<li><a class="add" href="#" onclick="return dsAttrShow_<?cs var:config.view_id ?>(3);"><span>周图</span></a></li>
-
-			<li class="line">line</li>
-			<li><a class="add" href="#" onclick="return dsLeftMenuShow_<?cs var:config.view_id ?>();"><span>导航菜单</span></a></li>
+			<li><a class="add" href="#" onclick="return dsAttrShow_<?cs var:config.view_id ?>(3);"><i class='icon-area-chart icon-large'></i>周图</a></li>
 
 			<li class="line">line</li>
 			<li>
@@ -132,7 +132,7 @@ function dsAttrShow_<?cs var:config.view_id ?>(type)
 	else
 		param = "&date=today" 
 
-	var ck = $("#ds_check_show_<?cs var:config.view_id ?>").attr("checked");
+	var ck = $("#ds_check_show_<?cs var:config.view_id ?>").is(":checked");
 	if(ck == "checked")
 		param += '&show_rep=1';
 	else
@@ -175,8 +175,8 @@ function dsAttrShowDate2_<?cs var:config.view_id ?>(idx)
 
 	var requrl = "<?cs var:config.cgipath?>mt_slog_showview";
 	var reqpara = {};
-	var ck = $("#ds_check_show_<?cs var:config.view_id ?>").attr("checked");
-	if(ck == "checked")
+	var ck = $("#ds_check_show_<?cs var:config.view_id ?>").is(":checked");
+	if(ck)
 		reqpara.show_rep = 1;
 	else
 		reqpara.show_rep = 0;
@@ -222,8 +222,8 @@ function dsAttrShowDate2_<?cs var:config.view_id ?>(idx)
 				// 获取完毕
 				ds_attr_show_get_auto_<?cs var:config.view_id ?> = null;
 				ds_attr_show_index_cur_<?cs var:config.view_id ?> = ds_attr_list_arry_<?cs var:config.view_id ?>.length;
-				var ck = $("#ds_check_show_<?cs var:config.view_id ?>").attr("checked");
-				if(ck == "checked")
+				var ck = $("#ds_check_show_<?cs var:config.view_id ?>").is(":checked");
+				if(ck)
 					dmtAddNoDataTextForView('ds_attr_list_<?cs var:config.view_id ?>');
 			}
 		}
@@ -264,8 +264,8 @@ $(document).ready(function(){
 function dsCheckShow_<?cs var:config.view_id ?>()
 {
 	var ckName = "cookie_ds_check_show_<?cs var:config.view_id ?>";
-	var ck = $("#ds_check_show_<?cs var:config.view_id ?>").attr("checked");
-	if(ck == "checked")
+	var ck = $("#ds_check_show_<?cs var:config.view_id ?>").is(":checked");
+	if(ck)
 		window.localStorage.setItem(ckName, '1');
 	else
 		window.localStorage.setItem(ckName, '0');

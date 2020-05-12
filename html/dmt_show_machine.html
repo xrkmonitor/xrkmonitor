@@ -1,32 +1,29 @@
 <div class="pageContent">
-	<div class="unitBox" style="margin-left:1px;"> 
-		<div class="pageContent" style="border-left:1px #B8D0D6 solid;border-right:1px #B8D0D6 solid">
-			<div class="panelBar">
-				<ul class="toolBar">
-					<li>指定日期：<input type="text" class="date" size="10" readonly="true" id="dsm_date_<?cs var:config.machine_id ?>" value="<?cs var:config.cust_date ?>" onblur="setTimeout(dsmOnCustDateChange_<?cs var:config.machine_id ?>, 600);" minDate="2014-01-01" maxDate="2088-12-31" /></li>
-					<li><a class="add" href="#" onclick="return dsmAttrShow_<?cs var:config.machine_id ?>(2);"><span>日图</span></a></li>
-					<li class="line">line</li>
-					<li><a class="add" href="#" onclick="return dsmAttrShow_<?cs var:config.machine_id ?>(1);"><span>日同比图</span></a></li>
-					<li class="line">line</li>
-					<li><a class="add" href="#" onclick="return dsmAttrShow_<?cs var:config.machine_id ?>(3);"><span>周图</span></a></li>
-					<li class="line">line</li>
-					<li style="display:none"><a id="dsm_href_<?cs var:config.machine_id ?>" href="#" target="navTab" rel="showmachine_<?cs var:config.machine_id ?>" fresh="false"></a></li>
-					<li><a class="add" href="#" onclick="return dsmLeftMenuShow_<?cs var:config.machine_id ?>();"><span>导航菜单</span></a></li>
-					&nbsp;&nbsp;&nbsp;<li><span id="dsm_show_proc_<?cs var:config.machine_id ?>"></span></li>
-				</ul>
-			</div>
+	<div class="panelBar" style="background-color:#f2f6f9">
+		<ul class="toolBar">
+			<li><a class="add" href="#" onclick="return dsmLeftMenuShow_<?cs var:config.machine_id ?>();"><i class='icon-reorder icon-large'></i>导航菜单</a></li>
+			<li class="line">line</li>
+			<li>指定日期：<input type="text" class="date" size="10" readonly="true" id="dsm_date_<?cs var:config.machine_id ?>" value="<?cs var:config.cust_date ?>" onblur="setTimeout(dsmOnCustDateChange_<?cs var:config.machine_id ?>, 600);" minDate="2014-01-01" maxDate="2088-12-31" /></li>
+			<li><a class="add" href="#" onclick="return dsmAttrShow_<?cs var:config.machine_id ?>(2);"><i class='icon-bar-chart icon-large'></i>日图</a></li>
+			<li class="line">line</li>
+			<li><a class="add" href="#" onclick="return dsmAttrShow_<?cs var:config.machine_id ?>(1);"><i class='icon-area-chart icon-large'></i>日同比图</a></li>
+			<li class="line">line</li>
+			<li><a class="add" href="#" onclick="return dsmAttrShow_<?cs var:config.machine_id ?>(3);"><i class='icon-area-chart icon-large'></i>周图</a></li>
+			<li class="line">line</li>
+			<li style="display:none"><a id="dsm_href_<?cs var:config.machine_id ?>" href="#" target="navTab" rel="showmachine_<?cs var:config.machine_id ?>" fresh="false"></a></li>
+			&nbsp;&nbsp;&nbsp;<li><span id="dsm_show_proc_<?cs var:config.machine_id ?>"></span></li>
+		</ul>
+	</div>
 
-			<div> 
-				<div id='dsmLeftMenu_<?cs var:config.machine_id ?>' layoutH="28" class="chartLeftMenu">
-					<ul class="tree treeFolder" id="dsm_attr_list_<?cs var:config.machine_id ?>">
-					</ul>
-				</div> 
+	<div> 
+		<div id='dsmLeftMenu_<?cs var:config.machine_id ?>' layoutH="28" class="chartLeftMenu">
+			<ul class="tree treeFolder" id="dsm_attr_list_<?cs var:config.machine_id ?>">
+			</ul>
+		</div> 
 
-				<div layoutH="28" class="unitBox" id="dsm_ct_attr_show_list_<?cs var:config.machine_id ?>"> 
-				</div>
-			</div>
+		<div layoutH="28" class="unitBox" id="dsm_ct_attr_show_list_<?cs var:config.machine_id ?>"> 
 		</div>
-	</div> <!-- unitBox -->
+	</div>
 </div>
 
 <script language="javascript" type="text/javascript">

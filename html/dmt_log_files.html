@@ -1,71 +1,57 @@
-<style> 
-.table-b table td{border:solid 1px #ededed;}
-.table tr td label { width:80px;}
-</style>
+<div class="pageHeader">
+	<div class="searchBar">
+		<ul class="searchContent"> 
+			<li width="240px" valign='center'>
+				<label>应用名称：</label>
+				<select name="dlf_appName" id="dlf_appName" style="width:160px;">
+					<option value="-">-</option>
+				</select>
+			</li>
+			<li width="150px"> 
+				<label>占用磁盘空间：</label>
+				<font id="logSizeTotal" style="color:blue"></font>
+			</li>
+			<li width="120px">
+				<label>日志文件数：</label>
+				<font id="logFilesTotal" style="color:blue"></font>
+			</li>
+			<li>
+				<label>日志记录总数：</label>
+				<font id="logTotal" style="color:blue"></font>
+			</li>
+		</ul>
+	</div>
+</div>
 
-<div class="pageContent">
-	<div class="unitBox" style="margin-left:1px;"> 
-		<div class="pageHeader" style="border:1px #B8D0D6 solid">
-			<div class="panelBar">
-				<table class="searchContent" style='padding-left:10px;margin-top:2px' >
-					<tr> 
-						<td width="240px" valign='center'>
-							<label>应用名称：</label>
-							<select name="dlf_appName" id="dlf_appName" style="width:160px;">
-								<option value="-">-</option>
-							</select>
-						</td>
-						<td width="150px"> 
-							<label>占用磁盘空间：</label>
-							<font id="logSizeTotal" style="color:blue"></font>
-						</td>
-						<td width="120px">
-							<label>日志文件数：</label>
-							<font id="logFilesTotal" style="color:blue"></font>
-						</td>
-						<td>
-							<label>日志记录总数：</label>
-							<font id="logTotal" style="color:blue"></font>
-						</td>
-					</tr>
-				</table>
-			</div>
+<div class="pageContent"> 
+	<table class="list" width="100%" layoutH="0"> 
+		<thead>
+			<tr>
+				<th width="30">序号</th>
+				<th width="150">日志文件</th>
+				<th width="50">文件大小</th>
+				<th width="40">日志记录数</th>
+				<th width="30">起始时间</th>
+				<th width="30">结束时间</th>
+			</tr>
+		</thead>
+		<tbody id="dlf_files_list"> 
+		</tbody>
+	</table>
+
+	<div class="pageBar panelBar">
+		<div class="pages">
+			<span>每页显示</span>
+			<select id="numPerPage" onchange="return dlfPageNumPerChange(this.value);">
+				<option value="10">10</option>
+				<option value="20" selected >20</option>
+				<option value="50">50</option>
+				<option value="100">100</option>
+				<option value="200">200</option>
+			</select>
+			<span>条，共 <font id="pageTotalCount"></font>  条</span>
 		</div>
-	
-		<div class="pageContent" style="border:1px #B8D0D6 solid;">
-			<div class="table-b">
-				<table class="list" width="100%" layoutH="64"> 
-					<thead>
-						<tr>
-							<th width="30">序号</th>
-							<th width="150">日志文件</th>
-							<th width="50">文件大小</th>
-							<th width="40">日志记录数</th>
-							<th width="30">起始时间</th>
-							<th width="30">结束时间</th>
-						</tr>
-					</thead>
-
-					<tbody id="dlf_files_list"> 
-					</tbody>
-				</table>
-
-				<div class="panelBar" layoutH="0">
-					<div class="pages">
-						<span>每页显示</span>
-						<select id="numPerPage" onchange="return dlfPageNumPerChange(this.value);">
-							<option value="10">10</option>
-							<option value="20" selected >20</option>
-							<option value="50">50</option>
-							<option value="100">100</option>
-							<option value="200">200</option>
-						</select>
-						<span>条，共 <font id="pageTotalCount"></font>  条</span>
-					</div>
-					<div class="pagination" id="pagination"> </div> 
-				</div>
-			</div> 
-		</div>
+		<div class="pagination" id="pagination"> </div> 
 	</div>
 </div> 
 

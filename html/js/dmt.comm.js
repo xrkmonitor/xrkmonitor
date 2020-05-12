@@ -53,7 +53,6 @@ function dmtSetPluginMarginInfo(tab)
 	var xLeft = iContentW % 452;
 	var xCount = dmtMathtrunc(iContentW/452);
 	var newM = dmtMathtrunc(xLeft/xCount/2);
-
 	if(newM != g_PluginMargin) {
 		g_PluginMargin = newM;
 		if(typeof tab == 'undefined')
@@ -61,9 +60,7 @@ function dmtSetPluginMarginInfo(tab)
 
 		var ptype = '';
 		if(tab == "dmt_plugin_open")
-			ptype='#dp1_plugin_list';
-		else if(tab == "dmt_plugin_my")
-			ptype='#dp3_plugin_list';
+			ptype='#dpopen_plugin_list';
 		else {
 			dmtJsBugReport('dmt.comm.js', 'dmtSetPluginMarginInfo', 'unknow plugin tab:'+tab);
 			return true;
@@ -1468,11 +1465,13 @@ function redrawCharts()
 		if(nid.match('showmachine_') || nid.match('showview_') || nid.match('innersite_')) {
 			dmtRedrawCharts();
 		}
+		if(nid.match("dmt_plugin_")) {
+		    dmtSetPluginMarginInfo(nid);
+		}
 	}
 	else {
 		// 主页
 		dcOnMainPage('main');
 	}
 }
-
 

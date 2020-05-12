@@ -1,7 +1,5 @@
-<link href="<?cs var:config.docpath?>themes/css/showlog.css" rel="stylesheet" type="text/css" media="screen"/>
-
 <div class="pageContent">
-	<div class="panel collapse" style="width:99%; float:left;" id="dhlLogFilter" defH="170" OnToggle="dhlPanelFun">
+	<div class="panel collapse" style="width:99%; float:left;background-color:#d8e5f1;" id="dhlLogFilter" defH="170" OnToggle="dhlPanelFun">
 		<h1>历史日志查询参数</h1>
 		<div>
 			<fieldset style="width:205px; height:155px; float:left;" >
@@ -118,10 +116,10 @@
 				<legend>包含关键字【与】</legend>
 				<input id="dhl_key_include" size="16" type="text" title="日志包含关键字，多个包含关键字之间的关系为与关系" value="" maxlength="16" onkeyup="this.value=this.value.replace(/[_]/g,'')" onafterpaste="this.value=this.value.replace(/[_]/g,'')" >
 				<span>
-					<button onclick="dhlAddLogKey(true, 'dhl_inc_keylist');">添加</button>
+					<button onclick="dhlAddLogKey(true, 'dhl_inc_keylist');"><i class='icon-plus'></i>添加</button>
 				</span>
 				<span>
-					<button onclick="dhlClearLogKey('dhl_inc_keylist', 'dhl_key_include');">清空</button>
+					<button onclick="dhlClearLogKey('dhl_inc_keylist', 'dhl_key_include');"><i class='icon-trash'></i>清空</button>
 				</span>
 
 				<fieldset style="margin-top:5px; height:45px; overflow:auto">
@@ -133,10 +131,10 @@
 				<legend>排除关键字【或】</legend>
 				<input id="dhl_key_exce" size="16" type="text" title="日志排除关键字，多个排除关键字之间的关系为或关系" value="" maxlength="10">
 				<span>
-					<button onclick="dhlAddLogKey(false, 'dhl_exce_keylist');">添加</button>
+					<button onclick="dhlAddLogKey(false, 'dhl_exce_keylist');"><i class='icon-plus'></i>添加</button>
 				</span>
 				<span>
-					<button onclick="dhlClearLogKey('dhl_exce_keylist', 'dhl_key_exce');">清空</button>
+					<button onclick="dhlClearLogKey('dhl_exce_keylist', 'dhl_key_exce');"><i class='icon-trash'></i>清空</button>
 				</span>
 				<fieldset style="margin-top:5px; height:45px; overflow:auto">
 					<div id="dhl_exce_keylist"> </div>
@@ -160,9 +158,9 @@
 					<label>结束</label>
 					<input type="text" id="dhlLogTimeEnd" class="date" value="" dateFmt="yyyy-MM-dd HH:mm:ss" readonly="true"/>
 					&nbsp;&nbsp;
-					<button onclick="$('#dhlCustTime').css('display', 'none'); $('#dhlCommTime').css('display', 'block');">常用时间段</button>
+					<button onclick="$('#dhlCustTime').css('display', 'none'); $('#dhlCommTime').css('display', 'block');"><i class='icon-time'></i>常用时间段</button>
 					&nbsp;
-					<button onclick="$('#dhlCustTime').css('display', 'none'); $('#dhlCustLog').css('display', 'block');">指定文件</button>
+					<button onclick="$('#dhlCustTime').css('display', 'none'); $('#dhlCustLog').css('display', 'block');"><i class='icon-clone'></i>指定文件</button>
 				</div>
 			</fieldset>
 			<fieldset style="width:320px; height:42px; float:left; margin-left:5px;" id="dhlCommTime"> 
@@ -181,8 +179,8 @@
 						<option value="315360000">10 年</option>
 						<option value="630720000">20 年</option>
 					</select>
-					<button onclick="$('#dhlCommTime').css('display', 'none'); $('#dhlCustTime').css('display', 'block');">自定义时间段</button>
-					<button onclick="$('#dhlCommTime').css('display', 'none'); $('#dhlCustLog').css('display', 'block');">指定文件</button>
+					<button onclick="$('#dhlCommTime').css('display', 'none'); $('#dhlCustTime').css('display', 'block');"><i class='icon-time'></i>自定义时间段</button>
+					<button onclick="$('#dhlCommTime').css('display', 'none'); $('#dhlCustLog').css('display', 'block');"><i class='icon-clone'></i>指定文件</button>
 				</div>
 			</fieldset>
 			<fieldset style="width:360px; height:42px; float:left; margin-left:5px; display:none" id="dhlCustLog"> 
@@ -191,8 +189,8 @@
 					<select id="dhlLogFile" style="width:160px;text-align:center">
 						<option value="0" selected>--- 请选择 ---</option>
 					</select>
-					<button onclick="$('#dhlCustLog').css('display', 'none'); $('#dhlCustTime').css('display', 'block');">自定义时间</button>
-					<button onclick="$('#dhlCustLog').css('display', 'none'); $('#dhlCommTime').css('display', 'block');">常用时间</button>
+					<button onclick="$('#dhlCustLog').css('display', 'none'); $('#dhlCustTime').css('display', 'block');"><i class='icon-time'></i>自定义时间</button>
+					<button onclick="$('#dhlCustLog').css('display', 'none'); $('#dhlCommTime').css('display', 'block');"><i class='icon-time'></i>常用时间</button>
 				</div>
 			</fieldset>
 
@@ -224,14 +222,14 @@
 			已扫描记录：<span id="dhlTotalRecords">0</span> ]
 		</div>
 		<ul>
-	        <li><div class="buttonActive"><div class="buttonContent"><button type="button" onclick="dhlShowHistory();" id="dhl_button_search">查找日志</button></div></div></li>
-	        <li><div class="buttonActive"><div class="buttonContent"><button type="button" onclick="dhlChangeSortByTime();" id="dhl_button_sort">变换时间顺序</button></div></div></li>
-	        <li><div class="buttonActive"><div class="buttonContent"><button type="button" onclick="dhlClearHistoryLog();" >&nbsp;&nbsp;清&nbsp;空&nbsp;&nbsp;</button></div></div></li>
-	        <li><div class="buttonActive"><div class="buttonContent"><button type="button" onclick="dhlShowMax();" id="dhl_button_show">扩展显示区</button></div></div></li>
+	        <li><button class="buttonActive" type="button" onclick="dhlShowHistory();" id="dhl_button_search"><i class='icon-search icon-large'></i>查找</button></li>
+	        <li><button class="buttonActive" type="button" onclick="dhlChangeSortByTime();" id="dhl_button_sort"><i class='icon-time icon-large'></i>变换时间顺序</button></li>
+	        <li><button class="buttonActive" type="button" onclick="dhlClearHistoryLog();"><i class='icon-trash icon-large'></i>清 空</button></li>
+	        <li><button class="buttonActive" type="button" onclick="dhlShowMax();" id='dhl_button_show'><i class="icon-move icon-large"></i>扩展显示区</button></li>
 	    </ul>
 	</div>
 
-	<div class="unitBox" style="overflow:auto" id="dhlLogShow" layoutH="255"> 
+	<div class="unitBox" style="overflow:auto" id="dhlLogShow" layoutH="355"> 
 		<ol id="dhlHistoryList"></ol>
 	</div> <!-- panel 历史日志 -->
 </div>
@@ -316,7 +314,7 @@ function dhlShowMax()
 		$("#dhl_button_show").text("扩展显示区");
 		$("#dhlLogFilter").show(100);
 		if(DWZ.ui.sbar == false)
-		    $("#sidebar_s .toggleCollapse div").trigger("click");
+		    $("#navTab .tabsPageHeader a.toggleCollapse").trigger("click");
 		$("#dhlLogShow").height(hshow-hshow_dapt);
 	}
 	else {
@@ -324,7 +322,7 @@ function dhlShowMax()
 		$("#dhl_button_show").text("收缩显示区");
 		$("#dhlLogFilter").hide(100);
 		if(DWZ.ui.sbar == true)
-		    $("#sidebar .toggleCollapse div").trigger("click");
+		    $("#navTab .tabsPageHeader a.toggleCollapse").trigger("click");
 		$("#dhlLogShow").height(hshow+hshow_dapt);
 	}
 }
@@ -367,7 +365,7 @@ function dhlShowHistory()
 			$("#dhl_History_status_recv").css('color', 'red').text("历史日志 【 查询超时】");
 			dhl_logRequestNo++;
 		}, 30000);
-	$("#dhl_button_search").text("重新查找");
+	$("#dhl_button_search").html("<i class='icon-search icon-large'></i>重新查找");
 }
 
 function dhlSelectAllModule()

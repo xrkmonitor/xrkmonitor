@@ -518,6 +518,19 @@ body { overflow:hidden;}
 .pageFormContent dl.nowrap, .nowrap dl{width:100%; height:auto; clear: both;}
 .pageFormContent dl.nowrap dd, .nowrap dd {width: 560px;}
 
+/* rock add - Panel */
+.panel { display:block; background-position:0 100%; background-repeat:repeat-x;}
+.panel .panelHeader { display:block; height:28px; padding-left:5px; background-position:0 0;}
+.panel .panelHeaderContent { display:block; height:28px; padding-right:5px; background-position:100% -50px; position:relative;}
+.panel .panelHeaderContent h1 { display:block; overflow:hidden; height:28px; padding:0 5px;line-height:28px; background-position:0 -100px; background-repeat:repeat-x;}
+.panel .panelContent { display:block; overflow:auto; padding:5px 5px 1px 5px; border-style:solid; border-width:0 1px;}
+.panel .panelFooter { display:block; overflow:hidden; height:5px; padding-left:5px; background-position:0 -150px;}
+.panel .panelFooterContent { display:block; overflow:hidden; height:5px; padding-right:5px; background-position:100% -200px;}
+.panel .collapsable, .panel .expandable { display:block; overflow:hidden; width:20px; height:21px; text-indent:-1000px; position:absolute; top:4px; right:4px;}
+.panel .collapsable:hover { background-position:0 -50px;}
+.panel .expandable { background-position:0 -100px;}
+.panel .expandable:hover { background-position:0 -150px;}
+
 fieldset {padding:3px; margin:0 0 5px 0; border:1px dotted #B8D0D6;}
 fieldset legend {padding:2px; border:1px dotted #B8D0D6; font-weight: bold;}
 fieldset legend:hover {background-color: #dddddd;}

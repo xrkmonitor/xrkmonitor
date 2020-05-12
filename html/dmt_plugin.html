@@ -119,7 +119,7 @@ function <?cs var:config.plugin_pre ?>_GetPluginInstallStatus(plugin)
 
 function <?cs var:config.plugin_pre ?>_GetInstallPluginShowInfo(idx, plugin, local_plugin)
 {
-	var shtml = "<div plugin_type=1 style='float:left; height:230px; width:450px; background-color:#ecf2f4; margin:10px ";
+	var shtml = "<div plugin_type=1 style='float:left; height:240px; width:450px; background-color:#ecf2f4; margin:10px ";
 	shtml += g_PluginMargin + "px; border-radius:10px; border:1px solid #000;'";
 	shtml += " id='<?cs var:config.plugin_pre ?>_plugin_" + plugin.plugin_id + "'";
 	if(plugin.ver != local_plugin.ver) 
@@ -174,7 +174,7 @@ function <?cs var:config.plugin_pre ?>_GetInstallPluginShowInfo(idx, plugin, loc
 
 function <?cs var:config.plugin_pre ?>_GetPluginShowInfo(idx, plugin)
 {
-	var shtml = "<div plugin_type=0 style='float:left; height:230px; width:450px; background-color:#ecf2f4; margin:10px ";
+	var shtml = "<div plugin_type=0 style='float:left; height:240px; width:450px; background-color:#ecf2f4; margin:10px ";
 		shtml += g_PluginMargin + "px; border-radius:10px; border:1px solid #000;'";
 		shtml += " id='<?cs var:config.plugin_pre ?>_plugin_" + plugin.plugin_id + "'";
 		shtml += " onclick='return <?cs var:config.plugin_pre ?>SetSelplugin(" + idx + ")' >";
@@ -490,73 +490,65 @@ $(document).ready(function(){
 </script>
 
 <style type="text/css">
-.pageContent .pageHeader table td label { width:60px}
-.dp_op { width:100%; height:100%; font-size:12px; color:blue; cursor:pointer; }
 .pluginName { font-size:18px; font-weight:bold; margin-top:10px; overflow:hidden; text-overflow:ellipsis; }
-.pluginItem { font-size:12px; margin-top:5px; width:260px; overflow:hidden; text-overflow:ellipsis; }
+.pluginItem { font-size:12px; width:260px; overflow:hidden; text-overflow:ellipsis; }
 </style>
 
+<div class="pageHeader" style="border:1px #B8D0D6 solid">
+	<div class="searchBar">
+		<ul class="searchContent" id='<?cs var:config.plugin_pre ?>_SearchBar'>
+			<li>
+				<label>开发语言:</label>
+				<select name="dev_language">
+					<option value="all">-全部-</option>
+					<option value="c/c++">c/c++</option>
+					<option value="php">php</option>
+					<option value="linux shell">linux shell</option>
+					<option value="javascript">javascript</option>
+					<option value="java">java</option>
+					<option value="python">python</option>
+				</select>
+			</li>
+
+			<li>
+				<label>运行平台:</label>
+				<select name="dest_os"> 
+					<option value="all">-全部-</option>
+					<option value="Linux">Linux</option>
+					<option value="Windows">Windows</option>
+				</select>
+			</li>
+
+			<li>
+				<label>是否开源:</label>
+				<select name="open_src"> 
+					<option value="999">-全部-</option>
+					<option value="1">开 源</option>
+					<option value="0">闭 源</option>
+				</select>
+			</li>
+
+			<li>
+				<label>部署方式:</label>
+				<select name="set_method">
+					<option value="999">-全部-</option>
+					<option value="0">内 置</option>
+					<option value="1">外 置</option>
+				</select>
+			</li>
+		</ul>
+
+		<div class="subBar">
+			<ul>
+				<li>
+					<button type="button" class="buttonActive" onclick='<?cs var:config.plugin_pre ?>Search(true);'><i class='icon-search icon-large'></i>查找</button></li>
+			</ul>
+		</div>
+	</div>
+</div>
+
 <div class="pageContent">
-	<div class="unitBox" style="margin-left:1px;"> 
-		<div class="accountInfo" style='display:block;height:30px;'>
-			<div class='note-text' style='text-align:left; font-size:13px; margin-top:8px;'>
-				说明：监控插件无需开发, 右键单击插件即可安装部署; 我们欢迎自行开发插件, 如您开发了插件且有意愿开源, 我们可以免费为您发布到插件市场.
-			</div>
-		</div>
-
-		<div class="pageHeader" style="border:1px #B8D0D6 solid">
-			<div class="searchBar">
-				<table class="searchContent" id='<?cs var:config.plugin_pre ?>_SearchBar'>
-					<tr>
-						<td>
-							<label>开发语言：</label>
-							<select name="dev_language">
-								<option value="all">-全部-</option>
-								<option value="c/c++">c/c++</option>
-								<option value="php">php</option>
-								<option value="linux shell">linux shell</option>
-								<option value="javascript">javascript</option>
-								<option value="java">java</option>
-								<option value="python">python</option>
-							</select>
-						</td>
-
-						<td>
-							<label>运行平台：</label>
-							<select name="dest_os"> 
-								<option value="all">-全部-</option>
-								<option value="Linux">Linux</option>
-								<option value="Windows">Windows</option>
-							</select>
-						</td>
-	
-						<td>
-							<label>是否开源：</label>
-							<select name="open_src"> 
-								<option value="999">-全部-</option>
-								<option value="1">开 源</option>
-								<option value="0">闭 源</option>
-							</select>
-						</td>
-
-						<td>
-							<label>部署方式：</label>
-							<select name="set_method">
-								<option value="999">-全部-</option>
-								<option value="0">内 置</option>
-								<option value="1">外 置</option>
-							</select>
-						</td>
-						<td>
-							<button type="button" class="sexybutton" onclick='<?cs var:config.plugin_pre ?>Search(true);'><span><span><span class="search">查找</span></span></span></button>
-						</td>
-					</tr>
-				</table>
-			</div>
-		</div>
-
-		<div layoutH="100" class="unitBox" id="<?cs var:config.plugin_pre ?>_plugin_list">
-		</div> 
-	</div> <!-- unitBox -->
+	<div layoutH="0" width='100%' id="<?cs var:config.plugin_pre ?>_plugin_list">
+	</div> 
 </div>
 

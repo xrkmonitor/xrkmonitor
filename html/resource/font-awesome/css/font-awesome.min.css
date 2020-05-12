@@ -2,7 +2,7 @@
 [class^="icon-"]:before,[class*=" icon-"]:before{text-decoration:inherit;display:inline-block;speak:none;}
 .icon-large:before{vertical-align:-10%;font-size:1.3333333333333333em;}
 a [class^="icon-"],a [class*=" icon-"]{display:inline;}
-[class^="icon-"].icon-fw,[class*=" icon-"].icon-fw{display:inline-block;width:1.1428571428571428em;text-align:right;padding-right:0.2857142857142857em;}[class^="icon-"].icon-fw.icon-large,[class*=" icon-"].icon-fw.icon-large{width:1.4285714285714286em;}
+[class^="icon-"],[class*=" icon-"]{display:inline-block;width:1.1428571428571428em;text-align:right;padding-right:0.2857142857142857em;}[class^="icon-"].icon-large,[class*=" icon-"].icon-large{width:1.4285714285714286em;}
 .icons-ul{margin-left:2.142857142857143em;list-style-type:none;}.icons-ul>li{position:relative;}
 .icons-ul .icon-li{position:absolute;left:-2.142857142857143em;width:2.142857142857143em;text-align:center;line-height:inherit;}
 [class^="icon-"].hide,[class*=" icon-"].hide{display:none;}
