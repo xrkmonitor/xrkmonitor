@@ -33,9 +33,12 @@
         border-color: #009688 !important;
     }
 
+.login_form{margin:0px auto;width:460px;float:left;padding:50px 80px;box-sizing:border-box;background:#fff;height:100%}
+
 .kit-login-main .layui-form-item {
 	position: relative;
 	margin-bottom:20px;
+	height:38px;width:100%;line-height:26px;font-size:14px;
 }
 
 .kit-login-main .layui-form-item .kit-login-icon {
@@ -48,7 +51,6 @@
 .kit-login-main .layui-form-item input {
 	padding-left: 34px;
 }
-
 
 .kit-login-box footer {
         height: 35px;
