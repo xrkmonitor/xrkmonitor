@@ -2,25 +2,24 @@
 <html lang="zh-cn">
 <head>
     <title>xrkmonitor - 登录</title>
-	<link rel="icon" href="<?cs var:config.docpath?>/themes/default/images/zifu_48.ico">
+	<link rel="icon" href="<?cs var:config.docpath?>images/zifu_48.ico">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
 	<meta http-equiv="Content-type" content="text/html; charset=utf-8" />
 	<meta name="keywords" content="字符云监控系统,云监控系统,监控提醒,日志系统,云日志系统,日志汇聚,多云部署">
 	<meta name="description" content="字符云监控系统-多云部署一站监控,一切尽在掌握!">
 	<meta name="author" content="rockdeng,1820140912@qq.com,qq:1820140912">
 	<meta name="renderer" content="webkit">
+
+	<link href="<?cs var:config.docpath?>resource/font-awesome/css/font-awesome.min.css?v=66" rel="stylesheet"/>
+	<link href="<?cs var:config.docpath?>resource/themes/css/login.css?v=20200507" rel="stylesheet" />
 	<?cs if:config.xrkmonitor_debug==1 ?>
-	<link href="<?cs var:config.docpath?>/themes/css/login.css" rel="stylesheet" />
-	<link href="<?cs var:config.docpath?>/themes/layui/css/layui.css" rel="stylesheet" />
-    <link href="<?cs var:config.docpath?>/themes/sideshow/css/normalize.css" rel="stylesheet" />
-    <link href="<?cs var:config.docpath?>/themes/sideshow/css/demo.css" rel="stylesheet" />
-    <link href="<?cs var:config.docpath?>/themes/sideshow/css/component.css" rel="stylesheet" />
-	<link href="<?cs var:config.docpath?>themes/sexybuttons/sexybuttons.css" rel="stylesheet" /> 
+	<link href="<?cs var:config.docpath?>resource/layui/css/layui.css" rel="stylesheet" />
+    <link href="<?cs var:config.docpath?>resource/sideshow/css/normalize.css" rel="stylesheet" />
+    <link href="<?cs var:config.docpath?>resource/sideshow/css/demo.css" rel="stylesheet" />
+    <link href="<?cs var:config.docpath?>resource/sideshow/css/component.css" rel="stylesheet" />
 	<?cs else ?>
-	<link href="<?cs var:config.docpath?>/themes/css/login.min.css?v=20200507" rel="stylesheet" />
-	<link href="<?cs var:config.docpath?>/themes/layui/css/layui.min.css?v=20200506" rel="stylesheet" />
-    <link href="<?cs var:config.docpath?>/themes/sideshow/css/sideshow.min.css?v=20200506" rel="stylesheet" />
-	<link href="<?cs var:config.docpath?>/themes/sexybuttons/sexybuttons.min.css?v=20200507" rel="stylesheet" /> 
+	<link href="<?cs var:config.docpath?>resource/layui/css/layui.min.css?v=20200506" rel="stylesheet" />
+    <link href="<?cs var:config.docpath?>resource/sideshow/css/sideshow.min.css?v=20200506" rel="stylesheet" />
 	<?cs /if ?>
 </head>
 
@@ -31,6 +30,7 @@
             <canvas id="demo-canvas"></canvas>
             <div class="kit-login-box">
                 <header>
+					<img src='<?cs var:config.docpath?>/images/login_show.png' style='float:left;padding-bottom:5px' width='64px' height='40px' />
 					<?cs if:config.isdaemon == 1 ?>
                     <h2>字符云监控系统 - 演示版</h2>
 					<?cs else ?>
@@ -76,13 +76,11 @@
                 </div>
 				<footer>
 					<?cs if:config.isdaemon == 1 ?>
-					<button disabled style='float:left;width:120px;margin-left:10px;' title='站点访问数据展示' class="sexybutton sexysimple"><span class="chart_bar"><?cs var:config.today_acc ?> / <?cs var:config.total_acc ?></span></button>
+					<button disabled style='float:left;width:120px;margin-left:10px;' class='layui-btn layui-btn-sm' title='站点访问数据展示'><i class="icon-bar-chart icon-large"></i><?cs var:config.today_acc ?> / <?cs var:config.total_acc ?></button>
 					<?cs else ?>
-					<button disabled style='float:left;width:120px;margin-left:10px;' title='站点访问数据' class="sexybutton sexysimple"><span class="chart_bar"><?cs var:config.today_acc ?> / <?cs var:config.total_acc ?></span></button>
+					<button disabled style='float:left;width:120px;margin-left:10px;' class='layui-btn layui-btn-sm' title='站点访问数据'><i class="icon-bar-chart icon-large"></i><?cs var:config.today_acc ?> / <?cs var:config.total_acc ?></button>
 					<?cs /if ?>
-
-					<a style='margin-left:35px; float:left; position:static;' title='码云源码链接' target='_blank' href='https://gitee.com/xrkmonitorcom/open/stargazers'><img src='https://gitee.com/xrkmonitorcom/open/badge/star.svg?theme=dark' alt='star'></img></a>
-					<button title='监控系统云版本' style='position:static; margin-left:35px; float:left;' class="sexybutton sexysimple" onClick='goto_online();'><span class="home">云版本</span></button>
+					<button title='监控系统云版本' style='position:static; margin-left:35px; font-color:#2f3e56; float:right;' class="layui-btn layui-btn-sm" onClick='goto_online();'><i class="icon-home icon-large"></i>云版本</button>
 				</footer>
             </div>
         </div>
@@ -94,18 +92,18 @@
 <?cs /if ?>
 
 <?cs if:config.xrkmonitor_debug==1 ?>
-<script src="<?cs var:config.docpath?>js/jquery-1.7.2.js"></script>
-<script src="<?cs var:config.docpath?>js/jquery.md5.js"></script>
-<script src="<?cs var:config.docpath?>js/jquery.cookie.js"></script>
-<script src="<?cs var:config.docpath?>js/sideshow/TweenMax.js"></script>
-<script src="<?cs var:config.docpath?>js/sideshow/rAF.js"></script>
-<script src="<?cs var:config.docpath?>js/sideshow/demo-2.js"></script>
-<script src="<?cs var:config.docpath?>js/dmt.comm.js" type="text/javascript"></script>
+<script src="<?cs var:config.docpath?>resource/js/jquery.js?v=1"></script>
+<script src="<?cs var:config.docpath?>resource/js/jquery.md5.js"></script>
+<script src="<?cs var:config.docpath?>resource/js/jquery.cookie.js"></script>
+<script src="<?cs var:config.docpath?>resource/js/sideshow/TweenMax.js"></script>
+<script src="<?cs var:config.docpath?>resource/js/sideshow/rAF.js"></script>
+<script src="<?cs var:config.docpath?>resource/js/sideshow/demo-2.js"></script>
+<script src="<?cs var:config.docpath?>resource/js/dmt.comm.js" type="text/javascript"></script>
 <?cs else ?>
-<script src="<?cs var:config.docpath?>js/jquery.min.js?v=2020506"></script>
-<script src="<?cs var:config.docpath?>js/jquery.other.min.js?v=2020506"></script>
-<script src="<?cs var:config.docpath?>js/dmt.comm.min.js?v=20200509" type="text/javascript"></script>
-<script src="<?cs var:config.docpath?>js/sideshow/sideshow.min.js?v=20200506"></script>
+<script src="<?cs var:config.docpath?>resource/js/jquery.min.js?v=2020506"></script>
+<script src="<?cs var:config.docpath?>resource/js/jquery.other.min.js?v=2020506"></script>
+<script src="<?cs var:config.docpath?>resource/js/dmt.comm.min.js?v=20200509" type="text/javascript"></script>
+<script src="<?cs var:config.docpath?>resource/js/sideshow/sideshow.min.js?v=20200506"></script>
 <?cs /if ?>
 
 <script language="javascript" type="text/javascript">

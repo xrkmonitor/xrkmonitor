@@ -1,9 +1,0 @@
-.log_type_debug { background-color:#CFC; font-size:20px; border-bottom:1px inset #000; }
-.log_type_info { background-color:#FFF; font-size:20px; border-bottom:1px inset #000; }
-.log_type_warn { background-color:#FCF; font-size:20px; border-bottom:1px inset #000; }
-.log_type_in_error { background-color:#F96; font-size:20px; border-bottom:1px inset #000; }
-.log_type_error { background-color:#F86; font-size:20px; border-bottom:1px inset #000; }
-.log_type_fatal { background-color:#C00; font-size:20px; border-bottom:1px inset #000; }
-.log_type_other { background-color:#C0C0C0; font-size:20px; border-bottom:1px inset #000; }
-.log_type_debug:hover, .log_type_info:hover, .log_type_warn:hover, .log_type_in_error:hover, .log_type_fatal:hover, .log_type_other:hover { font-weight:bolder; } 
-.log_status_info { color:blue; }
