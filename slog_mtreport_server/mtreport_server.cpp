@@ -210,7 +210,7 @@ void TryWriteRealinfoToDb()
 		return;
 	stConfig.dwLastWriteRealinfoToDbTime = slog.m_stNow.tv_sec;
 
-	SLogServer *pCenterServer = slog.GetWebMasterSrv();
+	SLogServer *pCenterServer = slog.GetValidServerByType(SRV_TYPE_MT_CENTER);
 	if(pCenterServer != stConfig.pCenterServer) {
 		stConfig.pCenterServer = pCenterServer;
 		if(slog.IsIpMatchLocalMachine(stConfig.pCenterServer->dwIp))

@@ -2506,7 +2506,6 @@ int DealInitLogReportTest(CGI *cgi)
 
 static int DealListPlugin(CGI *cgi, const char *ptype="open")
 {
-	hdf_set_value(cgi->hdf, "config.xrkmonitor_url", stConfig.szXrkmonitorSiteAddr);
 	hdf_set_value(stConfig.cgi->hdf, "config.plugin_pre", "dpopen");
 	hdf_set_valuef(stConfig.cgi->hdf, "config.navTabId=dmt_plugin_%s", ptype);
 
@@ -3571,7 +3570,6 @@ static int DealShowLocalPlugin(CGI *cgi)
 		return SLOG_ERROR_LINE;
 	}
 
-	hdf_set_value(cgi->hdf, "config.xrkmonitor_url", stConfig.szXrkmonitorSiteAddr);
 	hdf_set_value(stConfig.cgi->hdf, "config.plugin_pre", pshow_pre);
 	hdf_set_value(stConfig.cgi->hdf, "config.plugin_id", plugin_id);
 	hdf_set_value(stConfig.cgi->hdf, "config.action", "show_local_mt_plugin");
@@ -3606,7 +3604,6 @@ static int DealShowPlugin(CGI *cgi)
 		return SLOG_ERROR_LINE;
 	}
 
-	hdf_set_value(cgi->hdf, "config.xrkmonitor_url", stConfig.szXrkmonitorSiteAddr);
 	hdf_set_value(stConfig.cgi->hdf, "config.plugin_pre", pshow_pre);
 	hdf_set_value(stConfig.cgi->hdf, "config.plugin_id", plugin_id);
 	hdf_set_value(stConfig.cgi->hdf, "config.action", "show_mt_plugin");

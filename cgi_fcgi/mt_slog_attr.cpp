@@ -182,8 +182,9 @@ static int GetAttrList(Json &js, AttrSearchInfo *pinfo=NULL)
 	iOrder = (iOrder==0 ? SetRecordsOrder(stConfig.cgi, sSqlBuf, "xrk_id") : 1);
 	iOrder = (iOrder==0 ? SetRecordsOrder(stConfig.cgi, sSqlBuf, "create_time") : 1);
 	iOrder = (iOrder==0 ? SetRecordsOrder(stConfig.cgi, sSqlBuf, "attr_type") : 1);
-	if(iOrder == 0) // 默认按创建时间降序
-		strcat(sSqlBuf, " order by create_time desc");
+	iOrder = (iOrder==0 ? SetRecordsOrder(stConfig.cgi, sSqlBuf, "data_type") : 1);
+	if(iOrder == 0) 
+		strcat(sSqlBuf, " order by xrk_id desc");
 
 	memset(sTmpBuf, 0, sizeof(sTmpBuf));
 	sprintf(sTmpBuf, " limit %d,%d", iNumPerPage*(iCurPage-1), iNumPerPage);

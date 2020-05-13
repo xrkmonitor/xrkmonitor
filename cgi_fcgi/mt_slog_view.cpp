@@ -87,7 +87,7 @@ static int AddSearchInfo(char *psql, int ibufLen, SearchInfo *pinfo)
 	char sTmpBuf[128] = {0};
 	if(pinfo->id != 0)
 	{
-		sprintf(sTmpBuf, " and id=%d", pinfo->id);
+		sprintf(sTmpBuf, " and xrk_id=%d", pinfo->id);
 		strcat(psql, sTmpBuf);
 		hdf_set_int_value(stConfig.cgi->hdf, "config.dv_view_id", pinfo->id);
 	}
@@ -95,7 +95,7 @@ static int AddSearchInfo(char *psql, int ibufLen, SearchInfo *pinfo)
 	if(pinfo->pkey != NULL && pinfo->pkey[0] != '\0')
 	{
 		memset(sTmpBuf, 0, sizeof(sTmpBuf));
-		snprintf(sTmpBuf, sizeof(sTmpBuf)-1, " and (name like \'%%%s%%\' or view_desc like "
+		snprintf(sTmpBuf, sizeof(sTmpBuf)-1, " and (xrk_name like \'%%%s%%\' or view_desc like "
 			" \'%%%s%%\')", pinfo->pkey, pinfo->pkey);
 		if((int)(strlen(sTmpBuf) + strlen(psql)) >= ibufLen)
 		{

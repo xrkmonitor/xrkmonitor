@@ -713,9 +713,6 @@ static int DealInitChangeInfo()
 
 	hdf_set_int_value(stConfig.cgi->hdf, "config.has_email", iHasEmail);
 	hdf_set_value(stConfig.cgi->hdf, "config.field", pf);
-
-	if(!strcmp(pf, "xrkmonitor")) 
-		hdf_set_value(stConfig.cgi->hdf, "config.xrkmonitor_url", stConfig.szXrkmonitorSiteAddr);
 	DEBUG_LOG("receive change info:%s, has email:%d", pf, iHasEmail);
 	return 0;
 }

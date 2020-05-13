@@ -158,7 +158,6 @@ void SetWebInfo()
 	jsSite["user_id"] = stConfig.stUser.puser_info->iUserId;
 	hdf_set_value(stConfig.cgi->hdf, "config.site_info", jsSite.ToString().c_str());
 	hdf_set_int_value(stConfig.cgi->hdf, "config.user_flag_1", stConfig.stUser.puser_info->dwUserFlag_1);
-	hdf_set_value(stConfig.cgi->hdf, "config.xrkmonitor_url", stConfig.szXrkmonitorSiteAddr);
 	AppInfo *pApp = slog.GetAppInfoByIndex(stConfig.stUser.pSysInfo->iAppInfoIndexStart);
 	if(pApp != NULL && !slog.IsIpMatchLocalMachine(pApp->dwAppSrvMaster))
 		hdf_set_value(stConfig.cgi->hdf, "config.app_info_addr", 

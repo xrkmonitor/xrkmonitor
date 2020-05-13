@@ -425,8 +425,7 @@ static int DealSaveWarnConfig(bool bIsMod=false)
 	int32_t iWave = hdf_get_int_value(stConfig.cgi->hdf, "Query.ddwc_warn_wave", 0); 
 	int32_t iWarnType = hdf_get_int_value(stConfig.cgi->hdf, "Query.ddwc_warn_type", 0);
 	const char *pcallBkType = hdf_get_value(stConfig.cgi->hdf, "Query.ddwc_call_back_type", "CloseCurrent");
-	const char *pnavTabId = hdf_get_value(
-		stConfig.cgi->hdf, "Query.ddwc_reload_navTab_id", "dmt_warn_config");
+	const char *pnavTabId = hdf_get_value(stConfig.cgi->hdf, "Query.ddwc_reload_navTab_id", "dmt_slog_warn");
 	int32_t iWarnTypeValue = hdf_get_int_value(stConfig.cgi->hdf, "Query.ddwc_warn_type_val", 0);
 
 	DEBUG_LOG("iAttrId:%d, pWarnList:%s, pmax:%s, pmin:%s, pwave:%s, iMax:%d, iMin:%d, iWave:%d, iWarnType:%d, "

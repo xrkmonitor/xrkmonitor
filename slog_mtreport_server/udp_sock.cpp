@@ -930,7 +930,6 @@ void CUdpSock::OnRawData(const char *buf, size_t len, struct sockaddr *sa, sockl
 	}
 
 	if(PacketPb()) {
-
 		return;
 	}
 

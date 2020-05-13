@@ -1492,7 +1492,7 @@ int AfterCgiLogin(CGIConfig &stConfig)
 		stConfig.cgi = NULL;
 		return 0;
 	}
-
+	hdf_set_value(stConfig.cgi->hdf, "config.xrkmonitor_url", stConfig.szXrkmonitorSiteAddr);
 	return 1;
 }	
 

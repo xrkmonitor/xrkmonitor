@@ -106,7 +106,9 @@ typedef struct
 typedef struct 
 {
 	uint32_t dwReanInfoSeq;
+	uint32_t dwTryChangeStartTime;
 	uint8_t bTryChangeFlag;
+
 	uint32_t dwTotalAccTimes;
 	uint32_t dwTodayAccTimes;
 	uint16_t wNewAccTimes;
