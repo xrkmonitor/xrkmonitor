@@ -19,7 +19,7 @@
 		<br>
 
 		<div class="unit" id='dci_change_verify_info'>
-			<label>选择验证方式：</label>
+			<label style='width:90px'>选择验证方式：</label>
 			<select id="dci_sel_verify_type" style="width:100px; text-align:center;">
 				<?cs if:config.field!='pass' && config.field!='su_pass' ?>
 				<option value="1">密 码</option>
@@ -29,16 +29,16 @@
 				<option value="2">邮箱验证码</option>
 				<?cs /if ?>
 			</select>
-			<span id='dci_resend_vcode_show' style='display:none;'>
-				<div class="buttonActive"><div class="buttonContent"><button id="dci_resend_vcode" type="button">发送验证码</button></div></div>
+			<span id='dci_resend_vcode_show' style='display:none; margin-left:5px;'>
+				<button class="buttonActive" id="dci_resend_vcode" type="button">发送验证码</button>
 			</span>
 		</div>
 
 		<div class="unit" id='dci_passwd'>
 			<?cs if:config.field!='pass' && config.field!='su_pass' ?>
-			<label>登陆密码：</label>
+			<label style='width:90px'>登陆密码：</label>
 			<?cs else ?>
-			<label>新登陆密码：</label>
+			<label style='width:90px'>新登陆密码：</label>
 			<?cs /if ?>
 			<input type="password" name="oldPassword" style="display:none">
 			<input autocomplete="off" type="text" onfocus="this.type='password'" id="dci_password" name="oldPassword" size="28">
@@ -54,7 +54,7 @@
 			<input autocomplete="off" type="text" onfocus="this.type='password'" id='dci_xrkmonitor_pass' name="dci_xrkmonitor_pass" size="28" />
 			</p>
 			<p>
-			<label>绑定验证码：</label>
+			<label style='width:70px'>绑定验证码：</label>
 			<input id="dci_xrkmonitor_vcode" type="text" class="inputclass" size="9" align="top">&nbsp;
 			<img id="dci_img_vcode" title="点击更换验证码" src="#" width="76" height="20" border="0" style="position: relative; border:1px solid #eeeeee; background:#ffffff" >
 			<input id="dci_vcode_index" type="hidden">
@@ -83,20 +83,20 @@
 		</div>
 
 		<div class="unit" style="display:none" id='dci_new_email'>
-			<label>新电子邮箱：</label>
+			<label style='width:90px'>新电子邮箱:</label>
 			<input type="text" name="dci_user_email" id="dci_user_email" title="请输入电子邮箱地址" size="28" />
-			<span>
-				&nbsp;<div class="buttonActive"><div class="buttonContent"><button id="dci_resend_vcode_email">发送验证码</button></div></div>
+			<span style='float:left'>
+				&nbsp;<button class="buttonActive" id="dci_resend_vcode_email" type="button">发送验证码</button>
 			</span>
 		</div>
 
 		<div class="unit" id='dci_email' style="display:none">
-			<label>邮箱验证码：</label>
+			<label style='width:90px'>邮箱验证码：</label>
 			<input type="text" id="dci_email_vcode" size="28" /> 
 		</div>
 
 		<div class="unit" style="display:none" id='dci_new_name'>
-			<label>新账号名：</label>
+			<label style='width:90px'>新账号名：</label>
 			<input type="text" name="dci_user_name" id="dci_user_name" title="请输入4-20位字母或者数字" size="28" /> 
 		</div>
 
@@ -113,9 +113,9 @@
 	<div class="formBar">
 		<ul>
 			<li id='dci_submit_li'>
-				<div class="buttonActive"><div class="buttonContent"><button type="button" id='dci_submit'>&nbsp;&nbsp;提&nbsp;交&nbsp;&nbsp;</button></div></div>
+				<button type="submit" class="buttonActive" id='dci_submit'>提交</button></li>
 			</li>
-			<li><div class="button"><div class="buttonContent"><button type="button" class="close" id='dci_close'>&nbsp;&nbsp;取&nbsp;消&nbsp;&nbsp;</button></div></div></li>
+			<li><button type="button" class="buttonActive close" id='dci_close'>取消</button></li>
 		</ul>
 	</div>
 </div>

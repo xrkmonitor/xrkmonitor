@@ -25,8 +25,7 @@ $(document).ready(function(){
 
 <div class="pageContent">
 	<form method="post" action="<?cs var:config.cgipath?>mt_slog?action=<?cs var:config.action ?>&navTabId=dmt_list_module" class="pageForm required-validate" onsubmit="return validateCallback(this, dialogAjaxDone);">
-		<div class="pageFormContent" layoutH="56">
-
+		<div class="pageFormContent">
 			<?cs if:config.action == "save_mod_module" ?>
 			<input type="hidden" name="ddam_module_id" value="<?cs var:config.module_id ?>" />
 			<input type="hidden" name="ddam_op_app" value="<?cs var:config.app_id ?>" />
@@ -54,9 +53,8 @@ $(document).ready(function(){
 		</div>
 		<div class="formBar">
 			<ul>
-				<li><div class="button"><div class="buttonContent"><button type="submit">&nbsp;&nbsp;保&nbsp;存&nbsp;&nbsp;</button></div></div></li>
-				<li>
-					<div class="button"><div class="buttonContent"><button type="button" class="close">&nbsp;&nbsp;取&nbsp;消&nbsp;&nbsp;</button></div></div>
+				<li><button type="submit" class="buttonActive">保存</button></li>
+				<li><button type="button" class="buttonActive close">关闭</button></li>
 				</li>
 			</ul>
 		</div>

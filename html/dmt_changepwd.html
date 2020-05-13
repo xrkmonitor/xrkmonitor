@@ -55,24 +55,24 @@ function dcOnSubmit(elem)
 			<br />
 			<input type="hidden" name="action" value="change_pwd">
 			<div class="unit">
-				<label>旧密码：</label>
+				<label style='width:65px'>旧密码：</label>
 				<input type="password" name="s_oldPassword" style="display:none">
 				<input autocomplete="off" type="text" onfocus="this.type='password'" id="oldPassword" name="oldPassword" size="20" minlength="6" maxlength="20" class="required " />
 			</div>
 			<div class="unit">
-				<label>新密码：</label>
+				<label style='width:65px'>新密码：</label>
 				<input autocomplete="off" type="text" onfocus="this.type='password'" id="newPassword" name="newPassword" size="20" minlength="6" maxlength="20" class="required "/>
 			</div>
 			<div class="unit">
-				<label>确认密码：</label>
+				<label style='width:65px'>确认密码：</label>
 				<input autocomplete="off" type="text" onfocus="this.type='password'" id="dc_rnewPassword" name="dc_rnewPassword" size="20" equalTo="#newPassword" class="required "/>
 			</div>
 			
 		</div>
 		<div class="formBar">
 			<ul>
-				<li><div class="buttonActive"><div class="buttonContent"><button type="submit">&nbsp;&nbsp;提&nbsp;交&nbsp;&nbsp;</button></div></div></li>
-				<li><div class="button"><div class="buttonContent"><button type="button" class="close">&nbsp;&nbsp;取&nbsp;消&nbsp;&nbsp;</button></div></div></li>
+				<li><button type="submit" class="buttonActive">保存</button></li>
+				<li><button type="button" class="buttonActive close">关闭</button></li>
 			</ul>
 		</div>
 	</form>

@@ -15,9 +15,9 @@ function dlmSetMachineList(machine_info)
 		list += "<td>" + list_machine[i].name + "</td>";
 		list += "<td>" + list_machine[i].machine_desc + "</td>";
 		list += "<td>";
-		list += '<a class="btnSelect" href="javascript:$.bringBack({';
+		list += '<a href="javascript:$.bringBack({';
 		list += "ddwc_warn_type_val:'" + list_machine[i].id + "', ddwc_warn_type_name:'";
-		list += list_machine[i].name + "_" + list_machine[i].ip + "'})\" title='查找带回'>选择</a>";
+		list += list_machine[i].name + "_" + list_machine[i].ip + "'})\" title='查找带回'><i class='icon-check'></i>选择</a>";
 		list += "</td>";
 
 		list += "</tr>";
@@ -35,7 +35,7 @@ $(document).ready(function(){
 
 <div class="pageContent">
 	<div class="pageFormContent" layoutH="58">
-		<table class="table" width="100%">
+		<table class="list" width="100%">
 			<thead>
 				<tr>
 					<th width="60">序号</th>
@@ -52,7 +52,7 @@ $(document).ready(function(){
 	
 	<div class="formBar">
 		<ul>
-			<li><div class="button"><div class="buttonContent"><button class="close" type="button">&nbsp;&nbsp;关&nbsp;闭&nbsp;&nbsp;</button></div></div></li>
+			<li><button type="button" class="buttonActive close">关闭</button></li>
 		</ul>
 	</div>
 </div>

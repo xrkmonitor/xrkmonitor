@@ -2,23 +2,31 @@
 $(document).ready(function(){
 	$("#ddwc_form_submit").submit(function(){
 		validateCallback(this, dialogAjaxDone);
+		<?cs if:config.action=="save_multi_mod" ?>
+		$.pdialog.closeCurrent();
+		<?cs /if ?>
+
 		return false;
 	});
 });
 </script>
 
 <style type="text/css">
-.pageFormContent p { width:530px; }
+.pageFormContent p { width:500px; }
 .pageFormContent p label { width:60px; }
 </style>
 
 <div class="pageContent">
 	<form method="get" action="<?cs var:config.cgipath?>mt_slog_warn" class="pageForm" id="ddwc_form_submit">
-		<div class="pageFormContent" layoutH="56">
+		<div class="pageFormContent">
 			<input type="hidden" name="ddwc_call_back_type" value="closeCurrent" />
 			<?cs if:config.action=="save_multi_mod" ?>
 			<input type="hidden" name="ddwc_mod_warn_list" value="<?cs var:config.warn_list ?>" />
+			<input type="hidden" name="ddwc_call_back_type" value="closeCurrent" />
+			<?cs else ?>
+			<input type="hidden" name="ddwc_call_back_type" value="noCloseCurrent" />
 			<?cs /if ?>
+
 			<input type="hidden" name="ddwc_reload_navTab_id" value="dmt_slog_warn" />
 			<input type="hidden" name="ddwc_warn_config_id" value="<?cs var:config.warn_config_id ?>" />
 			<input type="hidden" name="action" value="<?cs var:config.action ?>" />
@@ -40,9 +48,9 @@ $(document).ready(function(){
 			</p>
 			<?cs else ?>
 			<p>
-				<label>清除告警：</label><input type="checkbox" name="c_warn_clear_not_sel" id="c_warn_clear_not_sel" />
+				<label style='width:60px'>清除告警:</label><input type="checkbox" name="c_warn_clear_not_sel" id="c_warn_clear_not_sel" />
 				<font class="note-text">
-					<label class='for' style="float:right;width:428px;" for="c_warn_clear_not_sel"> 
+					<label class='for' style="float:right;width:380px;" for="c_warn_clear_not_sel"> 
 						- 清除以下未勾选的告警类型配置
 					</label>
 				</font>
@@ -62,7 +70,7 @@ $(document).ready(function(){
 				<input type="text" size="20" class="digits" name="ddwc_warn_max" id="ddwc_warn_max" value="<?cs var:config.warn_max ?>" />
 				<input type="checkbox" name="c_warn_max" id="c_warn_max" />
 				<font class="note-text">
-					<label class='for' style="float:right;width:270px;" for="c_warn_max">
+					<label class='for' style="float:right;width:240px;" for="c_warn_max">
 						- 设置最大值，并勾选后最大值告警配置生效
 					</label>
 				</font>
@@ -72,7 +80,7 @@ $(document).ready(function(){
 				<input type="text" size="20" name="ddwc_warn_min" id="ddwc_warn_min" value="<?cs var:config.warn_min ?>" />
 				<input type="checkbox" name="c_warn_min" id="c_warn_min" />
 				<font class="note-text">
-					<label class='for' style="float:right;width:270px;" for="c_warn_min">
+					<label class='for' style="float:right;width:240px;" for="c_warn_min">
 						- 设置最小值，并勾选后最小值告警配置生效
 					</label>
 				</font>
@@ -82,7 +90,7 @@ $(document).ready(function(){
 				<input type="text" size="20" name="ddwc_warn_wave" id="ddwc_warn_wave" value="<?cs var:config.warn_wave ?>" />
 				<input type="checkbox" name="c_warn_wave" id="c_warn_wave" />
 				<font class="note-text">
-					<label class='for' style="float:right;width:270px;" for="c_warn_wave"> 
+					<label class='for' style="float:right;width:240px;" for="c_warn_wave"> 
 						- 设置波动值，并勾选后波动值告警配置生效
 					</label>
 				</font>
@@ -92,10 +100,8 @@ $(document).ready(function(){
 
 		<div class="formBar">
 			<ul>
-				<li><div class="button"><div class="buttonContent"><button type="submit"><?cs if:config.action=="save_multi_mod" ?>&nbsp;&nbsp;修&nbsp;改&nbsp;&nbsp;<?cs else ?>&nbsp;&nbsp;新&nbsp;增&nbsp;&nbsp;<?cs /if ?></button></div></div></li>
-				<li>
-					<div class="button"><div class="buttonContent"><button type="button" class="close">&nbsp;&nbsp;取&nbsp;消&nbsp;&nbsp;</button></div></div>
-				</li>
+				<li><button type="submit" class="buttonActive"><?cs if:config.action=="save_multi_mod" ?>修改<?cs else ?>新增<?cs /if ?></button></li>
+				<li><button type="button" class="buttonActive close">关闭</button></li>
 			</ul>
 		</div>
 	</form>

@@ -1,103 +1,77 @@
-<div class="pageContent">
-	<div class="unitBox" style="margin-left:1px;"> 
-		<form id="pagerForm" method="post" action="<?cs var:config.cgipath?>mt_slog?action=list_log_config">
-			<input type="hidden" name="pageNum" value="<?cs var:config.currentPage ?>" />
-			<input type="hidden" name="numPerPage" value="<?cs var:config.numPerPage ?>" />
-			<input type="hidden" name="orderField" value="<?cs var:config.orderField ?>" />
-			<input type="hidden" name="orderDirection" value="<?cs var:config.orderDirection ?>" />
+<div class="pageHeader">
+	<form class="pagerForm" method="post" onsubmit="return navTabSearch(this);" action="<?cs var:config.cgipath?>mt_slog?action=list_log_config">
+		<?cs include:config.cspath+"dmt_page_para.html" ?>
+		<input type="hidden" name="dlc_app_id" value="<?cs var:config.dlc_app_id ?>" />
+		<input type="hidden" name="dlc_module_id" value="<?cs var:config.dlc_module_id ?>" />
+	</form>
 
-			<input type="hidden" name="dlc_app_id" value="<?cs var:config.dlc_app_id ?>" />
-			<input type="hidden" name="dlc_module_id" value="<?cs var:config.dlc_module_id ?>" />
-		</form>
-
-		<div class="pageHeader" style="border:1px #B8D0D6 solid">
-			<form onsubmit="return navTabSearch(this, 'dmt_list_log_config');" action="<?cs var:config.cgipath ?>mt_slog?action=list_log_config" method="post">
-			<div class="searchBar">
-				<table class="searchContent" >
-					<tr>
-						<td>
-							应 用：
-							<select name="dlc_app_id" id="dlc_app_id">
-								<option value="0"> 全 部 </option>
-							</select>
-						</td>
-						<td>
-							模 块：
-							<select name="dlc_module_id" id="dlc_module_id">
-								<option value="0"> 全 部 </option>
-							</select>
-						</td>
-						<td>
-							<button class="sexybutton" onclick='dlcOnSearch();' ><span><span><span class="search">查找</span></span></span></button>
-						</td>
-					</tr>
-				</table>
-			</div>
-			</form>
-		</div>
-
-		<div class="pageContent" style="border-left:1px #B8D0D6 solid;border-right:1px #B8D0D6 solid">
-			<div class="panelBar">
-				<ul class="toolBar">
-					<li><a class="add" href="#" onclick="return dlcAddConfig();"><span>添加</span></a></li>
-					<li class="line">line</li>
-					<li><a class="delete" href="#" onclick="return dlcDeleteConfig();"><span>删除</span></a></li>
-					<li class="line">line</li>
-					<li><a class="edit" href="#" onclick="return dlcModConfig();"><span>修改</span></a></li>
-					<li class="line">line</li>
+	<form onsubmit="return navTabSearch(this, 'dmt_list_log_config');" action="<?cs var:config.cgipath ?>mt_slog?action=list_log_config" method="post">
+		<div class="searchBar">
+			<ul class="searchContent" >
+				<li>
+					<label>应 用:</label>
+					<select name="dlc_app_id" id="dlc_app_id">
+						<option value="0"> 全 部 </option>
+					</select>
+				</li>
+				<li>
+					<label>模 块:</label>
+					<select name="dlc_module_id" id="dlc_module_id">
+						<option value="0"> 全 部 </option>
+					</select>
+				</li>
+			</ul>
+			<div class="subBar">
+				<ul>
+					<li><button type='submit' class="buttonActive" onclick='dlcOnSearch();' ><i class='icon-search icon-large '></i>查找</button></li>
 				</ul>
 			</div>
-
-			<div>
-				<table class="list" width="100%" layoutH="90">
-					<thead>
-						<tr>
-							<th width="30">序号</th>
-							<?cs if:config.order_config_id ?>
-							<th width="40" orderField="config_id" class="<?cs var:config.order_config_id ?>">配置 id</th>
-							<?cs else ?>
-							<th width="40" orderField="config_id" class="asc">配置 id</th>
-							<?cs /if ?>
-
-							<?cs if:config.order_config_name ?>
-							<th width="130" orderField="config_name" class="<?cs var:config.order_config_name ?>" >配置名称</th>
-							<?cs else ?>
-							<th width="130" orderField="config_name" class="desc" >配置名称</th>
-							<?cs /if ?>
-
-							<?cs if:config.order_app_id ?>
-							<th width="130" orderField="app_id" class="<?cs var:config.order_app_id ?>">所属应用</th>
-							<?cs else ?>
-							<th width="130" orderField="app_id" class="desc">所属应用</th>
-							<?cs /if ?>
-
-							<th width="70">所属模块</th>
-							<th width="280">频率限制 (条/每分钟) | 日志类型</th>
-							<th width="40">详情</th>
-						</tr>
-					</thead>
-					<tbody id="dlc_config_list_tbody"> 
-					</tbody>
-				</table>
-
-				<div class="panelBar" layoutH="0">
-					<div class="pages">
-						<span>每页显示</span>
-						<select name="numPerPage" onchange="navTabPageBreak({numPerPage:this.value})">
-							<option value="10">10</option>
-							<option value="20">20</option>
-							<option value="50">50</option>
-							<option value="100">100</option>
-							<option value="200">200</option>
-						</select>
-						<span>条，共 <?cs var:config.totalCount ?>  条</span>
-					</div>
-					<div class="pagination" targetType="navTab" totalCount="<?cs var:config.totalCount ?>" numPerPage="<?cs var:config.numPerPage ?>" pageNumShown="<?cs var:config.pageNumShown ?>" currentPage="<?cs var:config.currentPage ?>"></div>
-				</div>
-	
-			</div> 
 		</div>
-	</div> <!-- unitBox -->
+	</form>
+</div>
+
+<div class="pageContent">
+	<div class="panelBar">
+		<ul class="toolBar">
+			<li><a href="#" onclick="return dlcAddConfig();"><i class='icon-plus'></i>添加</a></li>
+			<li class="line">line</li>
+			<li><a href="#" onclick="return dlcDeleteConfig();"><i class='icon-minus'></i>删除</a></li>
+			<li class="line">line</li>
+			<li><a href="#" onclick="return dlcModConfig();"><i class='icon-edit'></i>修改</a></li>
+			<li class="line">line</li>
+		</ul>
+	</div>
+	<table class="list" width="100%" layoutH="0">
+		<thead>
+			<tr>
+				<th width="30">序号</th>
+				<?cs if:config.order_config_id ?>
+				<th width="40" orderField="config_id" class="<?cs var:config.order_config_id ?>">配置 id</th>
+				<?cs else ?>
+				<th width="40" orderField="config_id" class="asc">配置 id</th>
+				<?cs /if ?>
+
+				<?cs if:config.order_config_name ?>
+				<th width="130" orderField="config_name" class="<?cs var:config.order_config_name ?>" >配置名称</th>
+				<?cs else ?>
+				<th width="130" orderField="config_name" class="desc" >配置名称</th>
+				<?cs /if ?>
+
+				<?cs if:config.order_app_id ?>
+				<th width="130" orderField="app_id" class="<?cs var:config.order_app_id ?>">所属应用</th>
+				<?cs else ?>
+				<th width="130" orderField="app_id" class="desc">所属应用</th>
+				<?cs /if ?>
+
+				<th width="70">所属模块</th>
+				<th width="280">频率限制 (条/每分钟) | 日志类型</th>
+				<th width="40">详情</th>
+			</tr>
+		</thead>
+		<tbody id="dlc_config_list_tbody"> 
+		</tbody>
+	</table>
+	<?cs include:config.cspath+"dmt_page.html" ?>
 </div>
 
 <script language="javascript" type="text/javascript">
@@ -275,7 +249,6 @@ function dlcOnSearch()
 		window.localStorage.removeItem('dlc_module_sel');
 	else if(window.localStorage.getItem('dlc_module_sel') != module_id)
 		window.localStorage.setItem('dlc_module_sel', module_id);
-
 	return true;
 }
 

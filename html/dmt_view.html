@@ -11,8 +11,6 @@ function dmSetViewList(view_info)
 	for(var i=0,j=0; i < view_info.count && i < list_view.length; i++)
 	{
 		list += "<tr target='view_id' rel='" + list_view[i].id + "'>";
-		j = (<?cs var:config.currentPage ?>-1) * <?cs var:config.numPerPage ?> + 1;
-		list += "<td>" + (i+j) + "</td>";
 		list += "<td>" + list_view[i].id + "</td>";
 		list += "<td>" + list_view[i].name + "</td>";
 
@@ -48,110 +46,85 @@ $(document).ready(function(){
 
 </script>
 
-<div class="pageContent">
-	<div class="unitBox" style="margin-left:1px;"> 
-		<form id="pagerForm" method="post" action="<?cs var:config.cgipath?>mt_slog_view?action=search">
-			<input type="hidden" name="pageNum" value="<?cs var:config.currentPage ?>" />
-			<input type="hidden" name="numPerPage" value="<?cs var:config.numPerPage ?>" />
-			<input type="hidden" name="orderField" value="<?cs var:config.orderField ?>" />
-			<input type="hidden" name="orderDirection" value="<?cs var:config.orderDirection ?>" />
+<div class="pageHeader">
+	<form class="pagerForm" method="post" onsubmit="return navTabSearch(this);" action="<?cs var:config.cgipath?>mt_slog_view?action=search">
+		<?cs include:config.cspath+"dmt_page_para.html" ?>
+		<input type="hidden" name="dv_keyword" value="<?cs var:config.dv_keyword ?>" />
+		<input type="hidden" name="dv_view_id" value="<?cs var:config.dv_view_id ?>" />
+	</form>
 
-			<input type="hidden" name="dv_keyword" value="<?cs var:config.dv_keyword ?>" />
-			<input type="hidden" name="dv_view_id" value="<?cs var:config.dv_view_id ?>" />
-		</form>
-
-		<div class="pageHeader" style="border:1px #B8D0D6 solid">
-			<form onsubmit="return navTabSearch(this, 'dmt_slog_view');" action="<?cs var:config.cgipath?>mt_slog_view?action=search">
-			<div class="searchBar">
-				<table class="searchContent" >
-					<tr>
-						<td>
-							视图ID：<input type="text" name="dv_view_id" size="10" value="<?cs var:config.dv_view_id ?>" />
-						</td>
-						<td>
-							关键字：<input type="text" name="dv_keyword" size="20" value="<?cs var:config.dv_keyword ?>" />
-						</td>
-						<td>
-							<button type="submit" class="sexybutton"><span><span><span class="search">查找</span></span></span></button>
-							<button class="sexybutton" id="dv_btn_erase" ><span><span><span class="erase">重填</span></span></span></button>
-						</td>
-					</tr>
-				</table>
-			</div>
-			</form>
-		</div>
-		
-		<div class="pageContent" style="border-left:1px #B8D0D6 solid;border-right:1px #B8D0D6 solid">
-			<div class="panelBar">
-				<ul class="toolBar">
-					<li><a class="add" href="<?cs var:config.cgipath?>mt_slog_view?action=add&navTabId=dvt_view" target="dialog" mask="true" maxable="false" width="560" height="300" title="添加视图"><span>添加</span></a></li>
-					<li class="line">line</li>
-					<li><a class="delete" href="<?cs var:config.cgipath?>mt_slog_view?action=delete&id={view_id}&navTabId=dvt_view" target="ajaxTodo" title="确定要删除吗?"><span>删除</span></a></li>
-					<li class="line">line</li>
-					<li><a class="edit" href="<?cs var:config.cgipath?>mt_slog_view?action=mod&id={view_id}&navTabId=dvt_view" target="dialog" mask="true" maxable="false" resizable="false" width="560" height="300" title="修改视图配置"><span>修改</span></a></li>
-					<li class="line">line</li>
+	<form onsubmit="return navTabSearch(this, 'dmt_slog_view');" action="<?cs var:config.cgipath?>mt_slog_view?action=search">
+		<div class="searchBar">
+			<ul class="searchContent" >
+				<li>
+					<label>视图ID:</label><input type="text" name="dv_view_id" size="10" value="<?cs var:config.dv_view_id ?>" />
+				</li>
+				<li>
+					<label>关键字:</label><input type="text" name="dv_keyword" size="20" value="<?cs var:config.dv_keyword ?>" />
+				</li>
+			</ul>
+			<div class="subBar">
+				<ul>
+					<li><button type="submit" class="buttonActive"><i class="icon-search icon-large"></i>查找</button></li>
+					<li><button type="button" id="dv_btn_erase" class='buttonActive'><i class="icon-trash icon-large"></i>重填</button></li>
 				</ul>
 			</div>
-
-			<div>
-				<table class="list" width="100%" layoutH="90">
-					<thead>
-						<tr>
-							<th width="60">序号</th>
-							<?cs if:config.order_id ?>
-							<th width="60" orderField="id" class="<?cs var:config.order_id ?>">视图id</th>
-							<?cs else ?>
-							<th width="60" orderField="id" class="asc">视图id</th>
-							<?cs /if ?>
-
-							<?cs if:config.order_name ?>
-							<th width="120" orderField="name" class="<?cs var:config.order_name ?>">视图名称</th>
-							<?cs else ?>
-							<th width="120" orderField="name" class="asc">视图名称</th>
-							<?cs /if ?>
-
-							<?cs if:config.order_view_flag ?>
-							<th width="120" orderField="view_flag" class="<?cs var:config.order_view_flag ?>">
-								绑定机器
-							</th>
-							<?cs else ?>
-							<th width="120" orderField="view_flag" class="desc">绑定机器</th>
-							<?cs /if ?>
-							<th width="140">视图描述</th>
-
-							<?cs if:config.order_user_add ?>
-							<th width="100" orderField="user_add" class="<?cs var:config.order_user_add ?>">添加者</th>
-							<?cs else ?>
-							<th width="100" orderField="user_add" class="asc">添加者</th>
-							<?cs /if ?>
-
-							<?cs if:config.order_create_time ?>
-							<th width="140" orderField="create_time" class="<?cs var:config.order_create_time ?>">添加时间</th>
-							<?cs else ?>
-							<th width="140" orderField="create_time" class="desc">添加时间</th>
-							<?cs /if ?>
-						</tr>
-					</thead>
-					<tbody id="dv_view_info_list">
-					</tbody>
-				</table>
-		
-				<div class="panelBar" layoutH="0">
-					<div class="pages">
-						<span>每页显示</span>
-						<select class="combox" name="numPerPage" onchange="navTabPageBreak({numPerPage:this.value})">
-							<option value="10">10</option>
-							<option value="20">20</option>
-							<option value="50">50</option>
-							<option value="100">100</option>
-							<option value="200">200</option>
-						</select>
-						<span>条，共 <?cs var:config.totalCount ?>  条</span>
-					</div>
-					<div class="pagination" targetType="navTab" totalCount="<?cs var:config.totalCount ?>" numPerPage="<?cs var:config.numPerPage ?>" pageNumShown="<?cs var:config.pageNumShown ?>" currentPage="<?cs var:config.currentPage ?>"></div>
-				</div>
-			</div> <!-- da_attr_list -->
 		</div>
-	</div> <!-- unitBox -->
+	</form>
+</div>
+		
+<div class="pageContent">
+	<div class="panelBar">
+		<ul class="toolBar">
+			<li><a href="<?cs var:config.cgipath?>mt_slog_view?action=add&navTabId=dvt_view" target="dialog" mask="true" maxable="false" width="560" height="300" title="添加视图"><i class='icon-plus'></i>添加</a></li>
+			<li class="line">line</li>
+			<li><a href="<?cs var:config.cgipath?>mt_slog_view?action=delete&id={view_id}&navTabId=dvt_view" target="ajaxTodo" title="确定要删除吗?"><i class='icon-plus'></i>删除</a></li>
+			<li class="line">line</li>
+			<li><a href="<?cs var:config.cgipath?>mt_slog_view?action=mod&id={view_id}&navTabId=dvt_view" target="dialog" mask="true" maxable="false" resizable="false" width="560" height="300" title="修改视图配置"><i class='icon-edit'></i>修改</a></li>
+			<li class="line">line</li>
+		</ul>
+	</div>
+
+	<table class="list" width="100%" layoutH="0">
+		<thead>
+			<tr>
+				<?cs if:config.order_xrk_id ?>
+				<th width="70" orderField="xrk_id" class="<?cs var:config.order_xrk_id ?>">视图id</th>
+				<?cs else ?>
+				<th width="70" orderField="xrk_id" class="asc">视图id</th>
+				<?cs /if ?>
+
+				<?cs if:config.order_xrk_name ?>
+				<th width="120" orderField="xrk_name" class="<?cs var:config.order_xrk_name ?>">视图名称</th>
+				<?cs else ?>
+				<th width="120" orderField="xrk_name" class="asc">视图名称</th>
+				<?cs /if ?>
+
+				<?cs if:config.order_view_flag ?>
+				<th width="120" orderField="view_flag" class="<?cs var:config.order_view_flag ?>">
+					绑定机器
+				</th>
+				<?cs else ?>
+				<th width="120" orderField="view_flag" class="desc">绑定机器</th>
+				<?cs /if ?>
+				<th width="140">视图描述</th>
+
+				<?cs if:config.order_user_add ?>
+				<th width="100" orderField="user_add" class="<?cs var:config.order_user_add ?>">添加者</th>
+				<?cs else ?>
+				<th width="100" orderField="user_add" class="asc">添加者</th>
+				<?cs /if ?>
+
+				<?cs if:config.order_create_time ?>
+				<th width="140" orderField="create_time" class="<?cs var:config.order_create_time ?>">添加时间</th>
+				<?cs else ?>
+				<th width="140" orderField="create_time" class="desc">添加时间</th>
+				<?cs /if ?>
+			</tr>
+		</thead>
+		<tbody id="dv_view_info_list">
+		</tbody>
+	</table>
+	<?cs include:config.cspath+"dmt_page.html" ?>
 </div>
 

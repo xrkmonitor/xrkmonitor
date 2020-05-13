@@ -1,130 +1,103 @@
-<div class="pageContent">
-	<div class="unitBox" style="margin-left:1px;"> 
-		<form id="pagerForm" method="post" action="<?cs var:config.cgipath?>mt_slog_warn?action=search">
-			<input type="hidden" name="pageNum" value="<?cs var:config.currentPage ?>" />
-			<input type="hidden" name="numPerPage" value="<?cs var:config.numPerPage ?>" />
-			<input type="hidden" name="orderField" value="<?cs var:config.orderField ?>" />
-			<input type="hidden" name="orderDirection" value="<?cs var:config.orderDirection ?>" />
+<div class="pageHeader">
+	<form class="pagerForm" method="post" onsubmit="return navTabSearch(this);" action="<?cs var:config.cgipath?>mt_slog_warn?action=search">
+		<?cs include:config.cspath+"dmt_page_para.html" ?>
+		<input type="hidden" name="dwc_warn_obj_type" value="<?cs var:config.dwc_warn_obj_type ?>" />
+		<input type="hidden" name="dwc_warn_type" value="<?cs var:config.dwc_warn_type ?>" />
+		<input type="hidden" name="dwc_warn_status" value="<?cs var:config.dwc_warn_status ?>" />
+		<input type="hidden" name="dwc_obj_id" value="<?cs var:config.dwc_obj_id ?>" />
+	</form>
 
-			<input type="hidden" name="dwc_warn_obj_type" value="<?cs var:config.dwc_warn_obj_type ?>" />
-			<input type="hidden" name="dwc_warn_type" value="<?cs var:config.dwc_warn_type ?>" />
-			<input type="hidden" name="dwc_warn_status" value="<?cs var:config.dwc_warn_status ?>" />
-			<input type="hidden" name="dwc_obj_id" value="<?cs var:config.dwc_obj_id ?>" />
-		</form>
-
-		<div class="pageHeader" style="border:1px #B8D0D6 solid">
-			<form onsubmit="return navTabSearch(this, 'dmt_slog_warn');" action="<?cs var:config.cgipath ?>mt_slog_warn?action=search" method="post">
-			<div class="searchBar">
-				<table class="searchContent" >
-					<tr>
-						<td>
-							<label>告警对象：</label>
-							<select name="dwc_warn_obj_type" id="dwc_warn_obj_type">
-								<option value="0">全部</option>
-								<option value="1">单机告警</option>
-								<option value="2">视图告警</option>
-							</select>
-						</td>
-						<td>
-							<label>告警类型：</label>
-							<select name="dwc_warn_type" id="dwc_warn_type">
-								<option value="0">全部</option>
-								<option value="1">最大值</option>
-								<option value="2">最小值</option>
-								<option value="4">波动值</option>
-							</select>
-						</td>
-						<td>
-							<label>告警状态：</label>
-							<select name="dwc_warn_status" id="dwc_warn_status">
-								<option value="0">全部</option>
-								<option value="32">已屏蔽</option>
-								<option value="64">未屏蔽</option>
-							</select>
-						</td>
-						<td>
-							告警对象 id：<input type="text" name="dwc_obj_id" size="10" value="<?cs var:config.dwc_obj_id ?>" />
-						</td>
-						<td>
-							<button type="submit" class="sexybutton" id="dwc_btn_submit"><span><span><span class="search">查找</span></span></span></button>
-							<button class="sexybutton" id="dwc_btn_erase" onclick="return dwcClearSearch()"><span><span><span class="erase">重填</span></span></span></button>
-						</td>
-					</tr>
-				</table>
-			</div>
-			</form>
-		</div>
-		
-		<div class="pageContent" style="border-left:1px #B8D0D6 solid;border-right:1px #B8D0D6 solid">
-			<div class="panelBar">
-				<ul class="toolBar">
-					<li><a class="add" href="#" onclick="return dwcAddNewWarn(1);"><span>单机告警设置</span></a></li>
-					<li class="line">line</li>
-					<li><a class="add" href="#" onclick="return dwcAddNewWarn(2);"><span>视图告警设置</span></a></li>
-					<li class="line">line</li>
-					<li><a class="edit" href="#" onclick="return dwcModMultiWarn();"><span>批量修改告警</span></a></li>
-					<li class="line">line</li>
-					<li><a class="edit" href="#" onclick="return dwcMaskMultiWarn();"><span>批量屏蔽告警</span></a></li>
-					<li class="line">line</li>
-					<li><a class="edit" href="#" onclick="return dwcUmaskMultiWarn();"><span>批量解除屏蔽</span></a></li>
-					<li class="line">line</li>
-					<li><a class="delete" href="#" onclick="return dwcDelMultiWarn();"><span>批量删除告警</span></a></li>
-					<li class="line">line</li>
+	<form onsubmit="return navTabSearch(this, 'dmt_slog_warn');" action="<?cs var:config.cgipath ?>mt_slog_warn?action=search" method="post">
+		<div class="searchBar">
+			<ul class="searchContent" >
+				<li>
+					<label>告警对象:</label>
+					<select name="dwc_warn_obj_type" id="dwc_warn_obj_type">
+						<option value="0">全部</option>
+						<option value="1">单机告警</option>
+						<option value="2">视图告警</option>
+					</select>
+				</li>
+				<li>
+					<label>告警类型:</label>
+					<select name="dwc_warn_type" id="dwc_warn_type">
+						<option value="0">全部</option>
+						<option value="1">最大值</option>
+						<option value="2">最小值</option>
+						<option value="4">波动值</option>
+					</select>
+				</li>
+				<li>
+					<label>告警状态:</label>
+					<select name="dwc_warn_status" id="dwc_warn_status">
+						<option value="0">全部</option>
+						<option value="32">已屏蔽</option>
+						<option value="64">未屏蔽</option>
+					</select>
+				</li>
+				<li>
+					<label>告警对象 id:</label><input type="text" name="dwc_obj_id" size="10" value="<?cs var:config.dwc_obj_id ?>" />
+				</li>
+			</ul>
+			<div class="subBar">
+				<ul>
+					<li class="width:auto"><button type="submit" class="buttonActive"><i class='icon-search icon-large '></i>查找</button></li>
+					<li><button class="buttonActive" onclick="return dwcClearSearch()"><i class="icon-trash icon-large"></i>重填</button></li>
 				</ul>
 			</div>
-
-			<div id="dwc_warn_list">
-				<table class="table" width="100%" layoutH="110">
-					<thead>
-						<tr>
-							<th width="20">序号</th>
-							<?cs if:config.order_attr_id ?>
-							<th width="40" orderField="attr_id" class="<?cs var:config.order_attr_id ?>">监控点id</th>
-							<?cs else ?>
-							<th width="40" orderField="attr_id" class="asc">监控点id</th>
-							<?cs /if ?>
-
-							<th width="150">监控点名称</th>
-							<th width="60">告警对象</th>
-
-							<?cs if:config.order_warn_type_value ?>
-							<th width="40" orderField="warn_type_value" class="<?cs var:config.order_warn__obj_type_value ?>">对象值</th>
-							<?cs else ?>
-							<th width="40" orderField="warn_type_value" class="asc">对象值</th>
-							<?cs /if ?>
-
-							<th width="110">告警类型</th>
-							<th width="60">告警值</th>
-							<th width="90">屏蔽状态</th>
-							<?cs if:config.order_create_time ?>
-							<th width="120" orderField="create_time" class="<?cs var:config.order_create_time ?>">添加时间</th>
-							<?cs else ?>
-							<th width="120" orderField="create_time" class="desc">添加时间</th>
-							<?cs /if ?>
-							<th width="22"><input type="checkbox" group="warn_ids" class="checkboxCtrl"></th>
-						</tr>
-					</thead>
-					<tbody id="dwc_warn_list_info">
-					</tbody>
-				</table>
-		
-				<div class="panelBar" layoutH="0">
-					<div class="pages">
-						<span>每页显示</span>
-						<select name="numPerPage" onchange="navTabPageBreak({numPerPage:this.value})">
-							<option value="10">10</option>
-							<option value="20">20</option>
-							<option value="50">50</option>
-							<option value="100">100</option>
-							<option value="200">200</option>
-						</select>
-						<span>条，共 <?cs var:config.totalCount ?>  条</span>
-					</div>
-					<div class="pagination" targetType="navTab" totalCount="<?cs var:config.totalCount ?>" numPerPage="<?cs var:config.numPerPage ?>" pageNumShown="<?cs var:config.pageNumShown ?>" currentPage="<?cs var:config.currentPage ?>"></div>
-				</div>
-			</div> <!-- da_attr_list -->
 		</div>
-	</div> <!-- unitBox -->
+	</form>
+</div>
+		
+<div class="pageContent">
+	<div class="panelBar">
+		<ul class="toolBar">
+			<li><a href="#" onclick="return dwcModMultiWarn();"><i class='icon-edit'></i>批量修改告警</a></li>
+			<li class="line">line</li>
+			<li><a href="#" onclick="return dwcMaskMultiWarn();"><i class='icon-ban-circle'></i>批量屏蔽告警</span></a></li>
+			<li class="line">line</li>
+			<li><a href="#" onclick="return dwcUmaskMultiWarn();"><i class='icon-random'></i>批量解除屏蔽</span></a></li>
+			<li class="line">line</li>
+			<li><a href="#" onclick="return dwcDelMultiWarn();"><i class='icon-minus'></i>批量删除告警</span></a></li>
+			<li class="line">line</li>
+			<li><a href="#" onclick="return dwcAddNewWarn(1);"><i class="icon-desktop"></i>单机告警设置</a></li>
+			<li class="line">line</li>
+			<li><a href="#" onclick="return dwcAddNewWarn(2);"><i class="icon-coffee"></i>视图告警设置</a></li>
+			<li class="line">line</li>
+		</ul>
+	</div>
+	<table class="list" width="100%" layoutH="0">
+		<thead>
+			<tr>
+				<th width="22" align='left'><input type="checkbox" group="warn_ids" class="checkboxCtrl"></th>
+				<?cs if:config.order_attr_id ?>
+				<th width="40" orderField="attr_id" class="<?cs var:config.order_attr_id ?>">监控点id</th>
+				<?cs else ?>
+				<th width="40" orderField="attr_id" class="asc">监控点id</th>
+				<?cs /if ?>
+
+				<th width="150">监控点名称</th>
+				<th width="60">告警对象</th>
+
+				<?cs if:config.order_warn_type_value ?>
+				<th width="40" orderField="warn_type_value" class="<?cs var:config.order_warn__obj_type_value ?>">对象值</th>
+				<?cs else ?>
+				<th width="40" orderField="warn_type_value" class="asc">对象值</th>
+				<?cs /if ?>
+				<th width="110">告警类型</th>
+				<th width="60">告警值</th>
+				<th width="90">屏蔽状态</th>
+				<?cs if:config.order_create_time ?>
+				<th width="120" orderField="create_time" class="<?cs var:config.order_create_time ?>">添加时间</th>
+				<?cs else ?>
+				<th width="120" orderField="create_time" class="desc">添加时间</th>
+				<?cs /if ?>
+			</tr>
+		</thead>
+		<tbody id="dwc_warn_list_info">
+		</tbody>
+	</table>
+	<?cs include:config.cspath+"dmt_page.html" ?>
 </div>
 
 <script language="javascript" type="text/javascript">
@@ -138,9 +111,9 @@ function dwcSetWarnList(warninfo)
 	var warn_type = "<?cs var:config.dwc_warn_type ?>";
 	for(var i=0,j=0; i < warninfo.count && i < listwarn.length; i++)
 	{
-		j = (<?cs var:config.currentPage ?>-1) * <?cs var:config.numPerPage ?> + 1;
 		list += "<tr>";
-		list += "<td>" + (i+j) + "</td>";
+		list += "<td><input name='warn_ids' value=";
+		list +=  listwarn[i].config_id + " type='checkbox'></td>";
 		list += "<td>" + listwarn[i].attr_id + "</td>";
 		list += "<td>" + listwarn[i].attr_name + "</td>";
 		if(listwarn[i].warn_flag & 8)
@@ -190,8 +163,6 @@ function dwcSetWarnList(warninfo)
 		else
 			list += "<td>未屏蔽</td>";
 		list += "<td>" + listwarn[i].add_time + "</td>";
-		list += "<td><input name='warn_ids' value=";
-		list +=  listwarn[i].config_id + " type='checkbox'></td>";
 		list += "</tr>";
 	}
 	return list;
@@ -288,7 +259,7 @@ function dwcModMultiWarn()
 
 	var url = "<?cs var:config.cgipath?>mt_slog_warn?action=mod_multi_warn";
 	url += "&warn_list=" + sel_config;
-	var op = $.parseJSON('{"mask":true,"maxable":false,"height":240,"width":560}'); 
+	var op = $.parseJSON('{"mask":true,"maxable":false,"height":260,"width":560}'); 
 	$.pdialog.open(url, "dwc_dlg_mod_multi_warn", "批量修改告警配置", op); 
 }
 

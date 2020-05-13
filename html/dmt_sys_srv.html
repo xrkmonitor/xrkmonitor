@@ -14,7 +14,7 @@ function dssSetSelSyssrv(selIndex)
 function dssOnDetail(idx)
 {
 	dss_sel_detail_idx = idx;
-	var op = $.parseJSON('{"mask":true,"maxable":false,"height":420,"width":620}'); 
+	var op = $.parseJSON('{"mask":true,"maxable":false,"height":480,"width":620}'); 
 	$.pdialog.open("<?cs var:config.docpath?>dmt_dlg_detail_syssrv.html", "dss_dlg_detail",
 		"服务器："+dss_syssrv_list.syssrv_list[idx].ip+" 详情", op);
 }
@@ -104,7 +104,7 @@ function dssModSyssrv()
 	var url = "<?cs var:config.cgipath?>mt_slog_machine?action=mod_syssrv";
 	url += "&srv_id=" + dss_sel_syssrv.id; 
 
-	var op = $.parseJSON('{"mask":true,"maxable":false,"height":460,"width":620}'); 
+	var op = $.parseJSON('{"mask":true,"maxable":false,"height":480,"width":620}'); 
 	$.pdialog.open(url, "dss_dlg_mod_syssrv", "修改系统服务器信息", op); 
 }
 
@@ -117,27 +117,24 @@ $(document).ready(function(){
 
 <div class="pageContent">
 	<div class="unitBox" style="margin-left:1px;"> 
-		<form id="pagerForm" method="post" action="<?cs var:config.cgipath?>mt_slog_machine?action=list_sys_srv">
-			<input type="hidden" name="pageNum" value="<?cs var:config.currentPage ?>" />
-			<input type="hidden" name="numPerPage" value="<?cs var:config.numPerPage ?>" />
-			<input type="hidden" name="orderField" value="<?cs var:config.orderField ?>" />
-			<input type="hidden" name="orderDirection" value="<?cs var:config.orderDirection ?>" />
+		<form class="pagerForm" method="post" action="<?cs var:config.cgipath?>mt_slog_machine?action=list_sys_srv">
+			<?cs include:config.cspath+"dmt_page_para.html" ?>
 		</form>
 
 		<div class="pageContent" style="border-left:1px #B8D0D6 solid;border-right:1px #B8D0D6 solid">
 			<div class="panelBar">
 				<ul class="toolBar">
-					<li><a class="add" href="#" onclick="return dssAddSyssrv();"><span>添加</span></a></li>
+					<li><a href="#" onclick="return dssAddSyssrv();"><i class='icon-plus'></i>添加</a></li>
 					<li class="line">line</li>
-					<li><a class="delete" href="#" onclick="return dssDeleteSyssrv();"><span>删除</span></a></li>
+					<li><a href="#" onclick="return dssDeleteSyssrv();"><i class='icon-minus'></i>删除</a></li>
 					<li class="line">line</li>
-					<li><a class="edit" href="#" onclick="return dssModSyssrv();"><span>修改</span></a></li>
+					<li><a href="#" onclick="return dssModSyssrv();"><i class='icon-edit'></i>修改</a></li>
 					<li class="line">line</li>
 				</ul>
 			</div>
 
 			<div>
-				<table class="table" width="100%" layoutH="50"> 
+				<table class="list" width="100%" layoutH="50"> 
 					<thead>
 						<tr>
 							<th width="40">序号</th>

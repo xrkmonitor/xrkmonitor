@@ -11,17 +11,19 @@
 		<div class="pageHeader" style="border:1px #B8D0D6 solid">
 			<form onsubmit="return navTabSearch(this, 'dmt_user_login');" action="<?cs var:config.cgipath?>mt_slog_user?action=login_info" method="post">
 			<div class="searchBar">
-				<table class="searchContent" >
-					<tr>
-						<td>
-							用户名：<input type="text" name="duli_user_name" id="duli_user_name" size="16" value="<?cs var:config.duli_user_name ?>" />
-						</td>
-						<td>
-							<button type="submit" class="sexybutton"><span><span><span class="search">查找</span></span></span></button>
-							<button type="button" class="sexybutton" onclick="return duliClearSearch()"><span><span><span class="erase">重填</span></span></span></button>
-						</td>
-					</tr>
-				</table>
+				<ul class="searchContent" >
+					<li>
+						<label>用户名:</label><input type="text" name="duli_user_name" id="duli_user_name" size="16" value="<?cs var:config.duli_user_name ?>" />
+					</li>
+				</ul>
+				<div class="subBar">
+					<ul>
+						<li>
+							<button class="buttonActive" type='submit'><i class='icon-search icon-large '></i>查找</button>
+							<button type="button" class="buttonActive" onclick="return duliClearSearch()"><i class="icon-trash icon-large"></i>重填</button>
+						</li>
+					</ul>
+				</div>
 			</div>
 			</form>
 		</div>

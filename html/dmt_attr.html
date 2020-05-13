@@ -75,11 +75,10 @@
 	<table class="list" width="100%" layoutH="0">
 		<thead>
 			<tr>
-				<th width="60">序号</th>
-				<?cs if:config.order_id ?>
-				<th width="60" orderField="id" class="<?cs var:config.order_id ?>">监控点id</th>
+				<?cs if:config.order_xrk_id ?>
+				<th width="70" orderField="xrk_id" class="<?cs var:config.order_xrk_id ?>">监控点id</th>
 				<?cs else ?>
-				<th width="60" orderField="id" class="asc">监控点id</th>
+				<th width="70" orderField="xrk_id" class="asc">监控点id</th>
 				<?cs /if ?>
 
 				<th width="240">监控点名称</th>
@@ -90,7 +89,12 @@
 				<th width="180" orderField="attr_type" class="asc">监控点类型</th>
 				<?cs /if ?>
 
-				<th width="80">数据类型</th>
+				<?cs if:config.order_data_type ?>
+				<th width="80" orderField='data_type' class="<?cs var:config.order_data_type ?>">数据类型</th>
+				<?cs else ?>
+				<th width="80" orderField='data_type' class="asc">数据类型</th>
+				<?cs /if ?>
+
 				<th width="200">监控点描述</th>
 				<th width="100">添加者</th>
 				<?cs if:config.order_create_time ?>
@@ -124,9 +128,6 @@ function daSetAttrList(attrinfo)
 	for(var i=0,j=0; i < attrinfo.count && i < listattr.length; i++)
 	{
 		list += "<tr onclick='daSetSelAttr(" + i + ")'>";
-
-		j = (<?cs var:config.currentPage ?>-1) * <?cs var:config.numPerPage ?> + 1;
-		list += "<td>" + (i+j) + "</td>";
 		list += "<td>" + listattr[i].id + "</td>";
 		list += "<td>" + listattr[i].name + "</td>";
 		list += "<td>" + listattr[i].attr_type + "</td>";

@@ -3,25 +3,27 @@
 		<div class="pageHeader" style="border:1px #B8D0D6 solid">
 			<form onsubmit="return navTabSearch(this, 'dmt_list_module');" action="<?cs var:config.cgipath ?>mt_slog?action=list_module" method="post">
 			<div class="searchBar">
-				<table class="searchContent" >
-					<tr>
-						<td>
-							应 用：
-							<select name="dm_app_id" id="dm_app_id">
-								<option value="0"> - 请选择 - </option>
-							</select>
-						</td>
-						<td>
-							模 块：
-							<select name="dm_module_id" id="dm_module_id">
-								<option value="0"> - 请选择 - </option>
-							</select>
-						</td>
-						<td>
-							<button class="sexybutton" onclick='dmOnSearch();'><span><span><span class="search">查找</span></span></span></button>
-						</td>
-					</tr>
-				</table>
+				<ul class="searchContent" >
+					<li>
+						<label>应 用：</label>
+						<select name="dm_app_id" id="dm_app_id">
+							<option value="0"> - 请选择 - </option>
+						</select>
+					</li>
+					<li>
+						<label>模 块：</label>
+						<select name="dm_module_id" id="dm_module_id">
+							<option value="0"> - 请选择 - </option>
+						</select>
+					</li>
+				</ul>
+				<div class="subBar">
+					<ul>
+						<li>
+							<button class="buttonActive" onclick='dmOnSearch();'><i class='icon-search icon-large '></i>查找</button>
+						</li>
+					</ul>
+				</div>
 			</div>
 			</form>
 		</div>
@@ -29,11 +31,11 @@
 		<div class="pageContent" style="border-left:1px #B8D0D6 solid;border-right:1px #B8D0D6 solid">
 			<div class="panelBar">
 				<ul class="toolBar">
-					<li><a class="add" href="#" onclick="return dmAddModule();"><span>添加</span></a></li>
+					<li><a href="#" onclick="return dmAddModule();"><i class='icon-plus'></i>添加</a></li>
 					<li class="line">line</li>
-					<li><a class="delete" href="#" onclick="return dmDeleteModule();"><span>删除</span></a></li>
+					<li><a href="#" onclick="return dmDeleteModule();"><i class='icon-minus'></i>删除</a></li>
 					<li class="line">line</li>
-					<li><a class="edit" href="#" onclick="return dmModModule();"><span>修改</span></a></li>
+					<li><a href="#" onclick="return dmModModule();"><i class='icon-edit'></i>修改</a></li>
 					<li class="line">line</li>
 				</ul>
 			</div>
@@ -128,7 +130,7 @@ function dmAddModule()
 		return false;
 	}
 	var url = "<?cs var:config.cgipath?>mt_slog?action=add_module";
-	var op = $.parseJSON('{"mask":true,"maxable":false,"height":300,"width":520}'); 
+	var op = $.parseJSON('{"mask":true,"maxable":false,"height":320,"width":520}'); 
 	$.pdialog.open(url, "dm_dlg_add_module", "添加模块", op); 
 }
 
@@ -226,7 +228,7 @@ function dmModModule()
 	url += "&module_name=" + encodeURIComponent(dm_sel_module.name);
 	url += "&module_desc=" + encodeURIComponent(dm_sel_module.desc);
 
-	var op = $.parseJSON('{"mask":true,"maxable":false,"height":300,"width":520}'); 
+	var op = $.parseJSON('{"mask":true,"maxable":false,"height":320,"width":520}'); 
 	$.pdialog.open(url, "dm_dlg_mod_module", "修改模块信息", op); 
 }
 
@@ -242,7 +244,7 @@ $(document).ready(function(){
 		if(app_sel == null)
 			app.html('<option value="0" selected> - 全部 - </option>');
 		else
-			app.html('<option value="0"> - 全部 - </option>');
+			app.html('');
 		var app_list = dm_module_list.applist;
 		for(var i=0; i < app_list.length; ++i) {
 			var op = $('<option></option>');
