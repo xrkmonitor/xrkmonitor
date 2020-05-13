@@ -44,7 +44,7 @@ CREATE TABLE `flogin_history` (
   `valid_time` int(11) unsigned DEFAULT NULL,
   PRIMARY KEY (`xrk_id`),
   KEY `user_id` (`user_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=318 DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM AUTO_INCREMENT=319 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -53,7 +53,7 @@ CREATE TABLE `flogin_history` (
 
 LOCK TABLES `flogin_history` WRITE;
 /*!40000 ALTER TABLE `flogin_history` DISABLE KEYS */;
-INSERT INTO `flogin_history` VALUES (317,1,1588645718,'192.168.128.1','192.168.128.3','http://192.168.128.3/cgi-bin/slog_flogin?action=show_main','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36',0,1589250518);
+INSERT INTO `flogin_history` VALUES (318,1,1589375979,'192.168.128.1','192.168.128.3','http://192.168.128.3/cgi-bin/slog_flogin?action=show_main','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36',0,1589980779);
 /*!40000 ALTER TABLE `flogin_history` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -98,7 +98,7 @@ CREATE TABLE `flogin_user` (
 
 LOCK TABLES `flogin_user` WRITE;
 /*!40000 ALTER TABLE `flogin_user` DISABLE KEYS */;
-INSERT INTO `flogin_user` VALUES (1,'sadmin','c5edac1b8c1d58bad90a246d8f08f53b',1,'2020-05-05 02:28:38','supperuser',1552345835,152,NULL,'0c96aa43ce31757758c40be976c20d34',1,1588645718,0,'192.168.128.1',1,1,0,'4033@qq.com',0,'c5edac1b8c1d58bad90a246d8f08f53b','192.168.128.3',0);
+INSERT INTO `flogin_user` VALUES (1,'sadmin','c5edac1b8c1d58bad90a246d8f08f53b',1,'2020-05-13 13:19:39','supperuser',1552345835,152,NULL,'0c96aa43ce31757758c40be976c20d34',1,1589375979,0,'192.168.128.1',1,1,0,'4033@qq.com',0,'c5edac1b8c1d58bad90a246d8f08f53b','192.168.128.3',0);
 /*!40000 ALTER TABLE `flogin_user` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
@@ -402,7 +402,7 @@ CREATE TABLE `mt_machine` (
   `create_time` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
   PRIMARY KEY (`xrk_id`),
   KEY `ip1` (`ip1`)
-) ENGINE=InnoDB AUTO_INCREMENT=125 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=126 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -411,7 +411,7 @@ CREATE TABLE `mt_machine` (
 
 LOCK TABLES `mt_machine` WRITE;
 /*!40000 ALTER TABLE `mt_machine` DISABLE KEYS */;
-INSERT INTO `mt_machine` VALUES (123,'192.168.128.3',58763456,NULL,NULL,NULL,'sadmin','sadmin','2020-05-05 02:27:36','auto add',0,0,0,1,1,'2020-05-05 02:27:36'),(124,'comm_report',16777343,0,0,0,'sadmin','sadmin','2020-05-05 02:32:53','ç”¨äºŽæŽ¥æ”¶å…¬å…±ä¸ŠæŠ¥çš„è™šæ‹Ÿæœºå™¨',0,1,2,1,1,'2020-05-05 02:27:36');
+INSERT INTO `mt_machine` VALUES (124,'comm_report',16777343,0,0,0,'sadmin','sadmin','2020-05-05 02:32:53','ç”¨äºŽæŽ¥æ”¶å…¬å…±ä¸ŠæŠ¥çš„è™šæ‹Ÿæœºå™¨',0,1,2,1,1,'2020-05-05 02:27:36'),(125,'192.168.128.3',58763456,NULL,NULL,NULL,'sadmin','sadmin','2020-05-13 13:13:17','ç³»ç»Ÿå®‰è£…æ—¶è‡ªåŠ¨æ·»åŠ ',0,0,0,1,1,'2020-05-13 13:13:17');
 /*!40000 ALTER TABLE `mt_machine` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
@@ -574,7 +574,7 @@ CREATE TABLE `mt_server` (
   `m_desc` varchar(256) DEFAULT NULL,
   PRIMARY KEY (`ip`,`xrk_type`),
   KEY `id` (`xrk_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=24 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=25 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -583,7 +583,7 @@ CREATE TABLE `mt_server` (
 
 LOCK TABLES `mt_server` WRITE;
 /*!40000 ALTER TABLE `mt_server` DISABLE KEYS */;
-INSERT INTO `mt_server` VALUES ('192.168.128.3',28080,1,3,0,0,0,0,'30,119',1000,1584529976,'sadmin','sadmin',1474811820,'2020-05-04 22:17:17','ç»‘å®šåº”ç”¨idï¼Œå¤„ç†æ—¥å¿—ä¸ŠæŠ¥ï¼Œå¯éƒ¨ç½²å¤šå°'),('192.168.128.3',38080,2,6,0,0,0,0,'',1000,1567504630,'sadmin','sadmin',1475408172,'2020-05-04 22:17:17','å¤„ç†ç›‘æŽ§ç‚¹æ•°æ®ä¸ŠæŠ¥ã€å¯éƒ¨ç½²å¤šå°'),('192.168.128.3',3306,3,4,0,0,0,0,'',1000,1567577833,'sadmin','sadmin',1475152894,'2020-05-04 22:17:17','mysql ç›‘æŽ§ç‚¹æœåŠ¡å™¨ï¼Œéƒ¨ç½²1å°'),('192.168.128.3',12121,11,23,0,0,0,0,'',1000,1567504613,'sadmin','sadmin',1561962711,'2020-05-04 22:17:17','web æŽ§åˆ¶å°æœåŠ¡å™¨ï¼Œéƒ¨ç½²1å°');
+INSERT INTO `mt_server` VALUES ('192.168.128.3',28080,1,3,0,0,0,0,'30,119',1000,1584529976,'sadmin','sadmin',1474811820,'2020-05-04 22:17:17','ç»‘å®šåº”ç”¨idï¼Œå¤„ç†æ—¥å¿—ä¸ŠæŠ¥ï¼Œå¯éƒ¨ç½²å¤šå°'),('192.168.128.3',38080,2,6,0,0,0,0,'',1000,1567504630,'sadmin','sadmin',1475408172,'2020-05-04 22:17:17','å¤„ç†ç›‘æŽ§ç‚¹æ•°æ®ä¸ŠæŠ¥ã€å¯éƒ¨ç½²å¤šå°'),('192.168.128.3',3306,3,4,0,0,0,0,'',1000,1567577833,'sadmin','sadmin',1475152894,'2020-05-04 22:17:17','mysql ç›‘æŽ§ç‚¹æœåŠ¡å™¨ï¼Œéƒ¨ç½²1å°'),('192.168.128.3',27000,4,24,0,0,0,0,'ä¸­å¿ƒæœåŠ¡å™¨ç”¨äºŽå½’æ€»å„æœåŠ¡å™¨éƒ½æœ‰ä¸ŠæŠ¥çš„æ•°æ®ï¼Œå±žäºŽ slog_mtreport_server ä¸­çš„æŸä¸€å°',1000,1589376081,'sadmin','sadmin',0,'2020-05-13 13:21:21','slog_mtreport_server ä¸­çš„ä¸€å°'),('192.168.128.3',12121,11,23,0,0,0,0,'',1000,1567504613,'sadmin','sadmin',1561962711,'2020-05-04 22:17:17','web æŽ§åˆ¶å°æœåŠ¡å™¨ï¼Œéƒ¨ç½²1å°');
 /*!40000 ALTER TABLE `mt_server` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
@@ -631,7 +631,7 @@ CREATE TABLE `mt_table_upate_monitor` (
   `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `r_change_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   PRIMARY KEY (`r_change_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=40020 DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM AUTO_INCREMENT=40030 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -640,7 +640,7 @@ CREATE TABLE `mt_table_upate_monitor` (
 
 LOCK TABLES `mt_table_upate_monitor` WRITE;
 /*!40000 ALTER TABLE `mt_table_upate_monitor` DISABLE KEYS */;
-INSERT INTO `mt_table_upate_monitor` VALUES ('mt_server',3,0,'2020-05-05 02:27:36',40009),('mt_server',6,0,'2020-05-05 02:27:36',40010),('mt_server',4,0,'2020-05-05 02:27:36',40011),('mt_server',23,0,'2020-05-05 02:27:36',40012),('mt_machine',123,0,'2020-05-05 02:27:36',40013),('mt_machine',124,0,'2020-05-05 02:27:36',40014),('mt_view_bmach',23,123,'2020-05-05 02:28:00',40015),('flogin_user',1,0,'2020-05-05 02:28:38',40016),('mt_view_bmach',22,123,'2020-05-05 02:29:00',40017),('mt_view_bmach',26,123,'2020-05-05 02:29:00',40018),('mt_machine',124,0,'2020-05-05 02:32:53',40019);
+INSERT INTO `mt_table_upate_monitor` VALUES ('mt_server',3,0,'2020-05-13 13:13:17',40020),('mt_server',6,0,'2020-05-13 13:13:17',40021),('mt_server',4,0,'2020-05-13 13:13:17',40022),('mt_server',23,0,'2020-05-13 13:13:17',40023),('mt_machine',125,0,'2020-05-13 13:13:17',40024),('mt_server',24,0,'2020-05-13 13:18:38',40025),('flogin_user',1,0,'2020-05-13 13:19:39',40026),('mt_server',24,0,'2020-05-13 13:20:37',40027),('mt_server',24,0,'2020-05-13 13:21:09',40028),('mt_server',24,0,'2020-05-13 13:21:21',40029);
 /*!40000 ALTER TABLE `mt_table_upate_monitor` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -786,7 +786,6 @@ CREATE TABLE `mt_view_bmach` (
 
 LOCK TABLES `mt_view_bmach` WRITE;
 /*!40000 ALTER TABLE `mt_view_bmach` DISABLE KEYS */;
-INSERT INTO `mt_view_bmach` VALUES (23,123,0,1,'2020-05-05 02:28:00'),(22,123,0,1,'2020-05-05 02:29:00'),(26,123,0,1,'2020-05-05 02:29:00');
 /*!40000 ALTER TABLE `mt_view_bmach` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
@@ -1021,4 +1020,4 @@ DELIMITER ;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2020-05-05 11:37:18
+-- Dump completed on 2020-05-13 21:22:11
