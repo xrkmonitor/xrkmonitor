@@ -1,0 +1,151 @@
+.kit-login-bg {
+	background-color: #393D49;
+}
+
+.kit-login-box {
+    width: 390px;
+    /*height: 330px;*/
+    margin: 10% auto;
+    background-color: #666;
+    background-color: rgba(46, 46, 46, 0.61);
+    border-radius: 10px;
+    color: aliceblue;
+    box-shadow: 0px 0px 20px 0px #009688;
+}
+
+.kit-login-box header {
+        height: 39px;
+        padding: 10px;
+        border-bottom: 1px solid rgba(0, 150, 136, 0.5);
+    }
+
+.kit-login-box header h2 {
+	text-align: center;
+	font-size: 25px;
+	line-height: 40px;
+}
+
+    .kit-login-box .kit-login-main {
+        /*height: 185px;*/
+        padding: 30px 50px 0;
+    }
+    .kit-login-box .kit-login-main .layui-input:focus {
+        border-color: #009688 !important;
+    }
+
+.login_form{margin:0px auto;width:460px;float:left;padding:50px 80px;box-sizing:border-box;background:#fff;height:100%}
+
+.kit-login-main .layui-form-item {
+	position: relative;
+	margin-bottom:20px;
+	height:38px;width:100%;line-height:26px;font-size:14px;
+}
+
+.kit-login-main .layui-form-item .kit-login-icon {
+	position: absolute;
+	color: #cccccc;
+	top: 10px;
+	left: 10px;
+}
+
+.kit-login-main .layui-form-item input {
+	padding-left: 34px;
+}
+
+.kit-login-box footer {
+        height: 35px;
+        margin: 0px 10px;
+        border-bottom: 1px solid rgba(0, 150, 136, 0.5);
+    }
+
+.kit-pull-right {
+	float: right !important;
+}
+
+.kit-clear {
+	clear: both;
+}
+
+.kit-login-remember {
+	line-height: 38px;
+}
+.kit-login-remember .layui-form-checkbox[lay-skin=primary] span {
+	color: white;
+}
+
+.kit-login-remember .layui-form-checked[lay-skin=primary] i {
+	border-color: #009688;
+    background-color: #009688;
+}
+
+.kit-login-remember .layui-form-switch {
+	margin-top: 0px;
+}
+
+.kit-login-code-box {
+	position: relative;
+	padding: 10px;
+}
+
+.kit-login-code-box input {
+	position: absolute;
+	width: 100px;
+}
+
+.kit-login-code-box img {
+	cursor: pointer;
+	position: absolute;
+	left: 115px;
+	height: 38px;
+}
+
+.layer-show-view {
+    margin: 14px;
+    padding-right:8px;
+}
+
+canvas {
+    position: absolute;
+    z-index: -1;
+}
+.kit-login-box header h2 {
+    line-height: normal;
+}
+.kit-login-box header {
+    height: auto;
+}
+.content {
+    position: relative;
+}
+.codrops-demos {
+    position: absolute;
+    bottom: 0;
+    left: 40%;
+    z-index: 10;
+}
+.codrops-demos a {
+    border: 2px solid rgba(242, 242, 242, 0.41);
+    color: rgba(255, 255, 255, 0.51);
+}
+.kit-pull-right button,
+.kit-login-main .layui-form-item input {
+    background-color: transparent;
+    color: white;
+}
+.kit-login-main .layui-form-item input::-webkit-input-placeholder {
+    color: white;
+}
+.kit-login-main .layui-form-item input:-moz-placeholder {
+    color: white;
+}
+.kit-login-main .layui-form-item input::-moz-placeholder {
+    color: white;
+}
+.kit-login-main .layui-form-item input:-ms-input-placeholder {
+    color: white;
+}
+.kit-pull-right button:hover {
+    border-color: #009688;
+    color: #009688
+}
+
