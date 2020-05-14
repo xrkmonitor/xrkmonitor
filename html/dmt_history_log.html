@@ -371,10 +371,10 @@ function dhlShowHistory()
 function dhlSelectAllModule()
 {
 	$("#dhl_flt_app_module input[name=dhl_flt_module]").each(function () {
-			if($("#dhl_flt_all_am").attr("checked"))
-				this.checked = true;
-			else
-				this.checked = false;
+		if($("#dhl_flt_all_am").is(":checked"))
+			$(this).prop("checked", true);
+		else
+			$(this).prop("checked", false);
 	});
 	return true;
 }

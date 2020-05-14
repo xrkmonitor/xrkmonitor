@@ -317,10 +317,10 @@ function drlShowPause(bPause)
 function drlSelectAllModule()
 {
 	$("#drl_flt_app_module input[name=drl_flt_module]").each(function () {
-			if($("#drl_flt_all_am").attr("checked"))
-				this.checked = true;
-			else
-				this.checked = false;
+		if($("#drl_flt_all_am").is(":checked"))
+			$(this).prop("checked", true);
+		else
+			$(this).prop("checked", false);
 	});
 	return true;
 }
