@@ -1,4 +1,3 @@
-
 <div class="pageContent" layoutH="28">
 	<div id='accountUseExp' style='width:300px; margin:15px 20px; float:left; height:300px;'>
 		<div class="panel" align='center' style='margin-top:2px;'>
@@ -59,9 +58,9 @@
 <div class="pageHeader" style='padding:0px 0px; height:40px;'>
     <div class="searchBar">
         <ul class="searchContent accountInfo">
-			<li style='margin-left:10px; float:left; font-weight:500; color:red; width:600px; overflow:hidden;'> 
+			<li style='margin-left:10px; float:left; font-size:14px; font-weight:400; color:red; width:600px; overflow:hidden;'> 
 				<?cs if:config.notify_daemon ?>
-				<span id='dcNotifyMsg' style="font-weight:500; color:red;"></span>
+				<span id='dcNotifyMsg' style="font-weight:400; font-size:14px; color:red;"></span>
 				<?cs else ?>
 				<marquee onMouseOut='start();' onMouseOver='stop();' scrollamount="2" align='middle' id='dcNotifyMsg' loop=-1 behavior="alternate" style='text-decoration:underline;'></marquee>
 				<?cs /if ?>
