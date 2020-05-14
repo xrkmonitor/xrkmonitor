@@ -1,10 +1,7 @@
 <div class="pageContent">
 	<div class="unitBox" style="margin-left:1px;"> 
-		<form id="pagerForm" method="post" action="<?cs var:config.cgipath?>mt_slog_user?action=login_info">
-			<input type="hidden" name="pageNum" value="<?cs var:config.currentPage ?>" />
-			<input type="hidden" name="numPerPage" value="<?cs var:config.numPerPage ?>" />
-			<input type="hidden" name="orderField" value="<?cs var:config.orderField ?>" />
-			<input type="hidden" name="orderDirection" value="<?cs var:config.orderDirection ?>" />
+		<form class="pagerForm" method="post" action="<?cs var:config.cgipath?>mt_slog_user?action=login_info">
+			<?cs include:config.cspath+"dmt_page_para.html" ?>
 			<input type="hidden" name="duli_user_name" value="<?cs var:config.duli_user_name?>">
 		</form>
 	
@@ -45,21 +42,7 @@
 					<tbody id="duli_list_user">
 					</tbody>
 				</table>
-		
-				<div class="panelBar" layoutH="0">
-					<div class="pages">
-						<span>每页显示</span>
-						<select name="numPerPage" onchange="navTabPageBreak({numPerPage:this.value})">
-							<option value="10">10</option>
-							<option value="20">20</option>
-							<option value="50">50</option>
-							<option value="100">100</option>
-							<option value="200">200</option>
-						</select>
-						<span>条，共 <?cs var:config.totalCount ?>  条</span>
-					</div>
-					<div class="pagination" targetType="navTab" totalCount="<?cs var:config.totalCount ?>" numPerPage="<?cs var:config.numPerPage ?>" pageNumShown="<?cs var:config.pageNumShown ?>" currentPage="<?cs var:config.currentPage ?>"></div>
-				</div>
+				<?cs include:config.cspath+"dmt_page.html" ?>
 			</div> 
 		</div>
 	</div> <!-- unitBox -->
