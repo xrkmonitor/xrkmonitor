@@ -75,7 +75,7 @@ $(document).ready(function(){
 
 </script>
 
-<div class="pageHeader" style="margin-left:1px;"> 
+<div class="pageHeader"> 
 	<form class="pagerForm" method="post" onsubmit='return dialogSearch(this);' action="<?cs var:config.cgipath?>mt_slog_showview?action=not_bind_attr_search&view_id=<?cs var:config.view_id ?>">
 		<?cs include:config.cspath+"dmt_page_para.html" ?>
 		<input type="hidden" name="dsnba_attr_data_type" value="<?cs var:config.dsnba_attr_data_type ?>" />

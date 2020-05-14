@@ -70,7 +70,7 @@ $(document).ready(function(){
 
 </script>
 
-<div class="pageHeader" style="margin-left:1px;"> 
+<div class="pageHeader">
 	<form class="pagerForm" method="post" action="<?cs var:config.cgipath?>mt_slog_showview?action=bind_attr_search&view_id=<?cs var:config.view_id ?>">
 		<?cs include:config.cspath+"dmt_page_para.html" ?>
 		<input type="hidden" name="dsba_attr_data_type" value="<?cs var:config.dsba_attr_data_type ?>" />
@@ -124,7 +124,7 @@ $(document).ready(function(){
 	</form>
 </div>
 	
-<div class="pageContent"> 
+<div class="pageContent">
 	<div class="panelBar">
 		<ul class="toolBar">
 			<li><a class="edit" targetType="dialog" postType="string" callback="dsbAfterAttrOpr_<?cs var:config.view_id ?>" target="selectedTodo" rel="bind_attr_<?cs var:config.view_id ?>" href="<?cs var:config.cgipath ?>mt_slog_showview?action=save_not_bind_attr&view_id=<?cs var:config.view_id ?>"><i class='icon-unlock icon-large'></i>解绑</a></li>
@@ -132,7 +132,7 @@ $(document).ready(function(){
 		</ul>
 	</div>
 
-	<table class="list" width="100%">
+	<table class="list" width="100%" style='height:350px'>
 		<thead>
 			<tr>
 				<th width="22"><input type="checkbox" group="bind_attr_<?cs var:config.view_id ?>" class="checkboxCtrl"></th>
@@ -145,7 +145,7 @@ $(document).ready(function(){
 		<tbody id="dsba_attr_list_info_<?cs var:config.view_id ?>">
 		</tbody>
 	</table>
-	
+
 	<div class="panelBar">
 		<div class="pages">
 			<span>每页显示</span>
@@ -159,6 +159,7 @@ $(document).ready(function(){
 			<span>条，共 <?cs var:config.totalCount ?>  条</span>
 		</div>
 		<div class="pagination" rel="dsb_bind_attr_list_<?cs var:config.view_id ?>" targetType="dialog" totalCount="<?cs var:config.totalCount ?>" numPerPage="<?cs var:config.numPerPage ?>" pageNumShown="<?cs var:config.pageNumShown ?>" currentPage="<?cs var:config.currentPage ?>"></div>
+
 	</div>
 </div> <!-- pageContent -->
 

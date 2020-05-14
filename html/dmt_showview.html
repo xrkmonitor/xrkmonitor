@@ -60,7 +60,7 @@ function dsAttrBind_<?cs var:config.view_id ?>()
 	url += "&view_id=" + view_id;
 	var dlg = "ds_dlg_bind_attr_" + view_id;
 
-	var op = $.parseJSON('{"mask":false,"maxable":true,"height":480,"width":780,"resizable":true}'); 
+	var op = $.parseJSON('{"mask":false,"maxable":false,"height":480,"width":780,"resizable":false}'); 
 	$.pdialog.open(url, dlg, "绑定监控点", op); 
 }
 
