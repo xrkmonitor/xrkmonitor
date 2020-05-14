@@ -2,8 +2,9 @@
 <ul class="nav">
 	<li><a href="<?cs var:config.cgipath?>mt_slog_user?action=init_change_pwd" mask=true maxable=false
 		target="dialog" width="420" height="260"><i class="icon-key icon-large"></i>修改密码</a></li>
-	<li><a href="#"><i class="icon-user icon-large"></i><?cs var:comm.user_name ?></a></li>
+	<li><a href="#" onclick='return dh_toUserCenter();'><i class="icon-user icon-large"></i><?cs var:comm.user_name ?></a></li>
 	<li><a href="#" id="a_logout" title="退出登录"><i class="icon-signout icon-large"></i>退出</a></li>
+	<li><a href="<?cs var:config.xrkmonitor_url ?>/dmt_open_doc.html" title="在线文档"><i class="icon-question icon-large"></i></a></li>
 </ul>
 
 <ul id="navMenu">
@@ -12,8 +13,16 @@
 	<li><a href="<?cs var:config.cgipath?>mt_slog_monitor?action=left_m"><i class="icon-cogs icon-large"></i>上报管理</a></li>
 	<li><a href="<?cs var:config.cgipath?>mt_slog_monitor?action=left_plus"><i class="icon-move icon-large"></i></i>监控扩展</a></li>
 	<?cs if:comm.user_type == 1 ?>
-	<li><a href="<?cs var:config.cgipath?>mt_slog_monitor?action=left_user"><i class="icon-group icon-large"></i>用户管理</a></li>
+	<li><a href="<?cs var:config.cgipath?>mt_slog_monitor?action=left_user" id='dh_user_manage'><i class="icon-group icon-large"></i>用户管理</a></li>
 	<li><a href="<?cs var:config.cgipath?>mt_slog_monitor?action=left_syssrv"><i class="icon-cog icon-large"></i>系统配置</a></li>
 	<?cs /if ?>
 </ul>
+
+
+<script type="text/javascript">
+function dh_toUserCenter()
+{
+	$('#dh_user_manage').trigger('click');
+}
+</script>
 

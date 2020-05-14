@@ -12,7 +12,7 @@
 <script src="<?cs var:config.docpath?>resource/js/jquery.easing.1.3.js?v=1"></script>
 <script src="<?cs var:config.docpath?>resource/js/jquery.json-2.3.js?v=1"></script>
 <script src="<?cs var:config.docpath?>resource/js/jquery.md5.js?v=1"></script>
-<script src="<?cs var:config.docpath?>resource/js/dwz.min.js?v=8999"></script>
+<script src="<?cs var:config.docpath?>resource/js/dwz.min.js?v=8599"></script>
 <script src="<?cs var:config.docpath?>resource/js/dwz.regional.zh.js?v=7999"></script>
 <script src="<?cs var:config.docpath?>resource/js/echarts.min.js"></script>
 <script src="<?cs var:config.docpath?>resource/js/china.js"></script>
@@ -20,7 +20,7 @@
 <script src="<?cs var:config.docpath?>resource/js/dmt.comm.min.js?v=20200509" type="text/javascript"></script>
 <script src="<?cs var:config.docpath?>resource/js/jquery.min.js?v=2020506"></script>
 <script src="<?cs var:config.docpath?>resource/js/jquery.other.min.js?v=2020506"></script>
-<script src="<?cs var:config.docpath?>resource/js/dwz.all.min.js?v=2030506"></script>
+<script src="<?cs var:config.docpath?>resource/js/dwz.all.min.js?v=3030506"></script>
 <script src="<?cs var:config.docpath?>resource/js/echarts.min.js?v=2020506"></script>
 <script src="<?cs var:config.docpath?>resource/js/china.min.js?v=2020506"></script>
 <?cs /if ?>
@@ -86,7 +86,7 @@ $(document).ready(function(){
 
 			// global info for javascript use
 			g_siteInfo = $.parseJSON('<?cs var:config.site_info ?>');
-			$("#themeList").theme({themeBase:"<?cs var:config.docpath?>resource/themes",defaultTheme:"toptry"});
+			$("#themeList").theme({themeBase:"<?cs var:config.docpath?>resource/themes", defaultTheme:"toptry"});
 
 			$("#a_logout").click(function(){
 				var d = new Date();

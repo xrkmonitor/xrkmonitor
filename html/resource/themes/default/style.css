@@ -132,5 +132,5 @@ footer a{color:#4d84ff}
 .comboxop .selected,body .comboxop a:hover{background-color:#667ea7;color:#fff}
 
 /* rock add */
-.list_table_title { height:28px; font-size:16px; color:white !important; text-align:center; background-color:#91c7ae }
+.list_table_title { height:28px; font-size:16px; text-align:center;font-weight:bold; background-color:red }
 
