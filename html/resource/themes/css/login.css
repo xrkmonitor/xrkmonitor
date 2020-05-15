@@ -9,7 +9,7 @@
     background-color: rgba(46, 46, 46, 0.61);
     border-radius: 10px;
     color: aliceblue;
-    box-shadow: 0px 0px 20px 0px #009688;
+    box-shadow: 0px 0px 20px 0px #5785f2;
 }
 
 .kit-login-box header {
@@ -24,13 +24,12 @@
 	line-height: 40px;
 }
 
-    .kit-login-box .kit-login-main {
-        /*height: 185px;*/
-        padding: 30px 50px 0;
-    }
-    .kit-login-box .kit-login-main .layui-input:focus {
-        border-color: #009688 !important;
-    }
+.kit-login-box .kit-login-main {
+    padding: 30px 50px 0;
+}
+.kit-login-box .kit-login-main .layui-input:focus {
+    border-color: #009688 !important;
+}
 
 .login_form{margin:0px auto;width:460px;float:left;padding:50px 80px;box-sizing:border-box;background:#fff;height:100%}
 
