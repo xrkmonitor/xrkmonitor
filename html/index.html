@@ -26,9 +26,31 @@
                 height: 100%;
             }
         </style>
+		<script type="text/javascript"> 
+		function iframeCheckLogin() { 
+			var g_support_var_css = false;
+			try {
+				document.documentElement.className = "js";
+				var supportsCssVars = function() { 
+					var e, t = document.createElement("style"); 
+					return t.innerHTML = "root: { --tmp-var: bold; }", 
+					   document.head.appendChild(t), e = !!(window.CSS && window.CSS.supports 
+						   && window.CSS.supports("font-weight", "var(--tmp-var)")), t.parentNode.removeChild(t), e
+				};
+				if(supportsCssVars())
+					g_support_var_css = true;
+			}catch(e) {
+			}
+
+			if(g_support_var_css)
+				document.getElementById('iframeId').src = '/cgi-bin/slog_flogin?action=show_main&login_show=var_css';
+			else
+				document.getElementById('iframeId').src = '/cgi-bin/slog_flogin?action=show_main&login_show=old';
+    	}
+		</script>
 	</head>
-	<body style='overflow:hidden'> 
-		<iframe id="iframeId" name='main_iframe' frameborder="0" scrolling="auto" src="/cgi-bin/slog_flogin?action=show_main" />
+	<body onload='iframeCheckLogin();' style='overflow:hidden'> 
+		<iframe id="iframeId" name='main_iframe' frameborder="0" scrolling="auto" src='about:blank;' />
 	</body>
 </html>
 

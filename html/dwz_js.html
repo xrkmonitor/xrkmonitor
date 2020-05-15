@@ -76,6 +76,28 @@ function djOnReadyOk()
 	setTimeout(function(){ $('#navMenuLast a').click(); }, 100);
 }
 
+function djCheckLoginType() 
+{ 
+	var support_var_css = false;
+	try {
+		document.documentElement.className = "js";
+		var supportsCssVars = function() { 
+			var e, t = document.createElement("style"); 
+			return t.innerHTML = "root: { --tmp-var: bold; }", 
+			   document.head.appendChild(t), e = !!(window.CSS && window.CSS.supports 
+				   && window.CSS.supports("font-weight", "var(--tmp-var)")), t.parentNode.removeChild(t), e
+		};
+		if(supportsCssVars())
+			support_var_css = true;
+	}catch(e) {
+	}
+
+	if(support_var_css)
+		return 'var_css';
+	return 'old'
+}
+
+
 $(document).ready(function(){
 	DWZ.init("<?cs var:config.docpath?>resource/dwz.frag.html", {
 		statusCode:{ok:200, error:300, timeout:301}, //【可选】
@@ -90,7 +112,7 @@ $(document).ready(function(){
 
 			$("#a_logout").click(function(){
 				var d = new Date();
-				var url = g_siteInfo.cgi_path+"slog_flogin?action=logout&v="+d.getTime();
+				var url = g_siteInfo.cgi_path+"slog_flogin?action=logout&v="+d.getTime()+'&login_show='+djCheckLoginType();
 				location.replace(url);
 				return false;
 			});
