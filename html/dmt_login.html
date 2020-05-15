@@ -14,23 +14,42 @@
 	<link href="<?cs var:config.docpath?>resource/themes/css/login.css?v=20200508" rel="stylesheet" />
 	<?cs if:config.xrkmonitor_debug==1 ?>
 	<link href="<?cs var:config.docpath?>resource/layui/css/layui.css" rel="stylesheet" />
-    <link href="<?cs var:config.docpath?>resource/sideshow/css/normalize.css" rel="stylesheet" />
-    <link href="<?cs var:config.docpath?>resource/sideshow/css/demo.css" rel="stylesheet" />
-    <link href="<?cs var:config.docpath?>resource/sideshow/css/component.css" rel="stylesheet" />
 	<?cs else ?>
 	<link href="<?cs var:config.docpath?>resource/layui/css/layui.min.css?v=20200506" rel="stylesheet" />
-    <link href="<?cs var:config.docpath?>resource/sideshow/css/sideshow.min.css?v=20200506" rel="stylesheet" />
 	<?cs /if ?>
+
+	<?cs if:config.login_show == "var_css" ?>
+		<link rel="stylesheet" type="text/css" href="<?cs var:config.docpath?>login/css/base.css?v=1" />
+	<?cs else ?>
+		<?cs if:config.xrkmonitor_debug==1 ?>
+    	<link href="<?cs var:config.docpath?>resource/sideshow/css/normalize.css" rel="stylesheet" />
+    	<link href="<?cs var:config.docpath?>resource/sideshow/css/demo.css" rel="stylesheet" />
+    	<link href="<?cs var:config.docpath?>resource/sideshow/css/component.css" rel="stylesheet" />
+		<?cs else ?>
+    	<link href="<?cs var:config.docpath?>resource/sideshow/css/sideshow.min.css?v=20200506" rel="stylesheet" />
+		<?cs /if ?>
+	<?cs /if ?>
+
 </head>
 
-<body class="kit-login-bg" style='overflow:hidden'>
-<div class="container demo-1">
-    <div class="content">
+<?cs if:config.login_show == "var_css" ?>
+<body class="cda-removeleft cda-naked cda-noimg">
+<?cs else ?>
+<body class="kit-login-bg demo-1" style='overflow:hidden'>
+<?cs /if ?>
+    <div> 
         <div id="large-header" class="large-header">
+			<?cs if:config.login_show == "var_css" ?>
+			<main> <div id="login_app"></div> </main>
+			<?cs else ?>
             <canvas id="demo-canvas"></canvas>
+			<?cs /if ?>
+
             <div class="kit-login-box">
                 <header>
-					<img src='<?cs var:config.docpath?>/images/login_show.png' style='float:left;padding-bottom:5px' width='64px' height='40px' />
+					<a href='http://xrkmonitor.com' target='_blank'>
+						<img src='<?cs var:config.docpath?>/images/login_show.png' style='float:left;padding-bottom:5px' width='64px' height='40px' />
+					</a>
 					<?cs if:config.isdaemon == 1 ?>
                     <h2>字符云监控系统 - 演示版</h2>
 					<?cs else ?>
@@ -77,7 +96,6 @@
             </div>
         </div>
     </div>
-</div>
 
 <?cs if:config.isdaemon == 1 ?>
 <script src="<?cs var:config.docpath?>js/dmt_xrkmonitor.js"></script>
@@ -87,16 +105,25 @@
 <script src="<?cs var:config.docpath?>resource/js/jquery.js?v=1"></script>
 <script src="<?cs var:config.docpath?>resource/js/jquery.md5.js"></script>
 <script src="<?cs var:config.docpath?>resource/js/jquery.cookie.js"></script>
-<script src="<?cs var:config.docpath?>resource/js/sideshow/TweenMax.js"></script>
-<script src="<?cs var:config.docpath?>resource/js/sideshow/rAF.js"></script>
-<script src="<?cs var:config.docpath?>resource/js/sideshow/demo-2.js"></script>
 <script src="<?cs var:config.docpath?>resource/js/dmt.comm.js" type="text/javascript"></script>
 <?cs else ?>
 <script src="<?cs var:config.docpath?>resource/js/jquery.min.js?v=2020506"></script>
 <script src="<?cs var:config.docpath?>resource/js/jquery.other.min.js?v=2020506"></script>
 <script src="<?cs var:config.docpath?>resource/js/dmt.comm.min.js?v=20200509" type="text/javascript"></script>
-<script src="<?cs var:config.docpath?>resource/js/sideshow/sideshow.min.js?v=20200506"></script>
 <?cs /if ?>
+
+<?cs if:config.login_show == "var_css" ?>
+	<?cs include:config.cspath+"dmt_login_show_varcss.html" ?>
+<?cs else ?>
+	<?cs if:config.xrkmonitor_debug==1 ?>
+	<script src="<?cs var:config.docpath?>resource/js/sideshow/TweenMax.js"></script>
+	<script src="<?cs var:config.docpath?>resource/js/sideshow/rAF.js"></script>
+	<script src="<?cs var:config.docpath?>resource/js/sideshow/demo-2.js"></script>
+	<?cs else ?>
+	<script src="<?cs var:config.docpath?>resource/js/sideshow/sideshow.min.js?v=20200506"></script>
+	<?cs /if ?>
+<?cs /if ?>
+
 
 <script language="javascript" type="text/javascript">
 	var g_req_timestamp = 0;
@@ -182,7 +209,7 @@
 			$('#loginmsg').html('<font color="#ff0000">当前无可用演示账号, 请稍后再试 ...</font>');
 			<?cs /if ?>
 		<?cs else ?>
-		$('#username').focus();
+			$('#username').focus();
 		<?cs /if ?>
 	}).keydown(function(event){
 		if(event.keyCode==13){
