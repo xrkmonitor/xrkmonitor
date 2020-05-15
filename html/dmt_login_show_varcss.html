@@ -44,27 +44,6 @@
 <script src="<?cs var:config.docpath?>login/js/InfiniteLights.js?v=1"></script>
 <script src="<?cs var:config.docpath?>login/js/Distortions.js?v=22"></script>
 <script language="javascript" type="text/javascript">
-	function dltSetLoginPos() {
-		$(".kit-login-box").css("position", "relative");
-		$(".kit-login-box").css("float", "left");
-		var w = $(window).width();
-		var h = $(window).height();
-		if(w > 390) {
-			var p=(w-390)/2;
-			$(".kit-login-box").css("margin-left", ''+p+'px');
-		}
-		if(h > 300) {
-			var p=(h-300)/3;
-			$(".kit-login-box").css("margin-top", ''+p+'px');
-		}
-	}
-
-	$(window).resize(function(){
-		dltSetLoginPos();
-	});
-
-	//dltSetLoginPos();
-
 		(function() {
 			const container = document.getElementById('login_app');
 
@@ -134,6 +113,5 @@
 		})();
 
 </script>
-
 
 
