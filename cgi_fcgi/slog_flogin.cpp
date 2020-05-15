@@ -182,16 +182,14 @@ static int SetFreeAccountInfo(CGI *cgi, HDF *hdf)
 static int PopLoginWindow(CGI *cgi, HDF *hdf)
 {
 	static std::string s_page_login_dwz;
+	static std::string s_page_login;
 
-	std::string s_page_login;
-	const char *plogin_show = hdf_get_value(hdf, "Query.login_show", "def");
+	const char *plogin_show = hdf_get_value(hdf, "Query.login_show", "old");
+	hdf_set_value(hdf, "config.login_show", plogin_show);
 	NEOERR *err = NULL;
 	if(s_page_login.empty()) {
 		s_page_login = stConfig.szCsPath;
-		if(!strcmp(plogin_show, "var_css"))
-			s_page_login += "dmt_login_varcss.html";
-		else
-			s_page_login += "dmt_login_tween.html";
+		s_page_login += "dmt_login.html";
 	}
 	if(s_page_login_dwz.empty()) {
 		s_page_login_dwz = stConfig.szCsPath;
@@ -238,17 +236,14 @@ static int PopLoginWindow(CGI *cgi, HDF *hdf)
 
 static int ResponseCheckResult(CGI *cgi, HDF *hdf, int32_t iResultCode)
 {
-	std::string s_page_login;
-	const char *plogin_show = hdf_get_value(hdf, "Query.login_show", "def");
+	static std::string s_page_login;
+
+	const char *plogin_show = hdf_get_value(hdf, "Query.login_show", "old");
+	hdf_set_value(hdf, "config.login_show", plogin_show);
 	TRealTimeInfoShm &stRealInfoShm = stConfig.pShmConfig->stSysCfg.stRealInfoShm;
 	if(s_page_login.empty()) {
 		s_page_login = stConfig.szCsPath;
-
-		if(!strcmp(plogin_show, "var_css"))
-			s_page_login += "dmt_login_varcss.html";
-		else
-			s_page_login += "dmt_login_tween.html";
-		DEBUG_LOG("login show:%s", plogin_show);
+		s_page_login += "dmt_login.html";
 	}
 	hdf_set_int_value(cgi->hdf, "config.total_acc", stRealInfoShm.dwTotalAccTimes+stRealInfoShm.wNewAccTimes);
 	hdf_set_int_value(cgi->hdf, "config.today_acc", stRealInfoShm.dwTodayAccTimes+stRealInfoShm.wNewAccTimes);
