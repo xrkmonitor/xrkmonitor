@@ -24,7 +24,7 @@ $(document).ready(function(){
 
 <div class="pageContent">
 	<form method="get" action="<?cs var:config.cgipath?>mt_slog_machine?action=<?cs var:config.action ?>&navTabId=dmt_machine" class="pageForm required-validate" onsubmit="return validateCallback(this, dialogAjaxDone);">
-		<div class="pageFormContent">
+		<div class="pageFormContent" layoutH='40'>
 			<input type="hidden" name="dmm_machine_id" value="<?cs var:machine.dmm_machine_id?>" />
 			<p>
 				<label>机器名称：</label>
