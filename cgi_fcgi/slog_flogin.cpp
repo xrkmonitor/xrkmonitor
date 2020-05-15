@@ -182,12 +182,16 @@ static int SetFreeAccountInfo(CGI *cgi, HDF *hdf)
 static int PopLoginWindow(CGI *cgi, HDF *hdf)
 {
 	static std::string s_page_login_dwz;
-	static std::string s_page_login;
 
+	std::string s_page_login;
+	const char *plogin_show = hdf_get_value(hdf, "Query.login_show", "def");
 	NEOERR *err = NULL;
 	if(s_page_login.empty()) {
 		s_page_login = stConfig.szCsPath;
-		s_page_login += "dmt_login_tween.html";
+		if(!strcmp(plogin_show, "var_css"))
+			s_page_login += "dmt_login_varcss.html";
+		else
+			s_page_login += "dmt_login_tween.html";
 	}
 	if(s_page_login_dwz.empty()) {
 		s_page_login_dwz = stConfig.szCsPath;
@@ -195,7 +199,7 @@ static int PopLoginWindow(CGI *cgi, HDF *hdf)
 	}
 
 	TRealTimeInfoShm &stRealInfoShm = stConfig.pShmConfig->stSysCfg.stRealInfoShm;
-	hdf_set_int_value(cgi->hdf, "config.total_acc", stRealInfoShm.dwTodayAccTimes+stRealInfoShm.wNewAccTimes);
+	hdf_set_int_value(cgi->hdf, "config.total_acc", stRealInfoShm.dwTotalAccTimes+stRealInfoShm.wNewAccTimes);
 	hdf_set_int_value(cgi->hdf, "config.today_acc", stRealInfoShm.dwTodayAccTimes+stRealInfoShm.wNewAccTimes);
 	if(g_iLoginType != 0)
 		hdf_set_int_value(hdf, "config.login_type", g_iLoginType);
@@ -234,13 +238,19 @@ static int PopLoginWindow(CGI *cgi, HDF *hdf)
 
 static int ResponseCheckResult(CGI *cgi, HDF *hdf, int32_t iResultCode)
 {
-	static std::string s_page_login;
+	std::string s_page_login;
+	const char *plogin_show = hdf_get_value(hdf, "Query.login_show", "def");
 	TRealTimeInfoShm &stRealInfoShm = stConfig.pShmConfig->stSysCfg.stRealInfoShm;
 	if(s_page_login.empty()) {
 		s_page_login = stConfig.szCsPath;
-		s_page_login += "dmt_login_tween.html";
+
+		if(!strcmp(plogin_show, "var_css"))
+			s_page_login += "dmt_login_varcss.html";
+		else
+			s_page_login += "dmt_login_tween.html";
+		DEBUG_LOG("login show:%s", plogin_show);
 	}
-	hdf_set_int_value(cgi->hdf, "config.total_acc", stRealInfoShm.dwTodayAccTimes+stRealInfoShm.wNewAccTimes);
+	hdf_set_int_value(cgi->hdf, "config.total_acc", stRealInfoShm.dwTotalAccTimes+stRealInfoShm.wNewAccTimes);
 	hdf_set_int_value(cgi->hdf, "config.today_acc", stRealInfoShm.dwTodayAccTimes+stRealInfoShm.wNewAccTimes);
 	
 	NEOERR *err = NULL;

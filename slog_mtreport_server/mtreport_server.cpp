@@ -283,7 +283,8 @@ void TryWriteRealinfoToDb()
 		stConfig.psysConfig->stRealInfoShm.wNewAccTimes = 0;
 		slog.EndChangeRealInfoShm();
 	}
-	INFO_LOG("save realinfo to db, data length:%d, sql length:%d", iBinaryDataLen, iSqlLen);
+	INFO_LOG("save realinfo to db, data length:%d, sql length:%d, total:%d, today:%d", 
+		iBinaryDataLen, iSqlLen, stInfo.total_access_times(), stInfo.today_access_times());
 }
 
 int main(int argc, char *argv[])
