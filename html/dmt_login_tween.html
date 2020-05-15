@@ -74,14 +74,6 @@
 						</div>
                     </div>
                 </div>
-				<footer>
-					<?cs if:config.isdaemon == 1 ?>
-					<button disabled style='float:left;width:120px;margin-left:10px;' class='layui-btn layui-btn-sm' title='站点访问数据展示'><i class="icon-bar-chart icon-large"></i><?cs var:config.today_acc ?> / <?cs var:config.total_acc ?></button>
-					<?cs else ?>
-					<button disabled style='float:left;width:120px;margin-left:10px;' class='layui-btn layui-btn-sm' title='站点访问数据'><i class="icon-bar-chart icon-large"></i><?cs var:config.today_acc ?> / <?cs var:config.total_acc ?></button>
-					<?cs /if ?>
-					<button title='监控系统云版本' style='position:static; margin-left:35px; font-color:#2f3e56; float:right;' class="layui-btn layui-btn-sm" onClick='goto_online();'><i class="icon-home icon-large"></i>云版本</button>
-				</footer>
             </div>
         </div>
     </div>
@@ -109,12 +101,6 @@
 <script language="javascript" type="text/javascript">
 	var g_req_timestamp = 0;
 	var g_login_in_cust_server = 0;
-
-	function goto_online()
-	{
-		window.open('http://xrkmonitor.com', '_blank');
-	}
-
 	function login_submit()
 	{
 		if ($('#username').val() == ""){
