@@ -1,3 +1,43 @@
+<style>
+    span{
+        width: 30px;
+        height: 30px;
+        background: url("<?cs var:config.docpath?>/images/star.png") no-repeat;
+        position: absolute;
+        background-size:100% 100%;
+        animation: flash 1s alternate infinite;
+    }
+    @keyframes flash {
+        0%{opacity: 0;}
+        100%{opacity: 1;}
+    }
+    span:hover{
+        transform: scale(3, 3) rotate(180deg) !important;
+        transition: all 1s;
+    }
+</style>
+
+<script language="javascript" type="text/javascript">
+	function dlsvSetStar(w, h, n) {
+	     for(var i=0; i<n; i++){
+            var span = document.createElement('span');
+            document.body.appendChild(span);
+            var x = parseInt(Math.random()/2 * w);
+            var y = parseInt(Math.random()/2 * h);
+            span.style.left = x + 'px';
+            span.style.top = y + 'px';
+            var scale = Math.random() * 1.5;
+            span.style.transform = 'scale('+ scale + ', ' + scale + ')';
+            var rate = Math.random() * 1.5;
+            span.style.animationDelay = rate + 's';
+        }
+	}
+	(function() {	
+		var w = $(window).width();
+		var h = $(window).height();
+		dlsvSetStar(w*0.4, h*0.1, 4);
+    })();
+</script>
 
 <script src="<?cs var:config.docpath?>login/js/three.min.js"></script>
 <script src="<?cs var:config.docpath?>login/js/postprocessing.min.js"></script>
