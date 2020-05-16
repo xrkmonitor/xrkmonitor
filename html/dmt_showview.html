@@ -133,7 +133,7 @@ function dsAttrShow_<?cs var:config.view_id ?>(type)
 		param = "&date=today" 
 
 	var ck = $("#ds_check_show_<?cs var:config.view_id ?>").is(":checked");
-	if(ck == "checked")
+	if(ck)
 		param += '&show_rep=1';
 	else
 		param += '&show_rep=0';
@@ -256,7 +256,7 @@ $(document).ready(function(){
 
 	var ck = window.localStorage.getItem("cookie_ds_check_show_<?cs var:config.view_id ?>");
 	if(ck == '1')
-		$("#ds_check_show_<?cs var:config.view_id ?>").attr("checked", true);
+		$("#ds_check_show_<?cs var:config.view_id ?>").prop("checked", true);
 	$('#ds_ct_attr_show_list_<?cs var:config.view_id ?>').html('');
 	dsAttrShowDate2_<?cs var:config.view_id ?>(0);
 });

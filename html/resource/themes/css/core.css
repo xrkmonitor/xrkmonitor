@@ -186,8 +186,8 @@ table.nowrap tbody tr{border-bottom-width:1px;border-bottom-style:solid;}
 #taskbar .close{display:block;overflow:hidden;padding:0;position:absolute;top:5px;width:auto;height:auto;top:50%;margin-top:-8px;right:8px;text-indent:0}
 
 /* ProgressBar */
-#progressBar{display:block;width:28px;height:28px;font-size:28px;position:absolute;top:50%;left:50%;margin-left:-14px;margin-top:-14px;z-index:2001}
-#background{display:block;width:100%;height:100%;opacity:0.4;filter:alpha(opacity=40);background:#FFF;position:absolute;top:0;left:0;z-index:2000}
+.progressBar{display:block;width:28px;height:28px;font-size:28px;position:absolute;top:50%;left:50%;margin-left:-14px;margin-top:-14px;z-index:2001}
+.background{display:block;width:100%;height:100%;opacity:0.4;filter:alpha(opacity=40);background:#FFF;position:absolute;top:0;left:0;z-index:2000}
 .alertBackground{display:none;width:100%;height:100%;opacity:0.4;background:rgba(0,0,0,.3);position:absolute;top:0;left:0;z-index:1010}
 .dialogBackground{display:none;width:100%;height:100%;opacity:0.4;background:rgba(0,0,0,.3);position:absolute;top:0;left:0;z-index:999}
 /* ----------------------------------------------------------------- Form */
