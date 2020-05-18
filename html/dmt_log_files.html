@@ -1,3 +1,7 @@
+<style>
+.searchContent li font { color:blue; line-height:28px }
+</style>
+
 <div class="pageHeader">
 	<div class="searchBar">
 		<ul class="searchContent"> 
@@ -9,15 +13,15 @@
 			</li>
 			<li>
 				<label>占用磁盘空间：</label>
-				<font id="logSizeTotal" style="color:blue"></font>
+				<font id="logSizeTotal"></font>
 			</li>
 			<li>
 				<label>日志文件数：</label>
-				<font id="logFilesTotal" style="color:blue"></font>
+				<font id="logFilesTotal"></font>
 			</li>
 			<li>
 				<label>日志记录总数：</label>
-				<font id="logTotal" style="color:blue"></font>
+				<font id="logTotal"></font>
 			</li>
 		</ul>
 		<div class='subBar'>
@@ -25,7 +29,7 @@
 	</div>
 </div>
 
-<div class="pageContent"> 
+<div class="pageContent" id='dlf_log_ct'> 
 	<table class="list" width="100%" layoutH="0"> 
 		<thead>
 			<tr>
@@ -44,7 +48,7 @@
 	<div class="pageBar panelBar">
 		<div class="pages">
 			<span>每页显示</span>
-			<select id="numPerPage" onchange="return dlfPageNumPerChange(this.value);">
+			<select class='combox' id="numPerPage" onchange="return dlfPageNumPerChange(this.value);">
 				<option value="10">10</option>
 				<option value="20" selected >20</option>
 				<option value="50">50</option>
@@ -170,7 +174,8 @@ function dlfShowLogFiles(js_result)
 		uhtml += "<td>" + result[i].time_end + "</td>";
 		uhtml += "</tr>";
 	}
-	$("#dlf_files_list").html(uhtml);
+	$("#dlf_files_list").html(uhtml)
+	$('#dlf_log_ct').initUI();
 }
 
 function dlfOpAppChange()

@@ -6,13 +6,13 @@
 				<ul class="searchContent" >
 					<li>
 						<label>应 用：</label>
-						<select name="dm_app_id" id="dm_app_id">
+						<select class='xrk_combox' name="dm_app_id" id="dm_app_id">
 							<option value="0"> - 请选择 - </option>
 						</select>
 					</li>
 					<li>
 						<label>模 块：</label>
-						<select name="dm_module_id" id="dm_module_id">
+						<select class='xrk_combox' name="dm_module_id" id="dm_module_id">
 							<option value="0"> - 请选择 - </option>
 						</select>
 					</li>
@@ -117,8 +117,6 @@ function dmSetModulelist()
 			uhtml += "<td>"+detail+"</td>";
 			uhtml += "</tr>";
 		}
-
-		break;
 	}
 	$("#dm_module_list_tbody").html(uhtml);
 }

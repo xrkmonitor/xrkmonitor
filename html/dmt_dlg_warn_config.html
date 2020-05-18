@@ -2,10 +2,6 @@
 $(document).ready(function(){
 	$("#ddwc_form_submit").submit(function(){
 		validateCallback(this, dialogAjaxDone);
-		<?cs if:config.action=="save_multi_mod" ?>
-		$.pdialog.closeCurrent();
-		<?cs /if ?>
-
 		return false;
 	});
 });
@@ -22,9 +18,6 @@ $(document).ready(function(){
 			<input type="hidden" name="ddwc_call_back_type" value="closeCurrent" />
 			<?cs if:config.action=="save_multi_mod" ?>
 			<input type="hidden" name="ddwc_mod_warn_list" value="<?cs var:config.warn_list ?>" />
-			<input type="hidden" name="ddwc_call_back_type" value="closeCurrent" />
-			<?cs else ?>
-			<input type="hidden" name="ddwc_call_back_type" value="noCloseCurrent" />
 			<?cs /if ?>
 
 			<input type="hidden" name="ddwc_reload_navTab_id" value="dmt_slog_warn" />

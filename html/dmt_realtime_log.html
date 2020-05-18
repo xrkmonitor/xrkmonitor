@@ -115,7 +115,7 @@
 
 			<fieldset style="width:240px; height:100px; float:left; margin-left:5px;" >
 				<legend>包含关键字【与】</legend>
-				<input id="drl_key_include" size="12" type="text" title="日志包含关键字，多个包含关键字之间的关系为与关系" value="" maxlength="16" onkeyup="this.value=this.value.replace(/[_]/g,'')" onafterpaste="this.value=this.value.replace(/[_]/g,'')" >
+				<input style='padding:0' id="drl_key_include" size="12" type="text" title="日志包含关键字，多个包含关键字之间的关系为与关系" value="" maxlength="16" onkeyup="this.value=this.value.replace(/[_]/g,'')" onafterpaste="this.value=this.value.replace(/[_]/g,'')" >
 				<span>
 					<button  onclick="drlAddLogKey(true, 'drl_inc_keylist');"><i class='icon-plus'></i>添加</button>
 				</span>
@@ -130,7 +130,7 @@
 
 			<fieldset style="width:240px; height:100px; float:left; margin-left:5px;" >
 				<legend>排除关键字【或】</legend>
-				<input id="drl_key_exce" size="12" type="text" title="日志排除关键字，多个排除关键字之间的关系为或关系" value="" maxlength="10">
+				<input id="drl_key_exce" style='padding:0' size="12" type="text" title="日志排除关键字，多个排除关键字之间的关系为或关系" value="" maxlength="10">
 				<span>
 					<button onclick="drlAddLogKey(false, 'drl_exce_keylist');"><i class='icon-plus'></i>添加</button>
 				</span>

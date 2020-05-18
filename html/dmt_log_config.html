@@ -1,6 +1,5 @@
 <div class="pageHeader">
 	<form class="pagerForm" method="post" onsubmit="return navTabSearch(this);" action="<?cs var:config.cgipath?>mt_slog?action=list_log_config">
-		<?cs include:config.cspath+"dmt_page_para.html" ?>
 		<input type="hidden" name="dlc_app_id" value="<?cs var:config.dlc_app_id ?>" />
 		<input type="hidden" name="dlc_module_id" value="<?cs var:config.dlc_module_id ?>" />
 	</form>
@@ -10,13 +9,13 @@
 			<ul class="searchContent" >
 				<li>
 					<label>应 用:</label>
-					<select name="dlc_app_id" id="dlc_app_id">
+					<select class='xrk_combox' name="dlc_app_id" id="dlc_app_id">
 						<option value="0"> 全 部 </option>
 					</select>
 				</li>
 				<li>
 					<label>模 块:</label>
-					<select name="dlc_module_id" id="dlc_module_id">
+					<select class='xrk_combox' name="dlc_module_id" id="dlc_module_id">
 						<option value="0"> 全 部 </option>
 					</select>
 				</li>
@@ -71,7 +70,6 @@
 		<tbody id="dlc_config_list_tbody"> 
 		</tbody>
 	</table>
-	<?cs include:config.cspath+"dmt_page.html" ?>
 </div>
 
 <script language="javascript" type="text/javascript">
@@ -278,11 +276,6 @@ $(document).ready(function(){
 		}
 		dlcAppChange();
 	}
-
-	$("select[name=numPerPage] option").each(function(){
-		if(this.value == <?cs var:config.numPerPage ?>)
-			$(this).attr("selected", true);
-	});
 
 	var ulist = dlcSetConfiglist();
 	$("#dlc_config_list_tbody").html(ulist);

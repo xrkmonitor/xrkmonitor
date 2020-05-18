@@ -114,7 +114,7 @@
 
 			<fieldset style="width:240px; height:100px; float:left; margin-left:5px;" >
 				<legend>包含关键字【与】</legend>
-				<input id="dhl_key_include" size="16" type="text" title="日志包含关键字，多个包含关键字之间的关系为与关系" value="" maxlength="16" onkeyup="this.value=this.value.replace(/[_]/g,'')" onafterpaste="this.value=this.value.replace(/[_]/g,'')" >
+				<input style='padding:0' id="dhl_key_include" size="16" type="text" title="日志包含关键字，多个包含关键字之间的关系为与关系" value="" maxlength="16" onkeyup="this.value=this.value.replace(/[_]/g,'')" onafterpaste="this.value=this.value.replace(/[_]/g,'')" >
 				<span>
 					<button onclick="dhlAddLogKey(true, 'dhl_inc_keylist');"><i class='icon-plus'></i>添加</button>
 				</span>
@@ -129,7 +129,7 @@
 
 			<fieldset style="width:240px; height:100px; float:left; margin-left:5px;" >
 				<legend>排除关键字【或】</legend>
-				<input id="dhl_key_exce" size="16" type="text" title="日志排除关键字，多个排除关键字之间的关系为或关系" value="" maxlength="10">
+				<input id="dhl_key_exce" size="16" style='padding:0' type="text" title="日志排除关键字，多个排除关键字之间的关系为或关系" value="" maxlength="10">
 				<span>
 					<button onclick="dhlAddLogKey(false, 'dhl_exce_keylist');"><i class='icon-plus'></i>添加</button>
 				</span>
@@ -154,9 +154,9 @@
 				<legend>自定义时间段</legend>
 				<div>
 					<label>开始</label>
-					<input type="text" id="dhlLogTimeStart" class="date" value="" dateFmt="yyyy-MM-dd HH:mm:ss" readonly="true"/>
+					<input type="text" id="dhlLogTimeStart" style='padding:0' class="date" value="" dateFmt="yyyy-MM-dd HH:mm:ss" readonly="true"/>
 					<label>结束</label>
-					<input type="text" id="dhlLogTimeEnd" class="date" value="" dateFmt="yyyy-MM-dd HH:mm:ss" readonly="true"/>
+					<input type="text" id="dhlLogTimeEnd" class="date" style='padding:0' value="" dateFmt="yyyy-MM-dd HH:mm:ss" readonly="true"/>
 					&nbsp;&nbsp;
 					<button onclick="$('#dhlCustTime').css('display', 'none'); $('#dhlCommTime').css('display', 'block');"><i class='icon-time'></i>常用时间段</button>
 					&nbsp;

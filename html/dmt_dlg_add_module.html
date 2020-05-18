@@ -21,11 +21,20 @@ $(document).ready(function(){
 	<?cs /if ?>
 });
 
+function ddamSaveAdd()
+{
+    <?cs if:config.action != "save_mod_module" ?>
+    var app = $('#ddam_op_app').val();
+    window.localStorage.setItem('dm_app_sel', app);
+    <?cs /if ?>
+    return true;
+}
+
 </script>
 
 <div class="pageContent">
 	<form method="post" action="<?cs var:config.cgipath?>mt_slog?action=<?cs var:config.action ?>&navTabId=dmt_list_module" class="pageForm required-validate" onsubmit="return validateCallback(this, dialogAjaxDone);">
-		<div class="pageFormContent">
+		<div class="pageFormContent" layoutH='0'>
 			<?cs if:config.action == "save_mod_module" ?>
 			<input type="hidden" name="ddam_module_id" value="<?cs var:config.module_id ?>" />
 			<input type="hidden" name="ddam_op_app" value="<?cs var:config.app_id ?>" />
@@ -53,7 +62,7 @@ $(document).ready(function(){
 		</div>
 		<div class="formBar">
 			<ul>
-				<li><button type="submit" class="buttonActive">保存</button></li>
+				<li><button type="submit" class="buttonActive" onclick='return ddamSaveAdd();'>保存</button></li>
 				<li><button type="button" class="buttonActive close">关闭</button></li>
 				</li>
 			</ul>

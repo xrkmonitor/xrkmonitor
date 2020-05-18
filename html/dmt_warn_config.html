@@ -12,7 +12,7 @@
 			<ul class="searchContent" >
 				<li>
 					<label>告警对象:</label>
-					<select name="dwc_warn_obj_type" id="dwc_warn_obj_type">
+					<select class='xrk_combox' name="dwc_warn_obj_type" id="dwc_warn_obj_type">
 						<option value="0">全部</option>
 						<option value="1">单机告警</option>
 						<option value="2">视图告警</option>
@@ -20,7 +20,7 @@
 				</li>
 				<li>
 					<label>告警类型:</label>
-					<select name="dwc_warn_type" id="dwc_warn_type">
+					<select class='xrk_combox' name="dwc_warn_type" id="dwc_warn_type">
 						<option value="0">全部</option>
 						<option value="1">最大值</option>
 						<option value="2">最小值</option>
@@ -29,7 +29,7 @@
 				</li>
 				<li>
 					<label>告警状态:</label>
-					<select name="dwc_warn_status" id="dwc_warn_status">
+					<select class='xrk_combox' name="dwc_warn_status" id="dwc_warn_status">
 						<option value="0">全部</option>
 						<option value="32">已屏蔽</option>
 						<option value="64">未屏蔽</option>
@@ -54,11 +54,11 @@
 		<ul class="toolBar">
 			<li><a href="#" onclick="return dwcModMultiWarn();"><i class='icon-edit'></i>批量修改告警</a></li>
 			<li class="line">line</li>
-			<li><a href="#" onclick="return dwcMaskMultiWarn();"><i class='icon-ban-circle'></i>批量屏蔽告警</span></a></li>
+			<li><a href="#" onclick="return dwcMaskMultiWarn();"><i class='icon-ban-circle'></i>批量屏蔽告警</a></li>
 			<li class="line">line</li>
-			<li><a href="#" onclick="return dwcUmaskMultiWarn();"><i class='icon-random'></i>批量解除屏蔽</span></a></li>
+			<li><a href="#" onclick="return dwcUmaskMultiWarn();"><i class='icon-random'></i>批量解除屏蔽</a></li>
 			<li class="line">line</li>
-			<li><a href="#" onclick="return dwcDelMultiWarn();"><i class='icon-minus'></i>批量删除告警</span></a></li>
+			<li><a href="#" onclick="return dwcDelMultiWarn();"><i class='icon-minus'></i>批量删除告警</a></li>
 			<li class="line">line</li>
 			<li><a href="#" onclick="return dwcAddNewWarn(1);"><i class="icon-desktop"></i>单机告警设置</a></li>
 			<li class="line">line</li>

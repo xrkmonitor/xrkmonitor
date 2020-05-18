@@ -83,6 +83,18 @@ function ddacOpAppChange()
 	}
 }
 
+function ddacSaveAdd()
+{
+    var app = $('#ddac_op_app').val();
+    window.localStorage.setItem('dlc_app_sel', app);
+    if($('#ddac_op_module').val() <= 0)
+    {
+        alertMsg.warn('请选择模块');
+        return false;
+    }
+    return true;
+}
+
 function ddacValidateCallback(fm)
 {
 	var sel_config = 0;
@@ -168,7 +180,7 @@ $(document).ready(function(){
 			<p style="display:none">
 				<label>所属应用：</label>
 				<input type="text" value="<?cs var:config.app_name ?>" readonly />
-				<input type="hidden" name="ddac_op_app" value="<?cs var:config.app_id ?>" />
+				<input type="hidden" id='ddac_op_app' name="ddac_op_app" value="<?cs var:config.app_id ?>" />
 			</p>
 			<p style="display:none">
 				<label>所属模块：</label>
@@ -264,7 +276,7 @@ $(document).ready(function(){
 		</div>
 		<div class="formBar">
 			<ul>
-				<li><button type="submit" class="buttonActive">保存</button></li>
+				<li><button type="submit" class="buttonActive" onclick='return ddacSaveAdd();'>保存</button></li>
 				<li><button type="button" class="buttonActive close">关闭</button></li>
 			</ul>
 		</div>

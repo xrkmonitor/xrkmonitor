@@ -499,7 +499,7 @@ $(document).ready(function(){
 		<ul class="searchContent" id='<?cs var:config.plugin_pre ?>_SearchBar'>
 			<li>
 				<label>开发语言:</label>
-				<select name="dev_language">
+				<select class='xrk_combox' name="dev_language">
 					<option value="all">-全部-</option>
 					<option value="c/c++">c/c++</option>
 					<option value="php">php</option>
@@ -512,7 +512,7 @@ $(document).ready(function(){
 
 			<li>
 				<label>运行平台:</label>
-				<select name="dest_os"> 
+				<select class='xrk_combox' name="dest_os"> 
 					<option value="all">-全部-</option>
 					<option value="Linux">Linux</option>
 					<option value="Windows">Windows</option>
@@ -521,7 +521,7 @@ $(document).ready(function(){
 
 			<li>
 				<label>是否开源:</label>
-				<select name="open_src"> 
+				<select class='xrk_combox' name="open_src"> 
 					<option value="999">-全部-</option>
 					<option value="1">开 源</option>
 					<option value="0">闭 源</option>
@@ -530,7 +530,7 @@ $(document).ready(function(){
 
 			<li>
 				<label>部署方式:</label>
-				<select name="set_method">
+				<select name="set_method" class='xrk_combox'>
 					<option value="999">-全部-</option>
 					<option value="0">内 置</option>
 					<option value="1">外 置</option>
