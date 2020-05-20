@@ -19,12 +19,12 @@ $(document).ready(function(){
 });
 </script>
 <style>
-.pageFormContent p label { width:80px; }
+#dmm_pageFormContent p label { width:80px; }
 </style>
 
 <div class="pageContent">
 	<form method="get" action="<?cs var:config.cgipath?>mt_slog_machine?action=<?cs var:config.action ?>&navTabId=dmt_machine" class="pageForm required-validate" onsubmit="return validateCallback(this, dialogAjaxDone);">
-		<div class="pageFormContent" layoutH='40'>
+		<div class="pageFormContent" layoutH='40' id='dmm_pageFormContent'>
 			<input type="hidden" name="dmm_machine_id" value="<?cs var:machine.dmm_machine_id?>" />
 			<p>
 				<label>机器名称：</label>

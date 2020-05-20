@@ -1,6 +1,6 @@
 <style type="text/css">
-.pageFormContent label { float:left; overflow:visible; width:70px; padding:0 5px; line-height:21px;}
-.pageFormContent p { width:420px;} 
+#ddaa_pageFormContent label { float:left; overflow:visible; width:70px; padding:0 5px; line-height:21px;}
+#ddaa_pageFormContent p { width:420px;} 
 </style>
 
 <script language="javascript" type="text/javascript">
@@ -13,7 +13,7 @@ $(document).ready(function(){
 
 <div class="pageContent">
 	<form method="get" action="<?cs var:config.cgipath?>mt_slog?action=<?cs var:config.action ?>&navTabId=dmt_list_app" class="pageForm required-validate" onsubmit="return validateCallback(this, dialogAjaxDone);">
-		<div class="pageFormContent" layoutH="56">
+		<div class="pageFormContent" layoutH="56" id='ddaa_pageFormContent'>
 			<?cs if:config.action == "save_mod_app" ?>
 			<input type="hidden" name="ddaa_app_id" value="<?cs var:config.app_id ?>" />
 			<?cs /if ?>

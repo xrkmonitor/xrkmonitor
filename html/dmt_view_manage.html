@@ -1,6 +1,6 @@
 <style type="text/css">
-.pageFormContent label { float:left; overflow:visible; width:140px; padding:0 5px; line-height:21px;}
-.pageFormContent p { width:500px;} 
+#dvm_pageFormContent label { float:left; overflow:visible; width:140px; padding:0 5px; line-height:21px;}
+#dvm_pageFormContent p { width:500px;} 
 </style>
 
 <script language="javascript" type="text/javascript">
@@ -21,7 +21,7 @@ $(document).ready(function(){
 
 <div class="pageContent">
 	<form method="get" action="<?cs var:config.cgipath?>mt_slog_view?action=<?cs var:config.action ?>&navTabId=dmt_slog_view" class="pageForm required-validate" onsubmit="return validateCallback(this, dialogAjaxDone);">
-		<div class="pageFormContent" layoutH="56">
+		<div class="pageFormContent" layoutH="56" id='dvm_pageFormContent'>
 			<input type="hidden" name="dvm_view_id" value="<?cs var:view.dvm_view_id?>" />
 			<p>
 				<label>视图名称：</label>

@@ -98,13 +98,13 @@ $(document).ready(function(){
 </script>
 
 <style type="text/css">
-.pageFormContent p { width:500px; }
-.pageFormContent p label { width:50px; }
+#ddwcc_pageFormContent p { width:500px; }
+#ddwcc_pageFormContent p label { width:50px; }
 </style>
 
 <div class="pageContent">
 	<form method="get" action="<?cs var:config.cgipath?>mt_slog_warn" class="pageForm" id="ddwcc_form_submit">
-		<div class="pageFormContent">
+		<div class="pageFormContent" id='ddwcc_pageFormContent'>
 			<input type="hidden" name="ddwc_warn_config_id" value="<?cs var:config.warn_config_id ?>" />
 			<input type="hidden" name="ddwc_warn_type_val" value="<?cs var:config.warn_type_id ?>" />
 			<input type="hidden" name="ddwc_attr_id" value="<?cs var:config.warn_attr_id ?>" />

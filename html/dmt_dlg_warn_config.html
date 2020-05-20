@@ -8,13 +8,13 @@ $(document).ready(function(){
 </script>
 
 <style type="text/css">
-.pageFormContent p { width:500px; }
-.pageFormContent p label { width:60px; }
+#ddwc_pageFormContent p { width:500px; }
+#ddwc_pageFormContent p label { width:60px; }
 </style>
 
 <div class="pageContent">
 	<form method="get" action="<?cs var:config.cgipath?>mt_slog_warn" class="pageForm" id="ddwc_form_submit">
-		<div class="pageFormContent">
+		<div class="pageFormContent" id='ddwc_pageFormContent'>
 			<input type="hidden" name="ddwc_call_back_type" value="closeCurrent" />
 			<?cs if:config.action=="save_multi_mod" ?>
 			<input type="hidden" name="ddwc_mod_warn_list" value="<?cs var:config.warn_list ?>" />
