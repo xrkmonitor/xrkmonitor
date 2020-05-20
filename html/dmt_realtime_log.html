@@ -1,5 +1,5 @@
 <div class="pageContent">
-	<div class="panel collapse" style="width:99%; float:left; background-color:#d8e5f1;" id="drlLogFilter" defH="170" OnToggle="drlPanelFun">
+	<div class="tabsHeader panel collapse" style="width:100%; overflow:auto; float:left; background-color:#d8e5f1;" id="drlLogFilter" defH="170" OnToggle="drlPanelFun">
 		<h1>实时日志查询参数</h1>
 		<div>
 			<fieldset style="width:205px; height:155px; float:left;" >
@@ -187,8 +187,8 @@
 	    </ul>
 	</div>
 
-	<div class="unitBox" style="overflow:auto" id="drlLogShow" layoutH="255"> 
-		<ol id="drlRealtimeList"></ol>
+	<div class="unitBox"> 
+		<ol id="drlRealtimeList" layoutH='0'></ol>
 	</div> <!-- panel 实时日志 -->
 </div>
 
@@ -242,24 +242,24 @@ function drlGetAppNameById(id)
 function drlPanelFun(c)
 {
 	var hfilter = parseInt($("#drlLogFilter").attr("defH"));
-	var hshow = parseInt($("#drlLogShow").height());
+	var hshow = parseInt($("#drlRealtimeList").height());
 	var hshow_dapt = 8;
 	if(c == 1) 
-		$("#drlLogShow").height(hshow+hfilter+hshow_dapt);
+		$("#drlRealtimeList").height(hshow+hfilter+hshow_dapt);
 	else 
-		$("#drlLogShow").height(hshow-hfilter-hshow_dapt);
+		$("#drlRealtimeList").height(hshow-hfilter-hshow_dapt);
 
 }
 
 function drlShowMax()
 {
 	var hfilter = parseInt($("#drlLogFilter").attr("defH"));
-	var hfcont = $("#drlLogFilter .panelContent").height();
-	var hshow = parseInt($("#drlLogShow").height());
+	var hfcont = $("#drlLogFilter").height();
+	var hshow = parseInt($("#drlRealtimeList").height());
 
 	// 查询参数设置区内容隐藏/显示的情况区分处理
-	var hshow_dapt = 43;
-	if(hfcont > 0)
+	var hshow_dapt = 33;
+	if(hfcont > hshow_dapt)
 		hshow_dapt += hfilter + 5;
 	if(drl_show_max){
 		drl_show_max = false;
@@ -267,7 +267,7 @@ function drlShowMax()
 		$("#drlLogFilter").show(100);
 		if(DWZ.ui.sbar == false)
 		    $("#navTab .tabsPageHeader a.toggleCollapse").trigger("click");
-		$("#drlLogShow").height(hshow-hshow_dapt);
+		$("#drlRealtimeList").height(hshow-hshow_dapt);
 	}
 	else {
 		drl_show_max = true;
@@ -275,7 +275,7 @@ function drlShowMax()
 		$("#drlLogFilter").hide(100);
 		if(DWZ.ui.sbar == true)
 		    $("#navTab .tabsPageHeader a.toggleCollapse").trigger("click");
-		$("#drlLogShow").height(hshow+hshow_dapt);
+		$("#drlRealtimeList").height(hshow+hshow_dapt);
 	}
 }
 

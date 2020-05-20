@@ -1,5 +1,5 @@
 <div class="pageContent">
-	<div class="panel collapse" style="width:99%; float:left;background-color:#d8e5f1;" id="dhlLogFilter" defH="170" OnToggle="dhlPanelFun">
+	<div class="tabsHeader panel collapse" style="width:100%; overflow:auto; float:left;background-color:#d8e5f1;" id="dhlLogFilter" defH="170" OnToggle="dhlPanelFun">
 		<h1>历史日志查询参数</h1>
 		<div>
 			<fieldset style="width:205px; height:155px; float:left;" >
@@ -229,8 +229,8 @@
 	    </ul>
 	</div>
 
-	<div class="unitBox" style="overflow:auto" id="dhlLogShow" layoutH="355"> 
-		<ol id="dhlHistoryList"></ol>
+	<div class="unitBox"> 
+		<ol id="dhlHistoryList" layoutH='0'></ol>
 	</div> <!-- panel 历史日志 -->
 </div>
 
@@ -290,24 +290,24 @@ function dhlGetAppNameById(id)
 function dhlPanelFun(c)
 {
 	var hfilter = parseInt($("#dhlLogFilter").attr("defH"));
-	var hshow = parseInt($("#dhlLogShow").height());
+	var hshow = parseInt($("#dhlHistoryList").height());
 	var hshow_dapt = 8;
 	if(c == 1) 
-		$("#dhlLogShow").height(hshow+hfilter+hshow_dapt);
+		$("#dhlHistoryList").height(hshow+hfilter+hshow_dapt);
 	else 
-		$("#dhlLogShow").height(hshow-hfilter-hshow_dapt);
+		$("#dhlHistoryList").height(hshow-hfilter-hshow_dapt);
 
 }
 
 function dhlShowMax()
 {
 	var hfilter = parseInt($("#dhlLogFilter").attr("defH"));
-	var hfcont = $("#dhlLogFilter .panelContent").height();
-	var hshow = parseInt($("#dhlLogShow").height());
+	var hfcont = $("#dhlLogFilter").height();
+	var hshow = parseInt($("#dhlHistoryList").height());
 
 	// 查询参数设置区内容隐藏/显示的情况区分处理
-	var hshow_dapt = 43;
-	if(hfcont > 0)
+	var hshow_dapt = 33;
+	if(hfcont > hshow_dapt)
 		hshow_dapt += hfilter + 5;
 	if(dhl_show_max){
 		dhl_show_max = false;
@@ -315,7 +315,7 @@ function dhlShowMax()
 		$("#dhlLogFilter").show(100);
 		if(DWZ.ui.sbar == false)
 		    $("#navTab .tabsPageHeader a.toggleCollapse").trigger("click");
-		$("#dhlLogShow").height(hshow-hshow_dapt);
+		$("#dhlHistoryList").height(hshow-hshow_dapt);
 	}
 	else {
 		dhl_show_max = true;
@@ -323,7 +323,7 @@ function dhlShowMax()
 		$("#dhlLogFilter").hide(100);
 		if(DWZ.ui.sbar == true)
 		    $("#navTab .tabsPageHeader a.toggleCollapse").trigger("click");
-		$("#dhlLogShow").height(hshow+hshow_dapt);
+		$("#dhlHistoryList").height(hshow+hshow_dapt);
 	}
 }
 
