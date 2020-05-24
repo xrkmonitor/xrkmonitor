@@ -106,7 +106,7 @@
 						<label class="for" title="日志内容" for="dhl_log_field_content">日志内容</label>
 						</td>
 						<td><input name="dhl_log_field" id="dhl_log_field_addr" type="checkbox" title="产生该条日志的机器地址"checked value="2">
-						<label class="for" title="产生该条日志的机器地址" for="dhl_log_field_addr">日志来源</label>
+						<label class="for" title="产生该条日志的机器地址" for="dhl_log_field_addr">日志上报机器</label>
 						</td>
 					</tr>
 				</table>
@@ -788,7 +788,7 @@ function dhlOpAppChange()
 	var idx = $('#dhl_appName').val();
 	var app = dhl_app_module_list.applist[idx];
 	$('#dhl_flt_app_module').html('');
-	$("#dhl_flt_all_am").attr("checked", true);
+	$("#dhl_flt_all_am").prop("checked", true);
 	for(var i=0; i < app.module_count; i++) {
 		var spid = "dhl_flt_module_" + i;
 		var sp = $('<div style="margin-left:5px"><input name="dhl_flt_module" type="checkbox" checked /><label class="for"></label></div>');

@@ -107,7 +107,7 @@
 						</td>
 
 						<td><input name="drl_log_field" id="drl_log_field_addr" type="checkbox" title="产生该条日志的机器地址"checked value="2">
-						<label class="for" title="产生该条日志的机器地址" for="drl_log_field_addr">日志来源</label>
+						<label class="for" title="产生该条日志的机器地址" for="drl_log_field_addr">日志上报机器</label>
 						</td>
 					</tr>
 				</table>
@@ -688,7 +688,7 @@ function drlOpAppChange()
 	var app = drl_app_module_list.applist[idx];
 	$('#drl_flt_app_module').html('');
 
-	$("#drl_flt_all_am").attr("checked", true);
+	$("#drl_flt_all_am").prop("checked", true);
 	for(var i=0; i < app.module_count; i++) {
 		var spid = "drl_flt_module_" + i;
 		var sp = $('<div style="margin-left:5px"><input name="drl_flt_module" type="checkbox" checked /><label class="for"></label></div>');

@@ -36,10 +36,11 @@
 				<tr>
 					<th width="10">序号</th>
 					<th width="150">日志文件</th>
-					<th width="50">文件大小</th>
+					<th width="40">文件大小</th>
 					<th width="40">日志记录数</th>
-					<th width="30">起始时间</th>
-					<th width="30">结束时间</th>
+					<th width="40">格式版本号</th>
+					<th width="60">起始时间</th>
+					<th width="60">结束时间</th>
 				</tr>
 			</thead>
 			<tbody id="dlf_files_list"> 
@@ -172,6 +173,7 @@ function dlfShowLogFiles(js_result)
 		uhtml += "<td>"+search+"</td>";
 		uhtml += "<td>" + result[i].size + "</td>";
 		uhtml += "<td>" + result[i].records + "</td>";
+		uhtml += "<td>" + result[i].version + "</td>";
 		uhtml += "<td>" + result[i].time_start + "</td>";
 		uhtml += "<td>" + result[i].time_end + "</td>";
 		uhtml += "</tr>";
