@@ -452,6 +452,61 @@ int CSLogSearch::SetSearchExcpKey(int iExcpKeyCount, char (*sExcpKeyList)[SLOG_K
 	return 0;
 }
 
+bool CSLogSearch::IsLogMatch(TSLogOut *pstLog, const char *pszLog)
+{
+	int i;
+
+	if(pszLog == NULL)
+	{
+		// app module 是否匹配 ----
+		if(m_iLogAppId != 0 && m_iLogAppId != pstLog->iAppId)
+			return false;
+		if(m_iModuleIdCount != 0)
+		{
+			for(i=0; i < m_iModuleIdCount; i++)
+			{
+				if(pstLog->iModuleId == m_arrLogModuleId[i])
+					break;
+			}
+			if(i >= m_iModuleIdCount)
+				return false;
+		}
+
+		// log 级别是否匹配 ----
+		if(!(pstLog->wLogType & m_iLogTypeFlag))
+			return false;
+		
+		// 上报机器是否匹配 ----
+		if(m_iReportMachine != 0 && m_iReportMachine != (int)pstLog->dwLogHost)
+			return false;
+	}
+	else
+	{
+		const char *phost = ipv4_addr_str(pstLog->dwLogHost);
+
+		// 排除关键字优先 ------------
+		for(i=0; i < m_iExcpKeyCount; i++)
+		{
+			if(strstr(phost, m_stExcpKey[i]))
+				return false;
+			if(bmh_is_match(pszLog, m_stExcpKey[i], m_stExcpJmpTab[i]) >= 0)
+				return false;
+		}
+
+		// 包含关键字 [与]
+		for(i=0; i < m_iIncKeyCount; i++)
+		{
+			if(strstr(phost, m_stIncKey[i]))	
+				continue;
+			if(bmh_is_match(pszLog, m_stIncKey[i], m_stIncJmpTab[i]) >= 0)
+				continue;
+			else
+				return false;
+		}
+	}
+	return true;
+}
+
 bool CSLogSearch::IsLogMatch(TSLog *pstLog, const char *pszLog)
 {
 	int i;
@@ -526,10 +581,218 @@ int CSLogSearch::GetSearchCurFilePercent()
 	return iPer;
 }
 
+int CSLogSearch::ReadLogFileVersion_1(SLogFileHead &stFileHead, FILE *fp, TSLogOut &stLogOut, int i)
+{
+	static char sLogBuf[BWORLD_SLOG_MAX_LINE_LEN+64];
+
+	SLogFileLogIndex stIndex;
+	m_dwCurFileHasRecords = stFileHead.iLogRecordsWrite;
+	for(int j=m_dwFilePos; j < stFileHead.iLogRecordsWrite; j++)
+	{
+		if(fseek(fp, MYSIZEOF(SLogFileHead)+MYSIZEOF(stIndex)*j, SEEK_SET) < 0)
+		{
+			ERR_LOG("seek record:%d index failed msg:%s file:%s", 
+				j, strerror(errno), m_pstLogFileList->stFiles[i].szAbsFileName);
+			break;
+		}
+		if(fread(&stIndex, MYSIZEOF(stIndex), 1, fp) != 1)
+		{
+			ERR_LOG("read slog file index from file:%s failed, msg:%s !", 
+				m_pstLogFileList->stFiles[i].szAbsFileName, strerror(errno));
+			break;
+		}
+
+		// 检查时间, 注意指定文件查找 ----
+		if(m_strLogFile.size() <= 0 && (stIndex.qwLogTime < m_qwTimeStart || stIndex.qwLogTime > m_qwTimeEnd))
+		{
+			if(j < stFileHead.iLogRecordsWrite)
+				m_dwFilePos = j+1;
+			continue;
+		}
+
+		stLogOut.iAppId = stIndex.iAppId;
+		stLogOut.iModuleId = stIndex.iModuleId;
+		stLogOut.wLogType = stIndex.wLogType;
+		stLogOut.dwLogHost = stIndex.dwLogHost;
+		if(j < stFileHead.iLogRecordsWrite)
+			m_dwFilePos = j+1;
+
+		if(!IsLogMatch(&stLogOut, NULL))
+			continue;
+
+		if(fseek(fp, stIndex.dwLogContentPos, SEEK_SET) < 0)
+		{
+			ERR_LOG("seek record:%d content failed msg:%s file:%s", 
+				j, strerror(errno), m_pstLogFileList->stFiles[i].szAbsFileName);
+			break;
+		}
+
+		// 日志记录的 seq 校验
+		uint32_t dwContentSeq = 0;
+		if(fread(&dwContentSeq, 4, 1, fp) != 1)
+		{
+			ERR_LOG("read content seq failed from file:%s log pos:%d, msg:%s !",
+				m_pstLogFileList->stFiles[i].szAbsFileName, j, strerror(errno));
+			break;
+		}
+		if(dwContentSeq != stIndex.dwLogSeq)
+		{
+			ERR_LOG("from slog file:%s content seq:%u != %u check content failed !", 
+				m_pstLogFileList->stFiles[i].szAbsFileName, dwContentSeq, stIndex.dwLogSeq);
+			break;
+		}
+		
+		if(fread(sLogBuf, 1, stIndex.dwLogContentLen, fp) != stIndex.dwLogContentLen)
+		{
+			ERR_LOG("read slog log contenet from file:%s failed, msg:%s !", 
+				m_pstLogFileList->stFiles[i].szAbsFileName, strerror(errno));
+			break;
+		}
+		if(IsLogMatch(&stLogOut, sLogBuf))
+		{
+			stLogOut.dwCust_1 = stIndex.dwCust_1;
+			stLogOut.dwCust_2 = stIndex.dwCust_2;
+			stLogOut.iCust_3 = stIndex.iCust_3;
+			stLogOut.iCust_4 = stIndex.iCust_4;
+			if(stIndex.szCust_5[0] != '\0') 
+				strncpy(stLogOut.szCust_5, stIndex.szCust_5, sizeof(stLogOut.szCust_5)-1);
+			if(stIndex.szCust_6[0] != '\0') 
+				strncpy(stLogOut.szCust_6, stIndex.szCust_6, sizeof(stLogOut.szCust_6)-1);
+			stLogOut.dwLogConfigId = stIndex.dwLogConfigId;
+			stLogOut.dwLogSeq = stIndex.dwLogSeq;
+			stLogOut.qwLogTime = stIndex.qwLogTime;
+			stLogOut.pszLog = sLogBuf;
+			return 1; 
+		}
+	}
+	return 0;
+}
+
+int CSLogSearch::ReadLogFileVersion_2(SLogFileHead &stFileHead, FILE *fp, TSLogOut &stLogOut, int i)
+{
+	static char sLogBuf[BWORLD_SLOG_MAX_LINE_LEN+64];
+
+	SLogFileLogIndex_ver2 stIndex;
+	m_dwCurFileHasRecords = stFileHead.iLogRecordsWrite;
+	for(int j=m_dwFilePos; j < stFileHead.iLogRecordsWrite; j++)
+	{
+		if(fseek(fp, MYSIZEOF(SLogFileHead)+MYSIZEOF(stIndex)*j, SEEK_SET) < 0)
+		{
+			ERR_LOG("seek record:%d index failed msg:%s file:%s", 
+				j, strerror(errno), m_pstLogFileList->stFiles[i].szAbsFileName);
+			break;
+		}
+		if(fread(&stIndex, MYSIZEOF(stIndex), 1, fp) != 1)
+		{
+			ERR_LOG("read slog file index from file:%s failed, msg:%s !", 
+				m_pstLogFileList->stFiles[i].szAbsFileName, strerror(errno));
+			break;
+		}
+
+		// 检查时间, 注意指定文件查找 ----
+		if(m_strLogFile.size() <= 0 && (stIndex.qwLogTime < m_qwTimeStart || stIndex.qwLogTime > m_qwTimeEnd))
+		{
+			if(j < stFileHead.iLogRecordsWrite)
+				m_dwFilePos = j+1;
+			continue;
+		}
+
+		stLogOut.iAppId = stIndex.iAppId;
+		stLogOut.iModuleId = stIndex.iModuleId;
+		stLogOut.wLogType = stIndex.wLogType;
+		stLogOut.dwLogHost = stIndex.dwLogHost;
+		if(j < stFileHead.iLogRecordsWrite)
+			m_dwFilePos = j+1;
+
+		if(!IsLogMatch(&stLogOut, NULL))
+			continue;
+
+		if(fseek(fp, stIndex.dwLogContentPos, SEEK_SET) < 0)
+		{
+			ERR_LOG("seek record:%d content failed msg:%s file:%s", 
+				j, strerror(errno), m_pstLogFileList->stFiles[i].szAbsFileName);
+			break;
+		}
+
+		// 日志记录的 seq 校验
+		uint32_t dwContentSeq = 0;
+		if(fread(&dwContentSeq, 4, 1, fp) != 1)
+		{
+			ERR_LOG("read content seq failed from file:%s log pos:%d, msg:%s !",
+				m_pstLogFileList->stFiles[i].szAbsFileName, j, strerror(errno));
+			break;
+		}
+		if(dwContentSeq != stIndex.dwLogSeq)
+		{
+			ERR_LOG("from slog file:%s content seq:%u != %u check content failed !", 
+				m_pstLogFileList->stFiles[i].szAbsFileName, dwContentSeq, stIndex.dwLogSeq);
+			break;
+		}
+		if(fread(sLogBuf, 1, stIndex.dwLogContentLen, fp) != stIndex.dwLogContentLen)
+		{
+			ERR_LOG("read slog log contenet from file:%s failed, msg:%s !", 
+				m_pstLogFileList->stFiles[i].szAbsFileName, strerror(errno));
+			break;
+		}
+
+		// 读取日志 cust data
+		if(stIndex.bLogCustLen > 0) {
+			if(fseek(fp, stIndex.dwLogCustPos, SEEK_SET) < 0) {
+				ERR_LOG("seek record:%d content failed msg:%s file:%s", 
+					j, strerror(errno), m_pstLogFileList->stFiles[i].szAbsFileName);
+				break;
+			}
+
+			char sCustBuf[256] = {0};
+			char *pCust = sCustBuf;
+			if(fread(sCustBuf, 1, stIndex.bLogCustLen, fp) != stIndex.bLogCustLen)
+			{
+				ERR_LOG("read log cust data from file:%s failed, msg:%s !", 
+					m_pstLogFileList->stFiles[i].szAbsFileName, strerror(errno));
+				break;
+			}
+			stLogOut.bCustFlag = (uint8_t)(*pCust); pCust++;
+			if(stLogOut.bCustFlag & MTLOG_CUST_FLAG_C1_SET) {
+				stLogOut.dwCust_1 = *((uint32_t*)pCust);
+				pCust += sizeof(uint32_t);
+			}
+			if(stLogOut.bCustFlag & MTLOG_CUST_FLAG_C2_SET) {
+				stLogOut.dwCust_2 = *((uint32_t*)pCust);
+				pCust += sizeof(uint32_t);
+			}
+			if(stLogOut.bCustFlag & MTLOG_CUST_FLAG_C3_SET) {
+				stLogOut.iCust_3 = *((int32_t*)pCust);
+				pCust += sizeof(int32_t);
+			}
+			if(stLogOut.bCustFlag & MTLOG_CUST_FLAG_C4_SET) {
+				stLogOut.iCust_4 = *((int32_t*)pCust);
+				pCust += sizeof(int32_t);
+			}
+			if(stLogOut.bCustFlag & MTLOG_CUST_FLAG_C5_SET) {
+				strncpy(stLogOut.szCust_5, pCust, sizeof(stLogOut.szCust_5)-1);
+				pCust += strlen(stLogOut.szCust_5)+1;
+			}
+			if(stLogOut.bCustFlag & MTLOG_CUST_FLAG_C6_SET) {
+				strncpy(stLogOut.szCust_6, pCust, sizeof(stLogOut.szCust_6)-1);
+				pCust += strlen(stLogOut.szCust_6)+1;
+			}
+		}
+
+		if(IsLogMatch(&stLogOut, sLogBuf))
+		{
+			stLogOut.dwLogConfigId = stIndex.dwLogConfigId;
+			stLogOut.dwLogSeq = stIndex.dwLogSeq;
+			stLogOut.qwLogTime = stIndex.qwLogTime;
+			stLogOut.pszLog = sLogBuf;
+			return 1; 
+		}
+	}
+	return 0;
+}
+
 TSLogOut * CSLogSearch::HistoryLog()
 {
 	static TSLogOut stLogOut;
-	static char sLogBuf[BWORLD_SLOG_MAX_LINE_LEN+64];
 	int i = 0, j = 0, k = 0;
 	FILE *fp = NULL;
 
@@ -609,8 +872,6 @@ TSLogOut * CSLogSearch::HistoryLog()
 		}
 	}
 
-	TSLog stLog;
-	memset(&stLog, 0, MYSIZEOF(TSLog));
 	m_dwCurFileHasRecords = 0;
 	for(i=m_wFileIndexStar+m_wFileNo, k=m_wFileNo; i < SLOG_LOG_FILES_COUNT_MAX; i++, k++)
 	{
@@ -623,99 +884,25 @@ TSLogOut * CSLogSearch::HistoryLog()
 		}
 
 		SLogFileHead &stFileHead = m_pstLogFileList->stFiles[i].stFileHead;
-		SLogFileLogIndex stIndex;
-		m_dwCurFileHasRecords = stFileHead.iLogRecordsWrite;
-		for(j=m_dwFilePos; j < stFileHead.iLogRecordsWrite; j++)
-		{
-			if(fseek(fp, MYSIZEOF(SLogFileHead)+MYSIZEOF(stIndex)*j, SEEK_SET) < 0)
-			{
-				ERR_LOG("seek record:%d index failed msg:%s file:%s", 
-					j, strerror(errno), m_pstLogFileList->stFiles[i].szAbsFileName);
-				break;
-			}
-			if(fread(&stIndex, MYSIZEOF(SLogFileLogIndex), 1, fp) != 1)
-			{
-				ERR_LOG("read slog file index from file:%s failed, msg:%s !", 
-					m_pstLogFileList->stFiles[i].szAbsFileName, strerror(errno));
-				break;
-			}
-
-			// 检查时间, 注意指定文件查找 ----
-			if(m_strLogFile.size() <= 0 && 
-				(stIndex.qwLogTime < m_qwTimeStart || stIndex.qwLogTime > m_qwTimeEnd))
-			{
-				if(j < stFileHead.iLogRecordsWrite)
-					m_dwFilePos = j+1;
-				continue;
-			}
-
-			stLog.iAppId = stIndex.iAppId;
-			stLog.iModuleId = stIndex.iModuleId;
-			stLog.wLogType = stIndex.wLogType;
-			stLog.dwLogHost = stIndex.dwLogHost;
-			if(j < stFileHead.iLogRecordsWrite)
-				m_dwFilePos = j+1;
-
-			if(!IsLogMatch(&stLog, NULL))
-				continue;
-
-			if(fseek(fp, stIndex.dwLogContentPos, SEEK_SET) < 0)
-			{
-				ERR_LOG("seek record:%d content failed msg:%s file:%s", 
-					j, strerror(errno), m_pstLogFileList->stFiles[i].szAbsFileName);
-				break;
-			}
-
-			// 日志记录的 seq 校验
-			uint32_t dwContentSeq = 0;
-			if(fread(&dwContentSeq, 4, 1, fp) != 1)
-			{
-				ERR_LOG("read content seq failed from file:%s log pos:%d, msg:%s !",
-					m_pstLogFileList->stFiles[i].szAbsFileName, j, strerror(errno));
-				break;
-			}
-			if(dwContentSeq != stIndex.dwLogSeq)
-			{
-				ERR_LOG("from slog file:%s content seq:%u != %u check content failed !", 
-					m_pstLogFileList->stFiles[i].szAbsFileName, dwContentSeq, stIndex.dwLogSeq);
-				break;
-			}
-			
-			if(fread(sLogBuf, 1, stIndex.dwLogContentLen, fp) != stIndex.dwLogContentLen)
-			{
-				ERR_LOG("read slog log contenet from file:%s failed, msg:%s !", 
-					m_pstLogFileList->stFiles[i].szAbsFileName, strerror(errno));
-				break;
-			}
-			if(IsLogMatch(&stLog, sLogBuf))
-			{
-				stLogOut.iAppId = stIndex.iAppId; 
-				stLogOut.iModuleId = stIndex.iModuleId; 
-				stLogOut.wLogType = stIndex.wLogType; 
-				stLogOut.dwCust_1 = stIndex.dwCust_1;
-				stLogOut.dwCust_2 = stIndex.dwCust_2;
-				stLogOut.iCust_3 = stIndex.iCust_3;
-				stLogOut.iCust_4 = stIndex.iCust_4;
-				if(stIndex.szCust_5[0] != '\0') 
-					memcpy(stLogOut.szCust_5, stIndex.szCust_5, sizeof(stLogOut.szCust_5));
-				if(stIndex.szCust_6[0] != '\0') 
-					memcpy(stLogOut.szCust_6, stIndex.szCust_6, sizeof(stLogOut.szCust_6));
-				stLogOut.dwLogConfigId = stIndex.dwLogConfigId;
-				stLogOut.dwLogHost = stIndex.dwLogHost;
-				stLogOut.dwLogSeq = stIndex.dwLogSeq;
-				stLogOut.qwLogTime = stIndex.qwLogTime;
-				stLogOut.pszLog = sLogBuf;
-
-				fclose(fp);
-				return &stLogOut; 
-			}
+		int iRet = 0;
+		memset(&stLogOut, 0, sizeof(stLogOut));
+		if(SLOG_FILE_VERSION_1 == stFileHead.bLogFileVersion)
+			iRet = ReadLogFileVersion_1(stFileHead, fp, stLogOut, i);
+		else if(SLOG_FILE_VERSION_2 == stFileHead.bLogFileVersion)
+			iRet = ReadLogFileVersion_2(stFileHead, fp, stLogOut, i);
+		else {
+			ERR_LOG("not support file version:%d", stFileHead.bLogFileVersion);
+			return NULL;
+		}
+		if(iRet > 0) {
+			fclose(fp);
+			return &stLogOut;
 		}
 
 		DEBUG_LOG("scan file:%s records:%u complete, fileno:%d, filepos:%u (i:%d, j:%d, k:%d)",
 			m_pstLogFileList->stFiles[i].szAbsFileName, m_dwCurFileHasRecords, m_wFileNo, m_dwFilePos, i, j, k);
 
 		fclose(fp);
-
 		if(k+1 >= m_wFileCount) // 文件已经扫描完成
 			break;
 
@@ -757,6 +944,7 @@ TSLogOut * CSLogSearch::RealTimeLog(int32_t & iLastLogIndex, uint32_t seq, uint6
 		if(IsLogMatch(m_pShmLog->sLogList+j, NULL)) {
 			pszLog = GetShmLog(m_pShmLog->sLogList+j, j);
 			if(pszLog != NULL && IsLogMatch(m_pShmLog->sLogList+j, pszLog)) {
+				memset(&stLogOut, 0, sizeof(stLogOut));
 				stLogOut.iAppId = m_pShmLog->sLogList[j].iAppId;
 				stLogOut.iModuleId = m_pShmLog->sLogList[j].iModuleId;
 				stLogOut.wLogType = m_pShmLog->sLogList[j].wLogType;
@@ -765,12 +953,18 @@ TSLogOut * CSLogSearch::RealTimeLog(int32_t & iLastLogIndex, uint32_t seq, uint6
 				stLogOut.qwLogTime = m_pShmLog->sLogList[j].qwLogTime;
 				stLogOut.dwLogConfigId = m_pShmLog->sLogList[j].dwLogConfigId;
 				stLogOut.dwLogHost = m_pShmLog->sLogList[j].dwLogHost;
-				stLogOut.dwCust_1 = m_pShmLog->sLogList[j].dwCust_1;
-				stLogOut.dwCust_2 = m_pShmLog->sLogList[j].dwCust_2;
-				stLogOut.iCust_3 = m_pShmLog->sLogList[j].iCust_3;
-				stLogOut.iCust_4 = m_pShmLog->sLogList[j].iCust_4;
-				memcpy(stLogOut.szCust_5, m_pShmLog->sLogList[j].szCust_5, sizeof(stLogOut.szCust_5));
-				memcpy(stLogOut.szCust_6, m_pShmLog->sLogList[j].szCust_6, sizeof(stLogOut.szCust_6));
+				if(m_pShmLog->sLogList[j].bCustFlag & MTLOG_CUST_FLAG_C1_SET)
+				    stLogOut.dwCust_1 = m_pShmLog->sLogList[j].dwCust_1;
+				if(m_pShmLog->sLogList[j].bCustFlag & MTLOG_CUST_FLAG_C2_SET)
+				    stLogOut.dwCust_2 = m_pShmLog->sLogList[j].dwCust_2;
+				if(m_pShmLog->sLogList[j].bCustFlag & MTLOG_CUST_FLAG_C3_SET)
+				    stLogOut.iCust_3 = m_pShmLog->sLogList[j].iCust_3;
+				if(m_pShmLog->sLogList[j].bCustFlag & MTLOG_CUST_FLAG_C4_SET)
+				    stLogOut.iCust_4 = m_pShmLog->sLogList[j].iCust_4;
+				if(m_pShmLog->sLogList[j].bCustFlag & MTLOG_CUST_FLAG_C5_SET)
+				    strncpy(stLogOut.szCust_5, m_pShmLog->sLogList[j].szCust_5, sizeof(stLogOut.szCust_5)-1);
+				if(m_pShmLog->sLogList[j].bCustFlag & MTLOG_CUST_FLAG_C6_SET)
+				    strncpy(stLogOut.szCust_6, m_pShmLog->sLogList[j].szCust_6, sizeof(stLogOut.szCust_6)-1);
 				iLastLogIndex = j;
 				return &stLogOut; 
 			}
@@ -1285,6 +1479,17 @@ CSupperLog::CSupperLog():memcache(s_memcache)
 	srand(m_stNow.tv_sec);
 	m_iRand = rand();
 	m_iPid = getpid();
+
+	m_iProcessId = 0;
+	m_iProcessCount = 0;
+	m_dwCust_1 = 0;
+	m_dwCust_2 = 0;
+	m_iCust_3 = 0;
+	m_iCust_4 = 0;
+	memset(m_szCust_5, 0, sizeof(m_szCust_5));
+	memset(m_szCust_6, 0, sizeof(m_szCust_6));
+	m_bCustFlag = 0;
+	m_iVmemShmKey = VMEM_DEF_SHMKEY;
 }
 
 int MtClientInfoHashWarn(uint32_t dwCurUse, uint32_t dwTotal)
@@ -3503,29 +3708,30 @@ int CSupperLog::WriteAppLogToShm(TSLogShm* pShmLog, LogInfo *pLog, int32_t dwLog
 	if(pLog->wCustDataLen > 0) {
 		uint8_t bCustFlag = pLog->sLog[0];
 		char *pCust = pLog->sLog+1;
+		pShmLog->sLogList[iIndex].bCustFlag = bCustFlag;
 		if(IS_SET_BIT(bCustFlag, MTLOG_CUST_FLAG_C1_SET)) {
-			pShmLog->sLogList[iIndex].dwCust_1 = *(uint32_t*)pCust;
+			pShmLog->sLogList[iIndex].dwCust_1 = ntohl(*(uint32_t*)pCust);
 			pCust += MYSIZEOF(uint32_t);
 		}
 		else
 			pShmLog->sLogList[iIndex].dwCust_1 = 0;
 
 		if(IS_SET_BIT(bCustFlag, MTLOG_CUST_FLAG_C2_SET)) {
-			pShmLog->sLogList[iIndex].dwCust_2 = *(uint32_t*)pCust;
+			pShmLog->sLogList[iIndex].dwCust_2 = ntohl(*(uint32_t*)pCust);
 			pCust += MYSIZEOF(uint32_t);
 		}
 		else
 			pShmLog->sLogList[iIndex].dwCust_2 = 0;
 
 		if(IS_SET_BIT(bCustFlag, MTLOG_CUST_FLAG_C3_SET)) {
-			pShmLog->sLogList[iIndex].iCust_3 = *(int32_t*)pCust;
+			pShmLog->sLogList[iIndex].iCust_3 = ntohl(*(int32_t*)pCust);
 			pCust += MYSIZEOF(int32_t);
 		}
 		else
 			pShmLog->sLogList[iIndex].iCust_3 = 0;
 
 		if(IS_SET_BIT(bCustFlag, MTLOG_CUST_FLAG_C4_SET)) {
-			pShmLog->sLogList[iIndex].iCust_4 = *(int32_t*)pCust;
+			pShmLog->sLogList[iIndex].iCust_4 = ntohl(*(int32_t*)pCust);
 			pCust += MYSIZEOF(int32_t);
 		}
 		else
@@ -3534,15 +3740,15 @@ int CSupperLog::WriteAppLogToShm(TSLogShm* pShmLog, LogInfo *pLog, int32_t dwLog
 		if(!IS_SET_BIT(bCustFlag, MTLOG_CUST_FLAG_C5_SET))
 			pShmLog->sLogList[iIndex].szCust_5[0] = '\0';
 		else {
-			memcpy(pShmLog->sLogList[iIndex].szCust_5, pCust, MYSIZEOF(pShmLog->sLogList[iIndex].szCust_5));
-			pCust += MYSIZEOF(pShmLog->sLogList[iIndex].szCust_5);
+			strncpy(pShmLog->sLogList[iIndex].szCust_5, pCust, MYSIZEOF(pShmLog->sLogList[iIndex].szCust_5)-1);
+			pCust += MYSIZEOF(pShmLog->sLogList[iIndex].szCust_5)+1;
 		}
 
 		if(!IS_SET_BIT(bCustFlag, MTLOG_CUST_FLAG_C6_SET)) 
 			pShmLog->sLogList[iIndex].szCust_6[0] = '\0';
 		else {
-			memcpy(pShmLog->sLogList[iIndex].szCust_6, pCust, MYSIZEOF(pShmLog->sLogList[iIndex].szCust_6));
-			pCust += MYSIZEOF(pShmLog->sLogList[iIndex].szCust_6);
+			strncpy(pShmLog->sLogList[iIndex].szCust_6, pCust, MYSIZEOF(pShmLog->sLogList[iIndex].szCust_6)-1);
+			pCust += strlen(pShmLog->sLogList[iIndex].szCust_6)+1;
 		}
 	}
 
@@ -3638,10 +3844,19 @@ int CSupperLog::InitChangeRealInfoShm()
 	}
 	for(int i = 0; i < 100; i++)
 	{
-		if(__sync_bool_compare_and_swap(&(m_pShmConfig->stSysCfg.stRealInfoShm.bTryChangeFlag), 0, 1))
+		if(__sync_bool_compare_and_swap(&(m_pShmConfig->stSysCfg.stRealInfoShm.bTryChangeFlag), 0, 1)) {
+			m_pShmConfig->stSysCfg.stRealInfoShm.dwTryChangeStartTime = slog.m_stNow.tv_sec;
 			return 0;
+		}
 		usleep(10);
 	}
+	if(m_pShmConfig->stSysCfg.stRealInfoShm.dwTryChangeStartTime+5 < slog.m_stNow.tv_sec) {
+		FATAL_LOG("TRealTimeInfoShm flag check failed, time info:%u - %lu",
+			m_pShmConfig->stSysCfg.stRealInfoShm.dwTryChangeStartTime, slog.m_stNow.tv_sec);
+		m_pShmConfig->stSysCfg.stRealInfoShm.dwTryChangeStartTime = slog.m_stNow.tv_sec;
+		return 0;
+	}
+	
 	FATAL_LOG("try change TRealTimeInfoShm failed !");
 	return -1;
 }
@@ -3660,9 +3875,16 @@ int CSupperLog::InitGetShmLogIndex(TSLogShm *pShmLog)
 {
 	for(int i = 0; i < 100; i++)
 	{
-		if(__sync_bool_compare_and_swap(&pShmLog->bTryGetLogIndex, 0, 1))
+		if(__sync_bool_compare_and_swap(&pShmLog->bTryGetLogIndex, 0, 1)) {
+			pShmLog->dwTryLogIndexStartTime = slog.m_stNow.tv_sec;
 			return 0;
+		}
 		usleep(10);
+	}
+	if(pShmLog->dwTryLogIndexStartTime+5 < slog.m_stNow.tv_sec) {
+		// 可能是程序异常退出导致 未释放, 这里直接返回可用
+		pShmLog->dwTryLogIndexStartTime = slog.m_stNow.tv_sec;
+		return 0;
 	}
 	return -1;
 }
@@ -3690,7 +3912,7 @@ void CSupperLog::ModifyLogStartIndexCmpAndSwap(TSLogShm *pShmLog, int iOld, int 
 	}
 }
 
-void CSupperLog::RemoteShmLog(TSLogOut &stLog, TSLogShm* pShmLog)
+void CSupperLog::RemoteShmLog(::top::SlogLogInfo &stLog, TSLogShm* pShmLog)
 {
 	if(NULL == pShmLog)
 		pShmLog = m_pShmLog;
@@ -3728,43 +3950,52 @@ void CSupperLog::RemoteShmLog(TSLogOut &stLog, TSLogShm* pShmLog)
 		SLOG_WARN_SHM_WRITE_FULL;
 
 		// 注意这里需要检查下 app, 否则可能导致堆栈耗光, 递归了
-		if(stLog.iAppId != m_iLogAppId)
+		if(stLog.uint32_app_id() != (uint32_t)m_iLogAppId)
 		{
 			ERR_LOG("slog exception(local remote) -- appid:%d moduleid:%d index:%d, log lost may be full !", 
-				stLog.iAppId, stLog.iModuleId, iIndex);
+				stLog.uint32_app_id(), stLog.uint32_module_id(), iIndex);
 		}
 		return ;
 	}
 
-	pShmLog->sLogList[iIndex].iAppId = stLog.iAppId;
-	pShmLog->sLogList[iIndex].iModuleId = stLog.iModuleId;
-	pShmLog->sLogList[iIndex].dwCust_1 = stLog.dwCust_1;
-	pShmLog->sLogList[iIndex].dwCust_2 = stLog.dwCust_2;
-	pShmLog->sLogList[iIndex].iCust_3 = stLog.iCust_3;
-	pShmLog->sLogList[iIndex].iCust_4 = stLog.iCust_4;
-	if(stLog.szCust_5[0] == '\0')
+	pShmLog->sLogList[iIndex].iAppId = stLog.uint32_app_id();
+	pShmLog->sLogList[iIndex].iModuleId = stLog.uint32_module_id();
+	pShmLog->sLogList[iIndex].bCustFlag = stLog.cust_flag();
+	if(pShmLog->sLogList[iIndex].bCustFlag & MTLOG_CUST_FLAG_C1_SET)
+		pShmLog->sLogList[iIndex].dwCust_1 = stLog.uint32_cust_1();
+	if(pShmLog->sLogList[iIndex].bCustFlag & MTLOG_CUST_FLAG_C2_SET)
+		pShmLog->sLogList[iIndex].dwCust_2 = stLog.uint32_cust_2();
+	if(pShmLog->sLogList[iIndex].bCustFlag & MTLOG_CUST_FLAG_C3_SET)
+		pShmLog->sLogList[iIndex].iCust_3 = stLog.int32_cust_3();
+	if(pShmLog->sLogList[iIndex].bCustFlag & MTLOG_CUST_FLAG_C4_SET)
+		pShmLog->sLogList[iIndex].iCust_4 = stLog.int32_cust_4();
+
+	if(pShmLog->sLogList[iIndex].bCustFlag & MTLOG_CUST_FLAG_C5_SET)
+		strncpy(pShmLog->sLogList[iIndex].szCust_5, 
+			stLog.bytes_cust_5().c_str(), MYSIZEOF(pShmLog->sLogList[iIndex].szCust_5)-1);
+	else
 		pShmLog->sLogList[iIndex].szCust_5[0] = '\0';
+
+	if(pShmLog->sLogList[iIndex].bCustFlag & MTLOG_CUST_FLAG_C6_SET)
+		strncpy(pShmLog->sLogList[iIndex].szCust_6, 
+			stLog.bytes_cust_6().c_str(), MYSIZEOF(pShmLog->sLogList[iIndex].szCust_6)-1);
 	else
-		memcpy(pShmLog->sLogList[iIndex].szCust_5, stLog.szCust_5, MYSIZEOF(pShmLog->sLogList[iIndex].szCust_5));
-	if(stLog.szCust_6[0] == '\0')
 		pShmLog->sLogList[iIndex].szCust_6[0] = '\0';
-	else
-		memcpy(pShmLog->sLogList[iIndex].szCust_6, stLog.szCust_6, MYSIZEOF(pShmLog->sLogList[iIndex].szCust_6));
 
-	pShmLog->sLogList[iIndex].qwLogTime = stLog.qwLogTime; 
-	pShmLog->sLogList[iIndex].wLogType = stLog.wLogType; 
-	pShmLog->sLogList[iIndex].dwLogConfigId = stLog.dwLogConfigId; 
-	pShmLog->sLogList[iIndex].dwLogHost = stLog.dwLogHost; 
+	pShmLog->sLogList[iIndex].qwLogTime = stLog.uint64_log_time(); 
+	pShmLog->sLogList[iIndex].wLogType = stLog.uint32_log_type(); 
+	pShmLog->sLogList[iIndex].dwLogConfigId = stLog.uint32_log_config_id(); 
+	pShmLog->sLogList[iIndex].dwLogHost = stLog.uint32_log_host(); 
 
-	int32_t iWrite = (int32_t)MYSTRLEN(stLog.pszLog);
+	int32_t iWrite = (int32_t)(stLog.bytes_log().size());
 	if(iWrite < BWORLD_MEMLOG_BUF_LENGTH)
 	{
 		pShmLog->sLogList[iIndex].iContentIndex = -1;
-		strcpy(pShmLog->sLogList[iIndex].sLogContent, stLog.pszLog);
+		strcpy(pShmLog->sLogList[iIndex].sLogContent, stLog.bytes_log().c_str());
 	}
 	else
 	{
-		memcpy(pShmLog->sLogList[iIndex].sLogContent, stLog.pszLog, BWORLD_MEMLOG_BUF_LENGTH);
+		memcpy(pShmLog->sLogList[iIndex].sLogContent, stLog.bytes_log().c_str(), BWORLD_MEMLOG_BUF_LENGTH);
 
 		if(m_iVmemShmKey <= 0) {
 			// vmem 未启用
@@ -3773,12 +4004,13 @@ void CSupperLog::RemoteShmLog(TSLogOut &stLog, TSLogShm* pShmLog)
 		}
 		else {
 			// 4 : 用于存储校验，即 sLogContent 的最后 4 字节要等于 vmem 中的前面 4 字节
-			iWrite = MtReport_SaveToVmem(stLog.pszLog+BWORLD_MEMLOG_BUF_LENGTH-4, iWrite-BWORLD_MEMLOG_BUF_LENGTH+4);
+			iWrite = MtReport_SaveToVmem(
+				pShmLog->sLogList[iIndex].sLogContent+BWORLD_MEMLOG_BUF_LENGTH-4, iWrite-BWORLD_MEMLOG_BUF_LENGTH+4);
 			if(iWrite < 0)
 			{
-				MtReport_Attr_Add(87, 1);
-				ERR_LOG("MtReport_SaveToVmem failed, ret:%d, lost log info -- (appid:%d, moduleid:%d, loglen:%u)",
-						iWrite, stLog.iAppId, stLog.iModuleId, (unsigned)MYSTRLEN(stLog.pszLog));
+				ERR_LOG("MtReport_SaveToVmem failed, ret:%d, lost log info -- (appid:%u, moduleid:%u, loglen:%u)",
+						iWrite, stLog.uint32_app_id(), stLog.uint32_module_id(), (uint32_t)stLog.bytes_log().size()); 
+
 				// 超长 log 改为失败 log ，保留部分 log 信息
 				pShmLog->sLogList[iIndex].wLogType = SLOG_TYPE_ERROR;
 				pShmLog->sLogList[iIndex].sLogContent[BWORLD_MEMLOG_BUF_LENGTH-1] = '\0';
@@ -3794,8 +4026,8 @@ void CSupperLog::RemoteShmLog(TSLogOut &stLog, TSLogShm* pShmLog)
 
 	if(m_iRemoteLogToStd)
 		printf("remote log info appid:%d module id:%d ConfigId:%u Remote addr:%s logtype:%d ---- \n\t\t%s\n",
-			stLog.iAppId, stLog.iModuleId, stLog.dwLogConfigId, 
-			ipv4_addr_str(stLog.dwLogHost), stLog.wLogType, stLog.pszLog);
+			stLog.uint32_app_id(), stLog.uint32_module_id(), stLog.uint32_log_config_id(), 
+			ipv4_addr_str(stLog.uint32_log_host()), stLog.uint32_log_type(), stLog.bytes_log().c_str());
 }
 
 
@@ -3997,6 +4229,7 @@ void CSupperLog::ShmLog(int wLogType , const char *pszFmt, ...)
 		strcat(m_sLogBuf+MYSIZEOF(m_sLogBuf)-TOO_LONG_TRUNC_STR_LEN, TOO_LONG_TRUNC_STR);
 	iWrite = MYSTRLEN(m_sLogBuf);
 
+	m_pShmLog->sLogList[iIndex].bCustFlag = m_bCustFlag;
 	m_pShmLog->sLogList[iIndex].iAppId = m_iLogAppId;
 	m_pShmLog->sLogList[iIndex].iModuleId = m_iLogModuleId;
 	m_pShmLog->sLogList[iIndex].dwCust_1 = m_dwCust_1;
@@ -4006,11 +4239,11 @@ void CSupperLog::ShmLog(int wLogType , const char *pszFmt, ...)
 	if(m_szCust_5[0] == '\0')
 		m_pShmLog->sLogList[iIndex].szCust_5[0] = '\0';
 	else
-		memcpy(m_pShmLog->sLogList[iIndex].szCust_5, m_szCust_5, MYSIZEOF(m_szCust_5));
+		strncpy(m_pShmLog->sLogList[iIndex].szCust_5, m_szCust_5, MYSIZEOF(m_pShmLog->sLogList[iIndex].szCust_5)-1);
 	if(m_szCust_6[0] == '\0')
 		m_pShmLog->sLogList[iIndex].szCust_6[0] = '\0';
 	else
-		memcpy(m_pShmLog->sLogList[iIndex].szCust_6, m_szCust_6, MYSIZEOF(m_szCust_6));
+		strncpy(m_pShmLog->sLogList[iIndex].szCust_6, m_szCust_6, MYSIZEOF(m_pShmLog->sLogList[iIndex].szCust_6)-1);
 
 	m_pShmLog->sLogList[iIndex].dwLogConfigId = m_dwConfigId;
 
@@ -4054,6 +4287,7 @@ void CSupperLog::ShmLog(int wLogType , const char *pszFmt, ...)
 	// modify by rock -- seq 最后设置，作为数据完全写入标志
 	m_pShmLog->sLogList[iIndex].dwLogSeq = dwSeq;
 	ModifyLogStartIndexCmpAndSwap(m_pShmLog, -1, iIndex);
+	SET_BIT(m_pAppInfo->dwAppLogFlag, APPLOG_FLAG_LOG_WRITED);
 }
 
 void CSupperLog::error(ISocketHandler *h, Socket *sock, 
@@ -4468,13 +4702,13 @@ int CSLogServerWriteFile::InitLogFiles()
 		qsort(m_pstLogFileList->stFiles, m_pstLogFileList->wLogFileCount, sizeof(SLogFileInfo), LogFileCmp);
 
 		// 读取全部文件头部, 文件统计信息写入 app 共享内存
-		if(m_pAppInfo != NULL && (!m_pAppInfo->bReadLogStatInfo || !!bReadAllFileHeadOk))
+		if(m_pAppInfo != NULL)
 		{
 			memset(&m_pAppInfo->stLogStatInfo, 0, sizeof(TLogStatInfo));
 			for(int i =0; i < m_pstLogFileList->wLogFileCount; i++)
 			{
-				SLogFileHead & stFileHead = m_pstLogFileList->stFiles[i].stFileHead;
 				if(ReadLogFileHead(i) >= 0) {
+					SLogFileHead & stFileHead = m_pstLogFileList->stFiles[i].stFileHead;
 					m_pAppInfo->stLogStatInfo.qwLogSizeInfo += stFileHead.stLogStatInfo.qwLogSizeInfo;
 					m_pAppInfo->stLogStatInfo.dwDebugLogsCount += stFileHead.stLogStatInfo.dwDebugLogsCount;
 					m_pAppInfo->stLogStatInfo.dwInfoLogsCount += stFileHead.stLogStatInfo.dwInfoLogsCount;
@@ -4501,7 +4735,7 @@ int CSLogServerWriteFile::InitLogFiles()
 	}
 
 	if(m_pstLogFileList->wLogFileCount > 0)
-		    m_wCurFpLogFileIndex = m_pstLogFileList->wLogFileCount - 1;
+	    m_wCurFpLogFileIndex = m_pstLogFileList->wLogFileCount - 1;
 
 	INFO_LOG("scandir:%s log file count:%d", m_szLogFilePath, m_pstLogFileList->wLogFileCount);
 	return m_pstLogFileList->wLogFileCount;
@@ -4637,20 +4871,31 @@ int CSLogServerWriteFile::AddNewSlogFile(uint64_t qwLogStartTime)
             strerror(errno), MYSIZEOF(stFileHead), m_pstLogFileList->stFiles[i].szAbsFileName);
         return SLOG_ERROR_LINE;
     }
-    SLogFileLogIndex stIndex;
-    memset(&stIndex, 0, MYSIZEOF(stIndex));
+	char *pLogIndex = NULL;
+	int iLogIndexSize = 0;
+	if(SLOG_FILE_VERSION_1 == stFileHead.bLogFileVersion) {
+		static SLogFileLogIndex stIndex = {0};
+		pLogIndex = (char*)(&stIndex);
+		iLogIndexSize = (int)sizeof(stIndex);
 
+	}
+	else if(SLOG_FILE_VERSION_2 == stFileHead.bLogFileVersion) {
+		static SLogFileLogIndex_ver2 stIndex = {0};
+		pLogIndex = (char*)(&stIndex);
+		iLogIndexSize = (int)sizeof(stIndex);
+	}
+	else {
+		ERR_LOG("not support log file version:%d", stFileHead.bLogFileVersion);
+		return SLOG_ERROR_LINE;
+	}
 
-    // 日志记录索引初始化 --- 共有 SLOG_LOG_RECORDS_COUNT_MAX 个索引
-    for(int j = 0; j < SLOG_LOG_RECORDS_COUNT_MAX; j++)
-    {
-        if(fwrite(&stIndex, MYSIZEOF(SLogFileLogIndex), 1, m_fpLogFile) != 1)
-        {
-            ERR_LOG("first write log index(%d) failed msg:%s write size:%u file:%s",
-                j, strerror(errno), MYSIZEOF(SLogFileLogIndex), m_pstLogFileList->stFiles[i].szAbsFileName);
-            return SLOG_ERROR_LINE;
-        }
-    }
+	for(int j=0; j < SLOG_LOG_RECORDS_COUNT_MAX; j++) {
+		if(fwrite(pLogIndex, iLogIndexSize, 1, m_fpLogFile) != 1) {
+			ERR_LOG("first write log index failed msg:%s write size:%d, file:%s",
+				strerror(errno), iLogIndexSize, m_pstLogFileList->stFiles[i].szAbsFileName);
+			return SLOG_ERROR_LINE;
+		}
+	}
     return 0;
 }
 
@@ -4683,8 +4928,7 @@ int CSLogServerWriteFile::AttachShm()
     return 0;
 }
 
-int CSLogServerWriteFile::WriteLog(
-	SLogFileHead &stFileHead, SLogFileLogIndex &stLogIndex, const char *pszLogTxt)
+int CSLogServerWriteFile::WriteLog(SLogFileHead &stFileHead, SLogFileLogIndex &stLogIndex, const char *pszLogTxt)
 {
 	if(NULL == m_fpLogFile)
 	{
@@ -4757,7 +5001,7 @@ int CSLogServerWriteFile::WriteLog(
 		return SLOG_ERROR_LINE;
 	}
 
-	int32_t iPos = 0;
+	uint32_t iPos = 0;
 	if((iPos=ftell(m_fpLogFile)) < 0)
 	{
 		ERR_LOG("ftell failed msg:%s file:%s", 
@@ -4785,7 +5029,7 @@ int CSLogServerWriteFile::WriteLog(
 	m_iWriteLogBytes += stLogIndex.dwLogContentLen;
 
 	// 写日志索引信息 ------------- 3
-	iPos = (int32_t)(MYSIZEOF(SLogFileHead)+(stFileHead.iLogRecordsWrite-1)*MYSIZEOF(SLogFileLogIndex));
+	iPos = MYSIZEOF(SLogFileHead)+(stFileHead.iLogRecordsWrite-1)*MYSIZEOF(stLogIndex);
 	if(fseek(m_fpLogFile, iPos, SEEK_SET) < 0)
 	{
 		ERR_LOG("seek log index failed msg:%s file:%s", 
@@ -4795,8 +5039,280 @@ int CSLogServerWriteFile::WriteLog(
 	if(fwrite(&stLogIndex, MYSIZEOF(SLogFileLogIndex), 1, m_fpLogFile) != 1)
 	{
 		ERR_LOG("write log index failed msg:%s write size:%u file:%s", strerror(errno),
-			MYSIZEOF(SLogFileLogIndex), m_pstLogFileList->stFiles[m_wCurFpLogFileIndex].szAbsFileName);
+			MYSIZEOF(stLogIndex), m_pstLogFileList->stFiles[m_wCurFpLogFileIndex].szAbsFileName);
 		return SLOG_ERROR_LINE;
+	}
+	return 0;
+}
+
+int CSLogServerWriteFile::WriteLog(
+	SLogFileHead &stFileHead, SLogFileLogIndex_ver2 &stLogIndex, const char *pszLogTxt, const char *pcustLog)
+{
+	if(NULL == m_fpLogFile)
+	{
+		FATAL_LOG("bug, m_fpLogFile is NULL !");
+		return SLOG_ERROR_LINE;
+	}
+
+	// 日志长度
+	stLogIndex.dwLogContentLen = MYSTRLEN(pszLogTxt) + 1; // 1 表示 0，字符串的结束符
+
+	// 写日志文件头部, 日志统计信息同时写入共享内存中 ----------- 1
+	stFileHead.iLogRecordsWrite++;
+	stFileHead.stLogStatInfo.qwLogSizeInfo += stLogIndex.dwLogContentLen+stLogIndex.bLogCustLen;
+	if(m_pAppInfo != NULL)
+		m_pAppInfo->stLogStatInfo.qwLogSizeInfo += stLogIndex.dwLogContentLen+stLogIndex.bLogCustLen;
+	switch(stLogIndex.wLogType)
+	{
+		case SLOG_LEVEL_DEBUG:
+			stFileHead.stLogStatInfo.dwDebugLogsCount++;
+			if(m_pAppInfo != NULL)
+				m_pAppInfo->stLogStatInfo.dwDebugLogsCount++;
+			break;
+		case SLOG_LEVEL_INFO:
+			stFileHead.stLogStatInfo.dwInfoLogsCount++;
+			if(m_pAppInfo != NULL)
+				m_pAppInfo->stLogStatInfo.dwInfoLogsCount++;
+			break;
+		case SLOG_LEVEL_WARNING:
+			stFileHead.stLogStatInfo.dwWarnLogsCount++;
+			if(m_pAppInfo != NULL)
+				m_pAppInfo->stLogStatInfo.dwWarnLogsCount++;
+			break;
+		case SLOG_LEVEL_REQERROR:
+			stFileHead.stLogStatInfo.dwReqerrLogsCount++;
+			if(m_pAppInfo != NULL)
+				m_pAppInfo->stLogStatInfo.dwReqerrLogsCount++;
+			break;
+		case SLOG_LEVEL_ERROR:
+			stFileHead.stLogStatInfo.dwErrorLogsCount++;
+			if(m_pAppInfo != NULL)
+				m_pAppInfo->stLogStatInfo.dwErrorLogsCount++;
+			break;
+		case SLOG_LEVEL_FATAL:
+			stFileHead.stLogStatInfo.dwFatalLogsCount++;
+			if(m_pAppInfo != NULL)
+				m_pAppInfo->stLogStatInfo.dwFatalLogsCount++;
+			break;
+		default:
+			stFileHead.stLogStatInfo.dwOtherLogsCount++;
+			if(m_pAppInfo != NULL)
+				m_pAppInfo->stLogStatInfo.dwOtherLogsCount++;
+			break;
+	}
+
+	if(fseek(m_fpLogFile, 0L, SEEK_SET) < 0)
+	{
+		ERR_LOG("seek file head failed msg:%s file:%s", 
+			strerror(errno), m_pstLogFileList->stFiles[m_wCurFpLogFileIndex].szAbsFileName);
+		RemoveFileInfo(m_wCurFpLogFileIndex);
+		return SLOG_ERROR_LINE;
+	}
+	if(fwrite(&stFileHead, 1, MYSIZEOF(stFileHead), m_fpLogFile) != MYSIZEOF(stFileHead))
+	{
+		ERR_LOG("write file head failed msg:%s write size:%u file:%s", strerror(errno),
+			MYSIZEOF(stFileHead), m_pstLogFileList->stFiles[m_wCurFpLogFileIndex].szAbsFileName);
+		return SLOG_ERROR_LINE;
+	}
+
+	// 写日志内容 --------------- 2
+	if(fseek(m_fpLogFile, 0L, SEEK_END) < 0)
+	{
+		ERR_LOG("seek file end failed msg:%s file:%s", 
+			strerror(errno), m_pstLogFileList->stFiles[m_wCurFpLogFileIndex].szAbsFileName);
+		return SLOG_ERROR_LINE;
+	}
+
+	uint32_t iPos = 0;
+	if((iPos=ftell(m_fpLogFile)) < 0)
+	{
+		ERR_LOG("ftell failed msg:%s file:%s", 
+			strerror(errno), m_pstLogFileList->stFiles[m_wCurFpLogFileIndex].szAbsFileName);
+		return SLOG_ERROR_LINE;
+	}
+	stLogIndex.dwLogContentPos = iPos;
+
+	// 日志内容写个seq，以便数据对账
+	if(fwrite(&(stLogIndex.dwLogSeq), 1, MYSIZEOF(stLogIndex.dwLogSeq), m_fpLogFile) != MYSIZEOF(stLogIndex.dwLogSeq))
+	{
+		ERR_LOG("write log seq failed msg:%s write size:%u file:%s",
+			strerror(errno), MYSIZEOF(stLogIndex.dwLogSeq),
+			m_pstLogFileList->stFiles[m_wCurFpLogFileIndex].szAbsFileName);
+		return SLOG_ERROR_LINE;
+	}
+	m_iWriteLogBytes += MYSIZEOF(stLogIndex.dwLogSeq);
+
+	if(fwrite(pszLogTxt, 1, stLogIndex.dwLogContentLen, m_fpLogFile) != stLogIndex.dwLogContentLen)
+	{
+		ERR_LOG("write log content failed msg:%s write size:%u file:%s",
+			strerror(errno), MYSTRLEN(pszLogTxt)+1, m_pstLogFileList->stFiles[m_wCurFpLogFileIndex].szAbsFileName);
+		return SLOG_ERROR_LINE;
+	}
+	m_iWriteLogBytes += stLogIndex.dwLogContentLen;
+
+	// 写日志 cust data 信息 ----- 3
+	if(stLogIndex.bLogCustLen > 0) {
+		if((iPos=ftell(m_fpLogFile)) < 0)
+		{
+			ERR_LOG("ftell failed msg:%s file:%s", 
+					strerror(errno), m_pstLogFileList->stFiles[m_wCurFpLogFileIndex].szAbsFileName);
+			return SLOG_ERROR_LINE;
+		}
+		stLogIndex.dwLogCustPos = iPos;
+
+		if(fwrite(pcustLog, 1, stLogIndex.bLogCustLen, m_fpLogFile) != stLogIndex.bLogCustLen)
+		{
+			ERR_LOG("write log cust failed msg:%s write size:%u file:%s",
+				strerror(errno), MYSTRLEN(pcustLog)+1, m_pstLogFileList->stFiles[m_wCurFpLogFileIndex].szAbsFileName);
+			return SLOG_ERROR_LINE;
+		}
+		m_iWriteLogBytes += stLogIndex.bLogCustLen;
+	}
+
+	// 写日志索引信息 ------------- 4
+	assert(stFileHead.iLogRecordsWrite <= stFileHead.iLogRecordsMax);
+	iPos = MYSIZEOF(SLogFileHead)+(stFileHead.iLogRecordsWrite-1)*MYSIZEOF(stLogIndex);
+	if(fseek(m_fpLogFile, iPos, SEEK_SET) < 0)
+	{
+		ERR_LOG("seek log index failed msg:%s file:%s", 
+			strerror(errno), m_pstLogFileList->stFiles[m_wCurFpLogFileIndex].szAbsFileName);
+		return SLOG_ERROR_LINE;
+	}
+	if(fwrite(&stLogIndex, 1, MYSIZEOF(stLogIndex), m_fpLogFile) != MYSIZEOF(stLogIndex))
+	{
+		ERR_LOG("write log index failed msg:%s write size:%u file:%s", strerror(errno),
+			MYSIZEOF(stLogIndex), m_pstLogFileList->stFiles[m_wCurFpLogFileIndex].szAbsFileName);
+		return SLOG_ERROR_LINE;
+	}
+
+	return 0;
+}
+
+uint32_t CSLogServerWriteFile::SaveLogCustData(char *sCustBuf, TSLog *pShmLog)
+{
+    int iCustUseLen = 0;
+    sCustBuf[iCustUseLen] = (char)pShmLog->bCustFlag;
+    iCustUseLen++;
+	if(pShmLog->dwLogConfigId == 64) {
+		iCustUseLen = 1;
+	}
+
+    if(IS_SET_BIT(pShmLog->bCustFlag, MTLOG_CUST_FLAG_C1_SET)) {
+        *(uint32_t*)(sCustBuf+iCustUseLen) = pShmLog->dwCust_1;
+        iCustUseLen+=MYSIZEOF(uint32_t);
+    }   
+
+    if(IS_SET_BIT(pShmLog->bCustFlag, MTLOG_CUST_FLAG_C2_SET)) {
+        *(uint32_t*)(sCustBuf+iCustUseLen) = pShmLog->dwCust_2;
+        iCustUseLen+=MYSIZEOF(uint32_t);
+    }   
+
+    if(IS_SET_BIT(pShmLog->bCustFlag, MTLOG_CUST_FLAG_C3_SET)) {
+        *(uint32_t*)(sCustBuf+iCustUseLen) = pShmLog->iCust_3;
+        iCustUseLen+=MYSIZEOF(uint32_t);
+    }   
+
+    if(IS_SET_BIT(pShmLog->bCustFlag, MTLOG_CUST_FLAG_C4_SET)) {
+        *(uint32_t*)(sCustBuf+iCustUseLen) = pShmLog->iCust_4;
+        iCustUseLen+=MYSIZEOF(uint32_t);
+    }   
+
+    if(IS_SET_BIT(pShmLog->bCustFlag, MTLOG_CUST_FLAG_C5_SET)) {
+        strncpy(sCustBuf+iCustUseLen, pShmLog->szCust_5, MYSIZEOF(pShmLog->szCust_5)-1);
+		iCustUseLen += strlen(sCustBuf+iCustUseLen)+1;
+    }   
+
+    if(IS_SET_BIT(pShmLog->bCustFlag, MTLOG_CUST_FLAG_C6_SET)) {
+        strncpy(sCustBuf+iCustUseLen, pShmLog->szCust_6, MYSIZEOF(pShmLog->szCust_6)-1);
+		iCustUseLen += strlen(sCustBuf+iCustUseLen)+1;
+	}
+
+	if(iCustUseLen <= 1)
+		return 0;
+	return iCustUseLen;
+}
+
+int CSLogServerWriteFile::WriteLogVersion_2(SLogFileHead &stFileHead, TSLog *pShmLog, const char *pszLogTxt)
+{
+	SLogFileLogIndex_ver2 stLogIndex; 
+	memset(&stLogIndex, 0, MYSIZEOF(stLogIndex));
+
+    char sCustBuf[256] = {0};
+	stLogIndex.bLogCustLen = SaveLogCustData(sCustBuf, pShmLog);
+	stLogIndex.dwLogConfigId = pShmLog->dwLogConfigId;
+	stLogIndex.dwLogHost = pShmLog->dwLogHost;
+	stLogIndex.iAppId = pShmLog->iAppId;
+	stLogIndex.iModuleId = pShmLog->iModuleId;
+
+	if(pShmLog->wLogType != SLOG_LEVEL_DEBUG && pShmLog->wLogType != SLOG_LEVEL_INFO
+		&& pShmLog->wLogType != SLOG_LEVEL_WARNING && pShmLog->wLogType != SLOG_LEVEL_REQERROR
+		&& pShmLog->wLogType != SLOG_LEVEL_ERROR && pShmLog->wLogType != SLOG_LEVEL_FATAL)
+	{
+		stLogIndex.wLogType = SLOG_LEVEL_OTHER;
+	}
+	else
+		stLogIndex.wLogType = pShmLog->wLogType;
+	stLogIndex.dwLogSeq = pShmLog->dwLogSeq;
+	stLogIndex.qwLogTime = pShmLog->qwLogTime;
+
+	if(WriteLog(stFileHead, stLogIndex, pszLogTxt, sCustBuf) < 0)
+	{
+		if(m_fpLogFile != NULL)
+		{
+			fclose(m_fpLogFile);
+			m_fpLogFile = NULL;
+		}
+
+		if(pShmLog->iContentIndex > 0)
+		{
+			MtReport_FreeVmem(pShmLog->iContentIndex);
+			pShmLog->iContentIndex = -1; 
+		}
+		exit(-1); // 进程退出，无法回滚
+	}
+	return 0;
+}
+
+int CSLogServerWriteFile::WriteLogVersion_1(SLogFileHead &stFileHead, TSLog *pShmLog, const char *pszLogTxt)
+{
+	SLogFileLogIndex stLogIndex; 
+	memset(&stLogIndex, 0, MYSIZEOF(stLogIndex));
+	stLogIndex.dwCust_1 = pShmLog->dwCust_1;
+	stLogIndex.dwCust_2 = pShmLog->dwCust_2;
+	stLogIndex.iCust_3 = pShmLog->iCust_3;
+	stLogIndex.iCust_4 = pShmLog->iCust_4;
+	strncpy(stLogIndex.szCust_5, pShmLog->szCust_5, MYSIZEOF(stLogIndex.szCust_5)-1);
+	strncpy(stLogIndex.szCust_6, pShmLog->szCust_6, MYSIZEOF(stLogIndex.szCust_6)-1);
+	stLogIndex.dwLogConfigId = pShmLog->dwLogConfigId;
+	stLogIndex.dwLogHost = pShmLog->dwLogHost;
+	stLogIndex.iAppId = pShmLog->iAppId;
+	stLogIndex.iModuleId = pShmLog->iModuleId;
+
+	if(pShmLog->wLogType != SLOG_LEVEL_DEBUG && pShmLog->wLogType != SLOG_LEVEL_INFO
+		&& pShmLog->wLogType != SLOG_LEVEL_WARNING && pShmLog->wLogType != SLOG_LEVEL_REQERROR
+		&& pShmLog->wLogType != SLOG_LEVEL_ERROR && pShmLog->wLogType != SLOG_LEVEL_FATAL)
+	{
+		stLogIndex.wLogType = SLOG_LEVEL_OTHER;
+	}
+	else
+		stLogIndex.wLogType = pShmLog->wLogType;
+	stLogIndex.dwLogSeq = pShmLog->dwLogSeq;
+	stLogIndex.qwLogTime = pShmLog->qwLogTime;
+
+	if(WriteLog(stFileHead, stLogIndex, pszLogTxt) < 0)
+	{
+		if(m_fpLogFile != NULL)
+		{
+			fclose(m_fpLogFile);
+			m_fpLogFile = NULL;
+		}
+
+		if(pShmLog->iContentIndex > 0)
+		{
+			MtReport_FreeVmem(pShmLog->iContentIndex);
+			pShmLog->iContentIndex = -1; 
+		}
+		exit(-1); // 进程退出，无法回滚
 	}
 	return 0;
 }
@@ -4821,7 +5337,6 @@ int CSupperLog::InitMtClientInfo()
 
 int CSLogServerWriteFile::WriteLogRecord(int iLogIndex)
 {
-	const char *pszLogTxt = NULL;
 	TSLog *pShmLog = m_pShmLog->sLogList+iLogIndex;
 
 	if(0==pShmLog->dwLogSeq) 
@@ -4829,17 +5344,6 @@ int CSLogServerWriteFile::WriteLogRecord(int iLogIndex)
 	    if(pShmLog->dwStartWriteLogTime+5 < time(NULL))
 	        return 0;
 	    return SLOG_ERROR_LINE;
-	}
-
-	pszLogTxt = GetShmLog(pShmLog, iLogIndex);
-	if(NULL == pszLogTxt)
-	{
-		WARN_LOG("slog shm index:%d, appid:%d, module id:%d get content failed !",
-			iLogIndex, pShmLog->iAppId, pShmLog->iModuleId);
-
-		// 重置下读索引
-		m_pShmLog->iLogStarIndex = -1;
-		return SLOG_ERROR_LINE;
 	}
 
 	if(m_pstLogFileList->wLogFileCount <= 0 
@@ -4881,10 +5385,13 @@ int CSLogServerWriteFile::WriteLogRecord(int iLogIndex)
 		return SLOG_ERROR_LINE;
 	}
 
-	if(NULL == m_fpLogFile)
+	if(NULL == m_fpLogFile && m_wCurFpLogFileIndex < SLOG_LOG_FILES_COUNT_MAX)
 	{
-		if(ReadLogFileHead(m_wCurFpLogFileIndex) < 0) 
+		if(m_pstLogFileList->stFiles[m_wCurFpLogFileIndex].stFileHead.stLogStatInfo.qwLogSizeInfo <= 0
+		 	&& ReadLogFileHead(m_wCurFpLogFileIndex) < 0) 
+		{
 			return SLOG_ERROR_LINE;
+		}
 
 		m_fpLogFile = fopen(m_pstLogFileList->stFiles[m_wCurFpLogFileIndex].szAbsFileName, "rb+");
 		if(NULL == m_fpLogFile)
@@ -4912,54 +5419,14 @@ int CSLogServerWriteFile::WriteLogRecord(int iLogIndex)
 	if(stFileHead.qwLogTimeStart > pShmLog->qwLogTime)
 		stFileHead.qwLogTimeStart = pShmLog->qwLogTime;
 
-	SLogFileLogIndex stLogIndex; 
-	memset(&stLogIndex, 0, MYSIZEOF(stLogIndex));
-	stLogIndex.dwCust_1 = pShmLog->dwCust_1;
-	stLogIndex.dwCust_2 = pShmLog->dwCust_2;
-	stLogIndex.iCust_3 = pShmLog->iCust_3;
-	stLogIndex.iCust_4 = pShmLog->iCust_4;
-	memcpy(stLogIndex.szCust_5, pShmLog->szCust_5, MYSIZEOF(pShmLog->szCust_5));
-	memcpy(stLogIndex.szCust_6, pShmLog->szCust_6, MYSIZEOF(pShmLog->szCust_6));
-	stLogIndex.dwLogConfigId = pShmLog->dwLogConfigId;
-	stLogIndex.dwLogHost = pShmLog->dwLogHost;
-	stLogIndex.iAppId = pShmLog->iAppId;
-	stLogIndex.iModuleId = pShmLog->iModuleId;
-
-	if(pShmLog->wLogType != SLOG_LEVEL_DEBUG && pShmLog->wLogType != SLOG_LEVEL_INFO
-		&& pShmLog->wLogType != SLOG_LEVEL_WARNING && pShmLog->wLogType != SLOG_LEVEL_REQERROR
-		&& pShmLog->wLogType != SLOG_LEVEL_ERROR && pShmLog->wLogType != SLOG_LEVEL_FATAL)
-	{
-		stLogIndex.wLogType = SLOG_LEVEL_OTHER;
-	}
-	else
-		stLogIndex.wLogType = pShmLog->wLogType;
-	stLogIndex.dwLogSeq = pShmLog->dwLogSeq;
-	stLogIndex.qwLogTime = pShmLog->qwLogTime;
-
-	if(WriteLog(stFileHead, stLogIndex, pszLogTxt) < 0)
-	{
-		if(m_fpLogFile != NULL)
-		{
-			fclose(m_fpLogFile);
-			m_fpLogFile = NULL;
-		}
-
-		if(pShmLog->iContentIndex > 0)
-		{
-			MtReport_FreeVmem(pShmLog->iContentIndex);
-			pShmLog->iContentIndex = -1; 
-		}
-		exit(-1); // 进程退出，无法回滚
-	}
-
-	// 排除 slog_write 自身写入共享内存的log
-	if(!(stLogIndex.iAppId==slog.m_iLogAppId && stLogIndex.iModuleId==slog.m_iLogModuleId))
-	{
-		DEBUG_LOG("write log -- appid:%d moduleid:%d logtype:%d logtime:%" PRIu64 " logseq:%u"
-			" content len:%u content pos:%u to file:%s", stLogIndex.iAppId, stLogIndex.iModuleId, 
-			stLogIndex.wLogType, stLogIndex.qwLogTime, stLogIndex.dwLogSeq, 
-			stLogIndex.dwLogContentLen, stLogIndex.dwLogContentPos, 
-			m_pstLogFileList->stFiles[m_wCurFpLogFileIndex].szAbsFileName);
+	const char *pszLogTxt = NULL;
+	pszLogTxt = GetShmLog(pShmLog, iLogIndex);
+	if(SLOG_FILE_VERSION_1 == stFileHead.bLogFileVersion) 
+		WriteLogVersion_1(stFileHead, pShmLog, pszLogTxt);
+	else if(SLOG_FILE_VERSION_2 == stFileHead.bLogFileVersion) 
+		WriteLogVersion_2(stFileHead, pShmLog, pszLogTxt);
+	else {
+		ERR_LOG("not support file version:%d", stFileHead.bLogFileVersion);
 	}
 
 	// 使用了vmem 存储超长log
@@ -5068,73 +5535,6 @@ int CSLogServerWriteFile::ReadLogFileHead(int iLogFileIndex)
 		fclose(fp);
 		return -3;
 	}
-
-	// 日志统计的概要信息读取 --- 2019-02-07
-	if(stFileHead.stLogStatInfo.qwLogSizeInfo <= 0)
-	{
-		// 老的日志文件没有写入类型等概要信息，重新生成并写入
-		memset(&stFileHead.stLogStatInfo, 0, sizeof(stFileHead.stLogStatInfo));
-		SLogFileLogIndex stIndex;
-		int j = 0;
-		for(j=0; j < stFileHead.iLogRecordsWrite; j++)
-		{
-			if(fread(&stIndex, MYSIZEOF(SLogFileLogIndex), 1, fp) != 1)
-			{
-				ERR_LOG("read slog file:%s failed, msg:%s !", 
-					m_pstLogFileList->stFiles[iLogFileIndex].szAbsFileName, strerror(errno));
-				break;
-			}
-
-			// check it
-			if(stIndex.iAppId != m_iAppId) {
-				ERR_LOG("check slog file:%s failed, appid: %d != %d",
-					m_pstLogFileList->stFiles[iLogFileIndex].szAbsFileName, stIndex.iAppId, m_iAppId);
-				break;
-			}
-			stFileHead.stLogStatInfo.qwLogSizeInfo += stIndex.dwLogContentLen;
-			switch(stIndex.wLogType){
-				case SLOG_LEVEL_DEBUG:
-					stFileHead.stLogStatInfo.dwDebugLogsCount++;
-					break;
-				case SLOG_LEVEL_INFO:
-					stFileHead.stLogStatInfo.dwInfoLogsCount++;
-					break;
-				case SLOG_LEVEL_WARNING:
-					stFileHead.stLogStatInfo.dwWarnLogsCount++;
-					break;
-				case SLOG_LEVEL_REQERROR:
-					stFileHead.stLogStatInfo.dwReqerrLogsCount++;
-					break;
-				case SLOG_LEVEL_ERROR:
-					stFileHead.stLogStatInfo.dwErrorLogsCount++;
-					break;
-				case SLOG_LEVEL_FATAL:
-					stFileHead.stLogStatInfo.dwFatalLogsCount++;
-					break;
-				default:
-					stFileHead.stLogStatInfo.dwOtherLogsCount++;
-					break;
-			}
-		}
-
-		if(stFileHead.stLogStatInfo.qwLogSizeInfo > 0) {
-			// 写入磁盘
-			fseek(fp, 0, SEEK_SET);
-			if(fwrite(&stFileHead, MYSIZEOF(stFileHead), 1, fp) != 1)
-			{
-				ERR_LOG("write file head failed msg:%s write size:%u file:%s",
-					strerror(errno), MYSIZEOF(stFileHead), m_pstLogFileList->stFiles[iLogFileIndex].szAbsFileName); 
-			}
-
-			INFO_LOG("read app:%d log stat info from file:%s, " 
-				"stat info - size:%lu, debug:%u, info:%u, warn:%u, reqerr:%u, err:%u, fatal:%u, other:%u",
-				m_iAppId, m_pstLogFileList->stFiles[iLogFileIndex].szAbsFileName, 
-				stFileHead.stLogStatInfo.qwLogSizeInfo, stFileHead.stLogStatInfo.dwDebugLogsCount,
-				stFileHead.stLogStatInfo.dwInfoLogsCount, stFileHead.stLogStatInfo.dwWarnLogsCount,
-				stFileHead.stLogStatInfo.dwReqerrLogsCount, stFileHead.stLogStatInfo.dwErrorLogsCount,
-				stFileHead.stLogStatInfo.dwFatalLogsCount, stFileHead.stLogStatInfo.dwOtherLogsCount);
-		}
-	}
 	fclose(fp);
 
 	const char *pszCheckDigit = qwtoa(m_pstLogFileList->stFiles[iLogFileIndex].qwLogTimeStart);
@@ -5237,9 +5637,16 @@ TSLogOut * CSLogClient::GetLog()
 		stLogOut.iCust_4 = m_pShmLog->sLogList[iLastIndex].iCust_4;
 		stLogOut.dwLogConfigId = m_pShmLog->sLogList[iLastIndex].dwLogConfigId;
 		stLogOut.dwLogHost = m_pShmLog->sLogList[iLastIndex].dwLogHost;
-		memcpy(stLogOut.szCust_5, m_pShmLog->sLogList[iLastIndex].szCust_5, MYSIZEOF(stLogOut.szCust_5));
-		memcpy(stLogOut.szCust_6, m_pShmLog->sLogList[iLastIndex].szCust_6, MYSIZEOF(stLogOut.szCust_6));
-		stLogOut.wLogType = m_pShmLog->sLogList[iLastIndex].wLogType;
+		stLogOut.bCustFlag = m_pShmLog->sLogList[iLastIndex].bCustFlag;
+
+		if(m_pShmLog->sLogList[iLastIndex].szCust_5[0] != '\0')
+			strncpy(stLogOut.szCust_5, m_pShmLog->sLogList[iLastIndex].szCust_5, MYSIZEOF(stLogOut.szCust_5)-1);
+		else
+			stLogOut.szCust_5[0] = '\0';
+		if(m_pShmLog->sLogList[iLastIndex].szCust_6[0] != '\0')
+			strncpy(stLogOut.szCust_6, m_pShmLog->sLogList[iLastIndex].szCust_6, MYSIZEOF(stLogOut.szCust_6)-1);
+		else
+			stLogOut.szCust_6[0] = '\0';
 	
 		stLogOut.pszLog = GetShmLog(m_pShmLog->sLogList+iLastIndex, iLastIndex);
 		if(NULL == stLogOut.pszLog)

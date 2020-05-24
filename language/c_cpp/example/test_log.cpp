@@ -50,12 +50,16 @@ int main(int argc, char *argv[])
 	// 使用日志自定义字段
 	MtReport_Log_SetCust1(1024);
 	MtReport_Log_SetCust5("cust5 set");
+	MtReport_Log_SetCust6("cust6ddddddddd set");
 
 	// cust 参数再没有再次设置的情况下在每条日志中输出的值不变
 	// 以下几条日志 cust1, cust5 的值保持不变
 	MtReport_Log_Debug("%s", argv[2]);
 	MtReport_Log_Info("%s", argv[2]);
 	MtReport_Log_Warn("%s", argv[2]);
+	MtReport_Log_SetCust2(2024);
+	MtReport_Log_SetCust3(3024);
+	MtReport_Log_SetCust5("cust5 setssssss");
 	MtReport_Log_Reqerr("%s", argv[2]);
 	MtReport_Log_Error("%s", argv[2]);
 	MtReport_Log_Fatal("%s", argv[2]);

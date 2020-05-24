@@ -273,8 +273,6 @@ int CUdpSock::DealCgiReportLog(const char *buf, size_t len)
 		return ERR_INVALID_PACKET;
 	}
 
-
-
 	int iWriteLogCount = 0;
 	LogInfo *pInfo= NULL;
 	TSLogShm *pLogShm = NULL;
@@ -627,8 +625,6 @@ void CUdpSock::SendGetAppLogSizeReq(const TGetAppLogSizeKey &info, top::SlogGetA
 void CUdpSock::OnRawDataLocalPkg(
 	const char *buf, size_t len, struct sockaddr *sa, socklen_t sa_len)
 {
-	static char sLogBuf[BWORLD_SLOG_MAX_LINE_LEN+128];
-
 	MtReport_Attr_Add(73, 1);
 
 	slog.CheckTest(NULL);
@@ -639,14 +635,12 @@ void CUdpSock::OnRawDataLocalPkg(
 	{
 		REQERR_LOG("ParseFromArray body failed ! bodylen:%d", m_iPbBodyLen);
 		AckToReq(ERR_INVALID_PACKET); 
-		MtReport_Attr_Add(74, 1);
 		return;
 	}
 	if(logs.log().size() <= 0)
 	{
 		REQERR_LOG("have no log in packet ");
 		AckToReq(ERR_INVALID_PACKET); 
-		MtReport_Attr_Add(74, 1);
 		return;
 	}
 
@@ -687,29 +681,25 @@ void CUdpSock::OnRawDataLocalPkg(
 
 	MtReport_Attr_Add(75, logs.log().size());
 	MtReport_Attr_Add(331, logs.log().size());
-	TSLogOut stLog;
-	stLog.pszLog = sLogBuf;
 	uint32_t tmNow = time(NULL);
 	int i = 0;
 	for(i=0; i < logs.log().size(); i++)
 	{
-		const ::top::SlogLogInfo & log = logs.log(i);
+		::top::SlogLogInfo *plog = logs.mutable_log(i);
 
 		// 日志频率限制检查（按每分钟计算）
-		if(IsLogFreqOver(log.uint32_log_config_id()))
+		if(IsLogFreqOver(plog->uint32_log_config_id()))
 		    break;
 
-		PB_LOG_TO_SLOG_OUT(log, stLog);
-
 		// 时间校准 --- client 时间与server 时间相差超过2分钟则用server 的时间
-		if((stLog.qwLogTime/1000000+120) < tmNow)
+		if((plog->uint64_log_time()/1000000+120) < tmNow)
 		{
 			struct timeval stNow; 
 			gettimeofday(&stNow, 0);
-			stLog.qwLogTime = stNow.tv_sec*1000000ULL+stNow.tv_usec;
+			plog->set_uint64_log_time(stNow.tv_sec*1000000ULL+stNow.tv_usec);
 			MtReport_Attr_Add(220, 1);
 		}
-		slog.RemoteShmLog(stLog, pLogShm);
+		slog.RemoteShmLog(*plog, pLogShm);
 	}
 
 	DEBUG_LOG("get recv log:%d appid:%d module id:%d head length:%d body length:%d, freq over:%d", 

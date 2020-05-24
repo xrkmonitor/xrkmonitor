@@ -713,14 +713,6 @@ static int DealAddConfig(CGI *cgi)
 static int GetLogConfigList(Json &js, SearchInfo *pinfo=NULL)
 {
 	char sSqlBuf[512] = {0};
-	int iCurPage = hdf_get_int_value(stConfig.cgi->hdf, "config.currentPage", 0);
-	int iNumPerPage = hdf_get_int_value(stConfig.cgi->hdf, "config.numPerPage", 0);
-	if(iCurPage == 0 || iNumPerPage == 0)
-	{
-		ERR_LOG("invalid iCurPage(%d) or iNumPerPage(%d)", iCurPage, iNumPerPage);
-		return SLOG_ERROR_LINE;
-	}
-
 	sprintf(sSqlBuf, "select * from mt_log_config where xrk_status=%d", RECORD_STATUS_USE);
 	if(pinfo != NULL && AddSearchInfo(sSqlBuf, sizeof(sSqlBuf), pinfo) < 0)
 		return SLOG_ERROR_LINE;
@@ -732,11 +724,6 @@ static int GetLogConfigList(Json &js, SearchInfo *pinfo=NULL)
 	iOrder = (iOrder==0 ? SetRecordsOrder(stConfig.cgi, sSqlBuf, "app_id") : 1);
 	if(iOrder == 0) 
 		strcat(sSqlBuf, " order by config_id desc");
-
-	char sTmpBuf[64]={0};
-	sprintf(sTmpBuf, " limit %d,%d", iNumPerPage*(iCurPage-1), iNumPerPage);
-	strcat(sSqlBuf, sTmpBuf);
-
 	DEBUG_LOG("get log config list - exesql:%s", sSqlBuf);
 
 	Query qu(*stConfig.db);
@@ -799,43 +786,12 @@ static int GetLogConfigList(Json &js, SearchInfo *pinfo=NULL)
 	return 0;
 }
 
-static int GetLogConfigTotalRecords(SearchInfo *pinfo=NULL)
-{
-	char sSqlBuf[512] = {0};
-	Query qu(*stConfig.db);
-	sprintf(sSqlBuf, "select count(*) from mt_log_config where xrk_status=%d", RECORD_STATUS_USE);
-	if(pinfo != NULL && AddSearchInfo(sSqlBuf, sizeof(sSqlBuf), pinfo) < 0)
-		return SLOG_ERROR_LINE;
-	strcat(sSqlBuf, " and module_id in (select distinct module_id from mt_module_info where xrk_status=0)");
-
-	DEBUG_LOG("get log config count - exesql:%s", sSqlBuf);
-	if(qu.get_result(sSqlBuf) == NULL || qu.num_rows() <= 0)
-	{
-		qu.free_result();
-		return 0;
-	}
-
-	qu.fetch_row();
-	int iCount = qu.getval(0);
-	qu.free_result();
-	DEBUG_LOG("log config records count:%d", iCount);
-	return iCount;
-}
-
 int DealListConfig(CGI *cgi)
 {
 	SearchInfo stInfo;
 	memset(&stInfo, 0, sizeof(stInfo));
 	stInfo.app_id = hdf_get_int_value(stConfig.cgi->hdf, "Query.dlc_app_id", 0);
 	stInfo.module_id = hdf_get_int_value(stConfig.cgi->hdf, "Query.dlc_module_id", 0);
-
-	int iRecords = GetLogConfigTotalRecords(&stInfo);
-	if(iRecords < 0)
-	{
-		ERR_LOG("get log config record count failed !");
-		return SLOG_ERROR_LINE;
-	}
-	SetRecordsPageInfo(stConfig.cgi, iRecords);
 
 	Json js_app;
 	if(GetAppModuleList(cgi, js_app) != 0)
@@ -1634,6 +1590,7 @@ static int DealGetLogFiles(CGI *cgi)
 		file["records"] = plogFile[i].stFileHead.iLogRecordsWrite;
 		file["time_start"] = GetTimeString(plogFile[i].stFileHead.qwLogTimeStart);
 		file["time_end"] = GetTimeString(plogFile[i].stFileHead.qwLogTimeEnd);
+		file["version"] = plogFile[i].stFileHead.bLogFileVersion;
 		const char *plast = strrchr(plogFile[i].szAbsFileName, '/');
 		if(plast != NULL)
 			file["fname"] = plast+1;

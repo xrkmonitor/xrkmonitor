@@ -18,6 +18,7 @@ message SlogLogInfo
 	optional int32 int32_cust_4 = 12;
 	optional bytes bytes_cust_5 = 13;
 	optional bytes bytes_cust_6 = 14;
+	optional uint32 cust_flag = 15;
 }
 
 message SlogClientPkgBody

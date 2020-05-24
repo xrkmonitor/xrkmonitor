@@ -83,8 +83,8 @@ typedef struct
 	uint32_t dwCust_2;
 	int32_t iCust_3;
 	int32_t iCust_4;
-	char szCust_5[8];
-	char szCust_6[16];
+	char szCust_5[16];
+	char szCust_6[32];
 	uint8_t bCustFlag;
 	char cReserved[8];
 }MTLogCust;
@@ -108,7 +108,8 @@ typedef struct
 	volatile uint8_t bTryGetLogIndex; // 用于支持多进程多线程
 	volatile int32_t iLogStarIndex; 
 	volatile int32_t iWriteIndex;
-	char cReserved[32];
+	uint32_t dwGetLogIndexStartTime;
+	char cReserved[28];
 	MTLog sLogList[MTLOG_SHM_RECORDS_COUNT];
 }MTLogShm;
 

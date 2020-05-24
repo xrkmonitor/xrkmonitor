@@ -45,6 +45,7 @@
 #include "pid_guard.h"
 #include "Json.h"
 #include "user.pb.h"
+#include "top_proto.pb.h"
 #include "sv_log.h"
 #include "sv_cfg.h"
 #include "sv_vmem.h"
@@ -118,12 +119,13 @@ typedef struct
 	char szReserved[4096];
 	void Show() {
 		SHOW_FIELD_VALUE_UINT(dwReanInfoSeq);
+		SHOW_FIELD_VALUE_UINT_TIME(dwTryChangeStartTime);
 		SHOW_FIELD_VALUE_UINT(bTryChangeFlag);
 		SHOW_FIELD_VALUE_UINT(dwTotalAccTimes);
 		SHOW_FIELD_VALUE_UINT(dwTodayAccTimes);
 		SHOW_FIELD_VALUE_UINT(wNewAccTimes);
 		SHOW_FIELD_VALUE_UINT_TIME(dwNewAccStartTime);
-		SHOW_FIELD_VALUE_UINT_TIME(bNewAccStartDay);
+		SHOW_FIELD_VALUE_UINT(bNewAccStartDay);
 	}
 }TRealTimeInfoShm;
 
@@ -1322,9 +1324,11 @@ enum
 #define SLOG_FIELD_CUST_5 4096 
 #define SLOG_FIELD_CUST_6 8192 
 
-#define SLOG_FILE_VERSION_CUR 1
+#define SLOG_FILE_VERSION_CUR 2
 #define SLOG_FILE_VERSION_MIN 1
-#define SLOG_FILE_VERSION_MAX 1
+#define SLOG_FILE_VERSION_MAX 2
+#define SLOG_FILE_VERSION_1 1  // 单条日志记录对应结构: SLogFileLogIndex
+#define SLOG_FILE_VERSION_2 2  // 单条日志记录对应结构: SLogFileLogIndex_ver2
 
 typedef struct
 {
@@ -1365,6 +1369,22 @@ typedef struct
 	uint32_t dwLogContentPos;
 }SLogFileLogIndex; // 单条日志的概要信息
 
+typedef struct
+{
+	uint8_t bLogCustLen;
+	uint32_t dwLogCustPos;
+
+	uint32_t dwLogConfigId; // 产生该条日志的配置编号
+	uint32_t dwLogHost; // 产生该条日志的机器
+	int32_t iAppId;
+	int32_t iModuleId;
+	uint16_t wLogType;
+	uint32_t dwLogSeq;
+	uint64_t qwLogTime;
+	uint32_t dwLogContentLen;
+	uint32_t dwLogContentPos;
+}SLogFileLogIndex_ver2; // 单条日志的概要信息 -- 对应 FILE_VERSION 为 2 的文件
+
 typedef struct 
 {
 	char szAbsFileName[256];
@@ -1394,7 +1414,7 @@ typedef struct
 #define MTLOG_CUST_FLAG_C6_SET 32
 typedef struct
 {
-	uint8_t bbCustFlag;
+	uint8_t bCustFlag;
 	uint32_t dwCust_1;
 	uint32_t dwCust_2;
 	int32_t iCust_3;
@@ -1415,26 +1435,9 @@ typedef struct
 	char sLogContent[BWORLD_MEMLOG_BUF_LENGTH];
 }TSLog; // 内存日志
 
-#define PB_LOG_TO_SLOG_OUT(pbLog, stLog) \
-	stLog.dwCust_1 = pbLog.uint32_cust_1(); \
-	stLog.dwCust_2 = pbLog.uint32_cust_2(); \
-	stLog.iCust_3 = pbLog.int32_cust_3(); \
-	stLog.iCust_4 = pbLog.int32_cust_4(); \
-	if(pbLog.has_bytes_cust_5()) \
-		strncpy(stLog.szCust_5, pbLog.bytes_cust_5().c_str(), sizeof(stLog.szCust_5)); \
-	if(pbLog.has_bytes_cust_6()) \
-		strncpy(stLog.szCust_6, pbLog.bytes_cust_6().c_str(), sizeof(stLog.szCust_6)); \
-	stLog.dwLogConfigId = pbLog.uint32_log_config_id(); \
-	stLog.dwLogHost = pbLog.uint32_log_host(); \
-	stLog.dwLogSeq = pbLog.uint32_log_seq(); \
-	stLog.iAppId = pbLog.uint32_app_id(); \
-	stLog.iModuleId = pbLog.uint32_module_id(); \
-	stLog.wLogType = pbLog.uint32_log_type(); \
-	stLog.qwLogTime = pbLog.uint64_log_time(); \
-	strncpy(stLog.pszLog, pbLog.bytes_log().c_str(), BWORLD_SLOG_MAX_LINE_LEN); 
-
 typedef struct
 {
+	uint8_t bCustFlag;
 	uint32_t dwCust_1;
 	uint32_t dwCust_2;
 	int32_t iCust_3;
@@ -1468,7 +1471,8 @@ typedef struct
 	uint32_t dwLogFreqStartTime; // 日志频率限制开始计算时间(按每分钟计)
 	int32_t iLogWriteCount; // 统计时间内已写入日志记录数
 
-	char sLogReserved[236]; // 保留
+	uint32_t dwTryLogIndexStartTime; 
+	char sLogReserved[232]; // 保留
 	TSLog sLogList[0]; // 该数组用作环形数组（注意：)
 
 	void Show() {
@@ -1690,50 +1694,50 @@ class CSupperLog: public StdLog, public IError
 		void SetCommData() {
 			int iWLen = 0;
 			m_szLogCommData[0] = '\0';
-			if(m_iCustFlag&SLOG_FIELD_CUST_1)
+			if(m_bCustFlag&MTLOG_CUST_FLAG_C1_SET)
 				iWLen += sprintf(m_szLogCommData+iWLen, "%u ", m_dwCust_1);
-			if(m_iCustFlag&SLOG_FIELD_CUST_2)
+			if(m_bCustFlag&MTLOG_CUST_FLAG_C2_SET)
 				iWLen += sprintf(m_szLogCommData+iWLen, "%u ", m_dwCust_2);
-			if(m_iCustFlag&SLOG_FIELD_CUST_3)
+			if(m_bCustFlag&MTLOG_CUST_FLAG_C3_SET)
 				iWLen += sprintf(m_szLogCommData+iWLen, "%d ", m_iCust_3);
-			if(m_iCustFlag&SLOG_FIELD_CUST_4)
+			if(m_bCustFlag&MTLOG_CUST_FLAG_C4_SET)
 				iWLen += sprintf(m_szLogCommData+iWLen, "%d ", m_iCust_4);
-			if(m_iCustFlag&SLOG_FIELD_CUST_5)
+			if(m_bCustFlag&MTLOG_CUST_FLAG_C5_SET)
 				iWLen += sprintf(m_szLogCommData+iWLen, "%s ", m_szCust_5);
-			if(m_iCustFlag&SLOG_FIELD_CUST_6)
+			if(m_bCustFlag&MTLOG_CUST_FLAG_C6_SET)
 				iWLen += sprintf(m_szLogCommData+iWLen, "%s ", m_szCust_6);
 		}
 		void SetLogType(int iLogType) { m_iLogType = iLogType; }
 		void SetLogOutType(int iLogOutType) { m_iLogOutType = iLogOutType; }
 		void SetCust_1(uint32_t dwCust) {
-			m_dwCust_1 = dwCust; m_iCustFlag |= SLOG_FIELD_CUST_1; 
+			m_dwCust_1 = dwCust; m_bCustFlag |= MTLOG_CUST_FLAG_C1_SET; 
 			SetCommData();
 		}
 		void SetCust_2(uint32_t dwCust) { 
-			m_dwCust_2 = dwCust; m_iCustFlag |= SLOG_FIELD_CUST_2; 
+			m_dwCust_2 = dwCust; m_bCustFlag |= MTLOG_CUST_FLAG_C2_SET; 
 			SetCommData();
 		}
 		void SetCust_3(int32_t iCust) {
-			m_iCust_3 = iCust; m_iCustFlag |= SLOG_FIELD_CUST_3; 
+			m_iCust_3 = iCust; m_bCustFlag |= MTLOG_CUST_FLAG_C3_SET; 
 			SetCommData();
 		}
 		void SetCust_4(int32_t iCust) {
-			m_iCust_4 = iCust; m_iCustFlag |= SLOG_FIELD_CUST_4; 
+			m_iCust_4 = iCust; m_bCustFlag |= MTLOG_CUST_FLAG_C4_SET; 
 			SetCommData();
 		}
 		void SetCust_5(const char *pstrCust) {
 			strncpy(m_szCust_5, pstrCust, sizeof(m_szCust_5)-1);
-			m_iCustFlag |= SLOG_FIELD_CUST_5; 
+			m_bCustFlag |= MTLOG_CUST_FLAG_C5_SET; 
 			SetCommData();
 		}
 		void SetCust_6(const char *pstrCust) {
 			strncpy(m_szCust_6, pstrCust, sizeof(m_szCust_6)-1);
-			m_iCustFlag |= SLOG_FIELD_CUST_6;
+			m_bCustFlag |= MTLOG_CUST_FLAG_C6_SET;
 			SetCommData();
 		}
 		void ClearAllCust() {
 			m_dwCust_1=0; m_dwCust_2=0; m_iCust_3=0; m_iCust_4=0; m_szCust_5[0]='\0'; m_szCust_6[0]='\0';
-			m_iCustFlag = 0;
+			m_bCustFlag = 0;
 		}
 
 		// 在 slog_mtreport_server 上的请求终端信息 
@@ -1944,7 +1948,7 @@ class CSupperLog: public StdLog, public IError
 		// 写日志接口
 		void ShmLog(int iLogLevel, const char *pszFmt, ...);
 		int WriteAppLogToShm(TSLogShm* pShmLog, LogInfo *pLog, int32_t dwLogHost);
-		void RemoteShmLog(TSLogOut &stLog, TSLogShm* pShmLog=NULL);
+		void RemoteShmLog(::top::SlogLogInfo &stLog, TSLogShm* pShmLog=NULL);
 		TSLogShm* GetAppLogShm(AppInfo *pAppShmInfo, bool bTryCreate=false);
 		uint32_t GetLogSeq() { 
 			if(NULL == m_pShmLog) return 0; 
@@ -2054,7 +2058,7 @@ class CSupperLog: public StdLog, public IError
 		int32_t m_iCust_4;
 		char m_szCust_5[16];
 		char m_szCust_6[32];
-		int32_t m_iCustFlag;
+		uint8_t m_bCustFlag;
 		int32_t m_iLogOutType;
 		int32_t m_iLocalLogType;
 		int32_t m_iLogType;
@@ -2150,8 +2154,12 @@ class CSLogSearch
 		int SetSearchExcpKey(int iExcpKeyCount, char (*sExcpKeyList)[SLOG_KEY_MAX_LENGTH]);
 		int AddExceptKey(const char *pszKey);
 
+		int ReadLogFileVersion_1(SLogFileHead &stFileHead, FILE *fp, TSLogOut &stLogOut, int i);
+		int ReadLogFileVersion_2(SLogFileHead &stFileHead, FILE *fp, TSLogOut &stLogOut, int i);
+
 		// 指定日志是否匹配查找参数
 		bool IsLogMatch(TSLog *pstLog, const char *pszLog);
+		bool IsLogMatch(TSLogOut *pstLog, const char *pszLog);
 
 		// 获取历史日志
 		// 调用该接口前请调用初始化查找相关函数，设置查找参数
@@ -2262,6 +2270,12 @@ class CSLogServerWriteFile
 		int Init();
 		int AttachShm(); 
 		int WriteLog(SLogFileHead &stFileHead, SLogFileLogIndex &stLogIndex, const char *pszLogTxt);
+		int WriteLogVersion_1(SLogFileHead &stFileHead, TSLog *pShmLog, const char *pszLogTxt);
+
+		uint32_t SaveLogCustData(char *pbuf, TSLog *pShmLog);
+		int WriteLog(SLogFileHead &stFileHead, SLogFileLogIndex_ver2 &stLogIndex, const char *pszLogTxt, const char *pcustLog);
+		int WriteLogVersion_2(SLogFileHead &stFileHead, TSLog *pShmLog, const char *pszLogTxt);
+
 		int WriteLogRecord(int iLogIndex);
 		void RemoveFileInfo(int iFileIndex);
 

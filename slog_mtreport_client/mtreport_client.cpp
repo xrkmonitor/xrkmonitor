@@ -871,6 +871,8 @@ int ReadAppLogToBuf(MTLog *plog)
 		if((iRet=MtReport_GetFromVmem(plog->iCustVmemIndex, pLogBuf->sLog, &iTmpLen)) >= 0){
 			pLogBuf->wCustDataLen = htons(iTmpLen);
 			iUseBufLen += iTmpLen;
+			MtReport_FreeVmem(plog->iCustVmemIndex);
+			plog->iCustVmemIndex = 0;
 		}
 		else {
 			pLogBuf->wCustDataLen = 0;
@@ -899,6 +901,8 @@ int ReadAppLogToBuf(MTLog *plog)
 		}
 		else 
 			ERROR_LOG("MtReport_GetFromVmem failed index:%d, ret:%d", plog->iVarmemIndex, iRet);
+		MtReport_FreeVmem(plog->iVarmemIndex);
+		plog->iVarmemIndex = 0;
 	}
 
 	pLogBuf->wLogDataLen = htons(iLogContentLen);
@@ -949,8 +953,7 @@ void ReadAppLog()
 		bReadSpecLog = true;
 		plog = stConfig.pReportShm->sLogListSpec+stConfig.pReportShm->iLogSpecialReadIdx;
 		if(plog->dwLogSeq == 0) {
-			uint64_t qwTime = (time(NULL)+5)*1000000ULL;
-			if(plog->qwLogTime >= qwTime) {
+			if((uint32_t)(plog->qwLogTime/1000000ULL+5) <= (uint32_t)(time(NULL))) {
 				if(stConfig.pReportShm->iLogSpecialReadIdx+1 >= MTLOG_LOG_SPECIAL_COUNT)
 					stConfig.pReportShm->iLogSpecialReadIdx = 0;
 				else
@@ -1006,15 +1009,13 @@ void ReadAppLog()
 				plog = stConfig.pReportShm->stLogShm[i].sLogList+stConfig.pReportShm->stLogShm[i].iLogStarIndex;
 				if(plog->dwLogSeq == 0)
 				{
-					uint64_t qwTime = (time(NULL)+5)*1000000ULL;
-					if(plog->qwLogTime >= qwTime) {
+					if((uint32_t)(plog->qwLogTime/1000000ULL+5) >= (uint32_t)(time(NULL))) {
 						if(stConfig.pReportShm->stLogShm[i].iLogStarIndex+1 >= MTLOG_SHM_RECORDS_COUNT)
 							stConfig.pReportShm->stLogShm[i].iLogStarIndex = 0;
 						else
 							stConfig.pReportShm->stLogShm[i].iLogStarIndex++;
 					}
-					SYNC_CAS_FREE(stConfig.pReportShm->stLogShm[i].bTryGetLogIndex);
-					continue;
+					break;
 				}
 
 				if(ReadAppLogToBuf(plog) < 0) {

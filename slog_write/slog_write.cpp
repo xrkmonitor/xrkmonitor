@@ -95,12 +95,12 @@ int Init(const char *pFile = NULL)
 		"LOCAL_IP", CFG_STRING, stConfig.szLocalIp, "", sizeof(stConfig.szLocalIp),
 		"SLOG_SERVER_FILE_PATH", CFG_STRING, stConfig.szLogPath, DEF_SLOG_LOG_FILE_PATH, sizeof(stConfig.szLogPath),
 		"WRITE_SHOW_PER_SECS", CFG_INT, &stConfig.iPerShowTimeSec, 300,
-		"SCAN_LOGFILE_AGAIN", CFG_INT, &stConfig.iScanAgain, 1,
+		"SCAN_LOGFILE_AGAIN", CFG_INT, &stConfig.iScanAgain, 0,
 		"LOCAL_MACHINE_ID", CFG_INT, &stConfig.iLocalMachineId, 0,
 		"SLOG_PROCESS_COUNT", CFG_INT, &slog.m_iProcessCount, 4,
 		"ADD_WRITE_APP_LOG_KEY", CFG_INT, &stConfig.iAddWriteAppLogShmKey, 20190203,
 		"LOG_SIZE_PER_TIME", CFG_INT, &stConfig.iLogSizeOutPerTime, 5,
-		"CHECK_WRITE_PROCESS_TIME", CFG_INT, &stConfig.iCheckWriteProcessTime, 30,
+		"CHECK_WRITE_PROCESS_TIME", CFG_INT, &stConfig.iCheckWriteProcessTime, 60,
 		"WRITE_RECORDS_PER_LOOP", CFG_INT, &stConfig.iWriteRecordsPerLoop, 200,
 		(void*)NULL)) < 0)
 	{   
@@ -108,11 +108,10 @@ int Init(const char *pFile = NULL)
 		return SLOG_ERROR_LINE;
 	} 
 
-	// 不能太小，跟分发逻辑有关
-	if(stConfig.iCheckWriteProcessTime < 10)
+	if(stConfig.iCheckWriteProcessTime < 30)
 	{
 		WARN_LOG("CHECK_WRITE_PROCESS_TIME too small, change from:%d to 10", stConfig.iCheckWriteProcessTime);
-		stConfig.iCheckWriteProcessTime = 10;
+		stConfig.iCheckWriteProcessTime = 30;
 	}
 
 	if(stConfig.szLocalIp[0] == '\0' || INADDR_NONE == inet_addr(stConfig.szLocalIp))
@@ -353,6 +352,18 @@ int main(int argc, char *argv[])
 		stConfig.pAddWriteAppLogShmCur->iAppId = 0;
 		stConfig.pAddWriteAppLogShmCur->iAppWriteTotal = 0;
 	}
+	else {
+		while(true) {
+			int i = 0;
+			for(; i < slog.m_iProcessCount-1;  i++) {
+				if(stConfig.pAddWriteAppLogShm[i].iProcessId == 0)
+					break;
+			}
+			if(i >= slog.m_iProcessCount-1)
+				break;
+			usleep(10);
+		}
+	}
 
 	while(slog.Run())
 	{
@@ -380,7 +391,7 @@ int main(int argc, char *argv[])
 				}
 
 				// 主进程分发逻辑，如果子进程写日志占用太多时间，可能导致某个app分发到两个子进程
-				if(time(NULL) > tmTmp+stConfig.iCheckWriteProcessTime-2)
+				if(time(NULL) > tmTmp+stConfig.iCheckWriteProcessTime-20)
 				{
 					INFO_LOG("process:%d write log records use too much time-:%d", 
 						slog.m_iProcessId, (int)(time(NULL)-tmTmp+stConfig.iCheckWriteProcessTime-2));
@@ -435,6 +446,13 @@ int main(int argc, char *argv[])
 		} // process 0
 	} // -- while
 	INFO_LOG("slog_write exit ! - process id:%d", slog.m_iProcessId);
+
+	for(int j=0; j < MAX_SLOG_APP_COUNT; j++) {
+		stConfig.pAppShmInfoList->stInfo[j].dwLastTryWriteLogTime = 0;
+	}
+	for(int i=0; i < slog.m_iProcessCount-1;  i++) {
+		stConfig.pAddWriteAppLogShm[i].iProcessId = 0;
+	}
 	return 0;
 }
 

@@ -344,7 +344,8 @@ int SendSlog(CUdpSock &sock, TLogClientInfo & stClientInfo)
 	::top::SlogLogInfo *pstLogInfo = NULL;
 	TSLogOut *pstLog = NULL;
 	int32_t iLogLen = 0, j = 0, iRet = 0, iSelfCount = 0;
-	for(j=0; j < MAX_LOG_COUNT_PER_SEND && iLogLen < 6000; j++)
+	uint8_t bCustFlag = 0;
+	for(j=0; j < MAX_LOG_COUNT_PER_SEND && iLogLen < 1200; j++)
 	{
 		pstLog = stClientInfo.pstLogClient->GetLog();
 		if(pstLog != NULL)
@@ -352,31 +353,47 @@ int SendSlog(CUdpSock &sock, TLogClientInfo & stClientInfo)
 			pstLogInfo = log.add_log();
 			pstLogInfo->set_uint32_app_id(pstLog->iAppId);
 			pstLogInfo->set_uint32_module_id(pstLog->iModuleId);
+			pstLogInfo->set_uint64_log_time(pstLog->qwLogTime);
+			pstLogInfo->set_uint32_log_seq(pstLog->dwLogSeq);
+			pstLogInfo->set_uint32_log_type(pstLog->wLogType);
+			pstLogInfo->set_uint32_log_config_id(pstLog->dwLogConfigId);
+			pstLogInfo->set_uint32_log_host(pstLog->dwLogHost);
+			iLogLen += 32;
 
 			// 统计本身产生的日志数目
 			if(pstLog->iAppId == slog.m_iLogAppId && pstLog->iModuleId == slog.m_iLogModuleId)
 				iSelfCount++;
 
-			pstLogInfo->set_uint64_log_time(pstLog->qwLogTime);
-			pstLogInfo->set_uint32_log_seq(pstLog->dwLogSeq);
-			pstLogInfo->set_uint32_log_type(pstLog->wLogType);
 			pstLogInfo->set_bytes_log(pstLog->pszLog);
-			pstLogInfo->set_uint32_log_config_id(pstLog->dwLogConfigId);
-			pstLogInfo->set_uint32_log_host(pstLog->dwLogHost);
-			pstLogInfo->set_uint32_cust_1(pstLog->dwCust_1);
-			pstLogInfo->set_uint32_cust_2(pstLog->dwCust_2);
-			pstLogInfo->set_int32_cust_3(pstLog->iCust_3);
-			pstLogInfo->set_int32_cust_4(pstLog->iCust_4);
-			iLogLen += 48;
-			if(pstLog->szCust_5[0] != '\0') {
+			iLogLen += pstLogInfo->bytes_log().size(); 
+
+			bCustFlag = pstLog->bCustFlag;
+			if(bCustFlag & MTLOG_CUST_FLAG_C1_SET) {
+				pstLogInfo->set_uint32_cust_1(pstLog->dwCust_1);
+				iLogLen += 4;
+			}
+			if(bCustFlag & MTLOG_CUST_FLAG_C2_SET) {
+				pstLogInfo->set_uint32_cust_2(pstLog->dwCust_2);
+				iLogLen += 4;
+			}
+			if(bCustFlag & MTLOG_CUST_FLAG_C3_SET) {
+				pstLogInfo->set_int32_cust_3(pstLog->iCust_3);
+				iLogLen += 4;
+			}
+			if(bCustFlag & MTLOG_CUST_FLAG_C4_SET) {
+				pstLogInfo->set_int32_cust_4(pstLog->iCust_4);
+				iLogLen += 4;
+			}
+			if((bCustFlag & MTLOG_CUST_FLAG_C5_SET) && pstLog->szCust_5[0] != '\0') {
 				pstLogInfo->set_bytes_cust_5(pstLog->szCust_5);
 				iLogLen += pstLogInfo->bytes_cust_5().size();
 			}
-			if(pstLog->szCust_6[0] != '\0') {
+			if((bCustFlag & MTLOG_CUST_FLAG_C6_SET) && pstLog->szCust_6[0] != '\0') {
 				pstLogInfo->set_bytes_cust_6(pstLog->szCust_6);
 				iLogLen += pstLogInfo->bytes_cust_6().size();
 			}
-			iLogLen += pstLogInfo->bytes_log().size(); 
+			pstLogInfo->set_cust_flag(bCustFlag);
+			iLogLen += 4;
 		}
 		else
 			break;
@@ -530,7 +547,7 @@ int main(int argc, char *argv[])
 					pLocalMachineInfo->ip1, pLocalMachineInfo->ip2, pLocalMachineInfo->ip3,
 					pLocalMachineInfo->ip4, ipv4_addr_str(it->second.pAppInfo->dwAppSrvMaster),
 					it->second.pAppInfo->dwAppSrvMaster, it->first);
-				SendHeart(stSock, it->second, it->second.pAppInfo->dwAppSrvMaster);
+				//SendHeart(stSock, it->second, it->second.pAppInfo->dwAppSrvMaster);
 				continue;
 			}
 
@@ -539,8 +556,6 @@ int main(int argc, char *argv[])
 				if(iRet > 0)
 					iSendCount += iRet;
 			}while(iRet >= MAX_LOG_COUNT_PER_SEND);
-			if(iSendCount <= 0)
-				SendHeart(stSock, it->second, it->second.pAppInfo->dwAppSrvMaster);
 		}
 	}
 	INFO_LOG("slog_client exit !");

@@ -186,6 +186,8 @@ void ReadRealInfoFromDb()
 		::comm::SysconfigInfo stInfo;
 		if(lengths[0] <= 0) {
 			WARN_LOG("get other info length 0");
+			stConfig.psysConfig->stRealInfoShm.dwTotalAccTimes = 0;
+			stConfig.psysConfig->stRealInfoShm.dwTodayAccTimes = 0;
 			return;
 		}
 		if(!stInfo.ParseFromArray(pval, lengths[0]))
@@ -202,7 +204,7 @@ void ReadRealInfoFromDb()
 	qu.free_result();
 }
 
-void TryWriteRealinfoToDb() 
+void TryUpdateRealinfo() 
 {
 	static uint32_t s_dwLastRealInfoSeq = 0;
 
@@ -228,12 +230,14 @@ void TryWriteRealinfoToDb()
 	if(stTm.tm_mday != stConfig.psysConfig->stRealInfoShm.bNewAccStartDay
 		|| slog.m_stNow.tv_sec > stConfig.psysConfig->stRealInfoShm.dwNewAccStartTime+24*60*60)
 	{
-		if(slog.InitChangeRealInfoShm()) {
+		if(slog.InitChangeRealInfoShm() >= 0) {
 			stConfig.psysConfig->stRealInfoShm.bNewAccStartDay = stTm.tm_mday;
 			stConfig.psysConfig->stRealInfoShm.dwNewAccStartTime = slog.m_stNow.tv_sec;
 			stConfig.psysConfig->stRealInfoShm.dwReanInfoSeq++;
 			stConfig.psysConfig->stRealInfoShm.dwTotalAccTimes += stConfig.psysConfig->stRealInfoShm.dwTodayAccTimes;
 			stConfig.psysConfig->stRealInfoShm.dwTodayAccTimes = 0;
+			stConfig.psysConfig->stRealInfoShm.dwTotalAccTimes += stConfig.psysConfig->stRealInfoShm.wNewAccTimes;
+			stConfig.psysConfig->stRealInfoShm.wNewAccTimes = 0;
 			slog.EndChangeRealInfoShm();
 		}
 	}
@@ -258,11 +262,10 @@ void TryWriteRealinfoToDb()
 	int32_t iBinaryDataLen = qu.SetBinaryData(pbuf, strval.c_str(), strval.size());
 	if(iBinaryDataLen < 0)
 		return;
-	if(iTmpLen+iBinaryDataLen+40> (int)sizeof(s_szBinSql)) {
+	if(iTmpLen+iBinaryDataLen+256 > (int)sizeof(s_szBinSql)) {
 		ERR_LOG("need more space %d < %d", iTmpLen+iBinaryDataLen, (int)sizeof(s_szBinSql));
 		return ;
 	}
-
 	pbuf += iBinaryDataLen;
 	int iSqlLen = (int32_t)(pbuf-s_szBinSql);
 	iTmpLen = snprintf(pbuf, sizeof(s_szBinSql)-iSqlLen, " where xrk_status=0 and user_id=1");
@@ -276,7 +279,7 @@ void TryWriteRealinfoToDb()
 	if(qu.ExecuteBinary(s_szBinSql, iSqlLen) < 0)
 		return ;
 
-	if(stConfig.psysConfig->stRealInfoShm.wNewAccTimes != 0 && slog.InitChangeRealInfoShm()) 
+	if(stConfig.psysConfig->stRealInfoShm.wNewAccTimes != 0 && slog.InitChangeRealInfoShm() >= 0) 
 	{
 		stConfig.psysConfig->stRealInfoShm.dwTotalAccTimes += stConfig.psysConfig->stRealInfoShm.wNewAccTimes;
 		stConfig.psysConfig->stRealInfoShm.dwTodayAccTimes += stConfig.psysConfig->stRealInfoShm.wNewAccTimes;
@@ -318,9 +321,6 @@ int main(int argc, char *argv[])
 		}
 		ReadRealInfoFromDb();
 	}
-	else if(!stConfig.bSelfIsCenterServer){
-		stSock.SendRealInfo();
-	}
 
 	while(h.GetCount() && slog.TryRun())
 	{
@@ -335,7 +335,7 @@ int main(int argc, char *argv[])
 		if((iRet=GetDatabaseServer()) < 0)
 			break;
 		h.Select(1, slog.m_iRand%SEC_USEC);
-		TryWriteRealinfoToDb();
+		TryUpdateRealinfo();
 	}
 	INFO_LOG("slog_mtreport_server exit !");
 	return 0;

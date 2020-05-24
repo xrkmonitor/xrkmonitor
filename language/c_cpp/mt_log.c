@@ -350,14 +350,14 @@ static int MtReport_Save_LogCust()
 	}
 
 	if(IS_SET_BIT(g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].stCust.bCustFlag, MTLOG_CUST_FLAG_C5_SET)) {
-		memcpy(sCustBuf+iCustUseLen, g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].stCust.szCust_5,
-			MYSIZEOF(g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].stCust.szCust_5));
+		strncpy(sCustBuf+iCustUseLen, g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].stCust.szCust_5,
+			MYSIZEOF(g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].stCust.szCust_5)-1);
 		iCustUseLen += MYSIZEOF(g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].stCust.szCust_5);
 	}
 
 	if(IS_SET_BIT(g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].stCust.bCustFlag, MTLOG_CUST_FLAG_C6_SET)) {
-		memcpy(sCustBuf+iCustUseLen, g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].stCust.szCust_6,
-			MYSIZEOF(g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].stCust.szCust_6));
+		strncpy(sCustBuf+iCustUseLen, g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].stCust.szCust_6,
+			MYSIZEOF(g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].stCust.szCust_6)-1);
 		iCustUseLen += MYSIZEOF(g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].stCust.szCust_6);
 	}
 
@@ -567,8 +567,10 @@ int MtReport_Log(int iLogType, const char *pszFmt, ...)
 	// 写入共享内存中
 	MTLogShm *pShmLog = NULL;
 	for(i=0; i < MTLOG_SHM_DEF_COUNT; i++) {
-		if(VARMEM_CAS_GET(&g_mtReport.pMtShm->stLogShm[i].bTryGetLogIndex)) {
+		if(VARMEM_CAS_GET(&g_mtReport.pMtShm->stLogShm[i].bTryGetLogIndex)
+			|| stNow.tv_sec > g_mtReport.pMtShm->stLogShm[i].dwGetLogIndexStartTime+5) {
 			pShmLog = g_mtReport.pMtShm->stLogShm+i;
+			g_mtReport.pMtShm->stLogShm[i].dwGetLogIndexStartTime = stNow.tv_sec;
 			break;
 		}
 	}
@@ -607,6 +609,8 @@ int MtReport_Log(int iLogType, const char *pszFmt, ...)
 
 	if(g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].stCust.bCustFlag != 0) 
 		pShmLog->sLogList[iIndex].iCustVmemIndex = MtReport_Save_LogCust(); 
+	else 
+		pShmLog->sLogList[iIndex].iCustVmemIndex = 0;
 
 	if(g_mtReport.pMtShm->dwFirstLogWriteTime == 0)
 		g_mtReport.pMtShm->dwFirstLogWriteTime = stNow.tv_sec;
