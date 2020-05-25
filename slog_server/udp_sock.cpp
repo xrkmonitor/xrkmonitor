@@ -41,7 +41,6 @@
 #include "slog_server.h"
 #include "udp_sock.h"
 #include "comm.pb.h"
-
 using namespace comm;
 
 CUdpSock::CUdpSock(ISocketHandler&h): UdpSocket(h), CBasicPacket() 
