@@ -34,7 +34,6 @@
 #include <errno.h>
 #include <sv_struct.h>
 #include <assert.h>
-
 #include <Base64.h>
 #include "udp_sock.h"
 #include "aes.h"
