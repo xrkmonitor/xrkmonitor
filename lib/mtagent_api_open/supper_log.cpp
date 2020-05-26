@@ -641,6 +641,12 @@ int CSLogSearch::ReadLogFileVersion_1(SLogFileHead &stFileHead, FILE *fp, TSLogO
 				m_pstLogFileList->stFiles[i].szAbsFileName, dwContentSeq, stIndex.dwLogSeq);
 			break;
 		}
+		if(stIndex.dwLogContentLen > BWORLD_SLOG_MAX_LINE_LEN) {
+			ERR_LOG("invalid log content length, check:%u > %d, app:%d, module:%d, log host:%u, record:%d, file:%s", 
+				stIndex.dwLogContentLen, BWORLD_SLOG_MAX_LINE_LEN, stIndex.iAppId, stIndex.iModuleId,
+				stIndex.dwLogHost, j, m_pstLogFileList->stFiles[i].szAbsFileName);
+			break;
+		}
 		
 		if(fread(sLogBuf, 1, stIndex.dwLogContentLen, fp) != stIndex.dwLogContentLen)
 		{
@@ -728,6 +734,13 @@ int CSLogSearch::ReadLogFileVersion_2(SLogFileHead &stFileHead, FILE *fp, TSLogO
 				m_pstLogFileList->stFiles[i].szAbsFileName, dwContentSeq, stIndex.dwLogSeq);
 			break;
 		}
+		if(stIndex.dwLogContentLen > BWORLD_SLOG_MAX_LINE_LEN) {
+			ERR_LOG("invalid log content length, check:%u > %d, app:%d, module:%d, log host:%u, record:%d, file:%s", 
+				stIndex.dwLogContentLen, BWORLD_SLOG_MAX_LINE_LEN, stIndex.iAppId, stIndex.iModuleId,
+				stIndex.dwLogHost, j, m_pstLogFileList->stFiles[i].szAbsFileName);
+			break;
+		}
+	
 		if(fread(sLogBuf, 1, stIndex.dwLogContentLen, fp) != stIndex.dwLogContentLen)
 		{
 			ERR_LOG("read slog log contenet from file:%s failed, msg:%s !", 
@@ -4938,6 +4951,11 @@ int CSLogServerWriteFile::WriteLog(SLogFileHead &stFileHead, SLogFileLogIndex &s
 
 	// 日志长度
 	stLogIndex.dwLogContentLen = MYSTRLEN(pszLogTxt) + 1; // 1 表示 0，字符串的结束符
+	if(stLogIndex.dwLogContentLen > BWORLD_SLOG_MAX_LINE_LEN) {
+		WARN_LOG("log content too long, check:%d > %d, app:%d, module:%d, will cust",
+			stLogIndex.dwLogContentLen, BWORLD_SLOG_MAX_LINE_LEN, stLogIndex.iAppId, stLogIndex.iModuleId);
+		stLogIndex.dwLogContentLen = BWORLD_SLOG_MAX_LINE_LEN;
+	}
 
 	// 写日志文件头部, 日志统计信息同时写入共享内存中 ----------- 1
 	stFileHead.iLogRecordsWrite++;
@@ -5056,6 +5074,11 @@ int CSLogServerWriteFile::WriteLog(
 
 	// 日志长度
 	stLogIndex.dwLogContentLen = MYSTRLEN(pszLogTxt) + 1; // 1 表示 0，字符串的结束符
+	if(stLogIndex.dwLogContentLen > BWORLD_SLOG_MAX_LINE_LEN) {
+		WARN_LOG("log content too long, check:%d > %d, app:%d, module:%d, will cust",
+			stLogIndex.dwLogContentLen, BWORLD_SLOG_MAX_LINE_LEN, stLogIndex.iAppId, stLogIndex.iModuleId);
+		stLogIndex.dwLogContentLen = BWORLD_SLOG_MAX_LINE_LEN;
+	}
 
 	// 写日志文件头部, 日志统计信息同时写入共享内存中 ----------- 1
 	stFileHead.iLogRecordsWrite++;
