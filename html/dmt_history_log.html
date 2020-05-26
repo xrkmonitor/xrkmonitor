@@ -479,14 +479,14 @@ function dhlSortShowHistoryLog()
 		}
 
 		if(result.LogField & 4096) {
-			ctadd += "<span>"+drlGetShowLogChar(j,0) + result.list[i].cust_5 + drlGetShowLogChar(j++, 1)+" </span>";
-			if(j >= drl_showlog_ary.length)
+			ctadd += "<span>"+dhlGetShowLogChar(j,0) + result.list[i].cust_5 + dhlGetShowLogChar(j++, 1)+" </span>";
+			if(j >= dhl_showlog_ary.length)
 				j = 0;
 		}
 
 		if(result.LogField & 8192) {
-			ctadd += "<span>"+drlGetShowLogChar(j,0) + result.list[i].cust_6 + drlGetShowLogChar(j++, 1)+" </span>";
-			if(j >= drl_showlog_ary.length)
+			ctadd += "<span>"+dhlGetShowLogChar(j,0) + result.list[i].cust_6 + dhlGetShowLogChar(j++, 1)+" </span>";
+			if(j >= dhl_showlog_ary.length)
 				j = 0;
 		}
 
