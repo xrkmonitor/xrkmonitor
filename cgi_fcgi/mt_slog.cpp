@@ -1723,35 +1723,47 @@ static int DealGetHistoryLog(CGI *cgi)
 			else
 				log["addr"] = "unknow";
 		}
-		if(iShowLogField & SLOG_FIELD_CUST_1)
-			log["cust_1"] = pstLog->dwCust_1;
-		else
-			log["cust_1"] = g_strCustLogHaveNo;
+		if(iShowLogField & SLOG_FIELD_CUST_1) {
+			if(pstLog->bCustFlag & MTLOG_CUST_FLAG_C1_SET)
+				log["cust_1"] = pstLog->dwCust_1;
+			else
+				log["cust_1"] = g_strCustLogHaveNo;
+		}
 
-		if(iShowLogField & SLOG_FIELD_CUST_2)
-			log["cust_2"] = pstLog->dwCust_2;
-		else
-			log["cust_2"] = g_strCustLogHaveNo;
+		if(iShowLogField & SLOG_FIELD_CUST_2) {
+			if(pstLog->bCustFlag & MTLOG_CUST_FLAG_C2_SET)
+				log["cust_2"] = pstLog->dwCust_2;
+			else
+				log["cust_2"] = g_strCustLogHaveNo;
+		}
 
-		if(iShowLogField & SLOG_FIELD_CUST_3)
-			log["cust_3"] = pstLog->iCust_3;
-		else
-			log["cust_3"] = g_strCustLogHaveNo;
+		if(iShowLogField & SLOG_FIELD_CUST_3) {
+			if(pstLog->bCustFlag & MTLOG_CUST_FLAG_C3_SET)
+				log["cust_3"] = pstLog->iCust_3;
+			else
+				log["cust_3"] = g_strCustLogHaveNo;
+		}
 
-		if(iShowLogField & SLOG_FIELD_CUST_4)
-			log["cust_4"] = pstLog->iCust_4;
-		else
-			log["cust_4"] = g_strCustLogHaveNo;
+		if(iShowLogField & SLOG_FIELD_CUST_4) {
+			if(pstLog->bCustFlag & MTLOG_CUST_FLAG_C4_SET)
+				log["cust_4"] = pstLog->iCust_4;
+			else
+				log["cust_4"] = g_strCustLogHaveNo;
+		}
 
-		if((iShowLogField & SLOG_FIELD_CUST_5) && pstLog->szCust_5[0] != '\0')
-			log["cust_5"] = pstLog->szCust_5;
-		else
-			log["cust_5"] = g_strCustLogHaveNo;
+		if(iShowLogField & SLOG_FIELD_CUST_5) {
+			if((pstLog->bCustFlag & MTLOG_CUST_FLAG_C5_SET) && pstLog->szCust_5[0] != '\0')
+				log["cust_5"] = pstLog->szCust_5;
+			else
+				log["cust_5"] = g_strCustLogHaveNo;
+		}
 
-		if((iShowLogField & SLOG_FIELD_CUST_6) && pstLog->szCust_6[0] != '\0')
-			log["cust_6"] = pstLog->szCust_6;
-		else
-			log["cust_6"] = g_strCustLogHaveNo;
+		if(iShowLogField & SLOG_FIELD_CUST_6) {
+			if((pstLog->bCustFlag & MTLOG_CUST_FLAG_C6_SET) && pstLog->szCust_6[0] != '\0')
+				log["cust_6"] = pstLog->szCust_6;
+			else
+				log["cust_6"] = g_strCustLogHaveNo;
+		}
 
 		if(iShowLogField & SLOG_FIELD_APP)
 			log["app"] = pstLog->iAppId;
@@ -1878,35 +1890,47 @@ static int DealGetRealTimeLog(CGI *cgi)
 					log["addr"] = "unknow";
 				log["addr_id"] = pstLog->dwLogHost;
 			}
-			if(iShowLogField & SLOG_FIELD_CUST_1)
-				log["cust_1"] = pstLog->dwCust_1;
-			else
-				log["cust_1"] = g_strCustLogHaveNo;
+			if(iShowLogField & SLOG_FIELD_CUST_1) {
+				if(pstLog->bCustFlag & MTLOG_CUST_FLAG_C1_SET)
+					log["cust_1"] = pstLog->dwCust_1;
+				else
+					log["cust_1"] = g_strCustLogHaveNo;
+			}
 
-			if(iShowLogField & SLOG_FIELD_CUST_2)
-				log["cust_2"] = pstLog->dwCust_2;
-			else
-				log["cust_2"] = g_strCustLogHaveNo;
+			if(iShowLogField & SLOG_FIELD_CUST_2) {
+				if(pstLog->bCustFlag & MTLOG_CUST_FLAG_C2_SET)
+					log["cust_2"] = pstLog->dwCust_2;
+				else
+					log["cust_2"] = g_strCustLogHaveNo;
+			}
 
-			if(iShowLogField & SLOG_FIELD_CUST_3)
-				log["cust_3"] = pstLog->iCust_3;
-			else
-				log["cust_3"] = g_strCustLogHaveNo;
+			if(iShowLogField & SLOG_FIELD_CUST_3) {
+				if(pstLog->bCustFlag & MTLOG_CUST_FLAG_C3_SET)
+					log["cust_3"] = pstLog->iCust_3;
+				else
+					log["cust_3"] = g_strCustLogHaveNo;
+			}
 
-			if(iShowLogField & SLOG_FIELD_CUST_4)
-				log["cust_4"] = pstLog->iCust_4;
-			else
-				log["cust_4"] = g_strCustLogHaveNo;
+			if(iShowLogField & SLOG_FIELD_CUST_4) {
+				if(pstLog->bCustFlag & MTLOG_CUST_FLAG_C4_SET)
+					log["cust_4"] = pstLog->iCust_4;
+				else
+					log["cust_4"] = g_strCustLogHaveNo;
+			}
 
-			if((iShowLogField & SLOG_FIELD_CUST_5) && pstLog->szCust_5[0] != '\0')
-				log["cust_5"] = pstLog->szCust_5;
-			else
-				log["cust_5"] = g_strCustLogHaveNo;
+			if(iShowLogField & SLOG_FIELD_CUST_5) {
+				if((pstLog->bCustFlag & MTLOG_CUST_FLAG_C5_SET) && pstLog->szCust_5[0] != '\0')
+					log["cust_5"] = pstLog->szCust_5;
+				else
+					log["cust_5"] = g_strCustLogHaveNo;
+			}
 
-			if((iShowLogField & SLOG_FIELD_CUST_6) && pstLog->szCust_6[0] != '\0')
-				log["cust_6"] = pstLog->szCust_6;
-			else
-				log["cust_6"] = g_strCustLogHaveNo;
+			if(iShowLogField & SLOG_FIELD_CUST_6) {
+				if((pstLog->bCustFlag & MTLOG_CUST_FLAG_C6_SET) && pstLog->szCust_6[0] != '\0')
+					log["cust_6"] = pstLog->szCust_6;
+				else
+					log["cust_6"] = g_strCustLogHaveNo;
+			}
 
 			if(iShowLogField & SLOG_FIELD_APP)
 				log["app"] = pstLog->iAppId;
