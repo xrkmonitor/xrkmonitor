@@ -314,6 +314,7 @@ int main(int argc, char *argv[])
 	}
 	h.Add(&stSock);
 
+	stConfig.dwCurrentTime = time(NULL);
 	if(stConfig.psysConfig->stRealInfoShm.dwReanInfoSeq == 0) {
 		if((iRet=GetDatabaseServer()) < 0) {
 			ERR_LOG("GetDatabaseServer failed !");
