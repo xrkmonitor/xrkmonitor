@@ -1,7 +1,7 @@
 <div class="pageContent">
 	<div class="panelBar" style="background-color:#f2f6f9">
 		<ul class="toolBar">
-			<li><a class="add" href="#" onclick="return dsmLeftMenuShow_<?cs var:config.machine_id ?>();"><i class='icon-reorder icon-large'></i>导航菜单</a></li>
+			<li><a class="add" href="#" onclick="return dsmLeftMenuShow_<?cs var:config.machine_id ?>();"><i class='icon-reorder icon-large'></i>图表导航菜单</a></li>
 			<li class="line">line</li>
 			<li>指定日期：<input type="text" class="date" size="10" readonly="true" id="dsm_date_<?cs var:config.machine_id ?>" value="<?cs var:config.cust_date ?>" onblur="setTimeout(dsmOnCustDateChange_<?cs var:config.machine_id ?>, 600);" minDate="2014-01-01" maxDate="2088-12-31" /></li>
 			<li><a class="add" href="#" onclick="return dsmAttrShow_<?cs var:config.machine_id ?>(2);"><i class='icon-bar-chart icon-large'></i>日图</a></li>

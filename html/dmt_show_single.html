@@ -8,14 +8,14 @@
 						</td>
 						<td>
 							<label style='width:80px'>曲线图类型:</label>
-							<select name="dss_select_show_type" id="dss_select_show_type" style="width:80px">
+							<select class='xrk_combox' name="dss_select_show_type" id="dss_select_show_type" style="width:80px">
 							</select>
 						</td>
 
 						<?cs if:config.show_type == "view" ?>
 						<td >
 							<label style='width:60px'>图表导航:</label>
-							<select name="dss_select_show_chart" id="dss_select_show_chart">
+							<select class='xrk_combox' name="dss_select_show_chart" id="dss_select_show_chart">
 							</select>
 						</td>
 						<?cs /if ?>
@@ -28,17 +28,17 @@
 			</div>
 		</div>
 
-		<div class="unitBox" style="border-left:1px #B8D0D6 solid;border-right:1px #B8D0D6 solid">
+		<div class="unitBox" style="border-left:1px #B8D0D6 solid;border-right:1px #B8D0D6 solid" id='dss_content'>
 			<div> 
 				<div layoutH="40" class="unitBox" id="dss_ct_attr_show_single" style="float:left; display:block; overflow:auto; width:825px; border:solid 1px #CCC;line-height:21px; background:#fff"> 
 				</div>
 
 				<div layoutH="50" style="display:block; overflow:auto; border:solid 1px #CCC;">
-					<table class="table" height="200"> 
+					<table class="list" width='100%'>
 						<thead>
 							<tr>
-								<th width="180" align="center">上报时间</th>
-								<th width="120" align="center">上报值</th>
+								<th align="center">上报时间</th>
+								<th align="center">上报值</th>
 							</tr>
 						</thead>
 						<tbody id="dss_attr_value_list_tbody">
@@ -59,16 +59,14 @@ function dssOnBrushSelected(p)
 {
 	var op = this.getOption();
 	var sv = Math.floor(p.batch[0].startValue);
-	var ev = Math.floor(p.batch[0].endValue);
 	var start = g_dss_date_time_start_utc*1000+g_dssTimeZoneOffset;
 	var start_idx = Math.ceil((sv-start)/60000);
-	var idx_count = Math.ceil((ev-sv)/60000);
 	if(start_idx < 0)
 	    start_idx = 0;
 	if(g_dss_show_type == 'site')
-	    dssSetSiteAttrValueInfo(op.title[0].text, start_idx, idx_count);
+	    dssSetSiteAttrValueInfo(op.title[0].text, start_idx);
 	else
-	    dssSetAttrValueInfo(op.title[0].text, start_idx, idx_count);
+	    dssSetAttrValueInfo(op.title[0].text, start_idx);
 }
 
 function dssShowAttrInfo(attr_val)
@@ -314,28 +312,27 @@ function dssValueIdxToTime(idx)
 	return timestr;
 }
 
-function dssSetSiteAttrValueInfo(title, idx, count)
+function dssSetSiteAttrValueInfo(title, idx)
 {
 	var idx_str = title.split('-');
 	var val_idx = parseInt(idx_str[0]);
 
 	var uhtml = "";
-	if(count == 0 || count > 30)
-		count = 30;
+	var count = 30;
 
 	var dss_value_list_str = g_dss_value_list_str[val_idx];
 	var i=0;
 	var j=idx;
-	var max=Number(dss_value_list_str[idx]);
+	var max=0;
 
 	// find max
 	for(i=0; j < dss_value_list_str.length && i < count; j++)
 	{
-		if(dss_value_list_str[j] == 'null')
+		if(dss_value_list_str[j] == 'null' || dss_value_list_str[j] == '-')
 			continue;
 		i++;
 		if(Number(dss_value_list_str[j]) > max)
-			max = dss_value_list_str[j];
+			max = Number(dss_value_list_str[j]);
 	}
 
 	for(i=0; idx < dss_value_list_str.length && i < count; idx++)
@@ -344,69 +341,70 @@ function dssSetSiteAttrValueInfo(title, idx, count)
 		if(dss_value_list_str.length > 1440)
 			day_idx = Math.floor(idx/1440);
 
-		if(dss_value_list_str[idx] == 'null')
+		if(dss_value_list_str[idx] == 'null' || dss_value_list_str[idx] == '-')
 			continue;
 		i++;
 		uhtml += "<tr>";
 		if(day_idx != -1)
-			uhtml += '<td width="120" align="center">' 
+			uhtml += '<td align="center">' 
 				+ g_dss_multi_days[day_idx] + " " + dssValueIdxToTime(idx) + '</td>';
 		else
-			uhtml += '<td width="120" align="center">' + g_dss_date_info + " " + dssValueIdxToTime(idx) + '</td>';
+			uhtml += '<td align="center">' + g_dss_date_info + " " + dssValueIdxToTime(idx) + '</td>';
 
 		if(Number(dss_value_list_str[idx]) == max)
-			uhtml += '<td width="80" align="center"><font color="red">' + dss_value_list_str[idx] + "</font></td>";
+			uhtml += '<td align="center"><font color="red">' + dss_value_list_str[idx] + "</font></td>";
 		else
-			uhtml += '<td width="80" align="center">' + dss_value_list_str[idx] + "</td>";
+			uhtml += '<td align="center">' + dss_value_list_str[idx] + "</td>";
 		uhtml += "</tr>";
 	}
 	$('#dss_attr_value_list_tbody').html(uhtml);
 }
 
-function dssSetAttrValueInfo(title, idx, count)
+function dssSetAttrValueInfo(title, idx)
 {
 	var idx_str = title.split('-');
 	var val_idx = parseInt(idx_str[0]);
 
 	var uhtml = "";
-	if(count == 0 || count > 30)
-		count = 30;
+	var count = 30;
 
 	var dss_value_list_str = g_dss_value_list_str[val_idx];
 	var i=0;
 	var j=idx;
-	var min=Number(dss_value_list_str[idx]);
-	var max=Number(dss_value_list_str[idx]);
+	var max=0;
 
-	// find max-min
-	for(i=0; j < dss_value_list_str.length && i < count; j++, i++)
+	// find max
+	for(i=0; j < dss_value_list_str.length && i < count; j++)
 	{
-		if(Number(dss_value_list_str[j]) < min)
-			min = Number(dss_value_list_str[j]);
+		if(dss_value_list_str[j] == 'null' || dss_value_list_str[j] == '0' || dss_value_list_str[j] == '-')
+			continue;
 		if(Number(dss_value_list_str[j]) > max)
-			max = dss_value_list_str[j];
+			max = Number(dss_value_list_str[j]);
+		i++;
 	}
 
 	// 周图
-	for(i=0; idx < dss_value_list_str.length && i < count; idx++, i++)
+	for(i=0; idx < dss_value_list_str.length && i < count; idx++)
 	{
 		var day_idx = -1;
 		if(dss_value_list_str.length > 1440)
 			day_idx = Math.floor(idx/1440);
 
+		if(dss_value_list_str[idx] == 'null' || dss_value_list_str[idx] == '0' || dss_value_list_str[idx] == '-')
+			continue;
+		i++;
+
 		uhtml += "<tr>";
 		if(day_idx != -1)
-			uhtml += '<td width="120" align="center">' 
+			uhtml += '<td align="center">' 
 				+ g_dss_multi_days[day_idx] + " " + dssValueIdxToTime(idx) + '</td>';
 		else
-			uhtml += '<td width="120" align="center">' + g_dss_date_info + " " + dssValueIdxToTime(idx) + '</td>';
+			uhtml += '<td align="center">' + g_dss_date_info + " " + dssValueIdxToTime(idx) + '</td>';
 
-		if(Number(dss_value_list_str[idx]) == min)
-			uhtml += '<td width="80" align="center"><font color="blue">' + dss_value_list_str[idx] + "</font></td>";
-		else if(Number(dss_value_list_str[idx]) == max)
-			uhtml += '<td width="80" align="center"><font color="red">' + dss_value_list_str[idx] + "</font></td>";
+		if(Number(dss_value_list_str[idx]) == max)
+			uhtml += '<td align="center"><font color="red">' + dss_value_list_str[idx] + "</font></td>";
 		else
-			uhtml += '<td width="80" align="center">' + dss_value_list_str[idx] + "</td>";
+			uhtml += '<td align="center">' + dss_value_list_str[idx] + "</td>";
 		uhtml += "</tr>";
 	}
 	$('#dss_attr_value_list_tbody').html(uhtml);
@@ -491,9 +489,9 @@ function dssAttrShowSingle(type)
 			g_dss_date_info = json.date_time_cur;
 			g_dss_show_type = json.show_type;
 			if(g_dss_show_type == 'site')
-				dssSetSiteAttrValueInfo("0-total", 0, 0);
+				dssSetSiteAttrValueInfo("0-total", 0);
 			else
-				dssSetAttrValueInfo("0-total", 0, 0);
+				dssSetAttrValueInfo("0-total", 0);
 			dssShowAttrInfo(json);
 		}
 		else if(json.msgid && alertMsg)
@@ -537,6 +535,7 @@ $(document).ready(function(){
 
 	dssAttrShowSingle(<?cs var:config.show_single_type ?>);
 	$('#dss_select_show_type').change(dssOnSelectChange);
+	$('#dss_content').initUI();
 });
 
 </script>

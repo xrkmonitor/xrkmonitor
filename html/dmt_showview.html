@@ -1,7 +1,7 @@
 <div class="pageContent">
 	<div class="panelBar" style='background-color:#f2f6f9'>
 		<ul class="toolBar">
-			<li><a class="add" href="#" onclick="return dsLeftMenuShow_<?cs var:config.view_id ?>();"><i class='icon-reorder icon-large'></i>导航菜单</a></li>
+			<li><a class="add" href="#" onclick="return dsLeftMenuShow_<?cs var:config.view_id ?>();"><i class='icon-reorder icon-large'></i>图表导航菜单</a></li>
 
 			<li class="line">line</li>
 			<li><a class="edit" href="#" onclick="return dsAttrBind_<?cs var:config.view_id ?>();"><i class='icon-lock icon-large'></i>监控点绑定</a></li>
@@ -22,7 +22,7 @@
 			<li class="line">line</li>
 			<li style='line-height:34px'>
 				<input type="checkbox" id="ds_check_show_<?cs var:config.view_id ?>" onclick="return dsCheckShow_<?cs var:config.view_id ?>();"/>
-				<label class='for' for='ds_check_show_<?cs var:config.view_id ?>'>仅绘制有上报的监控点图表</label>
+				<label class='for' for='ds_check_show_<?cs var:config.view_id ?>'>仅绘制有上报的图表</label>
 			</li>
 
 			<li style="display:none"><a id="ds_href_<?cs var:config.view_id ?>" href="#" target="navTab" rel="showview_<?cs var:config.view_id ?>" fresh="false"></a></li>
