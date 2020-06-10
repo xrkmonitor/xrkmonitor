@@ -32,7 +32,7 @@ int AddParameter(IM_SQL_PARA** ppara, const char* sName, const char* sValue, con
 	ptmp->sName = sName;
 	ptmp->sValue = sValue;
 	ptmp->iValue = 0;
-	if(!strcmp(sOperater, "DB_CAL"))
+	if(sOperater && !strcmp(sOperater, "DB_CAL"))
 		ptmp->bOperater = PARAMER_Operater_INT;
 	else
 		ptmp->bOperater = PARAMER_Operater_STR;
