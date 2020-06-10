@@ -8,20 +8,26 @@
 
 typedef struct _IM_SQL_PARA
 {
-	const char* sName;
-	const char* sValue;
+	std::string sName;
+	std::string sValue;
 	uint32_t iValue;
-	const char* sOperater;
+	char bOperater;
 	struct _IM_SQL_PARA* pnext;
 }IM_SQL_PARA;
+
+#define PARAMER_Operater_STR 1
+#define PARAMER_Operater_INT 2
 
 #define PARAMER_VALUE_BUF 1024*1024
 #define PARAMER_COUNT_MAX 100
 
+const char *GetParameterValue(IM_SQL_PARA *ptmp, MYSQL *m_pstDBlink);
 int InitParameter(IM_SQL_PARA** ppara);
 int AddParameter(IM_SQL_PARA** ppara, const char* sName, const char* sValue, const char* sOperater);
 int AddParameter(IM_SQL_PARA** ppara, const char* sName, uint32_t iValue, const char* sOperater);
-int ReleaseParameter(IM_SQL_PARA** ppara); // should not use this, recommend use InitParameter
+int AddParameterStr(IM_SQL_PARA** ppara, const char* sName, const char* sValue);
+int AddParameterInt(IM_SQL_PARA** ppara, const char* sName, uint32_t iValue);
+int ReleaseParameter(IM_SQL_PARA** ppara);
 int JoinParameter_Insert(std::string *pszDest, MYSQL *m_pstDBlink, IM_SQL_PARA* para);
 int JoinParameter_Set(std::string *pszDest, MYSQL *m_pstDBlink, IM_SQL_PARA* para);
 int JoinParameter_Limit(std::string *pszDest, MYSQL *m_pstDBlink, IM_SQL_PARA* para);
