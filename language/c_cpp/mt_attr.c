@@ -36,6 +36,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
 
 #include "mt_log.h"
 #include "mt_attr.h"
@@ -156,7 +157,7 @@ int MtReport_Attr_Add(int32_t attr, int32_t iValue)
 	int j=0;
 
 check_again:
-	if(bCheckCount > 100) {
+	if(bCheckCount > 10) {
 		MtReport_Attr_Spec(238, 1);
 		return -2;
 	}
@@ -183,6 +184,7 @@ check_again:
 				pNode->bSyncProcess++;
 				bCheckCount++;
 				j++;
+				usleep(1000);
 				goto check_again;
 			}
 		}
@@ -207,7 +209,7 @@ int MtReport_Attr_Set(int32_t attr, int32_t iValue)
 	int j=0;
 
 check_again:
-	if(bCheckCount > 100) {
+	if(bCheckCount > 10) {
 		MtReport_Attr_Spec(238, 1);
 		return -2;
 	}
@@ -234,6 +236,7 @@ check_again:
 				pNode->bSyncProcess++;
 				bCheckCount++;
 				j++;
+				usleep(1000);
 				goto check_again;
 			}
 		}
@@ -259,7 +262,7 @@ int MtReport_Str_Attr_Add(int32_t attr, const char *pstr, int32_t iValue)
 	uint32_t dwShortKey = attr+GetShortKeyByStr(stRecord.szStrInfo);
 
 check_again:
-	if(bCheckCount > 100) {
+	if(bCheckCount > 10) {
 		MtReport_Attr_Spec(238, 1);
 		return -2;
 	}
@@ -269,7 +272,7 @@ check_again:
 		pNode->iStrVal += iValue;
 	else if(pNode != NULL)
 	{
-		if(VARMEM_CAS_GET(&pNode->bSyncProcess) || pNode->bSyncProcess >= 120)
+		if(VARMEM_CAS_GET(&pNode->bSyncProcess) || pNode->bSyncProcess >= 10)
 		{
 			pNode->iStrVal = iValue;
 			pNode->iStrAttrId = attr;
@@ -280,6 +283,7 @@ check_again:
 		{
 			pNode->bSyncProcess++;
 			bCheckCount++;
+			usleep(1000);
 			goto check_again;
 		}
 	}
@@ -300,7 +304,7 @@ int MtReport_Str_Attr_Set(int32_t attr, const char *pstr, int32_t iValue)
 	uint32_t dwShortKey = attr+GetShortKeyByStr(stRecord.szStrInfo);
 
 check_again:
-	if(bCheckCount > 100) {
+	if(bCheckCount > 10) {
 		MtReport_Attr_Spec(238, 1);
 		return -2;
 	}
@@ -310,7 +314,7 @@ check_again:
 		pNode->iStrVal = iValue;
 	else if(pNode != NULL)
 	{
-		if(VARMEM_CAS_GET(&pNode->bSyncProcess) || pNode->bSyncProcess >= 120)
+		if(VARMEM_CAS_GET(&pNode->bSyncProcess) || pNode->bSyncProcess >= 10)
 		{
 			pNode->iStrVal = iValue;
 			pNode->iStrAttrId = attr;
@@ -321,6 +325,7 @@ check_again:
 		{
 			pNode->bSyncProcess++;
 			bCheckCount++;
+			usleep(1000);
 			goto check_again;
 		}
 	}

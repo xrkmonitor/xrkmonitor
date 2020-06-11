@@ -283,6 +283,8 @@ static int MtReport_Log_To_Spec(int iLogType, const char *pszFmt, va_list ap)
 		g_mtReport.pMtShm->dwLogSeq = 2;
 	}
 
+	if(iIndex >= MTLOG_LOG_SPECIAL_COUNT)
+		iIndex = 0;
 	g_mtReport.pMtShm->sLogListSpec[iIndex].qwLogTime = stNow.tv_sec*1000000ULL+stNow.tv_usec;
 	g_mtReport.pMtShm->sLogListSpec[iIndex].dwLogSeq = 0;
 
@@ -476,7 +478,7 @@ void MtReport_Clear_Test()
 // 0 -- 写日志成功
 int MtReport_Log(int iLogType, const char *pszFmt, ...)
 {
-	int i=0, iRet=0;
+	int i=0, iRet=0, j=0;
 	va_list ap;
 
 	if(!g_mtReport.cIsInit)
@@ -566,14 +568,20 @@ int MtReport_Log(int iLogType, const char *pszFmt, ...)
 
 	// 写入共享内存中
 	MTLogShm *pShmLog = NULL;
-	for(i=0; i < MTLOG_SHM_DEF_COUNT; i++) {
-		if(VARMEM_CAS_GET(&g_mtReport.pMtShm->stLogShm[i].bTryGetLogIndex)
-			|| stNow.tv_sec > g_mtReport.pMtShm->stLogShm[i].dwGetLogIndexStartTime+5) {
-			pShmLog = g_mtReport.pMtShm->stLogShm+i;
-			g_mtReport.pMtShm->stLogShm[i].dwGetLogIndexStartTime = stNow.tv_sec;
-			break;
+	for(j=0; j < 10; j++) {
+		for(i=0; i < MTLOG_SHM_DEF_COUNT; i++) {
+			if(VARMEM_CAS_GET(&g_mtReport.pMtShm->stLogShm[i].bTryGetLogIndex)
+					|| stNow.tv_sec > g_mtReport.pMtShm->stLogShm[i].dwGetLogIndexStartTime+5) {
+				pShmLog = g_mtReport.pMtShm->stLogShm+i;
+				g_mtReport.pMtShm->stLogShm[i].dwGetLogIndexStartTime = stNow.tv_sec;
+				break;
+			}
 		}
+		if(i < MTLOG_SHM_DEF_COUNT)
+		    break;
+		usleep(1000);
 	}
+
 	if(pShmLog == NULL) {
 		va_start(ap, pszFmt);
 		iRet = MtReport_Log_To_Spec(iLogType, pszFmt, ap);

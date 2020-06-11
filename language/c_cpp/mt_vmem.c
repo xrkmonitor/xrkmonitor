@@ -43,6 +43,17 @@
 
 extern MtReport g_mtReport;
 
+inline time_t sv_GetCurTime() {
+	return time(NULL);
+}
+
+static inline int _MtReport_Flag_IsTimeout(VmemBufNodeFirst *pFirst)
+{
+	if(pFirst->dwUseFlagStartTime+2 < sv_GetCurTime())
+		return 1;
+	return 0;
+}
+
 int32_t MtReport_InitVmem()
 {
 	if(g_mtReport.cIsVmemInit)
@@ -112,7 +123,7 @@ static int32_t fun(const char *pdata, int32_t iDataLen) \
 { \
 	uint16_t wNeedCount = iDataLen/len + ((iDataLen%len) ? 1 : 0); \
 	uint16_t wPreIndex = 0, wFreeIndex = 0, wFirstIndex = 0;\
-	int32_t iReadBuf = 0, i = 0, iRet = -1, iScan = 0; \
+	int32_t iReadBuf = 0, i = 0, iRet = -101, iScan = 0; \
 \
 	VmemBufNodeFirst *pFirst = NULL; \
 	ntype *pNode = NULL; \
@@ -120,9 +131,9 @@ static int32_t fun(const char *pdata, int32_t iDataLen) \
 	for(i=0; i < VMEM_SHM_COUNT; i++) { \
 		pNode = g_mtReport.pshm[i]; \
 		pFirst = (VmemBufNodeFirst*)pNode; \
-		if(!VARMEM_CAS_GET(&(pFirst->bUseFlag))) \
+		if(!VARMEM_CAS_GET(&(pFirst->bUseFlag)) && !_MtReport_Flag_IsTimeout(pFirst)) \
 			continue; \
-\
+		pFirst->dwUseFlagStartTime = sv_GetCurTime(); \
 		if(pFirst->wNodeCount < pFirst->wNodeUsed+wNeedCount) { \
 			VARMEM_CAS_FREE(pFirst->bUseFlag); \
 			continue; \
@@ -323,8 +334,10 @@ int32_t MtReport_FreeVmem(int32_t index)
 	pFirst = (VmemBufNodeFirst*)pNode; \
 	if(nIdx >= pFirst->wNodeCount) \
 		return -2; \
-	if(VARMEM_CAS_GET(&(pFirst->bUseFlag))) \
+	if(VARMEM_CAS_GET(&(pFirst->bUseFlag)) || _MtReport_Flag_IsTimeout(pFirst)) { \
 		bUseFlagGet = 1; \
+		pFirst->dwUseFlagStartTime = sv_GetCurTime(); \
+	} \
 	do { \
 		iNextSave = pNode[nIdx].wNextNodeIndex; \
 		pNode[nIdx].bDataLen = 0; \

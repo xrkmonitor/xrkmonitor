@@ -181,16 +181,16 @@ static int CheckHashTable(SharedHashTable *phash)
 	int i=0;
 
 check_hash_try_next:
-	for(i=0; i < 100; i++)
+	for(i=0; i < 10; i++)
 	{
 		if(__sync_bool_compare_and_swap(&pTableHead->bHashUseFlag, 0, 1))
 		{
 			pTableHead->dwLastUseTimeSec = time(NULL);
 			break;
 		}
-		usleep(10);
+		usleep(1000);
 	}
-	if(i >= 100)
+	if(i >= 10)
 	{
 		MtReport_Attr_Spec(91, 1);
 		if(dwStartCheckTime+3 < (uint32_t)time(NULL))
@@ -199,7 +199,7 @@ check_hash_try_next:
 			exit(-1); 
 		}
 
-		if(dwStartCheckTime+1 < (uint32_t)time(NULL))
+		if(dwStartCheckTime+2 < (uint32_t)time(NULL))
 			pTableHead->bHashUseFlag = 0;
 		goto check_hash_try_next;
 	}
@@ -252,16 +252,16 @@ void ResetHashTable(SharedHashTable *phash)
 	int i=0;
 
 check_hash_try_next:
-	for(i=0; i < 100; i++)
+	for(i=0; i < 10; i++)
 	{
 		if(__sync_bool_compare_and_swap(&pTableHead->bHashUseFlag, 0, 1))
 		{
 			pTableHead->dwLastUseTimeSec = time(NULL);
 			break;
 		}
-		usleep(10);
+		usleep(1000);
 	}
-	if(i >= 100)
+	if(i >= 10)
 	{
 		MtReport_Attr_Spec(91, 1);
 		if(dwStartCheckTime+3 < (uint32_t)time(NULL))
@@ -270,7 +270,7 @@ check_hash_try_next:
 			exit(-1); 
 		}
 
-		if(dwStartCheckTime+1 < (uint32_t)time(NULL))
+		if(dwStartCheckTime+2 < (uint32_t)time(NULL))
 			pTableHead->bHashUseFlag = 0;
 		goto check_hash_try_next;
 	}
@@ -529,18 +529,18 @@ int32_t InsertHashNodeSort(SharedHashTable *phash, void *pNode)
 	}
 	else {
 		int  i=0;
-		for(; i < 100; i++)
+		for(; i < 10; i++)
 		{
 			if(__sync_bool_compare_and_swap(&pTableHead->bHashUseFlag, 0, 1))
 			{
 				pTableHead->dwLastUseTimeSec = time(NULL);
 				break;
 			}
-			usleep(10);
+			usleep(1000);
 		}
-		if(i >= 100)
+		if(i >= 10)
 		{
-			if(pTableHead->dwLastUseTimeSec+1 < (uint32_t)time(NULL))
+			if(pTableHead->dwLastUseTimeSec+2 < (uint32_t)time(NULL))
 				pTableHead->bHashUseFlag = 0;
 			MtReport_Attr_Spec(237, 1);
 			return -33;
@@ -633,18 +633,18 @@ int32_t InsertHashNodeAfter(SharedHashTable *phash, void *pNode, uint32_t dwInde
 	}
 	else {
 		int  i=0;
-		for(; i < 1000; i++)
+		for(; i < 10; i++)
 		{
 			if(__sync_bool_compare_and_swap(&pTableHead->bHashUseFlag, 0, 1))
 			{
 				pTableHead->dwLastUseTimeSec = time(NULL);
 				break;
 			}
-			usleep(10);
+			usleep(1000);
 		}
-		if(i >= 100)
+		if(i >= 10)
 		{
-			if(pTableHead->dwLastUseTimeSec+1 < (uint32_t)time(NULL))
+			if(pTableHead->dwLastUseTimeSec+2 < (uint32_t)time(NULL))
 				pTableHead->bHashUseFlag = 0;
 			MtReport_Attr_Spec(237, 1);
 			return -33;
@@ -690,18 +690,18 @@ int32_t InsertHashNode(SharedHashTable *phash, void *pNode)
 	}
 	else {
 		int  i=0;
-		for(; i < 100; i++)
+		for(; i < 10; i++)
 		{
 			if(__sync_bool_compare_and_swap(&pTableHead->bHashUseFlag, 0, 1))
 			{
 				pTableHead->dwLastUseTimeSec = time(NULL);
 				break;
 			}
-			usleep(10);
+			usleep(1000);
 		}
-		if(i >= 100)
+		if(i >= 10)
 		{
-			if(pTableHead->dwLastUseTimeSec+1 < (uint32_t)time(NULL))
+			if(pTableHead->dwLastUseTimeSec+2 < (uint32_t)time(NULL))
 				pTableHead->bHashUseFlag = 0;
 			MtReport_Attr_Spec(237, 1);
 			return -33;
@@ -751,18 +751,18 @@ int32_t RemoveHashNode(SharedHashTable *phash, void *pNode)
 	}
 	else {
 		int  i=0;
-		for(; i < 1000; i++)
+		for(; i < 10; i++)
 		{
 			if(__sync_bool_compare_and_swap(&pTableHead->bHashUseFlag, 0, 1))
 			{
 				pTableHead->dwLastUseTimeSec = time(NULL);
 				break;
 			}
-			usleep(10);
+			usleep(1000);
 		}
-		if(i >= 100)
+		if(i >= 10)
 		{
-			if(pTableHead->dwLastUseTimeSec+1 < (uint32_t)time(NULL))
+			if(pTableHead->dwLastUseTimeSec+2 < (uint32_t)time(NULL))
 				pTableHead->bHashUseFlag = 0;
 			MtReport_Attr_Spec(237, 1);
 			return -33;

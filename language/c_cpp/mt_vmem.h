@@ -88,7 +88,7 @@ void MtReport_show_shm();
 
 #pragma pack(1)
 
-// vmem 第一个节点
+// vmem 第一个节点, 大小不能超过 VmemBufNode16
 typedef struct
 {
 	uint16_t wNodeCount;
@@ -96,6 +96,7 @@ typedef struct
 	uint16_t wFreeNodeIndex;
 	volatile uint8_t bUseFlag;
 	uint16_t wScanFreeIndex;
+	uint32_t dwUseFlagStartTime;
 }VmemBufNodeFirst;
 
 typedef struct
