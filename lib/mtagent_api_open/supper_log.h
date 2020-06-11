@@ -55,6 +55,7 @@
 #include "sv_freq_ctrl.h"
 #include "sv_coredump.h"
 #include "sv_net.h"
+#include "sv_time.h"
 #include "comm.pb.h"
 #include "sv_struct.h"
 #include "mt_shared_hash.h"
@@ -107,7 +108,7 @@ typedef struct
 typedef struct 
 {
 	uint32_t dwReanInfoSeq;
-	uint32_t dwTryChangeStartTime;
+	uint32_t dwReserved;
 	uint8_t bTryChangeFlag;
 
 	uint32_t dwTotalAccTimes;
@@ -119,7 +120,6 @@ typedef struct
 	char szReserved[4096];
 	void Show() {
 		SHOW_FIELD_VALUE_UINT(dwReanInfoSeq);
-		SHOW_FIELD_VALUE_UINT_TIME(dwTryChangeStartTime);
 		SHOW_FIELD_VALUE_UINT(bTryChangeFlag);
 		SHOW_FIELD_VALUE_UINT(dwTotalAccTimes);
 		SHOW_FIELD_VALUE_UINT(dwTodayAccTimes);
@@ -1471,8 +1471,7 @@ typedef struct
 	uint32_t dwLogFreqStartTime; // 日志频率限制开始计算时间(按每分钟计)
 	int32_t iLogWriteCount; // 统计时间内已写入日志记录数
 
-	uint32_t dwTryLogIndexStartTime; 
-	char sLogReserved[232]; // 保留
+	char sLogReserved[236]; // 保留
 	TSLog sLogList[0]; // 该数组用作环形数组（注意：)
 
 	void Show() {
@@ -1932,6 +1931,7 @@ class CSupperLog: public StdLog, public IError
 		bool Run() {
 			m_iRand = rand();
 			gettimeofday(&m_stNow, 0);
+			sv_SetCurTime(m_stNow.tv_sec);
 			return !m_bExitProcess; 
 		}
 
@@ -1939,6 +1939,7 @@ class CSupperLog: public StdLog, public IError
 		bool TryRun() {
 			m_iRand = rand();
 			gettimeofday(&m_stNow, 0);
+			sv_SetCurTime(m_stNow.tv_sec);
 			if(m_bExitProcess) 
 				return (m_stNow.tv_sec <= m_dwRecvExitSigTime+m_iMaxExitWaitTime);
 			return true;

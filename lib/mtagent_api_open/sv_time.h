@@ -43,5 +43,8 @@ int32_t GetTimeDiffMs(char cIsStart);
 // 判断时间 t 是否是每天的 h 时, h 取值 0 - 23
 int IsTimeInDayHour(time_t t, int h);
 
+void sv_SetCurTime(time_t now);
+time_t sv_GetCurTime();
+
 #endif
 

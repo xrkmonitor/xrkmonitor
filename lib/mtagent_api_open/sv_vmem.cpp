@@ -40,11 +40,19 @@
 #include "sv_vmem.h"
 #include "sv_shm.h"
 #include "sv_str.h"
+#include "sv_time.h"
 #include "mt_report.h"
 
 VmemBuf g_mtReportVmem;
 
 static char s_sLocalBuf[VMEM_MAX_DATA_LEN+1];
+
+static inline int _MtReport_Flag_IsTimeout(VmemBufNodeFirst *pFirst)
+{
+	if(pFirst->dwUseFlagStartTime+2 < sv_GetCurTime())
+		return 1;
+	return 0;
+}
 
 int32_t MtReport_InitVmem_ByFlag(int iFlag, int iShmKey)
 {
@@ -81,7 +89,6 @@ int32_t MtReport_InitVmem_ByFlag(int iFlag, int iShmKey)
 		return -1; \
 	}
 
-	VMEM_INIT_SHM(VmemBufNode8, VMEM_8_NODE_COUNT, VMEM_SHM_CHECK_STR_8, pV8Shm, iShmKey)
 	VMEM_INIT_SHM(VmemBufNode16, VMEM_16_NODE_COUNT, VMEM_SHM_CHECK_STR_16, pV16Shm, iShmKey+1)
 	VMEM_INIT_SHM(VmemBufNode32, VMEM_32_NODE_COUNT, VMEM_SHM_CHECK_STR_32, pV32Shm, iShmKey+2)
 	VMEM_INIT_SHM(VmemBufNode64, VMEM_64_NODE_COUNT, VMEM_SHM_CHECK_STR_64, pV64Shm, iShmKey+3)
@@ -99,84 +106,6 @@ int32_t MtReport_InitVmem()
 	if(g_mtReportVmem.cIsInit)
 		return 1;
 	return MtReport_InitVmem_ByFlag(0666, VMEM_DEF_SHMKEY);
-}
-
-int MtReport_GetNextNodeLen(int iCurNodeLen)
-{
-	if(iCurNodeLen == 8)
-		return 16;
-	else if(iCurNodeLen == 16)
-		return 32;
-	else if(iCurNodeLen == 32)
-		return 64;
-	else if(iCurNodeLen == 64)
-		return 128;
-	else if(iCurNodeLen == 128)
-		return 255;
-	return 8;
-}
-
-int MtReport_GetNextArryIdx(int iCurArryIdx)
-{
-	iCurArryIdx++;
-	if(iCurArryIdx >= VMEM_SHM_COUNT)
-		return 0;
-	return iCurArryIdx;
-}
-
-int MtReport_ScanNode(int iNodeLen, int iArrIdx, int iNodeIdx, int iScanCount)
-{
-#define MA_SCAN_FREE_NODE(type, pshm) do { \
-	if(iArrIdx >= VMEM_SHM_COUNT) \
-		return 0; \
-	type *pNode = g_mtReportVmem.pshm[iArrIdx]; \
-	pFirst = (VmemBufNodeFirst*)pNode; \
-	if(!VARMEM_CAS_GET(&(pFirst->bUseFlag))) \
-		return -1; \
-	for(iScan = 0; iNodeIdx < pFirst->wNodeCount && iScan < iScanCount; iScan++) { \
-		if(pNode[iNodeIdx].wNextNodeIndex == pFirst->wNodeCount+1) { \
-			pNode[iNodeIdx].wNextNodeIndex = pFirst->wFreeNodeIndex; \
-			pFirst->wFreeNodeIndex = iNodeIdx; \
-			pFirst->wNodeUsed--; \
-			pFirst->wDelayFree--; \
-			if(pFirst->wNodeUsed <= 0) \
-				MtReport_Attr_Add(104, 1); \
-			MtReport_Attr_Add(106, 1); \
-		}\
-		iNodeIdx++; \
-	} \
-	VARMEM_CAS_FREE(pFirst->bUseFlag); \
-	if(iNodeIdx >= pFirst->wNodeCount) \
-		return 0; \
-	return 1; \
-}while(0)
-
-	int iScan = 0;
-	VmemBufNodeFirst *pFirst = NULL;
-	switch(iNodeLen) {
-		case 8:
-			MA_SCAN_FREE_NODE(VmemBufNode8, pV8Shm);
-			break;
-		case 16:
-			MA_SCAN_FREE_NODE(VmemBufNode16, pV16Shm);
-			break;
-		case 32:
-			MA_SCAN_FREE_NODE(VmemBufNode32, pV32Shm);
-			break;
-		case 64:
-			MA_SCAN_FREE_NODE(VmemBufNode64, pV64Shm);
-			break;
-		case 128:
-			MA_SCAN_FREE_NODE(VmemBufNode128, pV128Shm);
-			break;
-		case 255:
-			MA_SCAN_FREE_NODE(VmemBufNode255, pV255Shm);
-			break;
-		default:
-			break;
-	}
-#undef MA_SCAN_FREE_NODE
-	return 0;
 }
 
 #define VMEM_MAKE_IDEX32(iRet, len, t_idx, n_idx) do { \
@@ -221,9 +150,9 @@ static int32_t fun(const char *pdata, int32_t iDataLen) \
 	for(i=0; i < VMEM_SHM_COUNT; i++) { \
 		pNode = g_mtReportVmem.pshm[i]; \
 		pFirst = (VmemBufNodeFirst*)pNode; \
-		if(!VARMEM_CAS_GET(&(pFirst->bUseFlag))) \
+		if(!VARMEM_CAS_GET(&(pFirst->bUseFlag)) && !_MtReport_Flag_IsTimeout(pFirst)) \
 			continue; \
-\
+		pFirst->dwUseFlagStartTime = sv_GetCurTime(); \
 		if(pFirst->wNodeCount < pFirst->wNodeUsed+wNeedCount) { \
 			VARMEM_CAS_FREE(pFirst->bUseFlag); \
 			continue; \
@@ -252,7 +181,6 @@ static int32_t fun(const char *pdata, int32_t iDataLen) \
 	return iRet; \
 }
 
-__SAVE_DATA_TO_VMEM(_SaveToVmem8, 8, VmemBufNode8, pV8Shm)
 __SAVE_DATA_TO_VMEM(_SaveToVmem16, 16, VmemBufNode16, pV16Shm)
 __SAVE_DATA_TO_VMEM(_SaveToVmem32, 32, VmemBufNode32, pV32Shm)
 __SAVE_DATA_TO_VMEM(_SaveToVmem64, 64, VmemBufNode64, pV64Shm)
@@ -277,14 +205,10 @@ int32_t MtReport_SaveToVmem(const char *pdata, int32_t iDataLen)
 #define VMEM_SAVE_CHECK_64 4
 #define VMEM_SAVE_CHECK_32 8
 #define VMEM_SAVE_CHECK_16 16 
-#define VMEM_SAVE_CHECK_8 32 
 
 	int iRet = -1, iCheckFlag = 0;
 
 	// 优先尝试只使用一个节点保存，以便读取时可以不用拷贝数据
-	if(iRet < 0 && iDataLen <= 8) {
-		iRet = _SaveToVmem8(pdata, iDataLen);
-	}
 	if(iRet < 0 && iDataLen <= 16) {
 		iRet = _SaveToVmem16(pdata, iDataLen);
 	}
@@ -326,12 +250,7 @@ int32_t MtReport_SaveToVmem(const char *pdata, int32_t iDataLen)
 		iRet = _SaveToVmem16(pdata, iDataLen);
 		iCheckFlag |= VMEM_SAVE_CHECK_16;
 	}
-	if(iRet < 0 && iDataLen >= 8) {
-		iRet = _SaveToVmem8(pdata, iDataLen);
-		iCheckFlag |= VMEM_SAVE_CHECK_8;
-	}
 
-#undef VMEM_SAVE_CHECK_8
 #undef VMEM_SAVE_CHECK_16
 #undef VMEM_SAVE_CHECK_32
 #undef VMEM_SAVE_CHECK_64
@@ -391,9 +310,6 @@ int32_t MtReport_GetFromVmem(int32_t index, char *pbuf, int32_t *piBufLen)
 }while(0)
 
 	switch(len) {
-		case 8:
-			VMEM_GET_DATA(VmemBufNode8, pV8Shm);
-			break;
 		case 16:
 			VMEM_GET_DATA(VmemBufNode16, pV16Shm);
 			break;
@@ -470,9 +386,6 @@ const char *MtReport_GetFromVmemZeroCp(int32_t index, char *pbuf, int32_t *piBuf
 }while(0)
 
 	switch(len) {
-		case 8:
-			VMEM_GET_DATA_ZERO_CP(VmemBufNode8, pV8Shm);
-			break;
 		case 16:
 			VMEM_GET_DATA_ZERO_CP(VmemBufNode16, pV16Shm);
 			break;
@@ -540,8 +453,10 @@ int32_t MtReport_FreeVmem(int32_t index)
 		MtReport_Attr_Add(104, 1); \
 		return -2; \
 	} \
-	if(VARMEM_CAS_GET(&(pFirst->bUseFlag))) \
+	if(VARMEM_CAS_GET(&(pFirst->bUseFlag)) || _MtReport_Flag_IsTimeout(pFirst)) { \
 		bUseFlagGet = 1; \
+		pFirst->dwUseFlagStartTime = sv_GetCurTime(); \
+	} \
 	do { \
 		iNextSave = pNode[nIdx].wNextNodeIndex; \
 		if(pNode[nIdx].bDataLen <= 0) { \
@@ -568,9 +483,6 @@ int32_t MtReport_FreeVmem(int32_t index)
 }while(0)
 
 	switch(len) {
-		case 8:
-			VMEM_FREE_NODE(VmemBufNode8, pV8Shm);
-			break;
 		case 16:
 			VMEM_FREE_NODE(VmemBufNode16, pV16Shm);
 			break;
@@ -607,18 +519,6 @@ void MtReport_show_shm(int len, int idx)
 	VmemBufNodeFirst *pfirst = NULL;
 	for(; i < VMEM_SHM_COUNT; i++) {
 		printf("------------------- (%d) ------------------\n", i);
-		if((len == 0 || len == 8) && (idx < 0 || idx == i))
-		{
-			VmemBufNode8 *pNode8 = g_mtReportVmem.pV8Shm[i];
-			pfirst = (VmemBufNodeFirst*)pNode8;
-			printf("node8 - %d\n", i);
-			printf("node count:%d node use:%d delay free:%d free idx:%d uflag:%d scan:%d\n", pfirst->wNodeCount,
-					pfirst->wNodeUsed, pfirst->wDelayFree, pfirst->wFreeNodeIndex, pfirst->bUseFlag, pfirst->wScanFreeIndex);
-			printf("next-1:%d 2:%d 3:%d ... %d:%d\n", pNode8[1].wNextNodeIndex, pNode8[2].wNextNodeIndex,
-					pNode8[3].wNextNodeIndex, VMEM_8_NODE_COUNT-1, pNode8[VMEM_8_NODE_COUNT-1].wNextNodeIndex);
-			printf("\n\n");
-		}
-
 		if((len == 0 || len == 16) && (idx < 0 || idx == i))
 		{
 			VmemBufNode16 *pNode16 = g_mtReportVmem.pV16Shm[i];

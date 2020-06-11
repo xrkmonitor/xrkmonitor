@@ -34,6 +34,20 @@
 #include <time.h>
 #include "sv_time.h"
 
+time_t  g_cmm_cur_time = 0;
+
+void sv_SetCurTime(time_t now)
+{
+	g_cmm_cur_time = now;
+}
+
+time_t sv_GetCurTime()
+{
+	if(g_cmm_cur_time != 0)
+		return g_cmm_cur_time;
+	return time(NULL);
+}
+
 char * time_to_ISO8601(time_t t)
 {
 	static char s_ios[32];

@@ -63,16 +63,6 @@ int32_t MtReport_FreeVmem(int32_t index);
 // 取数据并释放索引指向的节点 - 成功返回 大于等于0， 失败返回小于 0
 int32_t MtReport_GetAndFreeVmem(int32_t index, char *pbuf, int32_t *piBufLen);
 
-// 扫描指定小组中的节点，将其中的空闲节点加入到小组空闲链表中
-// iNodeLen 节点长度 - 8, 16, 32 ... 255
-// iArrIdx  节点小组索引 0 - VMEM_SHM_COUNT
-// iNodeIdx  小组内节点索引 0 - xx_NODE_COUNT
-// iScanCount 要扫描的节点数目 
-// 返回码：-1 -- 未获取到竞争锁，0 -- 扫描完成， 1 -- 小组还有节点未扫描完成
-int MtReport_ScanNode(int iNodeLen, int iArrIdx, int iNodeIdx, int iScanCount);
-int MtReport_GetNextNodeLen(int iCurNodeLen);
-int MtReport_GetNextArryIdx(int iCurArryIdx);
-
 const char * MtReport_GetFromVmem_Local(int32_t index);
 const char * MtReport_GetFromVmem_Local2(int32_t index, int32_t *piDataLen);
 
@@ -80,7 +70,6 @@ void MtReport_show_shm(int len, int idx);
 
 // vmem 类型
 #define VMEM_DEF_SHMKEY 2013046000
-#define VMEM_SHM_CHECK_STR_8 "3dgtlog1234580l*"
 #define VMEM_SHM_CHECK_STR_16 "3dg2352332tsl*]YYYY"
 #define VMEM_SHM_CHECK_STR_32 "3dgtlog_dk##Asyyyssl*]"
 #define VMEM_SHM_CHECK_STR_64 "3@tlog_dk##ADlslgdjk*]"
@@ -96,7 +85,6 @@ void MtReport_show_shm(int len, int idx);
 #define VMEM_NODE_COUNT_MAX 65000
 
 // count 不能超过 VMEM_NODE_COUNT_MAX 
-#define VMEM_8_NODE_COUNT 64000
 #define VMEM_16_NODE_COUNT 30000
 #define VMEM_32_NODE_COUNT 30000
 #define VMEM_64_NODE_COUNT 40000
@@ -105,7 +93,7 @@ void MtReport_show_shm(int len, int idx);
 
 #pragma pack(1)
 
-// vmem 第一个节点, VmemBufNodeFirst 不能超过 VmemBufNode8 大小
+// vmem 第一个节点, VmemBufNodeFirst 不能超过 VmemBufNode16 大小
 typedef struct
 {
 	uint16_t wNodeCount;
@@ -114,14 +102,8 @@ typedef struct
 	uint16_t wFreeNodeIndex;
 	volatile uint8_t bUseFlag;
 	uint16_t wScanFreeIndex; // 空闲节点扫描索引
+	uint32_t dwUseFlagStartTime;
 }VmemBufNodeFirst;
-
-typedef struct
-{
-	uint16_t wNextNodeIndex;
-	uint8_t bDataLen;
-	uint8_t sDataBuf[8];
-}VmemBufNode8;
 
 typedef struct
 {
@@ -161,7 +143,6 @@ typedef struct
 typedef struct
 {
 	int8_t cIsInit;
-	VmemBufNode8 *pV8Shm[VMEM_SHM_COUNT];
 	VmemBufNode16 *pV16Shm[VMEM_SHM_COUNT];
 	VmemBufNode32 *pV32Shm[VMEM_SHM_COUNT];
 	VmemBufNode64 *pV64Shm[VMEM_SHM_COUNT];

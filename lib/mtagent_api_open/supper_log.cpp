@@ -3858,20 +3858,12 @@ int CSupperLog::InitChangeRealInfoShm()
 	for(int i = 0; i < 100; i++)
 	{
 		if(__sync_bool_compare_and_swap(&(m_pShmConfig->stSysCfg.stRealInfoShm.bTryChangeFlag), 0, 1)) {
-			m_pShmConfig->stSysCfg.stRealInfoShm.dwTryChangeStartTime = slog.m_stNow.tv_sec;
 			return 0;
 		}
-		usleep(10);
+		usleep(1000);
 	}
-	if(m_pShmConfig->stSysCfg.stRealInfoShm.dwTryChangeStartTime+5 < slog.m_stNow.tv_sec) {
-		FATAL_LOG("TRealTimeInfoShm flag check failed, time info:%u - %lu",
-			m_pShmConfig->stSysCfg.stRealInfoShm.dwTryChangeStartTime, slog.m_stNow.tv_sec);
-		m_pShmConfig->stSysCfg.stRealInfoShm.dwTryChangeStartTime = slog.m_stNow.tv_sec;
-		return 0;
-	}
-	
-	FATAL_LOG("try change TRealTimeInfoShm failed !");
-	return -1;
+	FATAL_LOG("check flag:bTryChangeFlag failed!");
+	return 0;
 }
 
 void CSupperLog::EndChangeRealInfoShm()
@@ -3889,17 +3881,12 @@ int CSupperLog::InitGetShmLogIndex(TSLogShm *pShmLog)
 	for(int i = 0; i < 100; i++)
 	{
 		if(__sync_bool_compare_and_swap(&pShmLog->bTryGetLogIndex, 0, 1)) {
-			pShmLog->dwTryLogIndexStartTime = slog.m_stNow.tv_sec;
 			return 0;
 		}
-		usleep(10);
+		usleep(1000);
 	}
-	if(pShmLog->dwTryLogIndexStartTime+5 < slog.m_stNow.tv_sec) {
-		// 可能是程序异常退出导致 未释放, 这里直接返回可用
-		pShmLog->dwTryLogIndexStartTime = slog.m_stNow.tv_sec;
-		return 0;
-	}
-	return -1;
+	//MtReport_Attr_Add(85, 1);
+	return 0;
 }
 
 void CSupperLog::EndGetShmLogIndex(TSLogShm *pShmLog)
@@ -4061,7 +4048,9 @@ TSLogShm* CSupperLog::GetAppLogShm(AppInfo *pAppShmInfo, bool bTryCreate)
 	int32_t iShmKey = pAppShmInfo->iAppLogShmKey;
 	if(bTryCreate && iShmKey == 0) 
 	{
-		if(!__sync_bool_compare_and_swap(&pAppShmInfo->bTryAppLogShmFlag, 0, 1))
+		int i = 0;
+		for(i=0; i < 100 
+			&& !__sync_bool_compare_and_swap(&pAppShmInfo->bTryAppLogShmFlag, 0, 1); i++)
 		{
 			usleep(1000);
 			if(pAppShmInfo->iAppLogShmKey == 0 
@@ -4080,16 +4069,17 @@ TSLogShm* CSupperLog::GetAppLogShm(AppInfo *pAppShmInfo, bool bTryCreate)
 				iShmKey = pAppShmInfo->iAppLogShmKey;
 				INFO_LOG("get app log shm by other, appid:%d, flag:%u, iAppLogShmKey:%d",
 					pAppShmInfo->iAppId, pAppShmInfo->dwAppLogFlag, iShmKey);
-			}
-			else {
-				// 某个探测程序中途被终止了，可能跑到这里
-				INFO_LOG("get app log shm failed, appid:%d, flag:%u, try:%d",
-					pAppShmInfo->iAppId, pAppShmInfo->dwAppLogFlag, pAppShmInfo->bTryAppLogShmFlag);
-				pAppShmInfo->bTryAppLogShmFlag = 0;
-				return NULL;
+				break;
 			}
 		}
-		else
+
+		if(i >= 100) {
+			// 某个探测程序中途被终止了，可能跑到这里
+			INFO_LOG("get app log shm failed, appid:%d, flag:%u, try:%d",
+				pAppShmInfo->iAppId, pAppShmInfo->dwAppLogFlag, pAppShmInfo->bTryAppLogShmFlag);
+		}
+
+		if(iShmKey == 0)
 		{
 			CLEAR_BIT(pAppShmInfo->dwAppLogFlag, APPLOG_FLAG_SHMKEY_USE_ADD);
 			CLEAR_BIT(pAppShmInfo->dwAppLogFlag, APPLOG_FLAG_SHMKEY_USE_SUB);
@@ -4177,7 +4167,7 @@ TSLogShm* CSupperLog::GetAppLogShm(AppInfo *pAppShmInfo, bool bTryCreate)
 		}
 	}while(true);
 	pAppShmInfo->bTryAppLogShmFlag = 0;
-	MtReport_Attr_Add(88, 1);
+	//MtReport_Attr_Add(88, 1);
 	return NULL;
 }
 
@@ -4407,9 +4397,11 @@ SLogFile * CSLogServerWriteFile::GetAppLogFileShm(AppInfo *pAppShmInfo, bool bTr
 	int32_t iShmKey = pAppShmInfo->iAppLogFileShmKey;
 	if(bTryCreate && iShmKey == 0)
 	{
-		if(!__sync_bool_compare_and_swap(&pAppShmInfo->bTryAppLogFileShmFlag, 0, 1))
+		int i=0;
+		for(i=0; i < 100
+			&& !__sync_bool_compare_and_swap(&pAppShmInfo->bTryAppLogFileShmFlag, 0, 1); i++)
 		{
-			usleep(100);
+			usleep(1000);
 			if(pAppShmInfo->iAppLogFileShmKey == 0 
 				&& IS_SET_BIT(pAppShmInfo->dwAppLogFlag, APPLOG_FILE_FLAG_SHMKEY_USE_ADD)
 				&& IS_SET_BIT(pAppShmInfo->dwAppLogFlag, APPLOG_FILE_FLAG_SHMKEY_USE_SUB)
@@ -4426,16 +4418,17 @@ SLogFile * CSLogServerWriteFile::GetAppLogFileShm(AppInfo *pAppShmInfo, bool bTr
 				iShmKey = pAppShmInfo->iAppLogFileShmKey;
 				INFO_LOG("get app log file shm by other, appid:%d, flag:%u, iAppLogFileShmKey:%d",
 					pAppShmInfo->iAppId, pAppShmInfo->dwAppLogFlag, iShmKey);
-			}
-			else {
-				// 某个探测程序中途被终止了，可能跑到这里
-				INFO_LOG("get app log file shm failed, appid:%d, flag:%u",
-					pAppShmInfo->iAppId, pAppShmInfo->dwAppLogFlag);
-				pAppShmInfo->bTryAppLogFileShmFlag = 0;
-				return NULL;
+				break;
 			}
 		}
-		else
+
+		if(i >= 100) {
+			// 某个探测程序中途被终止了，可能跑到这里
+			INFO_LOG("get app log file shm failed, appid:%d, flag:%u",
+				pAppShmInfo->iAppId, pAppShmInfo->dwAppLogFlag);
+		}
+
+		if(iShmKey == 0)
 		{
 			CLEAR_BIT(pAppShmInfo->dwAppLogFlag, APPLOG_FILE_FLAG_SHMKEY_USE_ADD);
 			CLEAR_BIT(pAppShmInfo->dwAppLogFlag, APPLOG_FILE_FLAG_SHMKEY_USE_SUB);
@@ -5743,13 +5736,10 @@ int CSupperLog::InitGetMailShmLock(TCommSendMailInfoShm *pshm)
 	{
 		if(__sync_bool_compare_and_swap(&pshm->bLockGetShm, 0, 1))
 			break;
-		usleep(10);
+		usleep(1000);
 	}
 	if(i >= 100)
-	{
-		MtReport_Attr_Add(222, 1);
-		return SLOG_ERROR_LINE;
-	}
+		ERR_LOG("check flag:bLockGetShm mail failed");
 	return 0;
 }
 
