@@ -276,7 +276,7 @@ void CheckViewWarn(TWarnConfig *pWarnConfig, list<TAttrWarnInfo> &listWarn, uint
 			wInfo.iAttrId, wInfo.iWarnConfigValue, wInfo.dwWarnValue, wInfo.iWarnId);
 	}
 
-	if(pWarnConfig->iWarnConfigFlag & ATTR_WARN_FLAG_WAVE)
+	if((pWarnConfig->iWarnConfigFlag & ATTR_WARN_FLAG_WAVE) && dwPreLastVal > 0)
 	{
 		int w = (abs((int)(dwLastVal-dwPreLastVal))*100) / dwPreLastVal;
 		if(w > pWarnConfig->iWarnWave) {
