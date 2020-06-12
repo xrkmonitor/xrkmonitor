@@ -302,17 +302,11 @@ inline bool IsBasicAttr(int iAttrId)
     return false;
 }
 
-void CheckMachineWarn(TWarnConfig *pWarnConfig, 
+void CheckMachineWarn(MachineInfo *pMachineInfo, TWarnConfig *pWarnConfig, 
 	TWarnAttrReportInfo *pNode, list<TAttrWarnInfo> &listWarn, uint32_t now, int iDayMinIdx)
 {
 	uint32_t dwLastVal=0, dwPreLastVal=0;
 	AdaptReportValue(pNode, now, iDayMinIdx, dwLastVal, dwPreLastVal);
-	MachineInfo *pMachineInfo = slog.GetMachineInfo(pWarnConfig->iWarnId, NULL);
-	if(pMachineInfo == NULL) {
-		ERR_LOG("not find machine:%d", pWarnConfig->iWarnId);
-		return;
-	}
-
 	if((pWarnConfig->iWarnConfigFlag & ATTR_WARN_FLAG_MIN) && dwLastVal < (uint32_t)pWarnConfig->iWarnMin)
 	{
 		TAttrWarnInfo wInfo;
@@ -577,13 +571,24 @@ void CheckAttrWarn(uint32_t now)
 	}
 
 	TWarnConfig *pWarnConfig = NULL;
+	MachineInfo *pMachineInfo = NULL;
 	while(pNode != NULL)
 	{
+		pMachineInfo = slog.GetMachineInfo(pWarnConfig->iWarnId, NULL);
+		if(pMachineInfo == NULL) {
+			ERR_LOG("not find machine:%d", pWarnConfig->iWarnId);
+			if(bReverse)
+				pNode = (TWarnAttrReportInfo*)GetNextNodeRevers(&hash);
+			else
+				pNode = (TWarnAttrReportInfo*)GetNextNode(&hash);
+			continue;
+		}
+
 		// 单机告警 check
 		pWarnConfig = slog.GetWarnConfigInfo(pNode->iMachineId, pNode->iAttrId, NULL);
 		if(pWarnConfig != NULL) 
 		{
-			CheckMachineWarn(pWarnConfig, pNode, listWarn, now, iDayMinIdx);
+			CheckMachineWarn(pMachineInfo, pWarnConfig, pNode, listWarn, now, iDayMinIdx);
 		}
 
 		// 异常属性告警 check
@@ -602,8 +607,15 @@ void CheckAttrWarn(uint32_t now)
 					TAttrWarnInfo wInfo;
 					// 异常属性告警,归类到单机告警,打上单机标记
 					wInfo.iWarnFlag = ATTR_WARN_FLAG_TYPE_MACHINE|ATTR_WARN_FLAG_EXCEPTION;
-					if(pWarnConfig->iWarnConfigFlag & ATTR_WARN_FLAG_MASK_WARN)
-						wInfo.iWarnFlag |= ATTR_WARN_FLAG_MASK_WARN;
+
+					if((pWarnConfig->iWarnConfigFlag & ATTR_WARN_FLAG_MASK_WARN)
+						|| (pMachineInfo->bWarnFlag & MACH_WARN_DENY_ALL)
+						|| ((pMachineInfo->bWarnFlag & MACH_WARN_DENY_EXCEPT)
+							&& (pWarnConfig->iWarnConfigFlag&ATTR_WARN_FLAG_EXCEPTION))
+						|| ((pMachineInfo->bWarnFlag & MACH_WARN_DENY_BASIC) && IsBasicAttr(pNode->iAttrId)))
+					{
+						    wInfo.iWarnFlag |= ATTR_WARN_FLAG_MASK_WARN;
+					}
 
 					wInfo.iWarnId = pNode->iMachineId;
 					wInfo.iAttrId = pNode->iAttrId;
