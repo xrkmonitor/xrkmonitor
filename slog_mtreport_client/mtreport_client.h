@@ -256,6 +256,9 @@ typedef struct
 	int iConfigSocketIndex;
 	int iLogSocketIndex;
 
+	int iMaxRunMins;
+	int iDisablePlus;
+
 	// 重启进程更新全部配置标记
 	uint32_t dwRestartFlag;
 	bool bCheckHelloStart;

@@ -372,6 +372,8 @@ static int Init()
 			"./slog_mtreport_client.log", MYSIZEOF(stConfig.szLocalLogFile),
 		"CLIENT_LOCAL_LOG_TYPE", CFG_STRING, szTypeString, "warn|error|fatal", MYSIZEOF(szTypeString),
 		"CLIENT_LOCAL_LOG_SIZE", CFG_INT, &stConfig.iMaxLocalLogFileSize, 1024*1024*20,
+		"DISABLE_PLUGIN", CFG_INT, &stConfig.iDisablePlus, 0,
+		"MAX_RUN_MINS", CFG_INT, &stConfig.iMaxRunMins, 7*24*3600,
 		(void*)NULL)) < 0)
 	{   
 		printf("read config failed, from config file:%s\n", MTREPORT_CONFIG);
@@ -382,8 +384,8 @@ static int Init()
 	stConfig.fpLogFile = NULL;
 	TryReOpenLocalLogFile();
 
-	INFO_LOG("write log limit per sec:%d, type:%d, type str:%s", 
-		stConfig.iLogLimitPerSec, stConfig.iLocalLogType, szTypeString);
+	INFO_LOG("write log limit per sec:%d, type:%d, type str:%s, max run time mins:%d", 
+		stConfig.iLogLimitPerSec, stConfig.iLocalLogType, szTypeString, stConfig.iMaxRunMins);
 
 	gettimeofday(&stConfig.stTimeCur, NULL);
 	stConfig.dwCurTime = stConfig.stTimeCur.tv_sec;
@@ -1671,7 +1673,7 @@ int MonitorBusiProcess(int subPid, int argc)
 	int iKillSubPidCount = 0;
 
 	// 加载插件列表
-	if(LoadAllPlus() < 0) {
+	if(!stConfig.iDisablePlus && LoadAllPlus() < 0) {
 		FinishAllPlus();
 		stConfig.pReportShm->cIsAgentRun = 0;
 		return 0;
@@ -1680,7 +1682,9 @@ int MonitorBusiProcess(int subPid, int argc)
 	while(iKillSubPidCount < 10) {
 		usleep(10000);
 		stConfig.dwCurTime = time(NULL);
-		RunAllPlus();
+
+		if(!stConfig.iDisablePlus)
+			RunAllPlus();
 
 		int iStatus = 0;
 		int iPid = waitpid(-1, &iStatus, WNOHANG);
@@ -1766,7 +1770,7 @@ int main(int argc, char* argv[])
 			return -1;
 		}
 		else {
-			DEBUG_LOG("sub process:%d start", iPid);
+			DEBUG_LOG("sub process:%d start", getpid());
 			break;
 		}
 	}while(true);
@@ -1823,6 +1827,13 @@ int main(int argc, char* argv[])
 		if(stConfig.bCheckHelloStart && !IsHelloValid())
 		{
 			ERROR_LOG("%s", "hello invalid , process will restart ");
+			stConfig.pReportShm->cIsAgentRun = 2;
+			break;
+		}
+
+		if(stConfig.iMaxRunMins*60+stConfig.pReportShm->dwClientProcessStartTime <= stConfig.dwCurTime)
+		{
+			INFO_LOG("run over time limits:%d mins, try restart sub process", stConfig.iMaxRunMins);
 			stConfig.pReportShm->cIsAgentRun = 2;
 			break;
 		}
