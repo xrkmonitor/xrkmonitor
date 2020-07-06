@@ -60,13 +60,6 @@ if (!window.localStorage) {
   window.localStorage.length = (document.cookie.match(/\=/g) || window.localStorage).length;
 }
 
-function djShowConnectInfo()
-{
-	var op = { mask:true, maxable:false, height:400, width:420, resizable:false, drawable:true };
-	$.pdialog.openLocal(
-		'df_dlg_show_connect', 'df_dlg_show_connect', '<i class="icon-handshake-o icon-2x icon-fw"></i>联系我们', op);
-}
-
 function djOnReadyOk()
 {
 	// 主页相关逻辑
