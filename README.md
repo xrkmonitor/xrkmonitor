@@ -100,8 +100,6 @@
 
 
 ### 联系我们
-QQ 群 699014295 (加群密码：xrkmonitor):   
-![字符云监控系统QQ群](http://xrkmonitor.com/monitor/main/img/new_qq_group.png)  
 
 微信公众号:   
 ![字符云监控系统微信公众号](http://xrkmonitor.com/monitor/main/img/main_wx_qrcode.jpg)  
