@@ -1288,7 +1288,7 @@ int DealRefreshMainInfo(CGI *cgi)
 	std::multimap<int, AttrTypeInfo*, greater<int> >::iterator it = mpAttr.begin();
 	std::string strAttrInfo;
 	int iAttrCount = 0;
-	for(int i=0; i < 8 && it != mpAttr.end(); it++, i++)
+	for(int i=0; i < 7 && it != mpAttr.end(); it++, i++)
 	{
 		Json jsattr;
 		AttrTypeInfo *pInfo = it->second;
@@ -1320,7 +1320,7 @@ int DealRefreshMainInfo(CGI *cgi)
 	std::multimap<uint32_t, AppInfo*, greater<uint32_t> >::iterator itApp = mpApp.begin();
 	std::string strAppDiskInfo;
 	uint32_t dwAppDiskUse = 0;
-	for(int i=0; i < 8 && itApp != mpApp.end(); itApp++, i++)
+	for(int i=0; i < 7 && itApp != mpApp.end(); itApp++, i++)
 	{
 		Json jsapp;
 		AppInfo* pInfo = itApp->second;
