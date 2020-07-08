@@ -1288,6 +1288,7 @@ int DealRefreshMainInfo(CGI *cgi)
 	std::multimap<int, AttrTypeInfo*, greater<int> >::iterator it = mpAttr.begin();
 	std::string strAttrInfo;
 	int iAttrCount = 0;
+	static std::string s_strType("监控点类型-");
 	for(int i=0; i < 7 && it != mpAttr.end(); it++, i++)
 	{
 		Json jsattr;
@@ -1296,9 +1297,9 @@ int DealRefreshMainInfo(CGI *cgi)
 		if(!stConfig.iDisableVmemCache)
 			pTypeName = GetAttrTypeNameFromVmem(pInfo->id, stConfig);
 		if(pTypeName == NULL)
-			jsattr["name"] = std::string("监控点类型-")+itoa(pInfo->id);
+			jsattr["name"] = s_strType+itoa(pInfo->id);
 		else
-			jsattr["name"] = pTypeName;
+			jsattr["name"] = std::string(pTypeName) + "(" + itoa(pInfo->id)+")";
 		jsattr["value"] = pInfo->wAttrCount;
 		iAttrCount += pInfo->wAttrCount;
 		js["attr_info"].Add(jsattr);

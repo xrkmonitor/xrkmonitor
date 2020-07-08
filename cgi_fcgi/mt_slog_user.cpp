@@ -631,6 +631,11 @@ static int DealUserCenter()
 	hdf_set_int_value(stConfig.cgi->hdf, "config.user_id", pUserInfo->iUserId);
 	hdf_set_value(stConfig.cgi->hdf, "config.user_name", pUserInfo->szUserName);
 
+	uint32_t dwExpireTime = pUserInfo->dwLastAccessTime+pUserInfo->iLoginExpireTime;
+	if(dwExpireTime > pUserInfo->dwLoginTime+LOGIN_MAX_EXPIRE_TIME)
+        dwExpireTime = pUserInfo->dwLoginTime+LOGIN_MAX_EXPIRE_TIME;
+	hdf_set_value(stConfig.cgi->hdf, "config.login_expire_time", uitodate(dwExpireTime));
+
 	user::UserSessionInfo & user = stConfig.stUser.pbSess;
 	if(user.email().size() > 0)
 		hdf_set_value(stConfig.cgi->hdf, "config.user_email", DumpStrByMask2(user.email().c_str()));
