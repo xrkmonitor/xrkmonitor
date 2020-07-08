@@ -1,56 +1,15 @@
 <div class="pageContent" layoutH="28">
-	<div id='accountUseExp' style='width:300px; margin:15px 20px; float:left; height:300px;'>
-		<div class="panel" align='center' style='margin-top:2px;'>
-			<table width="100%" align='center' class="list" style="margin-top:1px">
-				<thead>
-					<tr>
-						<th colspan="2" class='list_table_title'>
-						账号概况
-						</th>
-					</tr>
-				</thead>
-				<tbody>
-				<tr>
-					<td class='mainPageTdName'>账号类型</td>
-					<td class='mainPageTdVal' id='dc_utype'><?cs var:config.type_name ?></td>
-				</tr>
-				<tr>
-					<td class='mainPageTdName'>已配置上报机器数</td>
-					<td class='mainPageTdVal' id="dc_umachine"></td>
-				</tr>
-				<tr>
-					<td class='mainPageTdName'>已创建应用数</td>
-					<td class='mainPageTdVal' id="dc_uapp"></td>
-				</tr>
-				<tr>
-					<td class='mainPageTdName'>已创建模块数</td>
-					<td class='mainPageTdVal' id="dc_umodule"></td>
-				</tr>
-				<tr>
-					<td class='mainPageTdName'>已使用磁盘空间</td>
-					<td class='mainPageTdVal' id="dc_udisk"></td>
-				</tr>
-				<tr>
-					<td class='mainPageTdName'>已上报日志记录数</td>
-					<td class='mainPageTdVal' id="dc_ulogrecords"></td>
-				</tr>
-				<tr>
-					<td class='mainPageTdName'>已创建监控点数</td>
-					<td class='mainPageTdVal' id="dc_uattr"></td>
-				</tr>
-				<tr>
-					<td class='mainPageTdName'>当前登陆有效期至</td>
-					<td class='mainPageTdVal'><?cs var:config.login_expire_time ?></td>
-				</tr>
-				<tr>
-					<td class='mainPageTdName'></td>
-					<td />
-				</tr>
-				</tbody>
-			</table>
+	<div id='mainResUseStatus' style='width:600px; height:400px; margin:10px 20px; float:left;'>
+		<div align='center'>
+			<font style='color:#000; font-size:17px;font-weight:bold; text-align:center;'>监控系统使用概况</font>	
 		</div>
+		<div id='mainResMachine' class='mainPageRes'></div>
+		<div id='mainWarnDealing' class='mainPageRes'></div>
+		<div id='mainWarnUnDeal' class='mainPageRes'></div>
+		<div id='mainResApp' class='mainPageRes'></div>
+		<div id='mainResLogs' class='mainPageRes'></div>
+		<div id='mainResDisk' class='mainPageRes'></div>
 	</div>
-	<div id='mainResourceUse' class='mainPageChart'></div>
 	<div id='mainChartAttr' class='mainPageChart'></div>
 	<div id='mainChartDisk' class='mainPageChart'></div>
 </div>
@@ -78,12 +37,11 @@
 
 <script language="javascript" type="text/javascript">
 var g_dcAppInfoAddr = 'local'; //'<?cs var:config.app_info_addr ?>';
-var g_dcChartResourceUse = null;
 var g_dcChartDiskUse = null;
 var g_dcChartAttrUse = null;
 
 var g_dcChartMinWidth = 420;
-var g_dcMainPageInfoWidth = 300;
+var g_dcMainInfoWidthFix = 600; // 等于 id mainResUseStatus 的 width
 var g_dcMainChartWidth = 420;
 var g_dcMainFirstChartWidth = 420;
 var g_dcMainFirstChartCount = 0;
@@ -100,20 +58,11 @@ function dcOnMainPage(idx)
 
 function dcMainPageRedrawChart()
 {
-	if($('#mainResourceUse').css('width') == g_dcMainChartWidth)
+	if($('#mainChartAttr').css('width') == g_dcMainChartWidth)
 		return;
 
-	if(g_dcChartResourceUse != null) {
+	if(g_dcChartAttrUse != null) {
 		if(g_dcMainFirstChartCount > 0) {
-			$('#mainResourceUse').css('width', g_dcMainFirstChartWidth);
-			g_dcChartResourceUse.resize();
-		}
-		else {
-			$('#mainResourceUse').css('width', g_dcMainChartWidth);
-			g_dcChartResourceUse.resize();
-		}
-
-		if(g_dcMainFirstChartCount > 1) {
 			$('#mainChartAttr').css('width', g_dcMainFirstChartWidth);
 			g_dcChartAttrUse.resize();
 		}
@@ -122,7 +71,7 @@ function dcMainPageRedrawChart()
 			g_dcChartAttrUse.resize();
 		}
 
-		if(g_dcMainFirstChartCount > 2) {
+		if(g_dcMainFirstChartCount > 1) {
 			$('#mainChartDisk').css('width', g_dcMainFirstChartWidth);
 			g_dcChartDiskUse.resize();
 		}
@@ -152,8 +101,8 @@ function dcMainPageSetChartSize()
 		var xBlank = dmtMathtrunc(xLeft/xCount);
 		g_dcMainChartWidth = g_dcChartMinWidth+xBlank;
 
-		// 第一行的图表宽度计算，需要减去表格的占用
-		iContentW -= g_dcMainPageInfoWidth+20+20;
+		// 第一行的图表宽度计算，需要减去固定宽度的占用
+		iContentW -= g_dcMainInfoWidthFix+20+20;
 		xLeft = iContentW % xWidth;
 		xCount = dmtMathtrunc(iContentW/xWidth);
 		if(xCount > 0) {
@@ -161,6 +110,8 @@ function dcMainPageSetChartSize()
 			g_dcMainFirstChartWidth = g_dcChartMinWidth+xBlank;
 			g_dcMainFirstChartCount = xCount;
 		}
+		else 
+			g_dcMainFirstChartCount = 0;
 	}
 }
 
@@ -173,15 +124,8 @@ function dcSetAttrInfoEChart(result)
 		},
 		tooltip: {
 			trigger:'item',
+			confine:true,
 			formatter: '{a} <br/>{b} : {c} ({d}%)'
-		},
-		legend : {
-			type:'scroll',
-			padding:[5,20,30,20],
-			orient: 'horizontal',
-			left:'center',
-			top:'bottom',
-			show:true
 		},
 		grid: {
 		},
@@ -190,17 +134,17 @@ function dcSetAttrInfoEChart(result)
 				type:'pie',
 				name:'自定义监控点',
 				radius:'75%',
-				center:['50%', '45%'],
+				center:['50%', '52%'],
 				data:[],
 				label: { 
-					show: false,
+					show: true,
 	        		normal: {
             	        show: false,
-            	        position: 'outside'
+            	        position: 'inside'
             	    },
             	    emphasis: {
             	        show: false,
-            	    }
+            	    },
             	},
 				itemStyle: {
 					emphasis: {
@@ -214,7 +158,8 @@ function dcSetAttrInfoEChart(result)
 	};
 
 	op.series[0].data = result.attr_info;
-	if(g_dcMainFirstChartCount > 1)
+	op.series[0].label = { show: true, formatter: '{b}：{d}%' };
+	if(g_dcMainFirstChartCount > 0)
 		$('#mainChartAttr').css('width', g_dcMainFirstChartWidth);
 	else
 		$('#mainChartAttr').css('width', g_dcMainChartWidth);
@@ -230,19 +175,11 @@ function dcSetAppDiskInfoEChart(result)
 	var op = {
 		title: {
 			x: 'center',
-			text:'日志系统磁盘空间使用分布（>=1K）'
+			text:'日志系统磁盘空间使用分布'
 		},
 		tooltip: {
 			trigger:'item',
-			formatter: '{a} <br/>{b} : {c} ({d}%)'
-		},
-		legend : {
-			type:'scroll',
-			padding:[5,20,30,20],
-			orient: 'horizontal',
-			left:'center',
-			top:'bottom',
-			show:true
+			formatter: '{a}: {b} <br />{c} MB ({d}%)'
 		},
 		grid: {
 		},
@@ -251,12 +188,13 @@ function dcSetAppDiskInfoEChart(result)
 				type:'pie',
 				name:'应用名称',
 				radius:'75%',
-				center:['50%', '45%'],
+				center:['50%', '52%'],
 				data:[],
 				label: { 
-					show: false,
+					show: true,
 	        		normal: {
-            	        show: false,
+            	        show: true,
+            	        position: 'inside'
             	    },
             	    emphasis: {
             	        show: false,
@@ -274,7 +212,8 @@ function dcSetAppDiskInfoEChart(result)
 	};
 
 	op.series[0].data = result.app_disk_info;
-	if(g_dcMainFirstChartCount > 2)
+	op.series[0].label = { show: true, formatter: '{b}：{d}%' };
+	if(g_dcMainFirstChartCount > 1)
 		$('#mainChartDisk').css('width', g_dcMainFirstChartWidth);
 	else
 		$('#mainChartDisk').css('width', g_dcMainChartWidth);
@@ -285,77 +224,142 @@ function dcSetAppDiskInfoEChart(result)
 	g_dcChartDiskUse.setOption(op);
 }
 
-function dcSetResourceUseEChart(valUse, valNotUse)
+
+function dcGetResourceUsePieOption(c_text, c_subtext, c_val, c_name, c_colors, c_items) 
 {
-	var op = {
-		title: {
-			x:'center',
-			text:'账号资源使用概况'
-		},
-		tooltip: {
-			trigger:'axis',
-			axisPointer: {
-				axis:'x',
-				label: {
-					formatter:function(p) {
-						return '资源名称：'+p.value;
-		  			}
-				},
-				type:'shadow'
-			}
-		},
-		legend : {
-			top:'top',
-			left:'right',
-			padding:[5,20,30,20],
-			show:true
-		},
-	    xAxis: {
-			axisTick: {
-				interval:0
-			},
-			axisLabel: {
-				verticalAlign:'top'
-			},
-			type: 'category', 
-			data: ['应用', '模块', '监控点', '上报机器', '磁盘空间(M)']
+	var subtext_color = 'blue';
+	if(c_colors.length > 4)
+		subtext_color = c_colors[4];
+	if(typeof c_items != 'undefined')
+		subtext_color = '#004444';
+	var pie_option = {
+	    title: {
+	        text: c_text,
+			subtext: c_subtext,
+	        left: 'center',
+	        top: 'center',
+	        textStyle: {
+	            color: '#044',
+	            fontSize: 14,
+	            fontFamily: 'PingFangSC-Regular'
+	        },
+        	subtextStyle: {
+        	    color: subtext_color,
+        	    fontSize: typeof c_items != 'undefined' ? 14 : 18,
+        	    fontFamily: 'PingFangSC-Regular',
+				fontWeight: 'bold',
+        	    top: 'center'
+        	},
+			itemGap: typeof c_items != 'undefined' ? 4 : -1
 	    },
-		yAxis: [ 
-			{
-				type: 'value',
-				axisPointer: {	
-					label: { 
-						formatter:function(p) { 
-							return p.value;
-						},
-					}
-				},
-				axisLabel: {
-					formatter:function(v, i) {
-						return v;
-					}
-				},
-			}
-		],
-		series: [
-			{
-				type:'bar',
-				data:[]
-			}
-		]
+	    series: [{
+	        name: c_name,
+	        type: 'pie',
+	        clockWise: true,
+	        radius: ['80%', '95%'],
+	        itemStyle: {
+	            normal: {
+	                label: {
+	                    show: false
+	                },
+	                labelLine: {
+	                    show: false
+	                }
+	            }
+	        },
+	        hoverAnimation: false,
+	        data: [{
+	            value: c_val,
+	            name: 'completed',
+	            itemStyle: {
+	                normal: {
+	                    borderWidth: 8,
+	                    borderColor: { 
+	                        colorStops: [{
+	                            offset: 0,
+	                            color: c_colors[0] || c_colors[1]
+	                        }, {
+	                            offset: 1,
+	                            color: c_colors[2] || c_colors[3]
+	                        }]
+	                    },
+	                    color: {
+	                        colorStops: [{
+	                            offset: 0,
+	                            color: c_colors[0] || c_colors[1]
+	                        }, {
+	                            offset: 1,
+	                            color: c_colors[2] || c_colors[3]
+	                        }]
+	                    },
+	                    label: {
+	                        show: false
+	                    },
+	                    labelLine: {
+	                        show: false
+	                    }
+	                }
+	            }
+	        }, {
+	            name: 'gap',
+	            value: 100 - c_val,
+	            itemStyle: {
+	                normal: {
+	                    label: {
+	                        show: false
+	                    },
+	                    labelLine: {
+	                        show: false
+	                    },
+	                    color: 'rgba(0, 0, 0, 0)',
+	                    borderColor: 'rgba(0, 0, 0, 0)',
+	                    borderWidth: 0
+	                }
+	            }
+	        }]
+	    }]
 	};
+	return pie_option;
+}
 
-	op.series[0].data = eval('['+valUse+']');
+function dcSetResourceUseEChart(res)
+{
+	var op = null;
 
-	if(g_dcMainFirstChartCount > 0)
-		$('#mainResourceUse').css('width', g_dcMainFirstChartWidth);
-	else
-		$('#mainResourceUse').css('width', g_dcMainChartWidth);
+	var dcChartResMachine = echarts.init(document.getElementById('mainResMachine'));
+	op = dcGetResourceUsePieOption(
+		'监控服务器\n', res.machine_count, 100, 'mainResMachine', ['#1d54f7', '#00cefc', '#68eaf9', '#367bec']);
+	dcChartResMachine.setOption(op);
 
-	if(g_dcChartResourceUse != null)
-		g_dcChartResourceUse.dispose();
-	g_dcChartResourceUse = echarts.init(document.getElementById('mainResourceUse'));
-	g_dcChartResourceUse.setOption(op);
+	var dcChartWarnUnDeal= echarts.init(document.getElementById('mainWarnUnDeal'));
+	op = dcGetResourceUsePieOption(
+		'未处理告警\n', '0', 100, 'mainWarnUnDeal', ['#d48265', '#ff0000', '#f00', '#d48265', 'red']);
+	dcChartWarnUnDeal.setOption(op);
+
+	var dcChartWarnDealing = echarts.init(document.getElementById('mainWarnDealing'));
+	op = dcGetResourceUsePieOption(
+		'处理中告警\n', '0', 100, 'mainWarnDealing', ['#ca8622', '#d48265', '#d48265', '#ca8622', '#d48265']);
+	dcChartWarnDealing.setOption(op);
+
+	var dcChartResApp = echarts.init(document.getElementById('mainResApp'));
+	op = dcGetResourceUsePieOption('应用数：'+res.app_count, 
+		'模块数：'+res.module_count, 100, 'mainResApp', ['#15d9b2', '#06de9b', '#68eaf9', '#367bec'], 2);
+	dcChartResApp.setOption(op);
+
+	var dcChartLogs = echarts.init(document.getElementById('mainResLogs'));
+	op = dcGetResourceUsePieOption(
+		'日志记录数\n', res.log_records, 100, 'mainResModule', ['#1d54f7', '#00cefc', '#68eaf9', '#367bec']);
+	dcChartLogs.setOption(op);
+
+	var logSpace = '';
+	if(res.log_space_kb > 0)
+		logSpace = dmtGetHumanReadDigitByKB(res.log_space_kb);
+	else 
+		logSpace = result.log_space_b+' B';
+	var dcChartResDisk = echarts.init(document.getElementById('mainResDisk'));
+	op = dcGetResourceUsePieOption(
+		'已使用磁盘空间\n', logSpace, 100, 'mainResDisk', ['#749f83', '#61a0a8', '#61a0a8', '#749f83']);
+	dcChartResDisk.setOption(op);
 }
 
 function dcInitMainPage()
@@ -406,23 +410,7 @@ function dcSetStatInfo(result)
 {
 	if(dmtFirstDealAjaxResponse(result))
 		return;
-
-	$('#dc_umachine').text(result.machine_count);
-	$('#dc_uapp').text(result.app_count);
-	$('#dc_uattr').text(result.attr_count);
-
-	if(result.log_space_kb > 0) {
-		var logSpace = dmtGetHumanReadDigitByKB(result.log_space_kb);
-		$('#dc_udisk').text(logSpace);
-	}
-	else { 
-		$('#dc_udisk').text(result.log_space_b+' B');
-	}
-
-	$('#dc_umodule').text(result.module_count);
-	$('#dc_ulogrecords').text(result.log_records);
-
-	dcSetResourceUseEChart(result.resource_use);
+	dcSetResourceUseEChart(result);
 	dcSetAttrInfoEChart(result);
 	dcSetAppDiskInfoEChart(result);
 }

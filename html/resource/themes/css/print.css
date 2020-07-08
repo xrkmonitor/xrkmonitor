@@ -16,6 +16,7 @@
 .mainPageTdName { height:26px; font-size:14px; text-align:center; }
 .mainPageTdVal { height:26px; font-size:14px; text-align:center; font-weight:bold; }
 .mainPageChart { margin:10px 20px; float:left; height:420px; }
+.mainPageRes { width:200px; height:160px; float:left; margin-top:10px; }
 .chartLeftMenu { float:left; display:block; overflow:auto; width:350px; border:solid 1px #CCC; line-height:21px; background:#fff; }
 .userPayColor { background-color:SpringGreen; }
 .mainHeadLeftTitle { font-size:18px;float:left;margin:15px 10px; letter-spacing: 1px; font-weight: bold; }
