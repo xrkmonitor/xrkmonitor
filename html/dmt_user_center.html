@@ -51,7 +51,7 @@
 
 <div class="navTab-panel tabsPageContent layoutBox" style="overflow:auto" id='duc_div' defH='580'>
 	<div>
-		<div class="panel" align='center' style="width:30%; float:left; margin:6px;" defH="280">
+		<div class="panel" align='center' style="width:30%; float:left; margin:6px;" defH="320">
 			<div>
 				<table width="100%" align="center" class="list" style="margin-top:2px">
 					<thead>
@@ -116,6 +116,11 @@
 						</tr>
 						<?cs /if ?>
 
+						<tr>
+							<td class="ucPageTdName">当前登录有效期</td>
+							<td class='ucPageTdVal'><?cs var:config.login_expire_time ?></td>
+							<td />
+						</tr>
 					</tbody>
 				</table>
 			</div>

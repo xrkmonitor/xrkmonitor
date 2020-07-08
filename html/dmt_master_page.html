@@ -58,9 +58,6 @@ function dcOnMainPage(idx)
 
 function dcMainPageRedrawChart()
 {
-	if($('#mainChartAttr').css('width') == g_dcMainChartWidth)
-		return;
-
 	if(g_dcChartAttrUse != null) {
 		if(g_dcMainFirstChartCount > 0) {
 			$('#mainChartAttr').css('width', g_dcMainFirstChartWidth);
