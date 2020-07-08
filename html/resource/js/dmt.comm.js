@@ -949,6 +949,113 @@ function dmtGetYAxisData(time_info, dstr)
 	return e_data_y;
 }
 
+function dmtGetUsePerPieOption(options) 
+{
+	var op = $.extend({ c_items:1, c_sublink:'' }, options);
+
+	var subtext_color = 'blue';
+	var text_color = '#044';
+	if(op.c_colors.length > 4)
+		subtext_color = op.c_colors[4];
+	if(op.c_items > 1) 
+		text_color = 'blue';
+	var pie_option = {
+	    title: {
+			id:op.c_name,
+	        text: op.c_text,
+			triggerEvent: true,
+			subtext: op.c_subtext,
+	        left: 'center',
+	        top: 'center',
+	        textStyle: {
+	            color: text_color,
+	            fontSize: 14,
+	            fontFamily: 'PingFangSC-Regular'
+	        },
+        	subtextStyle: {
+        	    color: subtext_color,
+        	    fontSize: op.c_items > 1 ? 14 : 18,
+        	    fontFamily: 'PingFangSC-Regular',
+				fontWeight: 'bold',
+        	    top: 'center'
+        	},
+			itemGap: -1,
+	    },
+	    series: [{
+	        name: op.c_name,
+	        type: 'pie',
+	        clockWise: true,
+	        radius: ['80%', '95%'],
+	        itemStyle: {
+	            normal: {
+	                label: {
+	                    show: false
+	                },
+	                labelLine: {
+	                    show: false
+	                }
+	            }
+	        },
+	        hoverAnimation: false,
+	        data: [{
+	            value: op.c_val,
+	            name: 'completed',
+	            itemStyle: {
+	                normal: {
+	                    borderWidth: 8,
+	                    borderColor: { 
+	                        colorStops: [{
+	                            offset: 0,
+	                            color: op.c_colors[0] || op.c_colors[1]
+	                        }, {
+	                            offset: 1,
+	                            color: op.c_colors[2] || op.c_colors[3]
+	                        }]
+	                    },
+	                    color: {
+	                        colorStops: [{
+	                            offset: 0,
+	                            color: op.c_colors[0] || op.c_colors[1]
+	                        }, {
+	                            offset: 1,
+	                            color: op.c_colors[2] || op.c_colors[3]
+	                        }]
+	                    },
+	                    label: {
+	                        show: false
+	                    },
+	                    labelLine: {
+	                        show: false
+	                    }
+	                }
+	            }
+	        }, {
+	            name: 'gap',
+	            value: 100 - op.c_val,
+	            itemStyle: {
+	                normal: {
+	                    label: {
+	                        show: false
+	                    },
+	                    labelLine: {
+	                        show: false
+	                    },
+	                    color: 'rgba(0, 0, 0, 0)',
+	                    borderColor: 'rgba(0, 0, 0, 0)',
+	                    borderWidth: 0
+	                }
+	            }
+	        }]
+	    }]
+	};
+
+	if(op.c_sublink != '') {
+		pie_option.title.sublink = op.c_sublink;
+		pie_option.title.subtarget = 'self';
+	}
+	return pie_option;
+}
+
 function dmtShowAttrInfo(attr_list, attr_val_list, ct_div, showtype)
 {
 	var STR_REPORT_D = 6, STR_REPORT_D_IP = 7;

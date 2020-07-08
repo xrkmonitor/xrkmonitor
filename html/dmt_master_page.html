@@ -98,7 +98,6 @@ function dcMainPageSetChartSize()
 		var xBlank = dmtMathtrunc(xLeft/xCount);
 		g_dcMainChartWidth = g_dcChartMinWidth+xBlank;
 
-		// 第一行的图表宽度计算，需要减去固定宽度的占用
 		iContentW -= g_dcMainInfoWidthFix+20+20;
 		xLeft = iContentW % xWidth;
 		xCount = dmtMathtrunc(iContentW/xWidth);
@@ -107,7 +106,7 @@ function dcMainPageSetChartSize()
 			g_dcMainFirstChartWidth = g_dcChartMinWidth+xBlank;
 			g_dcMainFirstChartCount = xCount;
 		}
-		else 
+		else
 			g_dcMainFirstChartCount = 0;
 	}
 }
@@ -122,7 +121,7 @@ function dcSetAttrInfoEChart(result)
 		tooltip: {
 			trigger:'item',
 			confine:true,
-			formatter: '{a} <br/>{b} : {c} ({d}%)'
+			formatter: '{b} <br /> {c} ({d}%)'
 		},
 		grid: {
 		},
@@ -131,7 +130,7 @@ function dcSetAttrInfoEChart(result)
 				type:'pie',
 				name:'自定义监控点',
 				radius:'75%',
-				center:['50%', '52%'],
+				center:['50%', '54%'],
 				data:[],
 				label: { 
 					show: true,
@@ -141,7 +140,7 @@ function dcSetAttrInfoEChart(result)
             	    },
             	    emphasis: {
             	        show: false,
-            	    },
+            	    }
             	},
 				itemStyle: {
 					emphasis: {
@@ -176,7 +175,12 @@ function dcSetAppDiskInfoEChart(result)
 		},
 		tooltip: {
 			trigger:'item',
-			formatter: '{a}: {b} <br />{c} MB ({d}%)'
+			formatter: function (params) {
+				var sstr = params.data.name + '<br />';
+				sstr += dmtGetHumanReadDigitByKB(params.data.value) + ', ';
+				sstr += '('+ params.percent + '%)';
+				return sstr;
+			}
 		},
 		grid: {
 		},
@@ -185,7 +189,7 @@ function dcSetAppDiskInfoEChart(result)
 				type:'pie',
 				name:'应用名称',
 				radius:'75%',
-				center:['50%', '52%'],
+				center:['50%', '54%'],
 				data:[],
 				label: { 
 					show: true,
@@ -221,132 +225,89 @@ function dcSetAppDiskInfoEChart(result)
 	g_dcChartDiskUse.setOption(op);
 }
 
-
-function dcGetResourceUsePieOption(c_text, c_subtext, c_val, c_name, c_colors, c_items) 
-{
-	var subtext_color = 'blue';
-	if(c_colors.length > 4)
-		subtext_color = c_colors[4];
-	if(typeof c_items != 'undefined')
-		subtext_color = '#004444';
-	var pie_option = {
-	    title: {
-	        text: c_text,
-			subtext: c_subtext,
-	        left: 'center',
-	        top: 'center',
-	        textStyle: {
-	            color: '#044',
-	            fontSize: 14,
-	            fontFamily: 'PingFangSC-Regular'
-	        },
-        	subtextStyle: {
-        	    color: subtext_color,
-        	    fontSize: typeof c_items != 'undefined' ? 14 : 18,
-        	    fontFamily: 'PingFangSC-Regular',
-				fontWeight: 'bold',
-        	    top: 'center'
-        	},
-			itemGap: typeof c_items != 'undefined' ? 4 : -1
-	    },
-	    series: [{
-	        name: c_name,
-	        type: 'pie',
-	        clockWise: true,
-	        radius: ['80%', '95%'],
-	        itemStyle: {
-	            normal: {
-	                label: {
-	                    show: false
-	                },
-	                labelLine: {
-	                    show: false
-	                }
-	            }
-	        },
-	        hoverAnimation: false,
-	        data: [{
-	            value: c_val,
-	            name: 'completed',
-	            itemStyle: {
-	                normal: {
-	                    borderWidth: 8,
-	                    borderColor: { 
-	                        colorStops: [{
-	                            offset: 0,
-	                            color: c_colors[0] || c_colors[1]
-	                        }, {
-	                            offset: 1,
-	                            color: c_colors[2] || c_colors[3]
-	                        }]
-	                    },
-	                    color: {
-	                        colorStops: [{
-	                            offset: 0,
-	                            color: c_colors[0] || c_colors[1]
-	                        }, {
-	                            offset: 1,
-	                            color: c_colors[2] || c_colors[3]
-	                        }]
-	                    },
-	                    label: {
-	                        show: false
-	                    },
-	                    labelLine: {
-	                        show: false
-	                    }
-	                }
-	            }
-	        }, {
-	            name: 'gap',
-	            value: 100 - c_val,
-	            itemStyle: {
-	                normal: {
-	                    label: {
-	                        show: false
-	                    },
-	                    labelLine: {
-	                        show: false
-	                    },
-	                    color: 'rgba(0, 0, 0, 0)',
-	                    borderColor: 'rgba(0, 0, 0, 0)',
-	                    borderWidth: 0
-	                }
-	            }
-	        }]
-	    }]
-	};
-	return pie_option;
-}
-
 function dcSetResourceUseEChart(res)
 {
 	var op = null;
 
 	var dcChartResMachine = echarts.init(document.getElementById('mainResMachine'));
-	op = dcGetResourceUsePieOption(
-		'监控服务器\n', res.machine_count, 100, 'mainResMachine', ['#1d54f7', '#00cefc', '#68eaf9', '#367bec']);
+	op = dmtGetUsePerPieOption({
+			c_text:'监控服务器\n', 
+			c_subtext:res.machine_count, 
+			c_val:100, 
+			c_name:'mainResMachine', 
+			c_colors:['#1d54f7', '#00cefc', '#68eaf9', '#367bec'],
+			c_sublink:'#'
+		});
 	dcChartResMachine.setOption(op);
+	dcChartResMachine.on('click', function(para) { 
+			navTab.openTab('dmt_machine', g_siteInfo.cgi_path + 'mt_slog_machine?action=list',
+			    {title:'上报机器管理', titleHtml:"<i class='icon icon-desktop'></i>上报机器管理", fresh:true});
+		});
 
 	var dcChartWarnUnDeal= echarts.init(document.getElementById('mainWarnUnDeal'));
-	op = dcGetResourceUsePieOption(
-		'未处理告警\n', '0', 100, 'mainWarnUnDeal', ['#d48265', '#ff0000', '#f00', '#d48265', 'red']);
+	op = dmtGetUsePerPieOption({
+			c_text:'未处理告警\n', 
+			c_subtext:'0', 
+			c_val:100, 
+			c_name:'mainWarnUnDeal', 
+			c_colors:['#d48265', '#ff0000', '#f00', '#d48265', 'red'],
+			c_sublink:'#'
+		});
 	dcChartWarnUnDeal.setOption(op);
+	dcChartWarnUnDeal.on('click', function(para) {
+			navTab.openTab('dmt_warn_list', 
+				g_siteInfo.cgi_path + 'mt_slog_showview?action=search_warn_list&dwl_deal_status_sel=0',
+			    {title:'监控点告警列表', titleHtml:"<i class='icon icon-screenshot'></i>监控点告警列表", fresh:true});
+		});
 
 	var dcChartWarnDealing = echarts.init(document.getElementById('mainWarnDealing'));
-	op = dcGetResourceUsePieOption(
-		'处理中告警\n', '0', 100, 'mainWarnDealing', ['#ca8622', '#d48265', '#d48265', '#ca8622', '#d48265']);
+	op = dmtGetUsePerPieOption({
+			c_text:'处理中告警\n', 
+			c_subtext:'0', 
+			c_val:100, 
+			c_name:'mainWarnDealing', 
+			c_sublink:'#',
+			c_colors:['#ca8622', '#d48265', '#d48265', '#ca8622', '#d48265']
+		});
 	dcChartWarnDealing.setOption(op);
+	dcChartWarnDealing.on('click', function(para) {
+			navTab.openTab('dmt_warn_list', 
+				g_siteInfo.cgi_path + 'mt_slog_showview?action=search_warn_list&dwl_deal_status_sel=1',
+			    {title:'监控点告警列表', titleHtml:"<i class='icon icon-screenshot'></i>监控点告警列表", fresh:true});
+		});
 
 	var dcChartResApp = echarts.init(document.getElementById('mainResApp'));
-	op = dcGetResourceUsePieOption('应用数：'+res.app_count, 
-		'模块数：'+res.module_count, 100, 'mainResApp', ['#15d9b2', '#06de9b', '#68eaf9', '#367bec'], 2);
+	op = dmtGetUsePerPieOption({
+			c_text:'应用数：'+res.app_count+'\n', 
+			c_subtext:'模块数：'+res.module_count, 
+			c_val:100, 
+			c_name:'mainResApp', 
+			c_colors:['#15d9b2', '#06de9b', '#68eaf9', '#367bec'], 
+			c_sublink:'#',
+			c_items:2
+		});
 	dcChartResApp.setOption(op);
+	dcChartResApp.on('click', function(para) {
+			navTab.openTab('dmt_list_app', 
+				g_siteInfo.cgi_path + 'mt_slog?action=list_app',
+			    {title:'应该管理', titleHtml:"<i class='icon icon-th-large'></i>应用管理", fresh:true});
+		});
 
 	var dcChartLogs = echarts.init(document.getElementById('mainResLogs'));
-	op = dcGetResourceUsePieOption(
-		'日志记录数\n', res.log_records, 100, 'mainResModule', ['#1d54f7', '#00cefc', '#68eaf9', '#367bec']);
+	op = dmtGetUsePerPieOption({
+			c_text:'日志记录数\n', 
+			c_subtext:res.log_records, 
+			c_val:100, 
+			c_sublink:'#',
+			c_name:'mainResModule', 
+			c_colors:['#1d54f7', '#00cefc', '#68eaf9', '#367bec']
+		});
 	dcChartLogs.setOption(op);
+	dcChartLogs.on('click', function(para) {
+			navTab.openTab('dmt_realtime_log', 
+				g_siteInfo.cgi_path + 'mt_slog?action=show_realtime_log',
+			    {title:'实时日志查看', titleHtml:"<i class='icon icon-cloud-upload'></i>实时日志查看", fresh:true});
+		});
 
 	var logSpace = '';
 	if(res.log_space_kb > 0)
@@ -354,9 +315,20 @@ function dcSetResourceUseEChart(res)
 	else 
 		logSpace = result.log_space_b+' B';
 	var dcChartResDisk = echarts.init(document.getElementById('mainResDisk'));
-	op = dcGetResourceUsePieOption(
-		'已使用磁盘空间\n', logSpace, 100, 'mainResDisk', ['#749f83', '#61a0a8', '#61a0a8', '#749f83']);
+	op = dmtGetUsePerPieOption({
+			c_text:'已使用磁盘空间\n', 
+			c_subtext:logSpace, 
+			c_val:100, 
+			c_name:'mainResDisk', 
+			c_sublink:'#',
+			c_colors:['#749f83', '#61a0a8', '#61a0a8', '#749f83']
+		});
 	dcChartResDisk.setOption(op);
+	dcChartResDisk.on('click', function(para) {
+			navTab.openTab('dmt_realtime_log', 
+				g_siteInfo.cgi_path + 'mt_slog?action=show_realtime_log',
+			    {title:'历史日志查看', titleHtml:"<i class='icon icon-cloud-download'></i>历史日志查看", fresh:true});
+		});
 }
 
 function dcInitMainPage()
