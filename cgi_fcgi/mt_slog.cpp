@@ -1268,6 +1268,35 @@ int DealRefreshMainInfo(CGI *cgi)
 	Json js;
 	js["statusCode"] = 0;
 
+	char szTmp[256] = {0};
+	Query & qu = *(stConfig.qu);
+
+	// 处理中告警
+	snprintf(szTmp, sizeof(szTmp),
+	    "select count(*) from mt_warn_info where xrk_status=%d and deal_status=1", RECORD_STATUS_USE);
+	if(!qu.get_result(szTmp) || qu.num_rows() <= 0) {
+	    WARN_LOG("get warn dealing count failed !");
+	    js["warn_dealings"] = 0;
+	}
+	else {
+	    qu.fetch_row();
+	    js["warn_dealings"] = (int)(qu.getval(0));
+	}
+	qu.free_result();
+	
+	// 未处理告警
+	snprintf(szTmp, sizeof(szTmp),
+	    "select count(*) from mt_warn_info where xrk_status=%d and deal_status=0", RECORD_STATUS_USE);
+	if(!qu.get_result(szTmp) || qu.num_rows() <= 0) {
+	    WARN_LOG("get warn undeal count failed !");
+	    js["warn_undeals"] = 0;
+	}
+	else {
+	    qu.fetch_row();
+	    js["warn_undeals"] = (int)(qu.getval(0));
+	}
+	qu.free_result();
+
 	MtSystemConfig *pSysInfo = stConfig.stUser.pSysInfo;
 	js["attr_count"] = pSysInfo->wAttrCount;
 	js["app_count"] = pSysInfo->wAppInfoCount;
@@ -1347,7 +1376,6 @@ int DealRefreshMainInfo(CGI *cgi)
 	int iModules = GetModuleCountTotal();
 	js["module_count"] = iModules;
 
-	char szTmp[256] = {0};
 	snprintf(szTmp, sizeof(szTmp), "%d,%d,%d,%d,%u", pSysInfo->wAppInfoCount, 
 		iModules, iAttrCount, pSysInfo->wMachineCount, (uint32_t)round((float)dwLogSpaceUseKB/1024));
 	js["resource_use"] = szTmp;
