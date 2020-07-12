@@ -247,7 +247,7 @@ function dcSetResourceUseEChart(res)
 	var dcChartWarnUnDeal= echarts.init(document.getElementById('mainWarnUnDeal'));
 	op = dmtGetUsePerPieOption({
 			c_text:'未处理告警\n', 
-			c_subtext:'0', 
+			c_subtext:''+res.warn_undeals, 
 			c_val:100, 
 			c_name:'mainWarnUnDeal', 
 			c_colors:['#d48265', '#ff0000', '#f00', '#d48265', 'red'],
@@ -263,7 +263,7 @@ function dcSetResourceUseEChart(res)
 	var dcChartWarnDealing = echarts.init(document.getElementById('mainWarnDealing'));
 	op = dmtGetUsePerPieOption({
 			c_text:'处理中告警\n', 
-			c_subtext:'0', 
+			c_subtext:''+res.warn_dealings, 
 			c_val:100, 
 			c_name:'mainWarnDealing', 
 			c_sublink:'#',
