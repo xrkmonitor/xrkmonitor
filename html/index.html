@@ -28,9 +28,9 @@
         </style>
 		<script type="text/javascript"> 
 		function iframeCheckLogin() { 
-			// 转移到 xrkmonitor.cn 域名
-			if(document.domain == 'xrkmonitor.com') {
-				top.location = 'http://xrkmonitor.cn';
+			// 转移到 open.xrkmonitor.cn 域名
+			if(document.domain.indexOf('open.xrkmonitor.com') != -1) {
+				top.location = 'http://open.xrkmonitor.cn';
 				return;
 			}
 
