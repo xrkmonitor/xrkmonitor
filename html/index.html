@@ -28,6 +28,12 @@
         </style>
 		<script type="text/javascript"> 
 		function iframeCheckLogin() { 
+			// 转移到 xrkmonitor.cn 域名
+			if(document.domain == 'xrkmonitor.com') {
+				top.location = 'http://xrkmonitor.cn';
+				return;
+			}
+
 			var g_support_var_css = false;
 			try {
 				document.documentElement.className = "js";
