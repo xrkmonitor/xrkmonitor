@@ -110,7 +110,7 @@ canvas {
     line-height: normal;
 }
 .kit-login-box header {
-    height: auto;
+    height: 50px;
 }
 .content {
     position: relative;
