@@ -203,7 +203,7 @@ a:focus {
 	color: inherit;
 }
 
-#app {
+#login_app #app {
 	width: 100%;
 	height: 100vh;
 	overflow: hidden;
