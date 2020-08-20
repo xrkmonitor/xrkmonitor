@@ -48,15 +48,20 @@
 			}catch(e) {
 			}
 
+			var ifm = document.createElement('iframe');
+			ifm.setAttribute('id', 'iframeId');
+			ifm.setAttribute('name', 'main_iframe');
+			ifm.setAttribute('frameborder', '0');
+			ifm.setAttribute('scrolling', 'auto');
 			if(g_support_var_css)
-				document.getElementById('iframeId').src = '/cgi-bin/slog_flogin?action=show_main&login_show=var_css';
+				ifm.setAttribute('src', '/cgi-bin/slog_flogin?action=show_main&login_show=var_css');
 			else
-				document.getElementById('iframeId').src = '/cgi-bin/slog_flogin?action=show_main&login_show=old';
+				ifm.setAttribute('src', '/cgi-bin/slog_flogin?action=show_main&login_show=old');
+			document.body.appendChild(ifm);
     	}
 		</script>
 	</head>
 	<body onload='iframeCheckLogin();' style='overflow:hidden'> 
-		<iframe id="iframeId" name='main_iframe' frameborder="0" scrolling="auto" src='about:blank;' />
 	</body>
 </html>
 
