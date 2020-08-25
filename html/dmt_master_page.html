@@ -325,9 +325,9 @@ function dcSetResourceUseEChart(res)
 		});
 	dcChartResDisk.setOption(op);
 	dcChartResDisk.on('click', function(para) {
-			navTab.openTab('dmt_realtime_log', 
-				g_siteInfo.cgi_path + 'mt_slog?action=show_realtime_log',
-			    {title:'历史日志查看', titleHtml:"<i class='icon icon-cloud-download'></i>历史日志查看", fresh:true});
+			navTab.openTab('dmt_log_files', 
+				g_siteInfo.cgi_path + 'mt_slog?action=log_files',
+			    {title:'日志文件列表', titleHtml:"<i class='icon icon-cloud-download'></i>日志文件列表", fresh:true});
 		});
 }
 
