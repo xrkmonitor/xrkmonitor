@@ -41,6 +41,11 @@ function dsnbaSetAttrList_<?cs var:config.view_id ?>(attrinfo)
 	return list;
 }
 
+function dsba_SetCurrent_<?cs var:config.view_id ?>()
+{
+    return 'ds_dlg_bind_attr_<?cs var:config.view_id ?>';
+}
+
 function dsnbaClearSearch_<?cs var:config.view_id ?>()
 {
 	$("#dsnba_attr_data_type_<?cs var:config.view_id ?>").val(0);
@@ -86,7 +91,7 @@ $(document).ready(function(){
 	<form onsubmit="return divSearch(this, 'dsb_not_bind_attr_list_<?cs var:config.view_id ?>');" action="<?cs var:config.cgipath?>mt_slog_showview?action=not_bind_attr_search&view_id=<?cs var:config.view_id ?>" method="post">
 		<div class="searchBar">
 			<ul class="searchContent">
-				<li style='width:180px'>
+				<li style='width:auto'>
 					<label style='width:46px'>数据类型:</label>
 					<select class="xrk_combox" name="dsnba_attr_data_type" id="dsnba_attr_data_type_<?cs var:config.view_id ?>">
 						<option value="0">全部</option>
@@ -100,36 +105,40 @@ $(document).ready(function(){
 					</select>
 				</li>
 
-				<li>
-				    <label style='width:50px'>监控点ID:</label>
-				    <input type="text" size='7' name="dam_attr_id" value="<?cs var:config.dam_attr_id ?>">
+				<li class='width:auto'>
+				    <label style='width:50px'>监控点ID：</label>
+				    <input type="text" size='6' name="dam_attr_id" value="<?cs var:config.dam_attr_id ?>">
 				</li>
-				<li>
+				<li class='width:auto'>
 					<label style='width:60px'>监控点类型:</label>
 					<input type="hidden" name="dam_attr_type" value="<?cs var:config.dam_attr_type ?>">
 					<input type="text" size="12" name="dam_attr_type_name" value="<?cs var:config.dam_attr_type_name ?>" readonly="readonly" />
 				</li>
-				<li align="left">
-					<a class="btnLook" href="<?cs var:config.cgipath ?>mt_slog_attr?action=lookUpAttrType" title="监控点类型选择" lookupGroup="" ></a>
+				<li class='width:auto'>
+					<a class="btnLook" href="<?cs var:config.cgipath ?>mt_slog_attr?action=lookUpAttrType" title="监控点类型选择" lookupGroup="" fk_callback='dsba_SetCurrent_<?cs var:config.view_id ?>' ></a>
 				</li>
 			</ul>
 			<div class='subBar'>
 				<ul>
-					<li><button type="submit" class="buttonActive" id="dsnba_btn_submit"><i class='icon-search icon-large '></i>查找</button></li>
-					<li><button title='重置查询条件' class="buttonActive" id="dsnba_btn_erase" onclick="return dsnbaClearSearch_<?cs var:config.view_id ?>()"><i class='icon-trash icon-large '></i></button></li>
+					<li>
+						<button type="submit" class="buttonActive" id="dsnba_btn_submit"><i class='icon-search icon-large '></i>查找</button>
+					</li>
+					<li>
+						<button title='重置查询条件' class="buttonActive" id="dsnba_btn_erase" onclick="return dsnbaClearSearch_<?cs var:config.view_id ?>()"><i class='icon-trash icon-large '></i></button>
+					</li>
 				</ul>
 			</div>
 		</div>
 	</form>
-</div>
-		
-<div class="pageContent"> 
+
 	<div class="panelBar">
 		<ul class="toolBar">
 			<li><a class="edit" targetType="dialog" postType="string" callback="dsbAfterAttrOpr_<?cs var:config.view_id ?>" target="selectedTodo" rel="not_bind_attr_<?cs var:config.view_id ?>" href="<?cs var:config.cgipath ?>mt_slog_showview?action=save_bind_attr&view_id=<?cs var:config.view_id ?>"><i class='icon-lock icon-large'></i>绑定</a></li>
 		</ul>
 	</div>
-
+</div>
+		
+<div class="pageContent" style='height:280px'> 
 	<table class="list" width="100%">
 		<thead>
 			<tr>

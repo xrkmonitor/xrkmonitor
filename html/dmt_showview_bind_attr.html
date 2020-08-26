@@ -41,6 +41,11 @@ function dsbaSetAttrList_<?cs var:config.view_id ?>(attrinfo)
 	return list;
 }
 
+function dsba_SetCurrent_<?cs var:config.view_id ?>()
+{
+    return 'ds_dlg_bind_attr_<?cs var:config.view_id ?>';
+}
+
 function dsbaClearSearch_<?cs var:config.view_id ?>()
 {
 	$("#dsba_attr_data_type_<?cs var:config.view_id ?>").val(0);
@@ -91,7 +96,7 @@ $(document).ready(function(){
 						<option value="<?cs var:config.sum_report_max ?>">取上报最大值</option>
 						<option value="<?cs var:config.ex_report ?>">异常量</option>
 						<option value="<?cs var:config.str_report_d ?>">字符串型</option>
-						<option value="<?cs var:config.str_report_d_ip ?>">字符串型-省级</option>
+						<option value="<?cs var:config.str_report_d_ip ?>">字符串型-IP省级</option>
 					</select>
 				</li>
 
@@ -106,14 +111,14 @@ $(document).ready(function(){
 					<input type="text" size="12" name="dam_attr_type_name" value="<?cs var:config.dam_attr_type_name ?>" readonly="readonly" />
 				</li>
 				<li class="width:auto">
-					<a class="btnLook" href="<?cs var:config.cgipath ?>mt_slog_attr?action=lookUpAttrType" title="监控点类型选择" lookupGroup="" ></a>
+					<a class="btnLook" href="<?cs var:config.cgipath ?>mt_slog_attr?action=lookUpAttrType" title="监控点类型选择" lookupGroup="" fk_callback='dsba_SetCurrent_<?cs var:config.view_id ?>' ></a>
 				</li>
 			</ul>
+			
 			<div class='subBar'>
 				<ul>
 					<li>
-						<button type="submit" class="buttonActive" id="dsba_btn_submit_<?cs var:config.view_id ?>">
-							<i class='icon-search icon-large '></i>查找</button>
+						<button type="submit" class="buttonActive"><i class='icon-search icon-large '></i>查找</button>
 					</li>
 					<li>
 						<button title='重置查询条件' class="buttonActive" id="dsba_btn_erase_<?cs var:config.view_id ?>" onclick="return dsbaClearSearch_<?cs var:config.view_id ?>()"><i class='icon-trash icon-large'></i></button>
@@ -122,9 +127,7 @@ $(document).ready(function(){
 			</div>
 		</div>
 	</form>
-</div>
-	
-<div class="pageContent">
+
 	<div class="panelBar">
 		<ul class="toolBar">
 			<li><a class="edit" targetType="dialog" postType="string" callback="dsbAfterAttrOpr_<?cs var:config.view_id ?>" target="selectedTodo" rel="bind_attr_<?cs var:config.view_id ?>" href="<?cs var:config.cgipath ?>mt_slog_showview?action=save_not_bind_attr&view_id=<?cs var:config.view_id ?>"><i class='icon-unlock icon-large'></i>解绑</a></li>
@@ -132,7 +135,10 @@ $(document).ready(function(){
 		</ul>
 	</div>
 
-	<table class="list" width="100%">
+</div>
+	
+<div class="pageContent">
+	<table class="list" width="100%" layoutH='0'>
 		<thead>
 			<tr>
 				<th width="22"><input type="checkbox" group="bind_attr_<?cs var:config.view_id ?>" class="checkboxCtrl"></th>
