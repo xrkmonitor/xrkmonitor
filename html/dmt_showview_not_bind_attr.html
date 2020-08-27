@@ -138,7 +138,7 @@ $(document).ready(function(){
 	</div>
 </div>
 		
-<div class="pageContent" style='height:280px'> 
+<div class="pageContent" style='height:273px'> 
 	<table class="list" width="100%">
 		<thead>
 			<tr>
@@ -153,21 +153,21 @@ $(document).ready(function(){
 		<tbody id="dsnba_attr_list_info_<?cs var:config.view_id ?>">
 		</tbody>
 	</table>
-
-	<div class="panelBar">
-		<div class="pages">
-			<span>每页显示</span>
-			<select class="combox" name="numPerPage" onchange="dialogPageBreak({numPerPage:this.value}, 'dsb_not_bind_attr_list_<?cs var:config.view_id ?>')">
-				<option value="10">10</option>
-				<option value="20">20</option>
-				<option value="50">50</option>
-				<option value="100">100</option>
-				<option value="200">200</option>
-			</select>
-			<span>条，共 <?cs var:config.totalCount ?>  条</span>
-		</div>
-		<div class="pagination" rel="dsb_not_bind_attr_list_<?cs var:config.view_id ?>" callback="dsbAfterAttrOpr_<?cs var:config.view_id ?>" targetType="dialog" totalCount="<?cs var:config.totalCount ?>" numPerPage="<?cs var:config.numPerPage ?>" pageNumShown="<?cs var:config.pageNumShown ?>" currentPage="<?cs var:config.currentPage ?>"></div>
-	</div>
 </div> <!-- pageContent -->
+
+<div class="panelBar">
+	<div class="pages">
+		<span>每页显示</span>
+		<select class="combox" name="numPerPage" onchange="dialogPageBreak({numPerPage:this.value}, 'dsb_not_bind_attr_list_<?cs var:config.view_id ?>')">
+			<option value="10">10</option>
+			<option value="20">20</option>
+			<option value="50">50</option>
+			<option value="100">100</option>
+			<option value="200">200</option>
+		</select>
+		<span>条，共 <?cs var:config.totalCount ?>  条</span>
+	</div>
+	<div class="pagination" rel="dsb_not_bind_attr_list_<?cs var:config.view_id ?>" callback="dsbAfterAttrOpr_<?cs var:config.view_id ?>" targetType="dialog" totalCount="<?cs var:config.totalCount ?>" numPerPage="<?cs var:config.numPerPage ?>" pageNumShown="<?cs var:config.pageNumShown ?>" currentPage="<?cs var:config.currentPage ?>"></div>
+</div>
 
 
