@@ -8,9 +8,8 @@
 var <?cs var:config.plugin_pre ?>_plugin_list = null;
 var <?cs var:config.plugin_pre ?>_sel_plugin = null;
 
-<?cs if:config.plugin_pre == "dpopen" ?>
 var g_LocalOpenPluginList = $.parseJSON('<?cs var:config.local_open_list ?>');
-<?cs /if ?>
+var g_LocalOpenPluginListIds = '<?cs var:config.local_open_list_ids ?>';
 
 function <?cs var:config.plugin_pre ?>SetSelplugin(selIndex)
 {
@@ -27,6 +26,10 @@ function <?cs var:config.plugin_pre ?>SetSelplugin(selIndex)
 	<?cs var:config.plugin_pre ?>_sel_plugin = <?cs var:config.plugin_pre ?>_plugin_list.list[selIndex];
 	pid = '#<?cs var:config.plugin_pre ?>_plugin_' + <?cs var:config.plugin_pre ?>_sel_plugin.plugin_id;
 	$(pid).css('background-color', '#ddf79a');
+}
+
+function <?cs var:config.plugin_pre ?>OnDownSrc()
+{
 }
 
 function <?cs var:config.plugin_pre ?>OnDownSrc()
@@ -451,6 +454,12 @@ function <?cs var:config.plugin_pre ?>ShowInfoUp()
 	$.pdialog.open(url, "<?cs var:config.plugin_pre ?>_dlg_show_plugin", "查看监控插件", op); 
 }
 
+function <?cs var:config.plugin_pre ?>PageChange(op)
+{
+	$('#<?cs var:config.plugin_pre ?>_SearchBar input[name=pageNum]').val(op.pageNum);
+	<?cs var:config.plugin_pre ?>Search(false);
+}
+
 function <?cs var:config.plugin_pre ?>Search(pglobal)
 {
 	var requrl = '<?cs var:config.xrkmonitor_url ?>/cgi-bin/mt_slog_open';
@@ -461,6 +470,12 @@ function <?cs var:config.plugin_pre ?>Search(pglobal)
 	reqdata.dest_os = $('#<?cs var:config.plugin_pre ?>_SearchBar select[name=dest_os]').val();
 	reqdata.open_src = $('#<?cs var:config.plugin_pre ?>_SearchBar select[name=open_src]').val();
 	reqdata.set_method = $('#<?cs var:config.plugin_pre ?>_SearchBar select[name=set_method]').val();
+	reqdata.pageNum = $('#<?cs var:config.plugin_pre ?>_SearchBar input[name=pageNum]').val();
+	reqdata.numPerPage = $('#<?cs var:config.plugin_pre ?>_numPerPage select[name=numPerPage]').val();
+	reqdata.price = $('#<?cs var:config.plugin_pre ?>_SearchBar select[name=price]').val();
+	reqdata.set_status = $('#<?cs var:config.plugin_pre ?>_SearchBar select[name=set_status]').val();
+	if(reqdata.set_status != 999)
+		reqdata.local_plugins = g_LocalOpenPluginListIds;
 
 	$.ajax({
 		type:'post',
@@ -478,6 +493,11 @@ function <?cs var:config.plugin_pre ?>Search(pglobal)
 				<?cs var:config.plugin_pre ?>_plugin_list = js;
 				<?cs var:config.plugin_pre ?>SetpluginList();
 			}
+
+			$('#plugin_total').text(js.totalCount);
+			$('#<?cs var:config.plugin_pre ?>_SearchBar input[name=numPerPage]').val(js.numPerPage);
+			$('#plugin_page').addClass('pagination').pagination({targetType:<?cs var:config.plugin_pre ?>PageChange, 
+				totalCount:js.totalCount, numPerPage:js.numPerPage, pageNumShown:js.pageNumShown, currentPage:js.currentPage});
 		}
 	});
 	return false;
@@ -497,6 +517,7 @@ $(document).ready(function(){
 <div class="pageHeader" style="border:1px #B8D0D6 solid">
 	<div class="searchBar">
 		<ul class="searchContent" id='<?cs var:config.plugin_pre ?>_SearchBar'>
+			<input type="hidden" name="pageNum">
 			<li>
 				<label>开发语言:</label>
 				<select class='xrk_combox' name="dev_language">
@@ -529,6 +550,24 @@ $(document).ready(function(){
 			</li>
 
 			<li>
+				<label>价格</label>
+				<select class='xrk_combox' name="price"> 
+					<option value="999">-全部-</option>
+					<option value="0">免 费</option>
+					<option value="1">付 费</option>
+				</select>
+			</li>
+
+			<li>
+				<label>部署情况</label>
+				<select class='xrk_combox' name="set_status">
+					<option value="999">-全部-</option>
+					<option value="1">已部署</option>
+					<option value="0">未部署</option>
+				</select>
+			</li>
+
+			<li>
 				<label>部署方式:</label>
 				<select name="set_method" class='xrk_combox'>
 					<option value="999">-全部-</option>
@@ -550,5 +589,22 @@ $(document).ready(function(){
 <div class="pageContent">
 	<div layoutH="0" width='100%' id="<?cs var:config.plugin_pre ?>_plugin_list">
 	</div> 
+
+	<div class="pageBar panelBar" id="<?cs var:config.plugin_pre ?>_numPerPage">
+    	<div class="pages">
+    		<span>每页显示</span>
+    		<select class='combox' name="numPerPage" onchange="<?cs var:config.plugin_pre ?>PageChange({pageNum:1});">
+    			<option value="6">6</option>
+    			<option value="10">10</option>
+    			<option value="20">20</option>
+    			<option value="50">50</option>
+    			<option value="100">100</option>
+    			<option value="200">200</option>
+    		</select>
+    		<span>条，共 <font id='plugin_total'></font> 条</span>
+    	</div>
+    	<div id='plugin_page'></div>
+    </div>
+
 </div>
 
