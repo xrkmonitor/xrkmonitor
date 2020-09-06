@@ -13,23 +13,7 @@ var g_LocalOpenPluginListIds = '<?cs var:config.local_open_list_ids ?>';
 
 function <?cs var:config.plugin_pre ?>SetSelplugin(selIndex)
 {
-	var pid;
-	if(<?cs var:config.plugin_pre ?>_sel_plugin != null) {
-		pid = '#<?cs var:config.plugin_pre ?>_plugin_' + <?cs var:config.plugin_pre ?>_sel_plugin.plugin_id;
-		if(<?cs var:config.plugin_pre ?>_sel_plugin.plugin_id
-			== <?cs var:config.plugin_pre ?>_plugin_list.list[selIndex].plugin_id) {
-			return false;
-		}
-		$(pid).css('background-color', '#ecf2f4');
-	}
-
 	<?cs var:config.plugin_pre ?>_sel_plugin = <?cs var:config.plugin_pre ?>_plugin_list.list[selIndex];
-	pid = '#<?cs var:config.plugin_pre ?>_plugin_' + <?cs var:config.plugin_pre ?>_sel_plugin.plugin_id;
-	$(pid).css('background-color', '#ddf79a');
-}
-
-function <?cs var:config.plugin_pre ?>OnDownSrc()
-{
 }
 
 function <?cs var:config.plugin_pre ?>OnDownSrc()
@@ -122,99 +106,93 @@ function <?cs var:config.plugin_pre ?>_GetPluginInstallStatus(plugin)
 
 function <?cs var:config.plugin_pre ?>_GetInstallPluginShowInfo(idx, plugin, local_plugin)
 {
-	var shtml = "<div plugin_type=1 style='float:left; height:240px; width:450px; background-color:#ecf2f4; margin:10px ";
-	shtml += g_PluginMargin + "px; border-radius:10px; border:1px solid #000;'";
-	shtml += " id='<?cs var:config.plugin_pre ?>_plugin_" + plugin.plugin_id + "'";
-	if(plugin.ver != local_plugin.ver) 
-		shtml += " has_new_ver=1 ";
-	else
-		shtml += " has_new_ver=0 ";
-	shtml += " onclick='return <?cs var:config.plugin_pre ?>SetSelplugin(" + idx + ")' >";
-
-	shtml += "<div style='float:left; height:180px; margin:10px; overflow:hidden; text-overflow:ellipsis;'>";
-	shtml += "<a href='#'><img width='160px' height='180px' src='";
-	if(local_plugin.pic != "" && local_plugin.pic != null) 
-		shtml += '<?cs var:config.xrkmonitor_url ?>/monitor/download/plugin/'+local_plugin.pic;
-	else
-		shtml += '<?cs var:config.xrkmonitor_url ?>/monitor/download/plugin/plugin_def_pic.png';
-	shtml += "'></img></a>"
-	shtml += "</div>";
-
-	shtml += "<div style='float:left;'>";
-	shtml += "<div class='pluginName'>" + local_plugin.plugin_name + "</div>";
-	shtml += "<div class='pluginItem'>安装情况: <font color='blue'>已安装(" + local_plugin.ver + ")</font>";
-	if(plugin.ver != local_plugin.ver)
-		shtml += "<font color='red'>&nbsp;-&nbsp;可更新</font></div>";
-	else
-		shtml += "</div>";
-
-	shtml += "<div class='pluginItem'>开发语言: " + local_plugin.dev_language + "</div>";
-	shtml += "<div class='pluginItem'>运行平台: " + local_plugin.dest_os + "</div>";
-	if(local_plugin.set_method != 0)
-		shtml += "<div class='pluginItem'>部署方式: 外置</div>";
-	else
-		shtml += "<div class='pluginItem'>部署方式: 内置</div>";
-	shtml += "<div class='pluginItem'>安装次数: <font color='blue'>" + plugin.open_install_times + "</font></div>";
-	if(plugin.ver != local_plugin.ver) {
-		shtml += "<div class='pluginItem'>最新版本: <font color='red'>" + plugin.ver + "</font></div>";
-		shtml += "<div class='pluginItem'>最后更新时间: <font color='red'>" + plugin.update_time + "</font></div>";
-	}
-	else {
-		shtml += "<div class='pluginItem'>最新版本: " + plugin.ver + "</div>";
-		shtml += "<div class='pluginItem'>最后更新时间: " + plugin.update_time + "</div>";
-	}
-	shtml += "<div class='pluginItem'>插件描述: " + local_plugin.desc.replace(/&br/g, "\r\n") + "</div>";
-	shtml += "</div>";
-
-	shtml += "<div style='width:440px; float:left; margin-left:10px;'>";
-	shtml += "<img src='<?cs var:config.xrkmonitor_url ?>/monitor/themes/sexybuttons/images/icons/silk/status_online.png'>";
-	shtml += "&nbsp;<font color='#255fcc'>"+local_plugin.auth+"</font></img>";
-	shtml += "</div>";
-
-	shtml += "</div>";
-	return shtml;
-}
-
-function <?cs var:config.plugin_pre ?>_GetPluginShowInfo(idx, plugin)
-{
-	var shtml = "<div plugin_type=0 style='float:left; height:240px; width:450px; background-color:#ecf2f4; margin:10px ";
-		shtml += g_PluginMargin + "px; border-radius:10px; border:1px solid #000;'";
+	var shtml = "<div class='plugin_block' style='margin:10px " + g_PluginMargin + "px;' ";
 		shtml += " id='<?cs var:config.plugin_pre ?>_plugin_" + plugin.plugin_id + "'";
 		shtml += " onclick='return <?cs var:config.plugin_pre ?>SetSelplugin(" + idx + ")' >";
 
-	shtml += "<div style='float:left; height:180px; margin:10px; overflow:hidden; text-overflow:ellipsis;'>";
-	shtml += "<a href='#'><img width='160px' height='180px' src='";
+	shtml += "<div class='pluginImg'><img src='";
 	if(plugin.pic != "" && plugin.pic != null) 
-		shtml += '<?cs var:config.xrkmonitor_url ?>/monitor/download/plugin/'+plugin.pic;
+		shtml += '<?cs var:config.xrkmonitor_url ?>'+plugin.pic;
 	else
 		shtml += '<?cs var:config.xrkmonitor_url ?>/monitor/download/plugin/plugin_def_pic.png';
-	shtml += "'></img></a>"
+	shtml += "'></img>";
+    if(typeof plugin.price != 'undefined') {
+        var p = plugin.price/100.0;
+        shtml += "<div class='pluginPrice'>￥" + p.toFixed(2) + "</div>";
+    }
+    else {
+        shtml += "<div class='pluginPrice' style='color:#00DB00'>免费</div>";
+    }
 	shtml += "</div>";
 
-	shtml += "<div style='float:left;'>";
-	shtml += "<div class='pluginName'>" + plugin.plugin_name + "</div>";
-	shtml += "<div class='pluginItem'>安装情况: <font color='blue'>未安装</font></div>";
+	shtml += "<div class='pluginMeta'>";
+   	shtml += "<div class='pluginName'>" + plugin.plugin_show_name + "</div>";
+    shtml += "<div class='pluginDisItem'>部署名：" + plugin.plugin_name + " (ID: " + plugin.plugin_id +")</div>";
+	if(typeof local_plugin != 'undefined') {
+		shtml += "<div class='pluginDisItem'>本地安装情况: <font color='blue' style='font-size:13.5px;'>已安装（";
+		shtml += local_plugin.ver + "）</font>";
+		if(plugin.ver != local_plugin.ver)
+			shtml += "<font color='red' style='font-size:13.5px;'>&nbsp;-&nbsp;可更新</font></div>";
+		else
+			shtml += "</div>";
+	}
+	else {
+		shtml += "<div class='pluginDisItem'>安装情况: <font color='blue' style='font-size:13.5px;'>未安装</font></div>";
+	}
+
 	shtml += "<div class='pluginItem'>开发语言: " + plugin.dev_language + "</div>";
-	shtml += "<div class='pluginItem'>运行平台: " + plugin.dest_os + "</div>";
-	if(plugin.set_method != 0)
-		shtml += "<div class='pluginItem'>部署方式: 外置</div>";
-	else
-		shtml += "<div class='pluginItem'>部署方式: 内置</div>";
-	shtml += "<div class='pluginItem'>安装次数: <font color='blue'>" + plugin.open_install_times + "</font></div>";
-	shtml += "<div class='pluginItem'>最新版本: " + plugin.ver + "</div>";
+	var mt = plugin.set_method != 0 ? '外置' : '内置';
+	shtml += "<div class='pluginItem-right'>部署方式: " + mt + "</div>";
+    if(plugin.dest_os == 'All_os')
+    	shtml += "<div class='pluginItem'>运行平台: 跨平台</div>";
+    else
+    	shtml += "<div class='pluginItem'>运行平台: " + plugin.dest_os + "</div>";
+	shtml += "<div class='pluginItem-right'>下载次数: " +plugin.download_times+"</div>";
+    if(plugin.open_src == 1)
+    	shtml += "<div class='pluginItem'>开源情况: 开源</div>";
+    else
+    	shtml += "<div class='pluginItem'>开源情况: 闭源</div>";
+	shtml += "<div class='pluginItem-right'>安装次数: "+plugin.open_install_times +"</div>";
 	shtml += "<div class='pluginItem'>更新时间: " + plugin.update_time + "</div>";
-	shtml += "<div class='pluginItem'>插件描述: " + plugin.desc.replace(/&br/g, "\r\n") + "</div>";
+	shtml += "<div class='pluginItem-right'>最新版本: " + plugin.ver + "</div>";
+	shtml += "</div>";
+	shtml += "<div class='pluginDesc'><div style='margin-left:25px;float:left'>&nbsp;</div>" + plugin.desc.replace(/&br/g, "\r\n") + "</div>";
+
+	shtml += "<div class='pluginAuth'><ul class='nav' style='color:gray'><li><i class='icon-user icon-large'></i>";
+	shtml += plugin.auth + "</li></ul>";
+    shtml += "</div>";
+
+	shtml += "<div style='float:left;width:120px;'>";
 	shtml += "</div>";
 
-	shtml += "<div style='width:440px; float:left; margin-left:10px;'>";
-	shtml += "<img src='<?cs var:config.xrkmonitor_url ?>/monitor/themes/sexybuttons/images/icons/silk/status_online.png'>";
-	shtml += "&nbsp;<font color='#255fcc'>"+plugin.auth+"</font></img>";
+    shtml += "<div class='pluginOp'>";
+	if(typeof local_plugin == 'undefined') {
+		shtml += "<ul class='nav'><li><a href='#' onclick='";
+		shtml += "<?cs var:config.plugin_pre ?>InstallPlugin(" + idx + ");' ";
+		shtml += "'title='一键安装插件'><i class='icon-wrench icon-large'></i>一键安装</a></li></ul>";
+	}
+	else if(plugin.install_tp_file != '' && plugin.install_tp_file != 'no') {
+		if(plugin.ver != local_plugin.ver) {
+			shtml += "<ul class='nav'><li><a href='#' onclick='";
+			shtml += "<?cs var:config.plugin_pre ?>UpdatePlugin(" + idx + ");' ";
+			shtml += "'title='一键更新插件'><i class='icon-wrench icon-large'></i>一键更新</a></li></ul>";
+		}
+		else {
+			shtml += "<ul class='nav'><li><a href='<?cs var:config.cgipath?>mt_slog?action=dp_add_plugin";
+			shtml += "&id=" + plugin.plugin_id + "'title='一键部署插件' target='navTab' rel='dp_add_plugin_";
+			shtml += plugin.plugin_id + "'><i class='icon-wrench icon-large'></i>一键部署</a></li></ul>";
+		}
+	}
+	else if(plugin.ver != local_plugin.ver) {
+		shtml += "<ul class='nav'><li><a href='#' onclick='";
+		shtml += "<?cs var:config.plugin_pre ?>UpdatePlugin(" + idx + ");' ";
+		shtml += "'title='一键更新插件'><i class='icon-wrench icon-large'></i>一键更新</a></li></ul>";
+	}
 	shtml += "</div>";
 
-	shtml += "</div>";
+    shtml += "</div>";
 	return shtml;
 }
-
 
 function <?cs var:config.plugin_pre ?>SetpluginList()
 {
@@ -235,31 +213,22 @@ function <?cs var:config.plugin_pre ?>SetpluginList()
 			uhtml += <?cs var:config.plugin_pre ?>_GetInstallPluginShowInfo(i, ulist[i], g_LocalOpenPluginList.list[j]);
 		}
 		else {
-			uhtml += <?cs var:config.plugin_pre ?>_GetPluginShowInfo(i, ulist[i]);
+			uhtml += <?cs var:config.plugin_pre ?>_GetInstallPluginShowInfo(i, ulist[i]);
 		}
 	}
 
 	$("#<?cs var:config.plugin_pre ?>_plugin_list").html(uhtml);
 	$("#<?cs var:config.plugin_pre ?>_plugin_list").children().hover(
 		function(){
-			$(this).css({"margin-top":"6px", "border-top-width":"5px", "border-color":"blue"});
-			$(this).find('.pluginName').css('font-size', '20px');
+			$(this).css('background-color', '#ddf79a');
 		}, 
 		function(){
-			$(this).css({"margin-top":"10px", "border-top-width":"1px", "border-color":"#000"});
-			$(this).find('.pluginName').css('font-size', '18px');
+			$(this).css('background-color', '#fff');
 		}
 	);
 
 	$("#<?cs var:config.plugin_pre ?>_plugin_list").children().each(function() {
-		var sMenu = 'mypluginOpenUnIns';
-		if($(this).attr('plugin_type') == 1) {
-			if($(this).attr('has_new_ver') == 0)
-				sMenu = 'mypluginOpenIns';
-			else
-				sMenu = 'mypluginOpenInsUp';
-		}
-		$(this).contextMenu(sMenu, {
+		$(this).contextMenu('mypluginOpenIns', {
 			callback: function(t, op) {
 				t.trigger('click');
 			},
@@ -270,31 +239,14 @@ function <?cs var:config.plugin_pre ?>SetpluginList()
 				downall:function(t, m) { 
 					return <?cs var:config.plugin_pre ?>OnDownSrc();
 				},
-				showinfo:function(t, m) { 
-					return <?cs var:config.plugin_pre ?>ShowInfo();
-				},
-				showinfo_up:function(t, m) { 
-					return <?cs var:config.plugin_pre ?>ShowInfoUp();
-				},
-				update:function() {
-					return <?cs var:config.plugin_pre ?>UpdatePlugin();
-				},
-				install:function(t, m) { 
-					return <?cs var:config.plugin_pre ?>InstallPlugin();
-				}
 			}
 		});
 	});
 }
 
-function <?cs var:config.plugin_pre ?>UpdatePlugin()
+function <?cs var:config.plugin_pre ?>UpdatePlugin(idx)
 {
-	if(<?cs var:config.plugin_pre ?>_sel_plugin == null)
-	{
-		alertMsg.info("请右键单击插件通过弹出菜单安装");
-		return;
-	}
-
+	<?cs var:config.plugin_pre ?>SetSelplugin(idx);
 	var requrl = "<?cs var:config.xrkmonitor_url?>/cgi-bin/mt_slog_open?action=open_get_plugin_pb_info";
 	requrl += "&plugin_id=" + <?cs var:config.plugin_pre ?>_sel_plugin.plugin_id; 
 	$.ajax({
@@ -320,12 +272,12 @@ function <?cs var:config.plugin_pre ?>UpdatePlugin()
 			{
 				js.plugin_pic = <?cs var:config.plugin_pre ?>_sel_plugin.pic;
 			}
-			<?cs var:config.plugin_pre ?>UpdatePluginPb(js, <?cs var:config.plugin_pre ?>_sel_plugin);
+			<?cs var:config.plugin_pre ?>UpdatePluginPb(js);
 		}
 	});
 }
 
-function <?cs var:config.plugin_pre ?>UpdatePluginPb(pbJs, psel)
+function <?cs var:config.plugin_pre ?>UpdatePluginPb(pbJs)
 {
 	var in_url = "<?cs var:config.cgipath?>mt_slog?action=update_open_plugin";
 	var plugin_info = JSON.stringify(pbJs);
@@ -347,21 +299,18 @@ function <?cs var:config.plugin_pre ?>UpdatePluginPb(pbJs, psel)
 				return;
 			}
 			else {
-				alertMsg.correct("插件更新成功, 插件部署方法请查看帮助文档");
+				alertMsg.correct("插件更新成功");
+
+				<?cs var:config.plugin_pre ?>SaveSearch();
 				return navTab.reload();
 			}
 		}
 	});
 }
 
-function <?cs var:config.plugin_pre ?>InstallPlugin()
+function <?cs var:config.plugin_pre ?>InstallPlugin(idx)
 {
-	if(<?cs var:config.plugin_pre ?>_sel_plugin == null)
-	{
-		alertMsg.info("请右键单击插件通过弹出菜单安装");
-		return;
-	}
-
+	<?cs var:config.plugin_pre ?>SetSelplugin(idx);
 	var requrl = "<?cs var:config.xrkmonitor_url?>/cgi-bin/mt_slog_open?action=open_get_plugin_pb_info";
 	requrl += "&plugin_id=" + <?cs var:config.plugin_pre ?>_sel_plugin.plugin_id; 
 	$.ajax({
@@ -387,12 +336,12 @@ function <?cs var:config.plugin_pre ?>InstallPlugin()
 			{
 				js.plugin_pic = <?cs var:config.plugin_pre ?>_sel_plugin.pic;
 			}
-			<?cs var:config.plugin_pre ?>InstallPluginPb(js, <?cs var:config.plugin_pre ?>_sel_plugin);
+			<?cs var:config.plugin_pre ?>InstallPluginPb(js);
 		}
 	});
 }
 
-function <?cs var:config.plugin_pre ?>InstallPluginPb(pbJs, psel)
+function <?cs var:config.plugin_pre ?>InstallPluginPb(pbJs)
 {
 	var in_url = "<?cs var:config.cgipath?>mt_slog?action=install_open_plugin";
 	var plugin_info = JSON.stringify(pbJs);
@@ -414,53 +363,59 @@ function <?cs var:config.plugin_pre ?>InstallPluginPb(pbJs, psel)
 				return;
 			}
 			else {
-				alertMsg.correct("插件安装成功, 插件部署方法请查看帮助文档");
+				alertMsg.correct("插件安装成功, 接下来您需要部署插件");
 				var rep_install_url = "<?cs var:config.xrkmonitor_url?>/cgi-bin/mt_slog_open?action=rep_open_install";
 				rep_install_url += "&plugin_id=" + js.plugin_id;
 				$.ajax({ type: "get", url: rep_install_url, dataType: 'json', global: false });
+
+				<?cs var:config.plugin_pre ?>SaveSearch();
 				navTab.reload();
 			}
 		}
 	});
 }
 
-function <?cs var:config.plugin_pre ?>ShowInfo()
-{
-	if(<?cs var:config.plugin_pre ?>_sel_plugin == null)
-	{
-		alertMsg.info("请先点击插件列表选择一个要查看的插件");
-		return;
-	}
-
-	var url = "<?cs var:config.cgipath?>mt_slog?action=show_local_mt_plugin&plugin_pre=<?cs var:config.plugin_pre ?>";
-	url += "&plugin_id=" + <?cs var:config.plugin_pre ?>_sel_plugin.plugin_id; 
-
-	var op = $.parseJSON('{"mask":true,"maxable":false,"height":600,"width":920}'); 
-	$.pdialog.open(url, "<?cs var:config.plugin_pre ?>_dlg_show_plugin", "本地已安装监控插件详情", op); 
-}
-
-function <?cs var:config.plugin_pre ?>ShowInfoUp()
-{
-	if(<?cs var:config.plugin_pre ?>_sel_plugin == null)
-	{
-		alertMsg.info("请先点击插件列表选择一个要查看的插件");
-		return;
-	}
-
-	var url = "<?cs var:config.cgipath?>mt_slog?action=show_mt_plugin&plugin_pre=<?cs var:config.plugin_pre ?>";
-	url += "&plugin_id=" + <?cs var:config.plugin_pre ?>_sel_plugin.plugin_id; 
-
-	var op = $.parseJSON('{"mask":true,"maxable":false,"height":600,"width":920}'); 
-	$.pdialog.open(url, "<?cs var:config.plugin_pre ?>_dlg_show_plugin", "查看监控插件", op); 
-}
-
 function <?cs var:config.plugin_pre ?>PageChange(op)
 {
 	$('#<?cs var:config.plugin_pre ?>_SearchBar input[name=pageNum]').val(op.pageNum);
-	<?cs var:config.plugin_pre ?>Search(false);
+	<?cs var:config.plugin_pre ?>Search();
 }
 
-function <?cs var:config.plugin_pre ?>Search(pglobal)
+function <?cs var:config.plugin_pre ?>ClearSearch()
+{
+	window.localStorage.removeItem('<?cs var:config.plugin_pre ?>_SearchBar_dev_language');
+	window.localStorage.removeItem('<?cs var:config.plugin_pre ?>_SearchBar_dest_os');
+	window.localStorage.removeItem('<?cs var:config.plugin_pre ?>_SearchBar_open_src');
+	window.localStorage.removeItem('<?cs var:config.plugin_pre ?>_SearchBar_set_method');
+	window.localStorage.removeItem('<?cs var:config.plugin_pre ?>_SearchBar_pageNum');
+	window.localStorage.removeItem('<?cs var:config.plugin_pre ?>_SearchBar_numPerPage');
+	window.localStorage.removeItem('<?cs var:config.plugin_pre ?>_SearchBar_price');
+	window.localStorage.removeItem('<?cs var:config.plugin_pre ?>_SearchBar_set_status');
+}
+
+function <?cs var:config.plugin_pre ?>SaveSearch()
+{
+	var reqdata = new Object();
+	reqdata.dev_language = $('#<?cs var:config.plugin_pre ?>_SearchBar select[name=dev_language]').val();
+	reqdata.dest_os = $('#<?cs var:config.plugin_pre ?>_SearchBar select[name=dest_os]').val();
+	reqdata.open_src = $('#<?cs var:config.plugin_pre ?>_SearchBar select[name=open_src]').val();
+	reqdata.set_method = $('#<?cs var:config.plugin_pre ?>_SearchBar select[name=set_method]').val();
+	reqdata.pageNum = $('#<?cs var:config.plugin_pre ?>_SearchBar input[name=pageNum]').val();
+	reqdata.numPerPage = $('#<?cs var:config.plugin_pre ?>_numPerPage select[name=numPerPage]').val();
+	reqdata.price = $('#<?cs var:config.plugin_pre ?>_SearchBar select[name=price]').val();
+	reqdata.set_status = $('#<?cs var:config.plugin_pre ?>_SearchBar select[name=set_status]').val();
+	
+	window.localStorage.setItem('<?cs var:config.plugin_pre ?>_SearchBar_dev_language', reqdata.dev_language);
+	window.localStorage.setItem('<?cs var:config.plugin_pre ?>_SearchBar_dest_os', reqdata.dest_os);
+	window.localStorage.setItem('<?cs var:config.plugin_pre ?>_SearchBar_open_src', reqdata.open_src);
+	window.localStorage.setItem('<?cs var:config.plugin_pre ?>_SearchBar_set_method', reqdata.set_method);
+	window.localStorage.setItem('<?cs var:config.plugin_pre ?>_SearchBar_pageNum', reqdata.pageNum);
+	window.localStorage.setItem('<?cs var:config.plugin_pre ?>_SearchBar_numPerPage', reqdata.numPerPage);
+	window.localStorage.setItem('<?cs var:config.plugin_pre ?>_SearchBar_price', reqdata.price);
+	window.localStorage.setItem('<?cs var:config.plugin_pre ?>_SearchBar_set_status', reqdata.set_status);
+}
+
+function <?cs var:config.plugin_pre ?>Search()
 {
 	var requrl = '<?cs var:config.xrkmonitor_url ?>/cgi-bin/mt_slog_open';
 	var reqdata = new Object();
@@ -474,14 +429,13 @@ function <?cs var:config.plugin_pre ?>Search(pglobal)
 	reqdata.numPerPage = $('#<?cs var:config.plugin_pre ?>_numPerPage select[name=numPerPage]').val();
 	reqdata.price = $('#<?cs var:config.plugin_pre ?>_SearchBar select[name=price]').val();
 	reqdata.set_status = $('#<?cs var:config.plugin_pre ?>_SearchBar select[name=set_status]').val();
-	if(reqdata.set_status != 999)
-		reqdata.local_plugins = g_LocalOpenPluginListIds;
+	reqdata.local_plugins = g_LocalOpenPluginListIds;
 
 	$.ajax({
 		type:'post',
 		url: requrl,
 		data: reqdata,
-		global: pglobal,
+		global: true,
 		dataType: 'json',
 		success: function(js) {
 			if(js.ret != 0) {
@@ -504,15 +458,43 @@ function <?cs var:config.plugin_pre ?>Search(pglobal)
 }
 
 $(document).ready(function(){
-	<?cs var:config.plugin_pre ?>Search(false);
+	if(window.localStorage.getItem('<?cs var:config.plugin_pre ?>_SearchBar_dev_language') != null) 
+		$('#<?cs var:config.plugin_pre ?>_SearchBar select[name=dev_language]').val(
+			window.localStorage.getItem('<?cs var:config.plugin_pre ?>_SearchBar_dev_language'));
+
+	if(window.localStorage.getItem('<?cs var:config.plugin_pre ?>_SearchBar_dest_os') != null) 
+		$('#<?cs var:config.plugin_pre ?>_SearchBar select[name=dest_os]').val(
+			window.localStorage.getItem('<?cs var:config.plugin_pre ?>_SearchBar_dest_os'));
+
+	if(window.localStorage.getItem('<?cs var:config.plugin_pre ?>_SearchBar_open_src') != null) 
+		$('#<?cs var:config.plugin_pre ?>_SearchBar select[name=open_src]').val(
+			window.localStorage.getItem('<?cs var:config.plugin_pre ?>_SearchBar_open_src'));
+
+	if(window.localStorage.getItem('<?cs var:config.plugin_pre ?>_SearchBar_set_method') != null) 
+		$('#<?cs var:config.plugin_pre ?>_SearchBar select[name=set_method]').val(
+			window.localStorage.getItem('<?cs var:config.plugin_pre ?>_SearchBar_set_method'));
+
+	if(window.localStorage.getItem('<?cs var:config.plugin_pre ?>_SearchBar_pageNum') != null) 
+		$('#<?cs var:config.plugin_pre ?>_SearchBar input[name=pageNum]').val(
+			window.localStorage.getItem('<?cs var:config.plugin_pre ?>_SearchBar_pageNum'));
+
+	if(window.localStorage.getItem('<?cs var:config.plugin_pre ?>_SearchBar_numPerPage') != null) 
+		$('#<?cs var:config.plugin_pre ?>_SearchBar select[name=numPerPage]').val(
+			window.localStorage.getItem('<?cs var:config.plugin_pre ?>_SearchBar_numPerPage'));
+
+	if(window.localStorage.getItem('<?cs var:config.plugin_pre ?>_SearchBar_price') != null) 
+		$('#<?cs var:config.plugin_pre ?>_SearchBar select[name=price]').val(
+			window.localStorage.getItem('<?cs var:config.plugin_pre ?>_SearchBar_price'));
+
+	if(window.localStorage.getItem('<?cs var:config.plugin_pre ?>_SearchBar_set_status') != null) 
+		$('#<?cs var:config.plugin_pre ?>_SearchBar select[name=set_status]').val(
+			window.localStorage.getItem('<?cs var:config.plugin_pre ?>_SearchBar_set_status'));
+
+	<?cs var:config.plugin_pre ?>ClearSearch();
+	<?cs var:config.plugin_pre ?>Search();
 });
 
 </script>
-
-<style type="text/css">
-.pluginName { font-size:18px; font-weight:bold; margin-top:10px; overflow:hidden; text-overflow:ellipsis; }
-.pluginItem { font-size:12px; width:260px; overflow:hidden; text-overflow:ellipsis; }
-</style>
 
 <div class="pageHeader" style="border:1px #B8D0D6 solid">
 	<div class="searchBar">
@@ -559,11 +541,11 @@ $(document).ready(function(){
 			</li>
 
 			<li>
-				<label>部署情况</label>
+				<label>安装部署情况</label>
 				<select class='xrk_combox' name="set_status">
 					<option value="999">-全部-</option>
-					<option value="1">已部署</option>
-					<option value="0">未部署</option>
+					<option value="1">已安装</option>
+					<option value="0">未安装</option>
 				</select>
 			</li>
 
@@ -580,7 +562,7 @@ $(document).ready(function(){
 		<div class="subBar">
 			<ul>
 				<li>
-					<button type="button" class="buttonActive" onclick='<?cs var:config.plugin_pre ?>Search(true);'><i class='icon-search icon-large'></i>查找</button></li>
+					<button type="button" class="buttonActive" onclick='<?cs var:config.plugin_pre ?>Search();'><i class='icon-search icon-large'></i>查找</button></li>
 			</ul>
 		</div>
 	</div>
