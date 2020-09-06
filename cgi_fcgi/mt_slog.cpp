@@ -47,7 +47,7 @@
 #include <errno.h>
 #include <math.h>
 #include <map>
-
+#include <sstream>
 #include <cgi_head.h>
 #include <cgi_comm.h>
 #include <cgi_attr.h>
@@ -2525,9 +2525,9 @@ static int DealListPlugin(CGI *cgi, const char *ptype="open")
 
 	// 本地已安装的公共插件信息
 	if(!strcmp(ptype, "open")) {
+		std::ostringstream ss;
 		Json js;
-		sprintf(sSqlBuf, 
-			"select * from mt_plugin where xrk_status=%d", RECORD_STATUS_USE);
+		sprintf(sSqlBuf, "select * from mt_plugin where xrk_status=%d", RECORD_STATUS_USE);
 		qu.get_result(sSqlBuf);
 		if(qu.num_rows() > 0) 
 		{
@@ -2550,11 +2550,17 @@ static int DealListPlugin(CGI *cgi, const char *ptype="open")
 				plugin["log_config"] = qu.getstr("log_config");
 				js["list"].Add(plugin);
 				iCount++;
+				ss << "plugin_" << qu.getuval("open_plugin_id") << "_" << qu.getstr("plugin_cur_ver") << ",";
 			}
 		}
 		js["count"] = iCount;
 		qu.free_result();
 		hdf_set_value(cgi->hdf, "config.local_open_list", js.ToString().c_str());
+		hdf_set_value(cgi->hdf, "config.local_open_list_ids", ss.str().c_str());
+	}
+	else {
+		hdf_set_value(cgi->hdf, "config.local_open_list", "{count:0}");
+		hdf_set_value(cgi->hdf, "config.local_open_list_ids", "");
 	}
 	return 0;
 }
@@ -2662,6 +2668,9 @@ static int AddPluginLogConfig(Query &qu, Json & js_plugin)
 static int AddPlugin(Query &qu, Json &js_plugin)
 {
 	const char *pname = js_plugin["plus_name"];
+	const char *pshow_name = pname;
+	if(js_plugin.HasValue("show_name"))
+		pshow_name = js_plugin["show_name"];
 
     std::ostringstream sql; 
 	sql << "select plugin_id from mt_plugin where open_plugin_id=" 
@@ -2682,6 +2691,12 @@ static int AddPlugin(Query &qu, Json &js_plugin)
 	    stConfig.pErrMsg = CGI_REQERR;
 	    return SLOG_ERROR_LINE;
 	}
+
+	if(strlen(pshow_name) < 6 || strlen(pshow_name) > 60) {
+	    REQERR_LOG("invalid plugin show name length:%d (6-60)", (int)strlen(pshow_name));
+	    stConfig.pErrMsg = CGI_REQERR;
+	    return SLOG_ERROR_LINE;
+	}
 	
 	const char *pdesc = js_plugin["plus_desc"];
 	if(strlen(pdesc) < 1 || strlen(pdesc) > 362) {
@@ -2698,6 +2713,7 @@ static int AddPlugin(Query &qu, Json &js_plugin)
 	}
 	AddParameter(&ppara, "plugin_desc", pdesc, NULL);
 	AddParameter(&ppara, "plugin_name", pname, NULL);
+	AddParameter(&ppara, "plugin_show_name", pshow_name, NULL);
 	AddParameter(&ppara, "plugin_cur_ver", (const char*)(js_plugin["plus_version"]), NULL);
 	AddParameter(&ppara, "plugin_pic", (const char*)(js_plugin["plugin_pic"]), NULL);
 	AddParameter(&ppara, "dev_language", (const char*)(js_plugin["dev_language"]), NULL);
@@ -2706,11 +2722,9 @@ static int AddPlugin(Query &qu, Json &js_plugin)
 	AddParameter(&ppara, "dest_os", (const char*)(js_plugin["dest_os"]), NULL);
 	AddParameter(&ppara, "log_config", (int)(js_plugin["b_add_log_module"]), "DB_CAL");
 	AddParameter(&ppara, "plugin_src_url", (const char*)(js_plugin["plus_url"]), NULL);
-
-	const char *pauth = js_plugin["plugin_auth"];
 	AddParameter(&ppara, "create_time", stConfig.dwCurTime, "DB_CAL");
 	AddParameter(&ppara, "update_time", uitodate(stConfig.dwCurTime), NULL);
-	AddParameter(&ppara, "plugin_auth", pauth, NULL);
+	AddParameter(&ppara, "plugin_auth", (const char *)(js_plugin["plugin_auth"]), NULL);
 	AddParameter(&ppara, "open_plugin_id", (int)(js_plugin["plugin_id"]), NULL);
 
 	strSql = "insert into mt_plugin";
@@ -3569,57 +3583,6 @@ static int DealInstallPlugin(CGI *cgi)
 	return 0;
 }
 
-static int DealShowLocalPlugin(CGI *cgi)
-{
-	char *pshow_pre = hdf_get_value(cgi->hdf, "Query.plugin_pre", NULL);
-	char *plugin_id = hdf_get_value(cgi->hdf, "Query.plugin_id", NULL);
-	if((pshow_pre == NULL || (strcmp(pshow_pre, "dpopen") && strcmp(pshow_pre, "dpmy")))
-		|| plugin_id == NULL) 
-	{
-		REQERR_LOG("invalid request parameter");
-		return SLOG_ERROR_LINE;
-	}
-
-	hdf_set_value(stConfig.cgi->hdf, "config.plugin_pre", pshow_pre);
-	hdf_set_value(stConfig.cgi->hdf, "config.plugin_id", plugin_id);
-	hdf_set_value(stConfig.cgi->hdf, "config.action", "show_local_mt_plugin");
-
-	char sSqlBuf[128] = {0};
-	Query qu(*stConfig.db);
-
-	snprintf(sSqlBuf, sizeof(sSqlBuf),
-		"select pb_info,plugin_id from mt_plugin where open_plugin_id=%s", plugin_id);
-	qu.get_result(sSqlBuf);
-	if(qu.num_rows() > 0 && qu.fetch_row() != NULL) 
-	{
-		hdf_set_value(stConfig.cgi->hdf, "config.plugin_info", qu.getstr("pb_info"));
-		DEBUG_LOG("get plugin:%s(local:%d) info", plugin_id, qu.getval("plugin_id"));
-	}
-	else {
-		hdf_set_value(stConfig.cgi->hdf, "config.plugin_info", "null");
-		WARN_LOG("not find plugin:%s", plugin_id);
-	}
-	qu.free_result();
-	return 0;
-}
-
-static int DealShowPlugin(CGI *cgi)
-{
-	char *pshow_pre = hdf_get_value(cgi->hdf, "Query.plugin_pre", NULL);
-	char *plugin_id = hdf_get_value(cgi->hdf, "Query.plugin_id", NULL);
-	if((pshow_pre == NULL || (strcmp(pshow_pre, "dpopen") && strcmp(pshow_pre, "dpmy")))
-		|| plugin_id == NULL) 
-	{
-		REQERR_LOG("invalid request parameter");
-		return SLOG_ERROR_LINE;
-	}
-
-	hdf_set_value(stConfig.cgi->hdf, "config.plugin_pre", pshow_pre);
-	hdf_set_value(stConfig.cgi->hdf, "config.plugin_id", plugin_id);
-	hdf_set_value(stConfig.cgi->hdf, "config.action", "show_mt_plugin");
-	return 0;
-}
-
 int main(int argc, char **argv, char **envp)
 {
 	int32_t iRet = 0;
@@ -3778,10 +3741,6 @@ int main(int argc, char **argv, char **envp)
 		// monitor plus 
 		else if(!strcmp(pAction, "open_plugin"))
 			iRet = DealListPlugin(stConfig.cgi);
-		else if(!strcmp(pAction, "show_mt_plugin"))
-			iRet = DealShowPlugin(stConfig.cgi);
-		else if(!strcmp(pAction, "show_local_mt_plugin"))
-			iRet = DealShowLocalPlugin(stConfig.cgi);
 		else if(!strcmp(pAction, "install_open_plugin"))
 			iRet = DealInstallPlugin(stConfig.cgi);
 		else if(!strcmp(pAction, "update_open_plugin"))
@@ -3828,9 +3787,6 @@ int main(int argc, char **argv, char **envp)
 			pcsTemplate = "dmt_dlg_log_report_test.html";
 		else if(!strcmp(pAction, "open_plugin"))
 			pcsTemplate = "dmt_plugin.html";
-		else if(!strcmp(pAction, "show_mt_plugin") || !strcmp(pAction, "show_local_mt_plugin"))
-			pcsTemplate = "dmt_dlg_add_plugin.html";
-
 		if(pcsTemplate != NULL)
 		{
 			std::string strCsFile(stConfig.szCsPath);
