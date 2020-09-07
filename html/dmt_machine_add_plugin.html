@@ -1,0 +1,101 @@
+<script src="<?cs var:config.docpath?>resource/js/dmt.addplugin.js"></script>
+<script language="javascript" type="text/javascript">
+
+
+$(document).ready(function(){
+    var machine_plugins = $.parseJSON('<?cs var:config.machine_plugins ?>');
+    if(machine_plugins.count > 0) {
+        var uhtml = '';
+        var lt = machine_plugins.plugins;
+        for(var i=0; i < lt.length; ++i) {
+            uhtml += "<tr>";
+            uhtml += "<td>" + lt[i].id + "</td>";
+            uhtml += "<td>" + lt[i].show_name + "</td>";
+            uhtml += "<td>" + lt[i].name + "</td>";
+            uhtml += "<td>" + lt[i].run_os + "</td>";
+            uhtml += "<td>" + lt[i].language + "</td>";
+            uhtml += "<td>" + lt[i].auth + "</td>";
+            uhtml += "<td>" + lt[i].last_version + "</td>";
+		    uhtml += "<td class='detail'><a href='" + lt[i].desc_url + "' target='_blank'>详情</a></td>";
+            if(lt[i].installed == 1)
+                uhtml += "<td>已部署</td>";
+            else {
+                uhtml += "<td class='detail'><a href='#' onclick='return dmapAddPlugin(\"<?cs var:config.cgipath ?>\", ";
+                uhtml += "<?cs var:config.machine_id ?>, "+ lt[i].id + ");'>一键部署</a></td>";
+            }
+        }
+        $('#dmap_machine_plugin_<?cs var:config.machine_id ?>').html(uhtml);
+    }
+
+    <?cs if:config.run_time > 0 ?>
+        $('#dmap_mach_run_<?cs var:config.machine_id ?>').html(dmtGetHumanTime(<?cs var:config.run_time ?>));
+    <?cs else ?>
+        $('#dmap_mach_run_<?cs var:config.machine_id ?>').html("<font color='red'>已停止</font></td>");
+    <?cs /if ?>
+});
+
+</script>
+
+<div class="pageContent statusMachine" layoutH='0'>
+	<div class="pageFormContent">
+        <div>
+            <font class='note-text'>提示：插件一键部署需要机器上安装监控 agent，且agent 为启动状态。如果系统信息获取不正确或者一键部署失败，请检查机器是否支持 tar/strings 等命令。</font>
+        </div>
+        <br />
+ 
+        <h3>待部署机器信息</h3>
+		<table class='list' width='100%'> 
+            <thead>
+                <tr>
+                    <th align='left' >机器ID</th>
+                    <th align='left' >机器名称</th>
+                    <th align='left' >机器IP</th>
+                    <th align='left' >系统平台</th>
+                    <th align='left' >体系结构</th>
+                    <th align='left' >libc版本</th>
+                    <th align='left' >libcpp版本</th>
+                    <th align='left' >agent 已运行</th>
+                </tr>
+            </thead>
+            <tbody>
+			    <tr>
+				    <td><?cs var:config.machine_id ?></td>
+				    <td><?cs var:config.machine_name ?></td>
+				    <td><?cs var:config.machine_ip ?></td>
+				    <td><?cs var:config.run_os ?></td>
+				    <td><?cs var:config.os_arc ?></td>
+				    <td><?cs var:config.libc_ver ?></td>
+				    <td><?cs var:config.libcpp_ver ?></td>
+                    <td id='dmap_mach_run_<?cs var:config.machine_id ?>'></td>
+			    </tr>
+            </tbody>
+        </table>
+
+        <br />
+        <div>
+            <font class='note-text'>提示：插件需要先在插件市场安装后才能在机器上部署，如有更新也需要先更新后才能在机器上更新版本。</font>
+        </div>
+        <br />
+
+        <h3>已部署/可部署插件</h3>
+        <table class='list' width='100%'>
+            <thead>
+                <tr>
+                    <th align='left' >插件ID</th>
+                    <th align='left' >插件显示名</th>
+                    <th align='left' >插件部署名</th>
+                    <th align='left' >运行平台</th>
+                    <th align='left' >开发语言</th>
+                    <th align='left' >插件作者</th>
+                    <th align='left' >当前版本</th>
+                    <th align='left' >插件详情</th>
+                    <th align='left' >部署</th>
+                </tr>
+            </thead>
+            <tbody id='dmap_machine_plugin_<?cs var:config.machine_id ?>'>
+            </tbody>
+	    </table>
+	</div>
+</div>
+
+

@@ -1,0 +1,205 @@
+<script language="javascript" type="text/javascript">
+
+var g_install_timeout = 30;
+var g_ddmip_ajax_ret = null;
+var g_ddmip_cur_step = 1;
+var g_start_install_time = $.now();
+
+function ddmipAddStatusStepShow(step)
+{
+    switch(step) {
+        case 2:
+            $('#ddip_install_process').append('<li>已分派任务</li>');
+            break;
+        case 3:
+            $('#ddip_install_process').append('<li>接入服务已接收任务</li>');
+            break;
+        case 4:
+            $('#ddip_install_process').append('<li>接入服务已下发任务到机器</li>');
+            break;
+        case 5:
+            $('#ddip_install_process').append('<li>agent 已向云服务查询到安装包下载地址</li>');
+            break;
+        case 6:
+            $('#ddip_install_process').append('<li>agent 已下载插件部署包</li>');
+            break;
+        case 7:
+            $('#ddip_install_process').append('<li>agent 已部署插件并启动</li>');
+            break;
+        case 8:
+            $('#ddip_install_process').append('<li>接入服务已收到插件消息，插件部署成功</li>');
+            break;
+
+        case 20:
+            $('#ddmip_result').html('<font color="red">部署失败：agent 获取插件部署包地址失败, 请检查机器是否安装 wget 工具');
+            break;
+        case 21:
+            $('#ddmip_result').html('<font color="red">部署失败：agent 获取插件部署包地址, 返回错误码');
+            break;
+        case 22:
+            $('#ddmip_result').html('<font color="red">部署失败：agent 获取插件部署包地址, 返回内容解析错误');
+            break;
+        case 23:
+            $('#ddmip_result').html('<font color="red">部署失败：agent 下载插件部署包失败');
+            break;
+        case 24:
+            $('#ddmip_result').html('<font color="red">部署失败：agent 解压缩部署包失败, 请检查机器是否安装 tar 工具');
+            break;
+        case 25:
+            $('#ddmip_result').html('<font color="red">部署失败：agent 创建部署目录失败, 请 agent 是否有目录创建权限');
+            break;
+        case 26:
+            $('#ddmip_result').html('<font color="red">部署失败：agent 启动插件失败, 可能是插件与系统不兼容导致');
+            break;
+
+        default:
+            $('#ddmip_result').html('<font color="red">部署失败，进度错误：' + step);
+            clearInterval(g_addplugin_timerid);
+            g_addplugin_timerid = 0;
+            break;
+    }
+}
+
+function ddmipShowNewStatusStep(js)
+{
+    // 进度未变化
+    if(g_ddmip_cur_step == js.proc_status)
+        return;
+
+    // 进度已变化，显示并重新开始计时
+    while(js.proc_status <= <?cs var:config.max_install_proc ?> && g_ddmip_cur_step < js.proc_status) {
+        g_ddmip_cur_step++;
+        ddmipAddStatusStepShow(g_ddmip_cur_step);
+    }
+
+    if(js.proc_status < <?cs var:config.max_install_proc ?>) {
+        g_install_timeout = 30;
+        $('#ddip_timeout').text(''+g_install_timeout);
+    }
+    else {
+        // 部署出错
+        if(js.proc_status > <?cs var:config.max_install_proc ?>)
+            ddmipAddStatusStepShow(js.proc_status);
+        else {
+            var tw = ($.now() - g_start_install_time)/1000;
+            $('#ddmip_result').html('<font color="blue">部署成功，总共耗时：' + dmtGetHumanTime(tw)); 
+        }
+        clearInterval(g_addplugin_timerid);
+        g_addplugin_timerid = 0;
+    }
+}
+
+function ddipInstallTimeout()
+{
+    g_install_timeout--;
+    $('#ddip_timeout').text(''+g_install_timeout);
+    if(g_install_timeout <= 0)
+    {
+        clearInterval(g_addplugin_timerid);
+        g_addplugin_timerid = 0;
+        $('#ddmip_result').html('<font color="red">部署进度30秒未有变化</font><br>'
+            + '<font color="red">您可以稍后在上报机器管理中查询部署是否成功</font>');
+    }
+    else {
+        if(g_ddmip_ajax_ret == null || g_ddmip_ajax_ret == 1) {
+	        var para = new Object();
+            para.action = 'refresh_preinstall_plugin_status';
+            para.machine_id = <?cs var:config.machine_id ?>;
+            para.plugin_id = <?cs var:config.plugin_id ?>;
+            var requrl = '<?cs var:config.cgipath?>mt_slog';
+            $.ajax({ type: 'GET',
+                url: requrl,
+                data: para,
+                global: false,
+		        dataType: 'json', 
+                success: function(js) {
+                    g_ddmip_ajax_ret = 1;
+                    if(dmtFirstDealAjaxResponse(js))
+                        return;
+                    if(js.ret != 0) {
+                        clearInterval(g_addplugin_timerid);
+                        g_addplugin_timerid = 0;
+                        $('#ddmip_result').html('<font color="red">ajax 请求返回错误:' + js.msg + '，部署失败！</font>');
+                    }
+                    else {
+                        ddmipShowNewStatusStep(js);
+                    }
+                },
+                error: function() {
+                    clearInterval(g_addplugin_timerid);
+                    g_addplugin_timerid = 0;
+                    $('#ddmip_result').html('<font color="red">ajax 请求失败，部署失败！</font>');
+                }
+            });
+            g_ddmip_ajax_ret = 0;
+        }
+    }
+}
+
+$(document).ready(function(){
+    // g_addplugin_timerid define in dmt_dp_add_plugin.html
+    if(g_addplugin_timerid != 0) {
+        clearInterval(g_addplugin_timerid);
+        g_addplugin_timerid = 0;
+    }
+
+    <?cs if:config.install_proc > config.max_install_proc ?>
+        <?cs if:config.has_last_work == 1?>
+        $('#ddmip_result').html('<font color="red">您最近5分钟有相同部署操作，请稍后再试！' +
+            '<br />最近部署时间：<?cs var:config.last_install_time ?></font>');
+        <?cs else ?>
+        $('#ddmip_result').html('<font color="red">部署任务发布失败，部署失败！</font>');
+        <?cs /if ?>
+    <?cs else ?>
+        $('#ddip_install_process').append('<li>已发布任务</li>');
+        g_addplugin_timerid = setInterval(ddipInstallTimeout, 1000);
+    <?cs /if ?>
+});
+
+</script>
+
+<div class="pageContent">
+	<div class="pageFormContent" layoutH='0'>
+        <div style='height:260px; width:250px; float:left;'>
+            <h3>部署进度</h3>
+            <br />
+            <ol id='ddip_install_process' style='list-style:decimal !important; margin-left:10px'></ol>
+            <br />
+            插件部署中请稍等：<span id='ddip_timeout'>30</span> ...
+            <br />
+            <br />
+            <span id='ddmip_result'></span>
+        </div>
+
+        <div style='height:90px;width:300px;float:right'>
+            <h3>待部署机器</h3>
+            <br />
+            <label style='width:60px'>机器名: </label><?cs var:config.machine_name ?>
+            <br />
+            <label style='width:60px'>机器IP: </label><?cs var:config.machine_ip ?>
+            <br />
+            <label style='width:60px'>机器ID: </label><?cs var:config.machine_id ?>
+            <br />
+        </div>
+
+        <div style='height:200px;width:300px;float:right'>
+            <h3>待部署插件</h3>
+            <br />
+            <label style='width:80px'>插件显示名: </label><?cs var:config.plugin_show_name ?>
+            <br />
+            <label style='width:80px'>插件部署名: </label><?cs var:config.plugin_name ?>
+            <br />
+            <label style='width:80px'>部署版本: </label><?cs var:config.plugin_ver ?>
+            <br />
+            <label style='width:80px'>插件ID: </label><?cs var:config.plugin_id ?>
+        </div>
+	</div>
+
+	<div class="formBar">
+		<ul style='list-style:none'>
+			<li><button type="button" class="buttonActive close">关闭</button></li>
+		</ul>
+	</div>
+</div>
+
+

@@ -46,6 +46,27 @@ function dmtMathtrunc(d) {
     return Math.trunc(d);   
 }
 
+function dmtGetHumanTime(val)
+{
+    var h = '';
+    if(val >= 86400) {
+        h += dmtMathtrunc(val/86400) + '天 ';
+        val %= 86400;
+    }
+    if(val >= 3600) {
+        h += dmtMathtrunc(val/3600) + '小时 ';
+        val %= 3600;
+    }
+    if(val >= 60) {
+        h += dmtMathtrunc(val/60) + '分钟 ';
+        val %= 60;
+    }
+    if(val >= 1) {
+        h += dmtMathtrunc(val) + '秒 ';
+    }
+    return h;
+}
+
 function dmtSetPluginMarginInfo(tab)
 {
 	var iSub = DWZ.ui.sbar ? $("#sidebar").width() + 10 : 24;

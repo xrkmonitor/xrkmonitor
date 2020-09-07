@@ -48,6 +48,9 @@
 
 			<li><a href="<?cs var:config.cgipath?>mt_slog_machine?action=mod&id={machine_id}&navTabId=dmt_machine" target="dialog" mask="true" maxable="false" resizable="false" width="520" height="460" title="修改机器配置"><i class='icon-edit'></i>修改</a></li>
 			<li class="line">line</li>
+
+			<li><a href="<?cs var:config.cgipath?>mt_slog_machine?action=machine_add_plugin&id={machine_id}&navTabId=dmt_machine" target="navTab" title="插件部署"><i class='icon-edit'></i>插件部署</a></li>
+			<li class="line">line</li>
 		</ul>
 	</div>
 
@@ -60,7 +63,9 @@
 				<th >机器IP</th>
 				<th >机器IP2</th>
 				<th >告警标记</th>
+				<th >上报状态</th>
 				<th >机器描述</th>
+				<th >机器状态</th>
 			</tr>
 		</thead>
 		<tbody id="dm_machine_info_list">
@@ -99,7 +104,21 @@ function dmSetMachineList(machine_info)
 			list += "<td>屏蔽异常告警</td>";
 		else 
 			list += "<td>未知告警标记</td>";
+
+	    if(list_machine[i].rep_status == 3)
+			list += "<td title='最近一小时无心跳无数据上报'><font color='red'>长时间离线</font></td>";
+        else if(list_machine[i].rep_status == 2)
+			list += "<td title='最近5分钟有数据上报'><font color='blue'>数据上报中</font></td>";
+        else if(list_machine[i].rep_status == 1)
+            list += "<td title='可能是未安装agent 或者agent 运行异常'><font color='red'>无心跳</font></td>";
+        else 
+            list += "<td title='最近3分钟无数据上报但有心跳消息'>心跳正常</td>";
 		list += "<td>" + list_machine[i].desc + "</td>";
+
+		list += "<td><a href='<?cs var:config.cgipath?>mt_slog_machine?action=show_status&id=";
+        list += list_machine[i].id + "&navTabId=dmt_machine' target='navTab'";
+        list += ' rel="machine_status_' + list_machine[i].id + '" title="查看机器状态">查看';
+        list += '</td>';
 		list += "</tr>";
 	}
 	return list;

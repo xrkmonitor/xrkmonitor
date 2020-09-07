@@ -130,8 +130,8 @@ function <?cs var:config.plugin_pre ?>_GetInstallPluginShowInfo(idx, plugin, loc
     shtml += "<div class='pluginDisItem'>部署名：" + plugin.plugin_name + " (ID: " + plugin.plugin_id +")</div>";
 	if(typeof local_plugin != 'undefined') {
 		shtml += "<div class='pluginDisItem'>本地安装情况: <font color='blue' style='font-size:13.5px;'>已安装（";
-		shtml += local_plugin.ver + "）</font>";
-		if(plugin.ver != local_plugin.ver)
+		shtml += local_plugin.plus_version + "）</font>";
+		if(plugin.ver != local_plugin.plus_version)
 			shtml += "<font color='red' style='font-size:13.5px;'>&nbsp;-&nbsp;可更新</font></div>";
 		else
 			shtml += "</div>";
@@ -172,18 +172,18 @@ function <?cs var:config.plugin_pre ?>_GetInstallPluginShowInfo(idx, plugin, loc
 		shtml += "'title='一键安装插件'><i class='icon-wrench icon-large'></i>一键安装</a></li></ul>";
 	}
 	else if(plugin.install_tp_file != '' && plugin.install_tp_file != 'no') {
-		if(plugin.ver != local_plugin.ver) {
+		if(plugin.ver != local_plugin.plus_version) {
 			shtml += "<ul class='nav'><li><a href='#' onclick='";
 			shtml += "<?cs var:config.plugin_pre ?>UpdatePlugin(" + idx + ");' ";
 			shtml += "'title='一键更新插件'><i class='icon-wrench icon-large'></i>一键更新</a></li></ul>";
 		}
 		else {
-			shtml += "<ul class='nav'><li><a href='<?cs var:config.cgipath?>mt_slog?action=dp_add_plugin";
-			shtml += "&id=" + plugin.plugin_id + "'title='一键部署插件' target='navTab' rel='dp_add_plugin_";
-			shtml += plugin.plugin_id + "'><i class='icon-wrench icon-large'></i>一键部署</a></li></ul>";
+			shtml += "<ul class='nav'><li><a href='#' onclick='";
+			shtml += "<?cs var:config.plugin_pre ?>AddPlugin(" + plugin.plugin_id + ");' ";
+			shtml += "'title='一键部署插件'><i class='icon-wrench icon-large'></i>一键部署</a></li></ul>";
 		}
 	}
-	else if(plugin.ver != local_plugin.ver) {
+	else if(plugin.ver != local_plugin.plus_version) {
 		shtml += "<ul class='nav'><li><a href='#' onclick='";
 		shtml += "<?cs var:config.plugin_pre ?>UpdatePlugin(" + idx + ");' ";
 		shtml += "'title='一键更新插件'><i class='icon-wrench icon-large'></i>一键更新</a></li></ul>";
@@ -244,44 +244,16 @@ function <?cs var:config.plugin_pre ?>SetpluginList()
 	});
 }
 
-function <?cs var:config.plugin_pre ?>UpdatePlugin(idx)
+function <?cs var:config.plugin_pre ?>AddPlugin(plugin_id)
 {
-	<?cs var:config.plugin_pre ?>SetSelplugin(idx);
-	var requrl = "<?cs var:config.xrkmonitor_url?>/cgi-bin/mt_slog_open?action=open_get_plugin_pb_info";
-	requrl += "&plugin_id=" + <?cs var:config.plugin_pre ?>_sel_plugin.plugin_id; 
-	$.ajax({
-		type: "get",
-		url: requrl,
-		dataType: 'json', 
-		global: false,
-		timeout: function(){
-			alertMsg.warn("请求超时");
-		},
-		success: function(js){
-			if(dmtFirstDealAjaxResponse(js))
-				return;
-			if(js.has_pb_info == 0) {
-				alertMsg.info("插件更新信息获取失败 !");
-				return;
-			}
-			js.plugin_id = <?cs var:config.plugin_pre ?>_sel_plugin.plugin_id;
-			js.dev_language = <?cs var:config.plugin_pre ?>_sel_plugin.dev_language;
-			js.dest_os = <?cs var:config.plugin_pre ?>_sel_plugin.dest_os;
-			if(typeof <?cs var:config.plugin_pre ?>_sel_plugin.pic != "undefined"
-				&& <?cs var:config.plugin_pre ?>_sel_plugin.pic.pic != "")
-			{
-				js.plugin_pic = <?cs var:config.plugin_pre ?>_sel_plugin.pic;
-			}
-			<?cs var:config.plugin_pre ?>UpdatePluginPb(js);
-		}
-	});
+	navTab.openTab('dp_plugin_install_'+plugin_id, 
+		'<?cs var:config.cgipath?>mt_slog?action=dp_add_plugin&id='+plugin_id, 
+		{title:'一键部署插件', titleHtml:"<i class='icon-wrench icon-large'></i>一键部署插件", fresh:true});
 }
 
 function <?cs var:config.plugin_pre ?>UpdatePluginPb(pbJs)
 {
 	var in_url = "<?cs var:config.cgipath?>mt_slog?action=update_open_plugin";
-	var plugin_info = JSON.stringify(pbJs);
-
 	$.ajax({
 		type: "post",
 		url: in_url,
@@ -308,6 +280,39 @@ function <?cs var:config.plugin_pre ?>UpdatePluginPb(pbJs)
 	});
 }
 
+function <?cs var:config.plugin_pre ?>UpdatePlugin(idx)
+{
+    <?cs var:config.plugin_pre ?>SetSelplugin(idx);
+    var requrl = "<?cs var:config.xrkmonitor_url?>/cgi-bin/mt_slog_open?action=open_get_plugin_pb_info";
+    requrl += "&plugin_id=" + <?cs var:config.plugin_pre ?>_sel_plugin.plugin_id; 
+    $.ajax({
+        type: "get",
+        url: requrl,
+        dataType: 'json', 
+        global: false,
+        timeout: function(){
+            alertMsg.warn("请求超时");
+        },
+        success: function(js){
+            if(dmtFirstDealAjaxResponse(js))
+                return;
+            if(js.has_pb_info == 0) {
+                alertMsg.info("插件更新信息获取失败 !");
+                return;
+            }
+            js.plugin_id = <?cs var:config.plugin_pre ?>_sel_plugin.plugin_id;
+            js.dev_language = <?cs var:config.plugin_pre ?>_sel_plugin.dev_language;
+            js.dest_os = <?cs var:config.plugin_pre ?>_sel_plugin.dest_os;
+            if(typeof <?cs var:config.plugin_pre ?>_sel_plugin.pic != "undefined"
+                && <?cs var:config.plugin_pre ?>_sel_plugin.pic.pic != "")
+            {
+                js.plugin_pic = <?cs var:config.plugin_pre ?>_sel_plugin.pic;
+            }
+            <?cs var:config.plugin_pre ?>UpdatePluginPb(js);
+        }
+    });
+}
+
 function <?cs var:config.plugin_pre ?>InstallPlugin(idx)
 {
 	<?cs var:config.plugin_pre ?>SetSelplugin(idx);
@@ -328,14 +333,6 @@ function <?cs var:config.plugin_pre ?>InstallPlugin(idx)
 				alertMsg.info("插件安装信息获取失败 !");
 				return;
 			}
-			js.plugin_id = <?cs var:config.plugin_pre ?>_sel_plugin.plugin_id;
-			js.dev_language = <?cs var:config.plugin_pre ?>_sel_plugin.dev_language;
-			js.dest_os = <?cs var:config.plugin_pre ?>_sel_plugin.dest_os;
-			if(typeof <?cs var:config.plugin_pre ?>_sel_plugin.pic != "undefined"
-				&& <?cs var:config.plugin_pre ?>_sel_plugin.pic.pic != "")
-			{
-				js.plugin_pic = <?cs var:config.plugin_pre ?>_sel_plugin.pic;
-			}
 			<?cs var:config.plugin_pre ?>InstallPluginPb(js);
 		}
 	});
@@ -344,8 +341,6 @@ function <?cs var:config.plugin_pre ?>InstallPlugin(idx)
 function <?cs var:config.plugin_pre ?>InstallPluginPb(pbJs)
 {
 	var in_url = "<?cs var:config.cgipath?>mt_slog?action=install_open_plugin";
-	var plugin_info = JSON.stringify(pbJs);
-
 	$.ajax({
 		type: "post",
 		url: in_url,

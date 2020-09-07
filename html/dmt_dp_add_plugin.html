@@ -1,0 +1,107 @@
+<script src="<?cs var:config.docpath?>resource/js/dmt.addplugin.js"></script>
+<script language="javascript" type="text/javascript">
+
+$(document).ready(function(){
+    var machlist = $.parseJSON('<?cs var:config.machine_list ?>');
+    if(machlist.count > 0) {
+        var uhtml = '';
+        var lt = machlist.list;
+        for(var i=0; i < lt.length; ++i) {
+            uhtml += "<tr>";
+            uhtml += "<td>" + lt[i].id + "</td>";
+            uhtml += "<td>" + lt[i].name + "</td>";
+            uhtml += "<td>" + lt[i].ip + "</td>";
+
+            if(lt[i].run_os == 'All_os')
+                uhtml += "<td>跨平台</td>";
+            else
+                uhtml += "<td>" + lt[i].run_os + "</td>";
+            uhtml += "<td>" + lt[i].os_arc + "</td>";
+            uhtml += "<td>" + lt[i].libc_ver + "</td>";
+            uhtml += "<td>" + lt[i].libcpp_ver + "</td>";
+            if(lt[i].run_time > 0) 
+                uhtml += "<td>" + dmtGetHumanTime(lt[i].run_time) + "</td>";
+            else
+                uhtml += "<td><font color='red'>未部署或未启动</font></td>";
+            if(lt[i].plugin_ver == 'no') {
+                if(lt[i].run_time > 0 && ('<?cs var:config.plugin_run_os ?>' == 'All_os' 
+                    || lt[i].run_os == '<?cs var:config.plugin_run_os ?>' 
+                    || lt[i].run_os_type == '<?cs var:config.plugin_run_os ?>'))
+                {
+                    uhtml += "<td class='detail'><a href='#' onclick='return dmapAddPlugin(\"<?cs var:config.cgipath ?>\", ";
+                    uhtml += lt[i].id + ", <?cs var:config.plugin_id ?>);'>一键部署</a></td>";
+                }
+                else
+                    uhtml += "<td></td>";
+            }
+            else
+                uhtml += "<td>已部署：" + lt[i].plugin_ver + "</td>";
+        }
+        $('#ddap_add_plugin_<?cs var:config.plugin_id ?>').html(uhtml);
+    }
+});
+
+</script>
+
+<div class="pageContent statusMachine" layoutH='0'>
+	<div class="pageFormContent">
+        <h3>待部署插件信息</h3>
+		<table class='list' width='100%'> 
+            <thead>
+                <tr>
+                    <th align='left' >插件ID</th>
+                    <th align='left' >插件显示名</th>
+                    <th align='left' >插件部署名</th>
+                    <th align='left' >运行平台</th>
+                    <th align='left' >开发语言</th>
+                    <th align='left' >插件作者</th>
+                    <th align='left' >当前版本</th>
+                    <th align='left' >插件详情</th>
+                </tr>
+ 
+            </thead>
+            <tbody>
+			    <tr>
+				    <td><?cs var:config.plugin_id ?></td>
+				    <td><?cs var:config.plugin_show_name ?></td>
+				    <td><?cs var:config.plugin_name ?></td>
+                    <?cs if:config.plugin_run_os == "All_os" ?>
+    				<td>跨平台</td>
+                    <?cs else ?>
+    				<td><?cs var:config.plugin_run_os ?></td>
+                    <?cs /if ?>
+				    <td><?cs var:config.plugin_language ?></td>
+				    <td><?cs var:config.plugin_auth ?></td>
+				    <td><?cs var:config.plugin_last_version ?></td>
+				    <td class='detail'><a href='http://<?cs var:config.plugin_desc_url ?>' target='_blank'>详情</a></td>
+			    </tr>
+            </tbody>
+        </table>
+
+        <br />
+        <div>
+            <font class='note-text'>提示：插件一键部署需要机器上安装监控 agent，且agent 为启动状态。如果系统信息获取不正确或者一键部署失败，请检查机器上是否支持 tar/strings 等命令。</font>
+        </div>
+        <br />
+        <h3>机器列表</h3>
+        <table class='list' width='100%'>
+            <thead>
+                <tr>
+                    <th align='left' >机器ID</th>
+                    <th align='left' >机器名称</th>
+                    <th align='left' >机器IP</th>
+                    <th align='left' >系统平台</th>
+                    <th align='left' >体系结构</th>
+                    <th align='left' >libc版本</th>
+                    <th align='left' >libcpp版本</th>
+                    <th align='left' >agent 已运行</th>
+                    <th align='left' >部署</th>
+                </tr>
+            </thead>
+            <tbody id='ddap_add_plugin_<?cs var:config.plugin_id ?>'>
+            </tbody>
+	    </table>
+	</div>
+</div>
+
+

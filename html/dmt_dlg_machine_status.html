@@ -1,0 +1,104 @@
+<script language="javascript" type="text/javascript">
+
+$(document).ready(function(){
+    var g_machine_plugin_info = $.parseJSON('<?cs var:config.machine_plugins ?>');
+    if(g_machine_plugin_info.count > 0) {
+        var uhtml = '';
+        var lt = g_machine_plugin_info.list;
+        for(var i=0; i < lt.length; ++i) {
+            uhtml += "<tr>";
+            if(lt[i].rep_status == 3) 
+		        uhtml += "<td title='最近一小时无心跳无数据上报'><font color='red'>长时间离线</font></td>";
+            else if(lt[i].rep_status == 2)
+		        uhtml += "<td title='最近5分钟有数据上报'><font color='blue'>数据上报中</font></td>";
+            else if(lt[i].rep_status == 1)
+                uhtml += "<td title='可能是未安装agent 或者agent 运行异常'><font color='red'>无心跳</font></td>";
+            else
+                uhtml += "<td title='最近3分钟无数据上报但有心跳消息'>心跳正常</td>";
+            uhtml += "<td>" + lt[i].id + "</td>";
+            uhtml += "<td>" + lt[i].show_name + "</td>";
+            uhtml += "<td>" + lt[i].name + "</td>";
+            uhtml += "<td>" + lt[i].cfg_version + "</td>";
+            uhtml += "<td>" + lt[i].build_version + "</td>";
+            uhtml += "<td>" + lt[i].start_time + "</td>";
+            if(lt[i].run_time > 0) 
+                uhtml += "<td>" + dmtGetHumanTime(lt[i].run_time) + "</td>";
+            else
+                uhtml += "<td><font color='red'>已停止</font></td>";
+            uhtml += "<td>" + lt[i].last_attr_time + "</td>";
+            uhtml += "<td>" + lt[i].last_log_time + "</td>";
+        }
+        $('#dms_machine_plugin_<?cs var:config.machine_id ?>').html(uhtml);
+    }
+
+    <?cs if:config.run_time > 0 ?>
+        $('#dms_mach_run_<?cs var:config.machine_id ?>').html(dmtGetHumanTime(<?cs var:config.run_time ?>));
+    <?cs else ?>
+        $('#dms_mach_run_<?cs var:config.machine_id ?>').html("<font color='red'>已停止</font></td>");
+    <?cs /if ?>
+});
+
+</script>
+
+<div class="pageContent statusMachine" layoutH='0'>
+	<div class="pageFormContent">
+        <h3>上报机器基础信息</h3>
+		<table class='list' width='100%'> 
+            <thead>
+                <tr>
+                    <th align='left' valign='top'>上报状态</th>
+                    <th align='left' valign='top'>机器ID</th>
+                    <th align='left' valign='top'>机器名称</th>
+                    <th align='left' valign='top'>机器IP</th>
+                    <th align='left' valign='top'>agent 已运行</th>
+                    <th align='left' valign='top'>最近心跳上报时间</th>
+                    <th align='left' valign='top'>最近监控点上报时间</th>
+                    <th align='left' valign='top'>最近日志上报时间</th>
+                </tr>
+            </thead>
+            <tbody>
+			    <tr>
+                <?cs if:config.rep_status == 3 ?>
+			        <td title='最近一小时无心跳无数据上报'><font color='red'>长时间离线</font></td>
+                <?cs elif:config.rep_status == 2 ?>
+			        <td title='最近5分钟有数据上报'><font color='blue'>数据上报中</font></td>
+                <?cs elif:config.rep_status == 1 ?>
+                    <td title='可能是未安装agent 或者agent 运行异常'><font color='red'>无心跳</font></td>
+                <?cs else ?>
+                    <td title='最近3分钟无数据上报但有心跳消息'>心跳正常</td>
+                <?cs /if ?>
+				    <td><?cs var:config.machine_id ?></td>
+				    <td><?cs var:config.machine_name ?></td>
+				    <td><?cs var:config.machine_ip ?></td>
+                    <td id='dms_mach_run_<?cs var:config.machine_id ?>'></td>
+				    <td><?cs var:config.last_hello ?></td>
+				    <td><?cs var:config.last_attr ?></td>
+				    <td><?cs var:config.last_log ?></td>
+			    </tr>
+            </tbody>
+        </table>
+
+        <br />
+        <h3>已部署插件</h3>
+        <table class='list' width='100%'>
+            <thead>
+                <tr>
+                    <th align='left' valign='top'>上报状态</th>
+                    <th align='left' valign='top'>插件ID</th>
+                    <th align='left' valign='top'>插件显示名</th>
+                    <th align='left' valign='top'>插件部署名</th>
+                    <th align='left' valign='top'>配置文件版本</th>
+                    <th align='left' valign='top'>源码版本</th>
+                    <th align='left' valign='top'>最近启动时间</th>
+                    <th align='left' valign='top'>已运行</th>
+                    <th align='left' valign='top'>最近监控点上报</th>
+                    <th align='left' valign='top'>最近日志上报</th>
+                </tr>
+            </thead>
+            <tbody id='dms_machine_plugin_<?cs var:config.machine_id ?>'>
+            </tbody>
+	    </table>
+	</div>
+</div>
+
+
