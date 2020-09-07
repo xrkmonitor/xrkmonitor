@@ -59,9 +59,6 @@ install:
 	install -m 755 $(SHAREDLIB) $(LIBDIR)
 	ln -sf libmtreport_api-1.1.0.so $(LIBDIR)/libmtreport_api.so.1
 	ln -sf libmtreport_api.so.1 $(LIBDIR)/libmtreport_api.so
-	install -m 755 $(SHAREDLIB) ../../slog_mtreport_client/libmtreport/
-	ln -sf libmtreport_api-1.1.0.so ../../slog_mtreport_client/libmtreport/libmtreport_api.so.1
-	ln -sf libmtreport_api.so.1 ../../slog_mtreport_client/libmtreport/libmtreport_api.so
 
 clean:
 	rm -f $(LIBDIR)/lib$(TARGET).*

@@ -1,6 +1,6 @@
 include ../make_env
 COMM_INC = -I${MTLIB_INCLUDE_PATH}/mtreport_api
-COMM_LIB = -lmtreport_api -ldl
+COMM_LIB = /usr/lib64/libmtreport_api.a
 
 CC = g++ 
 CXXFLAGS += $(COMM_INC) 
@@ -14,9 +14,6 @@ DEP := $(SRC:.cpp=.d)
 
 $(TARGETS): ${OBJ} 
 	$(CC) -o $@ $^ $(COMM_LIB) -lrt
-ifeq ($(USE_DLL_COMM_LIB), yes) 
-	strip $(TARGETS)
-endif
 
 clean: 
 	rm -f *.o

@@ -104,6 +104,9 @@ class CUdpSock: public UdpSocket, public CBasicPacket
 		void DealUserTotalAttr(int iAttrId, const char *pOldDay, const char *pNewDay);
 		void InitTotalAttrReportShm(int32_t iAttrId, int iMachineId, comm::MonitorMemcache &memInfo, int iMinIdx);
 
+        void DealQuickProcessMsg();
+        void ReportQuickToSlowMsg();
+
 		// 处理上报
 		void DealLocalReportAttr();
 		void DealSiteReportAttr();
@@ -130,6 +133,8 @@ class CUdpSock: public UdpSocket, public CBasicPacket
 		char m_szLastTableName[32];
 		MachineInfo * m_pcltMachine;
 		struct tm m_currDateTime;
+		std::string m_strCommReportMachIp;
+        std::string m_strSlowProcessIp;
 
 	private:
 		int DealCgiReportAttr(const char *buf, size_t len);

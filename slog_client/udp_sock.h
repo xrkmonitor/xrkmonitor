@@ -45,9 +45,67 @@ class CUdpSock: public UdpSocket, public CBasicPacket
 		void OnRawData(const char *buf, size_t len, struct sockaddr *sa, socklen_t sa_len);
 		void SendLog(Ipv4Address &addr, const char *buf, size_t len);
 		int32_t SendResponsePacket(const char *pkg, int len) { return 0; }
+        void ReportQuickToSlowMsg(int iMachineId);
 
 	private:
 };
+
+class TLogClientInfo
+{
+	public:
+		TLogClientInfo() {
+			pAppInfo = NULL;
+			pstLogClient = NULL;
+		}
+
+		TLogClientInfo & operator=(const TLogClientInfo &clt)
+		{
+			pAppInfo = clt.pAppInfo;
+			pstLogClient = clt.pstLogClient;
+			return *this;
+		}
+
+		AppInfo * pAppInfo;
+		CSLogClient *pstLogClient;
+};
+
+typedef std::map<int, TLogClientInfo> TMapLogClientInfo;
+typedef std::map<int, TLogClientInfo>::iterator TMapLogClientInfoIt;
+typedef std::map<uint32_t, uint32_t> TMapHeartToServerInfo;
+typedef std::map<uint32_t, uint32_t>::iterator TMapHeartToServerInfoIt;
+
+typedef struct _CONFIG
+{
+	char szLocalIp[20];
+
+	int iLocalMachineId;
+	MachineInfo *pLocalMachineInfo;
+
+	TMapHeartToServerInfo stMapHeartInfo;
+
+	uint32_t dwSendLogCount;
+	uint32_t dwCurrentTime;
+	TMapLogClientInfo mapLogClient;
+	SLogAppInfo *pAppShmInfoList;
+	AppInfo * pSelfApp;
+	int32_t iSendHeartTimeSec;
+	int32_t iCheckLogClientTimeSec;
+    char szQuickToSlowIp[16];
+    int iQuickToSlowPort;
+
+	_CONFIG() {
+		memset(szLocalIp, 0, sizeof(szLocalIp));
+
+		dwSendLogCount = 0;
+		dwCurrentTime = 0;
+		pAppShmInfoList = NULL;
+		pSelfApp = NULL;
+		iSendHeartTimeSec = 0;
+		iCheckLogClientTimeSec = 0;
+	}
+}CONFIG;
+
+extern CONFIG stConfig;
 
 #endif
 

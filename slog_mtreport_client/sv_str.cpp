@@ -147,29 +147,6 @@ char * ipv4_addr_str(uint32_t dwAddr)
 	return inet_ntoa(in);
 }
 
-uint32_t datetoui(const char *pdate)
-{
-	struct tm t;
-	memset(&t, 0, MYSIZEOF(t));
-	if(sscanf(pdate, "%d-%d-%d %d:%d:%d",
-		&t.tm_year, &t.tm_mon, &t.tm_mday, &t.tm_hour, &t.tm_min, &t.tm_sec) != 6)
-		return 0;
-
-	t.tm_year -= 1900;
-	t.tm_mon -= 1;
-	return mktime(&t);
-}
-
-char *uitodate(uint32_t dwTimeSec)
-{
-	static char sBuf[64];
-	struct tm stTm;
-	time_t tmnew = dwTimeSec;
-	localtime_r(&tmnew, &stTm);
-	strftime(sBuf, MYSIZEOF(sBuf), "%Y-%m-%d %H:%M:%S", &stTm);
-	return sBuf;
-}
-
 char *qwtoa(uint64_t qwVal)
 {
 	static char sbuf[40];

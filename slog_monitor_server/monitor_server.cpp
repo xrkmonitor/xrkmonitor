@@ -64,7 +64,7 @@ static int Init(const char *papp)
 	if((iRet=LoadConfig(pconf,
 		"LISTEN_PORT", CFG_INT, &iPort, 38080,
 		"LOCAL_LISTEN_IP", CFG_STRING, stConfig.szListenIP, "0.0.0.0", sizeof(stConfig.szListenIP),
-		"KEEP", CFG_INT, &(stConfig.iKeep), 30,
+		"KEEP", CFG_INT, &(stConfig.iKeep), 7,
 		"MEMCACHE_PORT", CFG_INT, &stConfig.iMemcachePort, 12121,
 		"MEMCACHE_RTIMEOUT", CFG_INT, &stConfig.iRTimeout, 200,
 		"MEMCACHE_WTIMEOUT", CFG_INT, &stConfig.iWTimeout, 200,
@@ -79,6 +79,7 @@ static int Init(const char *papp)
 		return SLOG_ERROR_LINE;
 	} 
 	stConfig.wServerPort = iPort;
+	stConfig.wInnerServerPort = iPort+1;
 
 	if(slog.InitMachineList() < 0)
 	{
@@ -360,11 +361,21 @@ int main(int argc, char* argv[])
 		if(CheckDbConnect(stSock) < 0)
 			return SLOG_ERROR_LINE;
 		stSock.TryChangeAttrSaveType();
-		while(slog.Run())
+
+
+		Ipv4Address addr(stSock.m_strSlowProcessIp, stConfig.wInnerServerPort);
+	    if(stSock.Bind(addr, 0) < 0)
+	    {
+	    	FATAL_LOG("inner bind port:%d failed", stConfig.wInnerServerPort);
+	    	return SLOG_ERROR_LINE;
+	    }
+	    h.Add(&stSock);
+
+		while(slog.Run() && h.GetCount())
 		{
+            h.Select(0, slog.m_iRand % 100000 + 20);
 			if(slog.IsExitSet()) {
 				stSock.SetCloseAndDelete();
-				h.Select(1, 2000);
 				continue;
 			}
 			if(CheckDbConnect(stSock) < 0)
@@ -378,7 +389,6 @@ int main(int argc, char* argv[])
 			stSock.WriteAttrDataToDb();
 			stSock.WriteStrAttrToDb();
 			CheckWarnAttrHashNode();
-			h.Select(1, 2000);
 		}
 		INFO_LOG("slog_monitor_server (write attr to db) exit !");
 		return 0;

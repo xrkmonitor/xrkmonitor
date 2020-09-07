@@ -70,6 +70,12 @@ uint32_t MakeFirstHelloPkg()
 	memset(&stInfo, 0, MYSIZEOF(stInfo));
 	stInfo.iMtClientIndex = htonl(stConfig.pReportShm->iMtClientIndex);
 	stInfo.iMachineId = htonl(stConfig.pReportShm->iMachineId);
+	strncpy(stInfo.sCmpTime, g_strCmpTime.c_str(), sizeof(stInfo.sCmpTime)-1);
+	strncpy(stInfo.sVersion, g_strVersion.c_str(), sizeof(stInfo.sVersion)-1);
+	strncpy(stInfo.sOsInfo, stConfig.szOs, sizeof(stInfo.sOsInfo)-1);
+	strncpy(stInfo.sOsArc, stConfig.szOsArc, sizeof(stInfo.sOsArc)-1);
+	strncpy(stInfo.sLibcVer, stConfig.szLibcVer, sizeof(stInfo.sLibcVer)-1);
+	strncpy(stInfo.sLibcppVer, stConfig.szLibcppVer, sizeof(stInfo.sLibcppVer)-1);
 	pkg.InitCmdContent((void*)&stInfo, (uint16_t)MYSIZEOF(stInfo));
 
 	// 签名
@@ -934,7 +940,6 @@ int DealRespCheckSystemConfig(CBasicPacket &pkg)
 	stConfig.pReportShm->stSysCfg.dwConfigSeq = pcfg->dwConfigSeq;
 	stConfig.pReportShm->stSysCfg.bAttrSendPerTimeSec = pcfg->bAttrSendPerTimeSec;
 	stConfig.pReportShm->stSysCfg.bLogSendPerTimeSec = pcfg->bLogSendPerTimeSec;
-	stConfig.pReportShm->stSysCfg.bReportCpuUseSec = pcfg->bReportCpuUseSec;
 	INFO_LOG("check system config, update, new seq:%u", pcfg->dwConfigSeq);
 	return 0;
 }

@@ -431,6 +431,24 @@ FloginInfo* SearchOnlineUserById(FloginList *pshmLoginList, int uid, int & index
 	return NULL;
 }
 
+int my_cgi_output(const char *pdata, CGIConfig &stConfig)
+{
+	STRING str;
+	string_init(&str);
+	NEOERR *err = NULL;
+	if((err=string_set(&str, pdata)) != STATUS_OK
+		|| (err=cgi_output(stConfig.cgi, &str)) != STATUS_OK)
+	{   
+		string_clear(&str);
+		string_init(&str);
+		nerr_error_traceback(err, &str);
+		ERR_LOG("cgi_output failed ! msg:%s", pdata);
+		return SLOG_ERROR_LINE;
+	}
+	string_clear(&str);
+	return 0;
+}
+
 void RedirectToFastLogin(CGIConfig &stConfig)
 {
 	// 日志系统可能需要跨站
@@ -1495,4 +1513,38 @@ int AfterCgiLogin(CGIConfig &stConfig)
 	hdf_set_value(stConfig.cgi->hdf, "config.xrkmonitor_url", stConfig.szXrkmonitorSiteAddr);
 	return 1;
 }	
+
+
+int ReportStatus(
+    uint32_t dwLastReportAttrTime, uint32_t dwLastReportLogTime, uint32_t dwLastHelloTime, CGIConfig &stConfig)
+{
+    // 数据上报中(最近5分钟有数据上报)
+    if(dwLastReportAttrTime+300 >= stConfig.dwCurTime 
+        || dwLastReportLogTime+300 >= stConfig.dwCurTime)
+        return 2;
+
+    // 心跳检查，三次心跳丢失认为无心跳
+    int iHelloCheck = stConfig.pShmConfig->stSysCfg.wHelloPerTimeSec*3;
+    if(iHelloCheck < 60)
+        iHelloCheck = 60;
+
+    // 无心跳
+    if(dwLastHelloTime+iHelloCheck < stConfig.dwCurTime)
+        return 1;
+
+    // 长时间离线
+    if(dwLastHelloTime+3600 < stConfig.dwCurTime
+        && dwLastReportAttrTime+3600 < stConfig.dwCurTime
+        && dwLastReportLogTime+3600 < stConfig.dwCurTime)
+        return 3;
+
+    // 心跳正常, 无数据上报
+    return 0;
+}
+
+int GetMachineRepStatus(MachineInfo *pInfo, CGIConfig &stConfig)
+{
+    return ReportStatus(pInfo->dwLastReportAttrTime, pInfo->dwLastReportLogTime, pInfo->dwLastHelloTime,
+        stConfig);
+}
 

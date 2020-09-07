@@ -12,6 +12,15 @@ enum Command
 	CMD_SLOG_REMOVE_OLD_APP_LOG_FILE = 508;
 	CMD_SLOG_OPEN_SEND_WARN = 510;
 	CMD_SLOG_OPEN_SEND_EMAIL = 511;
+	CMD_SEND_REALINFO_TO_CENTER_REQ = 512;
+	CMD_SEND_REALINFO_TO_CENTER_RESP = 513;
+    CMD_QUICK_PROCESS_TO_SLOW_REQ = 514; 
+}
+
+enum QuickToSlowCmd
+{
+    QTS_MACHINE_LAST_ATTR_TIME = 1;
+    QTS_MACHINE_LAST_LOG_TIME = 2;
 }
 
 message PkgHead
@@ -23,6 +32,13 @@ message PkgHead
 	optional bytes echo_buf = 5;
 	optional uint32 uint32_magic_response_num = 6;
 	optional uint32 uid = 7;
+	optional uint32 req_machine = 8;
+	optional uint32 reserved_1 = 9;
+	optional uint32 reserved_2 = 10;
+	optional uint32 reserved_3 = 11;
+	optional uint32 str_reserved_1 = 12;
+	optional uint32 str_reserved_2 = 13;
+	optional uint32 str_reserved_3 = 14;
 }
 
 // for monitor system ----------------- start
@@ -94,6 +110,11 @@ message SysconfigInfo
 	optional uint32 today_access_times = 2;
 }
 
-
-
+message QuickProcessToSlowInfo {
+    optional int32 machine_id = 1;
+    optional uint32 machine_last_attr_time = 2;
+    optional uint32 machine_last_log_time = 3;
+    optional uint32 user_master_id = 4;
+    optional int32 quick_to_slow_cmd = 5;
+}
 

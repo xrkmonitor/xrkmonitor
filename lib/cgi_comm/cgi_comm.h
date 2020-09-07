@@ -53,6 +53,7 @@
 int show_errpage(const char * cs_path, const char * err_msg, CGIConfig &stConfig);
 NEOERR *my_cgi_display (CGI *cgi, const char *cs_file, bool bSaveOut=false);
 NEOERR *my_cgi_output_local(CGI *cgi, const char *cs_file);
+int my_cgi_output(const char *pdata, CGIConfig &stConfig);
 int my_cgi_file_download (const char *file, const char *fileName);
 int my_cgi_excel_output (const char *fileName, const char *buff);
 char *get_value(CGI *cgi, char *para);
@@ -96,6 +97,9 @@ int32_t GetFloginFree(FloginList *pshmLoginList, uint32_t dwCurTime);
 
 void SetCgiResponseType(CGIConfig &stConfig, const char *s_JsonRequest[]); 
 void SetCgiResponseErrInfo(CGIConfig &stConfig, const char *strErrMsg, int iErrorCode=CGI_ERROR_CODE_COMM);
+
+int GetMachineRepStatus(MachineInfo *pInfo, CGIConfig &stConfig);
+int ReportStatus(uint32_t dwLastReportAttrTime, uint32_t dwLastReportLogTime, uint32_t dwLastHelloTime, CGIConfig &stConfig);
 
 #define VERIFY_CODE_LEN 4
 #define VERIFY_COUNT_MAX 20000

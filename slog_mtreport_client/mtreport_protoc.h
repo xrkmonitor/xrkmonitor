@@ -52,6 +52,12 @@ typedef struct
 {
 	int32_t iMtClientIndex;
 	int32_t iMachineId;
+	char sCmpTime[32];
+	char sVersion[12];
+	char sOsInfo[32];
+	char sOsArc[32];
+	char sLibcVer[32];
+	char sLibcppVer[32];
 }MonitorHelloFirstContent; // req
 
 typedef struct 

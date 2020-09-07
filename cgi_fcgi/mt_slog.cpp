@@ -46,6 +46,7 @@
 #include <inttypes.h>
 #include <errno.h>
 #include <math.h>
+#include <sv_file.h>
 #include <map>
 #include <sstream>
 #include <cgi_head.h>
@@ -86,6 +87,7 @@ static const char *s_JsonRequest [] = {
 	"install_open_plugin",
 	"update_open_plugin",
 	"down_plugin_conf",
+    "refresh_preinstall_plugin_status",
 	NULL
 };
 
@@ -2525,32 +2527,28 @@ static int DealListPlugin(CGI *cgi, const char *ptype="open")
 
 	// 本地已安装的公共插件信息
 	if(!strcmp(ptype, "open")) {
-		std::ostringstream ss;
 		Json js;
-		sprintf(sSqlBuf, "select * from mt_plugin where xrk_status=%d", RECORD_STATUS_USE);
-		qu.get_result(sSqlBuf);
-		if(qu.num_rows() > 0) 
+		std::ostringstream ss;
+		sprintf(sSqlBuf, "select pb_info from mt_plugin where xrk_status=%d", RECORD_STATUS_USE);
+		if(qu.get_result(sSqlBuf) && qu.num_rows() > 0) 
 		{
+			const char *pinfo = NULL;
+			size_t iParseIdx = 0;
+			size_t iReadLen = 0;
 			while(qu.fetch_row() != NULL)
 			{
 				Json plugin;
-				plugin["plugin_id"] = qu.getuval("open_plugin_id");
-				plugin["local_plugin_id"] = qu.getuval("plugin_id");
-				plugin["plugin_name"] = qu.getstr("plugin_name");
-				plugin["desc"] = qu.getstr("plugin_desc");
-				plugin["ver"] = qu.getstr("plugin_cur_ver");
-				plugin["auth"] = qu.getstr("plugin_auth");
-				plugin["create_time"] = uitodate(qu.getuval("create_time"));
-				plugin["update_time"] = qu.getstr("update_time");
-				plugin["open_src"] = qu.getval("open_src");
-				plugin["set_method"] = qu.getval("set_method");
-				plugin["dev_language"] = qu.getstr("dev_language");
-				plugin["dest_os"] = qu.getstr("dest_os");
-				plugin["pic"] = qu.getstr("plugin_pic");
-				plugin["log_config"] = qu.getstr("log_config");
+				pinfo = qu.getstr("pb_info");
+				iParseIdx = 0;
+				iReadLen = strlen(pinfo);
+				plugin.Parse(pinfo, iParseIdx);
+				if(iParseIdx != iReadLen) {
+					WARN_LOG("parse json content, size:%u!=%u", (uint32_t)iParseIdx, (uint32_t)iReadLen);
+					continue;
+				}
 				js["list"].Add(plugin);
 				iCount++;
-				ss << "plugin_" << qu.getuval("open_plugin_id") << "_" << qu.getstr("plugin_cur_ver") << ",";
+				ss << "plugin_" << (int)(plugin["plugin_id"]) << "_" << (const char*)(plugin["plus_version"]) << ",";
 			}
 		}
 		js["count"] = iCount;
@@ -2667,11 +2665,6 @@ static int AddPluginLogConfig(Query &qu, Json & js_plugin)
 
 static int AddPlugin(Query &qu, Json &js_plugin)
 {
-	const char *pname = js_plugin["plus_name"];
-	const char *pshow_name = pname;
-	if(js_plugin.HasValue("show_name"))
-		pshow_name = js_plugin["show_name"];
-
     std::ostringstream sql; 
 	sql << "select plugin_id from mt_plugin where open_plugin_id=" 
 		<< (int)(js_plugin["plugin_id"]) << ";";
@@ -2679,54 +2672,22 @@ static int AddPlugin(Query &qu, Json &js_plugin)
 	if(qu.num_rows() > 0 && qu.fetch_row()) 
 	{
 		WARN_LOG("already install plugin:%s(%d), local plugin id:%d",
-			pname, (int)(js_plugin["plugin_id"]), qu.getval("plugin_id"));
+			(const char*)(js_plugin["name"]), (int)(js_plugin["plugin_id"]), qu.getval("plugin_id"));
 		qu.free_result();
 		stConfig.iErrorCode = 301;
 		return SLOG_ERROR_LINE;
 	}
 	qu.free_result();
 
-	if(strlen(pname) < 6 || strlen(pname) > 28) {
-	    REQERR_LOG("invalid plugin name length:%d (6-28)", (int)strlen(pname));
-	    stConfig.pErrMsg = CGI_REQERR;
-	    return SLOG_ERROR_LINE;
-	}
-
-	if(strlen(pshow_name) < 6 || strlen(pshow_name) > 60) {
-	    REQERR_LOG("invalid plugin show name length:%d (6-60)", (int)strlen(pshow_name));
-	    stConfig.pErrMsg = CGI_REQERR;
-	    return SLOG_ERROR_LINE;
-	}
-	
-	const char *pdesc = js_plugin["plus_desc"];
-	if(strlen(pdesc) < 1 || strlen(pdesc) > 362) {
-	    REQERR_LOG("invalid plugin desc length:%d (1-362)", (int)strlen(pdesc));
-	    stConfig.pErrMsg = CGI_REQERR;
-	    return SLOG_ERROR_LINE;
-	}
-	
 	std::string strSql;
 	IM_SQL_PARA* ppara = NULL;
 	if(InitParameter(&ppara) < 0) {
 		ERR_LOG("sql parameter init failed !");
 		return SLOG_ERROR_LINE;
 	}
-	AddParameter(&ppara, "plugin_desc", pdesc, NULL);
-	AddParameter(&ppara, "plugin_name", pname, NULL);
-	AddParameter(&ppara, "plugin_show_name", pshow_name, NULL);
-	AddParameter(&ppara, "plugin_cur_ver", (const char*)(js_plugin["plus_version"]), NULL);
-	AddParameter(&ppara, "plugin_pic", (const char*)(js_plugin["plugin_pic"]), NULL);
-	AddParameter(&ppara, "dev_language", (const char*)(js_plugin["dev_language"]), NULL);
-	AddParameter(&ppara, "open_src", (bool)(js_plugin["b_open_source"]), "DB_CAL");
-	AddParameter(&ppara, "set_method", (int)(js_plugin["set_method"]), "DB_CAL");
-	AddParameter(&ppara, "dest_os", (const char*)(js_plugin["dest_os"]), NULL);
-	AddParameter(&ppara, "log_config", (int)(js_plugin["b_add_log_module"]), "DB_CAL");
-	AddParameter(&ppara, "plugin_src_url", (const char*)(js_plugin["plus_url"]), NULL);
 	AddParameter(&ppara, "create_time", stConfig.dwCurTime, "DB_CAL");
 	AddParameter(&ppara, "update_time", uitodate(stConfig.dwCurTime), NULL);
-	AddParameter(&ppara, "plugin_auth", (const char *)(js_plugin["plugin_auth"]), NULL);
-	AddParameter(&ppara, "open_plugin_id", (int)(js_plugin["plugin_id"]), NULL);
-
+	AddParameter(&ppara, "open_plugin_id", (int)(js_plugin["plugin_id"]), "DB_CAL");
 	strSql = "insert into mt_plugin";
 	JoinParameter_Insert(&strSql, qu.GetMysql(), ppara);
 
@@ -2740,7 +2701,7 @@ static int AddPlugin(Query &qu, Json &js_plugin)
 	js_plugin["local_plugin_id"] = (int)(qu.insert_id());
 
 	DEBUG_LOG("add plugin:%s to db, local id:%d, open id:%d",
-		pname, (int)(js_plugin["local_plugin_id"]), (int)(js_plugin["plugin_id"]));
+		(const char*)(js_plugin["name"]), (int)(js_plugin["local_plugin_id"]), (int)(js_plugin["plugin_id"]));
 	return 0;
 }
 
@@ -3037,12 +2998,12 @@ static int GetLocalPlugin(Json &js_plugin, int iPluginId)
 	Query qu(*stConfig.db);
 
 	snprintf(sSqlBuf, sizeof(sSqlBuf),
-		"select pb_info,plugin_id from mt_plugin where open_plugin_id=%d", iPluginId);
+		"select pb_info from mt_plugin where open_plugin_id=%d", iPluginId);
 	qu.get_result(sSqlBuf);
 	if(qu.num_rows() > 0 && qu.fetch_row() != NULL) 
 	{
 		hdf_set_value(stConfig.cgi->hdf, "config.plugin_info", qu.getstr("pb_info"));
-		DEBUG_LOG("get plugin:%d(local:%d) info", iPluginId, qu.getval("plugin_id"));
+		DEBUG_LOG("get plugin:%d info", iPluginId);
 	}
 	else {
 		WARN_LOG("not find plugin:%d", iPluginId);
@@ -3221,6 +3182,253 @@ static int MakePluginConfFile(Json &plug_info, ostringstream &oAbsFile)
 	return iRet;
 }
 
+static int DealRefreshPreInstallStatus()
+{
+	int mid = hdf_get_int_value(stConfig.cgi->hdf, "Query.machine_id", 0);
+    int pid = hdf_get_int_value(stConfig.cgi->hdf, "Query.plugin_id", 0);
+	if(mid==0 || pid==0)
+	{
+		REQERR_LOG("invalid parameter mid:%d, pid:%d", mid, pid);
+		hdf_set_value(stConfig.cgi->hdf, "err.msg", CGI_REQERR);
+		return SLOG_ERROR_LINE;
+	}
+
+    Json js;
+	Query & qu = *stConfig.qu;
+    std::ostringstream ss;
+    ss << "select install_proc from mt_plugin_machine where machine_id=" << mid;
+    ss << " and open_plugin_id=" << pid << " and xrk_status=0";
+    if(!qu.get_result(ss.str().c_str()) ||  qu.num_rows() <= 0) {
+        REQERR_LOG("not find preinstall machine:%d, plugin:%d !", mid, pid);
+        js["ret"] = 1;
+        js["msg"] = "未找到一键部署任务";
+    }
+    else {
+        qu.fetch_row();
+        js["ret"] = 0;
+        if(qu.getval("install_proc") == 0)
+            js["proc_status"] = EV_PREINSTALL_SERVER_RECV_PLUGIN_MSG;
+        else
+            js["proc_status"] = qu.getval("install_proc");
+    }
+
+    qu.free_result();
+	std::string str(js.ToString());
+    DEBUG_LOG("preinstall machine:%d, plugin:%d, new process status:%s", mid, pid, str.c_str());
+    return my_cgi_output(str.c_str(), stConfig);
+}
+
+// 整个安装过程需要执行的操作步骤数
+#define MAX_INSTALL_PLUGIN_PROC 8
+static int DealPreInstallPlugin(std::string &strCsTemplateFile)
+{
+	int mid = hdf_get_int_value(stConfig.cgi->hdf, "Query.mach", 0);
+    int pid = hdf_get_int_value(stConfig.cgi->hdf, "Query.plugin", 0);
+	if(mid==0 || pid==0)
+	{
+		REQERR_LOG("invalid parameter mid:%d, pid:%d", mid, pid);
+		hdf_set_value(stConfig.cgi->hdf, "err.msg", CGI_REQERR);
+		return SLOG_ERROR_LINE;
+	}
+
+	Json js_local;
+	if(GetLocalPlugin(js_local, pid) < 0)
+		return SLOG_ERROR_LINE;
+	hdf_set_value(stConfig.cgi->hdf, "config.plugin_name", (const char*)(js_local["plus_name"]));
+	hdf_set_value(stConfig.cgi->hdf, "config.plugin_show_name", (const char*)(js_local["show_name"]));
+	hdf_set_value(stConfig.cgi->hdf, "config.plugin_ver", (const char*)(js_local["plus_version"]));
+	if(js_local.HasValue("install_tp_file") && !IsStrEqual((const char*)(js_local["install_tp_file"]), "no"))
+	{
+		std::string strCsFile(stConfig.szCsPath);
+		strCsFile += (const char*)(js_local["install_tp_file"]);
+		if(IsFileExist(strCsFile.c_str()))  {
+			strCsTemplateFile = (const char*)(js_local["install_tp_file"]);
+			DEBUG_LOG("use template file:%s", (const char*)(js_local["install_tp_file"]));
+		}
+		else {
+			WARN_LOG("not find file:%s(%s)", strCsFile.c_str(), (const char*)(js_local["install_tp_file"]));
+		}
+	}
+
+    MachineInfo *pMachinfo = slog.GetMachineInfo(mid, NULL);
+    if(!pMachinfo) {
+        REQERR_LOG("not find machine:%d", mid);
+		hdf_set_value(stConfig.cgi->hdf, "err.msg", CGI_REQERR);
+        return SLOG_ERROR_LINE;
+    }
+
+    std::string ips;
+    if(pMachinfo->ip1 != 0) {
+        ips += ipv4_addr_str(pMachinfo->ip1);
+        ips += " | ";
+    }
+    if(pMachinfo->ip2 != 0) {
+        ips += ipv4_addr_str(pMachinfo->ip2);
+        ips += " | ";
+    }
+    if(pMachinfo->ip3 != 0) {
+        ips += ipv4_addr_str(pMachinfo->ip3);
+        ips += " | ";
+    }
+    if(pMachinfo->ip4 != 0) {
+        ips += ipv4_addr_str(pMachinfo->ip4);
+        ips += " | ";
+    }
+    if(ips.length() > 3)
+        ips.erase(ips.length()-3, 3);
+    hdf_set_value(stConfig.cgi->hdf, "config.machine_ip", ips.c_str());
+    const char *ptmp = MtReport_GetFromVmem_Local(pMachinfo->iNameVmemIdx);
+    hdf_set_value(stConfig.cgi->hdf, "config.machine_name", ptmp ? ptmp : "unknow");
+    hdf_set_int_value(stConfig.cgi->hdf, "config.max_install_proc", MAX_INSTALL_PLUGIN_PROC);;
+
+	Query & qu = *stConfig.qu;
+    std::ostringstream ss;
+    ss << "select start_time,install_proc from mt_plugin_machine where machine_id=" << mid;
+    ss << " and open_plugin_id=" << pid << " and xrk_status=0";
+
+    // 最近5分钟是否有执行部署操作，如有则不允许再发起
+    int iHasLastWork = 0;
+    if(qu.get_result(ss.str().c_str()) &&  qu.num_rows() > 0) {
+        qu.fetch_row();
+        uint32_t dwStart = qu.getuval("start_time");
+        int iProc = qu.getval("install_proc");
+        if(iProc != 0 && dwStart+300 >= stConfig.dwCurTime) {
+            iHasLastWork = 1;
+            hdf_set_value(stConfig.cgi->hdf, "config.last_install_time", uitodate(dwStart));
+            DEBUG_LOG("has last install, start time:%s(%u), cur:%u", uitodate(dwStart), dwStart, stConfig.dwCurTime);
+        }
+        else if(iProc == 0) {
+            // 已安装了插件，前台应该不能发起部署
+            qu.free_result();
+            hdf_set_value(stConfig.cgi->hdf, "err.msg", CGI_REQERR);
+            REQERR_LOG("plugin already install, machine:%d, plugin:%d !", mid, pid);
+            return SLOG_ERROR_LINE;
+        }
+    }
+    qu.free_result();
+    hdf_set_int_value(stConfig.cgi->hdf, "config.has_last_work", iHasLastWork);
+    if(!iHasLastWork) {
+        ss.str("");
+        ss << "replace into mt_plugin_machine set machine_id=" << mid;
+        ss << ", open_plugin_id=" << pid << ", install_proc=" << EV_PREINSTALL_START;
+        ss << ", start_time=" << stConfig.dwCurTime;
+        ss << ", cfg_version=\'" << (const char*)(js_local["plus_version"]) << "\'";
+        ss << ", build_version=\'" << (const char*)(js_local["plus_version"]) << "\'";
+        if(!qu.execute(ss.str().c_str())) 
+            hdf_set_int_value(stConfig.cgi->hdf, "config.install_proc", MAX_INSTALL_PLUGIN_PROC+1);
+        else 
+            hdf_set_int_value(stConfig.cgi->hdf, "config.install_proc", EV_PREINSTALL_START);
+    }
+    else {
+        hdf_set_int_value(stConfig.cgi->hdf, "config.install_proc", MAX_INSTALL_PLUGIN_PROC+1);
+    }
+
+    hdf_set_int_value(stConfig.cgi->hdf, "config.machine_id", mid);
+    hdf_set_int_value(stConfig.cgi->hdf, "config.plugin_id", pid);
+    DEBUG_LOG("machine:%d try install plugin:%d", mid, pid);
+    return 0;
+}
+
+static int DealDpAddPlugin()
+{
+	int id = hdf_get_int_value(stConfig.cgi->hdf, "Query.id", 0);
+	if(id==0)
+	{
+		REQERR_LOG("invalid parameter from:%s", stConfig.remote);
+		hdf_set_value(stConfig.cgi->hdf, "err.msg", CGI_REQERR);
+		return SLOG_ERROR_LINE;
+	}
+
+	Json js_local;
+	if(GetLocalPlugin(js_local, id) < 0)
+		return SLOG_ERROR_LINE;
+
+    hdf_set_int_value(stConfig.cgi->hdf, "config.plugin_id", id);
+	hdf_set_value(stConfig.cgi->hdf, "config.plugin_name", (const char*)(js_local["plus_name"]));
+    hdf_set_value(stConfig.cgi->hdf, "config.plugin_show_name", (const char*)(js_local["show_name"])); 
+    hdf_set_value(stConfig.cgi->hdf, "config.plugin_last_version", (const char*)(js_local["plus_version"])); 
+    hdf_set_value(stConfig.cgi->hdf, "config.plugin_run_os", (const char*)(js_local["run_os"]));
+    hdf_set_value(stConfig.cgi->hdf, "config.plugin_auth", (const char*)(js_local["plugin_auth"]));
+    hdf_set_value(stConfig.cgi->hdf, "config.plugin_language", (const char*)(js_local["dev_language"]));
+	std::ostringstream ss;
+    ss << "http://" << stConfig.szXrkmonitorSiteAddr << "/plugin/" << (const char*)(js_local["plus_name"]) << ".html";
+    hdf_set_value(stConfig.cgi->hdf, "config.plugin_desc_url", ss.str().c_str());
+
+    std::map<int, std::string> mpMachPluginStatus;
+    std::map<int, std::string>::iterator itMachStatus;
+
+	Query qu(*stConfig.db);
+    ss.str("");
+    ss << "select machine_id,build_version from mt_plugin_machine where xrk_status=0 and install_proc=0 and open_plugin_id=" << id;
+    if(qu.get_result(ss.str().c_str()) && qu.num_rows() > 0) {
+        for(int i=0; i < qu.num_rows() && qu.fetch_row(); i++) {
+            mpMachPluginStatus.insert(std::pair<int, std::string>(qu.getval("machine_id"), qu.getstr("build_version")));
+        }
+    }
+    qu.free_result();
+
+    Json js;
+	int iCount = 0;
+    ss.str("");
+	ss << "select * from mt_machine where xrk_status=0";
+	if(qu.get_result(ss.str().c_str()) && qu.num_rows() > 0) {
+		while(qu.fetch_row()) {
+        	Json mach;
+        	mach["id"] = qu.getval("xrk_id");
+        	itMachStatus = mpMachPluginStatus.find((int)(mach["id"]));
+        	if(itMachStatus != mpMachPluginStatus.end())
+        	    mach["plugin_ver"] = itMachStatus->second;
+        	else
+        	    mach["plugin_ver"] = "no";
+
+        	std::string ips;
+        	if(qu.getuval("ip1") != 0) {
+        	    ips += ipv4_addr_str(qu.getuval("ip1"));
+        	    ips += " | ";
+        	}
+        	if(qu.getuval("ip2") != 0) {
+        	    ips += ipv4_addr_str(qu.getuval("ip2"));
+        	    ips += " | ";
+        	}
+        	if(qu.getuval("ip3") != 0) {
+        	    ips += ipv4_addr_str(qu.getuval("ip3"));
+        	    ips += " | ";
+        	}
+        	if(qu.getuval("ip4") != 0) {
+        	    ips += ipv4_addr_str(qu.getuval("ip4"));
+        	    ips += " | ";
+        	}
+        	if(ips.length() > 3)
+        	    ips.erase(ips.length()-3, 3);
+
+        	mach["ip"] = ips;
+        	mach["name"] = qu.getstr("xrk_name");
+			uint32_t dwLastHelloTime =  qu.getuval("last_hello_time");
+			uint32_t dwAgentStartTime = qu.getuval("start_time");
+        	if(dwLastHelloTime+300 >= stConfig.dwCurTime && stConfig.dwCurTime > dwLastHelloTime) 
+        	    mach["run_time"] = stConfig.dwCurTime-dwAgentStartTime;
+        	else
+        	    mach["run_time"] = 0;
+        	mach["run_os"] = qu.getstr("agent_os");
+        	mach["os_arc"] = qu.getstr("os_arc");
+        	mach["libc_ver"] = qu.getstr("libc_ver");
+        	mach["libcpp_ver"] = qu.getstr("libcpp_ver");
+        	std::string osType;
+        	GetOsType(mach["run_os"], osType);
+        	mach["run_os_type"] = osType;
+        	js["list"].Add(mach);
+        	iCount++;
+		}
+    }
+	qu.free_result();
+
+    js["count"] = iCount;
+    std::string str(js.ToString());
+    hdf_set_value(stConfig.cgi->hdf, "config.machine_list", str.c_str());
+    DEBUG_LOG("try setup plugin :%d, machine count:%d", id, iCount);
+    return 0;
+}
+
 static int DealDownloadPluginConf(CGI *cgi)
 {
 	const char *pself_domain = hdf_get_value(cgi->hdf, "Query.self_domain", NULL);
@@ -3293,6 +3501,8 @@ static int DealUpdatePlugin(CGI *cgi)
 	js_plugin.Parse(pinfo, iParseIdx);
 	if(iParseIdx != iReadLen) {
 		WARN_LOG("parse json content, size:%u!=%u", (uint32_t)iParseIdx, (uint32_t)iReadLen);
+		stConfig.pErrMsg = "插件数据解析错误！";
+		return SLOG_ERROR_LINE;
 	}
 
 	Json js_local;
@@ -3432,44 +3642,41 @@ static int DealUpdatePlugin(CGI *cgi)
 		ERR_LOG("sql parameter init failed !");
 		return SLOG_ERROR_LINE;
 	}
-	AddParameter(&ppara, "plugin_cur_ver", (const char*)(js_plugin["plus_version"]), NULL);
 	js_local["plus_version"] = (const char*)(js_plugin["plus_version"]);
 	if((int)(js_plugin["b_add_log_module"]) && !(int)(js_local["b_add_log_module"])) {
-		AddParameter(&ppara, "log_config", (int)(js_plugin["b_add_log_module"]), "DB_CAL");
 		js_local["b_add_log_module"] = (int)(js_plugin["b_add_log_module"]);
 	}
 	if(strcmp((const char*)(js_plugin["plus_desc"]), (const char*)(js_local["plus_desc"]))) {
-		AddParameter(&ppara, "plugin_desc", (const char*)(js_plugin["plus_desc"]), NULL);
 		js_local["plus_desc"] = (const char*)(js_plugin["plus_desc"]);
 	}
 	if(strcmp((const char*)(js_plugin["plugin_auth"]), (const char*)(js_local["plugin_auth"]))) {
-		AddParameter(&ppara, "plugin_auth", (const char*)(js_plugin["plugin_auth"]), NULL);
 		js_local["plugin_auth"] = (const char*)(js_plugin["plugin_auth"]);
 	}
 	if((bool)(js_plugin["b_open_source"]) != (bool)(js_local["b_open_source"])) {
-		AddParameter(&ppara, "open_src", (bool)(js_plugin["b_open_source"]), "DB_CAL");
 		js_local["b_open_source"] = (bool)(js_plugin["b_open_source"]);
 	}
 	if(strcmp((const char*)(js_plugin["dest_os"]), (const char*)(js_local["dest_os"]))) {
-		AddParameter(&ppara, "dest_os", (const char*)(js_plugin["dest_os"]), NULL);
 		js_local["dest_os"] = (const char*)(js_plugin["dest_os"]);
 	}
 	if((int)(js_plugin["set_method"]) != (int)(js_local["set_method"])) {
-		AddParameter(&ppara, "set_method", (int)(js_plugin["set_method"]), "DB_CAL");
 		js_local["set_method"] = (int)(js_plugin["set_method"]);
 	}
 	if(strcmp((const char*)(js_plugin["dev_language"]), (const char*)(js_local["dev_language"]))) {
-		AddParameter(&ppara, "dev_language", (const char*)(js_plugin["dev_language"]), NULL);
 		js_local["dev_language"] = (const char*)(js_plugin["dev_language"]);
 	}
 	if(strcmp((const char*)(js_plugin["plugin_pic"]), (const char*)(js_local["plugin_pic"]))) {
-		AddParameter(&ppara, "plugin_pic", (const char*)(js_plugin["plugin_pic"]), NULL);
 		js_local["plugin_pic"] = (const char*)(js_plugin["plugin_pic"]);
 	}
 	if(strcmp((const char*)(js_plugin["plus_url"]), (const char*)(js_local["plus_url"]))) {
-		AddParameter(&ppara, "plugin_src_url", (const char*)(js_plugin["plus_url"]), NULL);
 		js_local["plus_url"] = (const char*)(js_plugin["plus_url"]);
 	}
+	if(!IsStrEqual((const char*)(js_plugin["show_name"]), (const char*)(js_local["plugin_show_name"]))) {
+		js_local["plugin_show_name"] = (const char*)(js_plugin["show_name"]);
+	}
+	if(!IsStrEqual((const char*)(js_plugin["install_tp_file"]), (const char*)(js_local["install_tp_file"]))) {
+		js_local["install_tp_file"] = (const char*)(js_plugin["install_tp_file"]);
+	}
+
 	std::string strJs = js_local.ToString();
 	AddParameter(&ppara, "pb_info", strJs.c_str(), NULL);
 
@@ -3519,6 +3726,8 @@ static int DealInstallPlugin(CGI *cgi)
 	js_plugin.Parse(pinfo, iParseIdx);
 	if(iParseIdx != iReadLen) {
 		WARN_LOG("parse json content, size:%u!=%u", (uint32_t)iParseIdx, (uint32_t)iReadLen);
+		stConfig.pErrMsg = "插件数据解析错误！";
+		return SLOG_ERROR_LINE;
 	}
 
 	Query & qu = *(stConfig.qu);
@@ -3674,6 +3883,7 @@ int main(int argc, char **argv, char **envp)
 			continue;
 		}
 		INFO_LOG("get action :%s from :%s", pAction, stConfig.remote);
+		std::string strCsTemplateFile;
 
 		// log ---
 		if(!strcmp(pAction, "show_realtime_log")
@@ -3738,7 +3948,7 @@ int main(int argc, char **argv, char **envp)
 		else if(!strcmp(pAction, "delete_config"))
 			iRet = DealDelConfig(stConfig.cgi);
 
-		// monitor plus 
+		// monitor plugin
 		else if(!strcmp(pAction, "open_plugin"))
 			iRet = DealListPlugin(stConfig.cgi);
 		else if(!strcmp(pAction, "install_open_plugin"))
@@ -3747,6 +3957,14 @@ int main(int argc, char **argv, char **envp)
 			iRet = DealUpdatePlugin(stConfig.cgi);
 		else if(!strcmp(pAction, "down_plugin_conf"))
 			iRet = DealDownloadPluginConf(stConfig.cgi);
+
+		else if(!strcmp(pAction, "dp_add_plugin")) 
+            iRet = DealDpAddPlugin();
+		else if(!strcmp(pAction, "ddap_install_plugin")) 
+            iRet = DealPreInstallPlugin(strCsTemplateFile);
+		else if(!strcmp(pAction, "refresh_preinstall_plugin_status")) 
+            iRet = DealRefreshPreInstallStatus();
+	
 		else {
 			ERR_LOG("unknow action:%s", pAction);
 			iRet = -1;
@@ -3758,7 +3976,6 @@ int main(int argc, char **argv, char **envp)
 		}
 
 		const char *pcsTemplate = NULL;
-
 		if(!strcmp(pAction, "list_app"))
 			pcsTemplate = "dmt_app.html";
 		else if(!strcmp(pAction, "add_app") || !strcmp(pAction, "mod_app"))
@@ -3787,6 +4004,11 @@ int main(int argc, char **argv, char **envp)
 			pcsTemplate = "dmt_dlg_log_report_test.html";
 		else if(!strcmp(pAction, "open_plugin"))
 			pcsTemplate = "dmt_plugin.html";
+		else if(!strcmp(pAction, "dp_add_plugin")) 
+			pcsTemplate = "dmt_dp_add_plugin.html";
+
+		if(!pcsTemplate && !strCsTemplateFile.empty())
+			pcsTemplate = strCsTemplateFile.c_str();
 		if(pcsTemplate != NULL)
 		{
 			std::string strCsFile(stConfig.szCsPath);

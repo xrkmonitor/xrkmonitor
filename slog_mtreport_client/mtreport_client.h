@@ -259,6 +259,13 @@ typedef struct
 	int iMaxRunMins;
 	int iDisablePlus;
 
+	// 云端地址，用于一键部署插件等功能
+	char szCloudUrl[256];
+	char szOs[32];
+	char szOsArc[20];
+	char szLibcVer[32];
+	char szLibcppVer[32];
+
 	// 重启进程更新全部配置标记
 	uint32_t dwRestartFlag;
 	bool bCheckHelloStart;
@@ -276,9 +283,11 @@ typedef std::list<TConfigItem*> TConfigItemList;
 
 void UpdateConfigFile(const char *pfile, TConfigItemList & list);
 void ReleaseConfigList(TConfigItemList & list);
+int get_cmd_result(const char *cmd, std::string &strResult);
 
-extern std::string g_strCmpTime;
 extern CONFIG stConfig;
+extern std::string g_strCmpTime;
+extern const std::string g_strVersion;
 
 #endif
 

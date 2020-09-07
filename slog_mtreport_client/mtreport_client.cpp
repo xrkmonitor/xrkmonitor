@@ -64,56 +64,43 @@
 
 extern MtReport g_mtReport;
 
+const std::string g_strVersion = "v1.0.0";
 std::string g_strCmpTime = __DATE__ " " __TIME__; 
 CONFIG stConfig;
-
-typedef struct _TPlusFun {
-	// 插件初始化函数，成功返回 0， 非 0 表示失败
-	int (*pSlogPlusInit)();
-	// agent 会定时调用 SlogPlusOnLoop， 插件可在该函数中实现上报逻辑
-	void (*pSlogPlusOnLoop)(uint32_t dwTimeNow);
-	// agent 程序退出时，调用该函数，可用于插件资源释放
-	void (*pSlogPlusEnd)();
-
-	void *pHandle;
-	int iPlusIndex;
-	std::string strPlusPath;
-
-	_TPlusFun() {
-		pSlogPlusInit = NULL;
-		pSlogPlusOnLoop = NULL;
-		pSlogPlusEnd = NULL;
-		pHandle = NULL;
-		iPlusIndex = -1;
-	}
-}TPlusFun;
 
 int InitReportLog();
 int InitReportAttr();
 int OnEventTimer(TimerNode *pNodeShm, unsigned uiDataLen, char *pData);
 
-inline int BeforeEnterPlus(TPlusFun *pfun)
-{
-	// 进入插件目录
-	if(chdir(pfun->strPlusPath.c_str()) != 0) {
-		ERROR_LOG("change to plus dir:%s failed, msg:%s", pfun->strPlusPath.c_str(), strerror(errno));
-		return MTREPORT_ERROR_LINE;
-	}
 
-	if(pfun->iPlusIndex < 0 || pfun->iPlusIndex >= MAX_INNER_PLUS_COUNT) {
-		ERROR_LOG("invalid plus index:%d", pfun->iPlusIndex);
-		return MTREPORT_ERROR_LINE;
-	}
-	g_mtReport.iPlusIndex = pfun->iPlusIndex;
-	return 0;
-}
-
-inline void AfterEnterPlus(TPlusFun *pfun)
+int get_cmd_result(const char *cmd, std::string &strResult)
 {
-	// 重置工作目录
-	if(chdir(stConfig.szCurPath) != 0) {
-		WARN_LOG("reset chdir:%s failed, msg:%s", stConfig.szCurPath, strerror(errno));
-	}
+    static char s_buf[4096] = {0}; 
+    FILE *fp = popen(cmd, "r");
+    if(!fp) {
+        ERROR_LOG("popen failed, cmd:%s, msg:%s", cmd, strerror(errno));
+        return ERROR_LINE;
+    }    
+
+    if(fgets(s_buf, sizeof(s_buf), fp)) {
+        strResult = s_buf;
+        size_t pos = strResult.find("\n");
+        if(pos != std::string::npos)
+            strResult.replace(pos, 1, ""); 
+        pos = strResult.find("\r");
+        if(pos != std::string::npos)
+            strResult.replace(pos, 1, ""); 
+        pos = strResult.find("\r\n");
+        if(pos != std::string::npos)
+            strResult.replace(pos, 2, ""); 
+        DEBUG_LOG("cmd:%s, get result:%s", cmd, s_buf);
+    }    
+    else {
+        strResult = "";
+        ERROR_LOG("fgets failed, cmd:%s, msg:%s", cmd, strerror(errno));
+    }    
+    pclose(fp);
+    return 0;
 }
 
 void OnSelectTimeout(time_t uiTime)
@@ -374,13 +361,23 @@ static int Init()
 		"CLIENT_LOCAL_LOG_SIZE", CFG_INT, &stConfig.iMaxLocalLogFileSize, 1024*1024*20,
 		"DISABLE_PLUGIN", CFG_INT, &stConfig.iDisablePlus, 0,
 		"MAX_RUN_MINS", CFG_INT, &stConfig.iMaxRunMins, 7*24*3600,
+		"XRKMONITOR_CLOUD_URL", CFG_STRING, stConfig.szCloudUrl, "xrkmonitor.com", MYSIZEOF(stConfig.szCloudUrl),
+		"LOCAL_OS", CFG_STRING, stConfig.szOs, "", MYSIZEOF(stConfig.szOs),
+		"LOCAL_OS_ARC", CFG_STRING, stConfig.szOsArc, "", MYSIZEOF(stConfig.szOsArc),
+		"LOCAL_LIBC_VER", CFG_STRING, stConfig.szLibcVer, "", MYSIZEOF(stConfig.szLibcVer),
+		"LOCAL_LIBCPP_VER", CFG_STRING, stConfig.szLibcppVer, "", MYSIZEOF(stConfig.szLibcppVer),
 		(void*)NULL)) < 0)
 	{   
 		printf("read config failed, from config file:%s\n", MTREPORT_CONFIG);
 		return -1;
 	} 
 
-	stConfig.iLocalLogType = GetLogTypeByStr(szTypeString);
+	// 启动信息记录到日志, 频率限制先改大
+	int iLogLimitPerSecSave = stConfig.iLogLimitPerSec;
+	int iLocalLogTypeSave = GetLogTypeByStr(szTypeString);
+	stConfig.iLogLimitPerSec = 10000;
+	stConfig.iLocalLogType = 255;
+
 	stConfig.fpLogFile = NULL;
 	TryReOpenLocalLogFile();
 
@@ -416,6 +413,40 @@ static int Init()
 	INFO_LOG("read config - server:%s:%d ", stConfig.szSrvIp_master, stConfig.iSrvPort);
 	INFO_LOG("local ip:%s, config:%s, cmp time:%s", pip, stConfig.szLocalIP, g_strCmpTime.c_str());
 
+	// 基础信息，用于一键部署插件
+	if(stConfig.szOs[0] == '\0') {
+		std::string str;
+		get_cmd_result("./run_tool.sh getos", str);
+		memset(stConfig.szOs, 0, sizeof(stConfig.szOs));
+		strncpy(stConfig.szOs, str.c_str(), sizeof(stConfig.szOs)-1);
+	}
+
+	if(stConfig.szOsArc[0] == '\0') {
+		std::string str;
+		get_cmd_result("./run_tool.sh getarc", str);
+		memset(stConfig.szOsArc, 0, sizeof(stConfig.szOsArc));
+		strncpy(stConfig.szOsArc, str.c_str(), sizeof(stConfig.szOsArc)-1);
+	}
+
+	if(stConfig.szLibcVer[0] == '\0') {
+		std::string str;
+		get_cmd_result("./run_tool.sh getlibc", str);
+		memset(stConfig.szLibcVer, 0, sizeof(stConfig.szLibcVer));
+		strncpy(stConfig.szLibcVer, str.c_str(), sizeof(stConfig.szLibcVer)-1);
+	}
+
+	if(stConfig.szLibcppVer[0] == '\0') {
+		std::string str;
+		get_cmd_result("./run_tool.sh getlibcpp", str);
+		memset(stConfig.szLibcppVer, 0, sizeof(stConfig.szLibcppVer));
+		strncpy(stConfig.szLibcppVer, str.c_str(), sizeof(stConfig.szLibcppVer)-1);
+	}
+
+	INFO_LOG("get local system info - os:%s, arc:%s, libc ver:%s, libcpp ver:%s",
+	    stConfig.szOs, stConfig.szOsArc, stConfig.szLibcVer, stConfig.szLibcppVer);
+	INFO_LOG("write log limit per sec:%d, type:(%d)(%s)", iLogLimitPerSecSave, iLocalLogTypeSave, szTypeString);
+	stConfig.iLogLimitPerSec = iLogLimitPerSecSave;
+	stConfig.iLocalLogType = iLocalLogTypeSave;
 	return 0;
 }
 
@@ -551,7 +582,7 @@ void ReadStrAttr()
 			ERROR_LOG("check node error in str attr list [not use] -- attr:%d value:%d",
 				pNode->iStrAttrId, pNode->iStrVal);
 		}
-		if(pNode->bSyncProcess != 1)
+		if(pNode->bSyncProcess < 1)
 		{
 			ERROR_LOG("check node error in str attr list [syncflag] -- attr:%d value:%d bSyncProcess:%d",
 				pNode->iStrAttrId, pNode->iStrVal, pNode->bSyncProcess);
@@ -637,7 +668,7 @@ void ReadAttr()
 				ERROR_LOG("check node error in attr list [not use] -- attr:%d value:%d",
 					pNode->iAttrID, pNode->iCurValue);
 			}
-			if(pNode->bSyncProcess != 1)
+			if(pNode->bSyncProcess < 1)
 			{
 				ERROR_LOG("check node error in attr list [syncflag] -- attr:%d value:%d bSyncProcess:%d",
 					pNode->iAttrID, pNode->iCurValue, pNode->bSyncProcess);
@@ -1233,7 +1264,6 @@ void ShowMtSystemConfig(MtSystemConfig & str)
 	SHOW_FIELD_VALUE_UINT(dwConfigSeq);
 	SHOW_FIELD_VALUE_UINT(bAttrSendPerTimeSec);
 	SHOW_FIELD_VALUE_UINT(bLogSendPerTimeSec);
-	SHOW_FIELD_VALUE_UINT(bReportCpuUseSec);
 	printf("\n");
 }
 
@@ -1291,7 +1321,6 @@ void ShowShm()
 	SHOW_FIELD_VALUE_INT(iMtClientIndex);
 	SHOW_FIELD_VALUE_INT(iMachineId);
 	SHOW_FIELD_VALUE_UINT_IP(dwConnServerIp);
-	SHOW_FIELD_VALUE_UINT_TIME(dwKeySetTime);
 	SHOW_FIELD_VALUE_MASK_CSTR(16, sRandKey);
 	SHOW_FIELD_VALUE_UINT(dwPkgSeq);
 	SHOW_FIELD_VALUE_UINT_TIME(dwLastHelloOkTime);
@@ -1548,143 +1577,15 @@ void deal_exist_sig(int sig)
 	}    
 }
 
-int LoadAllPlus()
-{
-	DIR* pDir = opendir(stConfig.szPlusPath);
-	if(pDir == NULL)
-	{
-		ERROR_LOG("open plus dir:%s failed, msg:%s", stConfig.szPlusPath, strerror(errno));
-		return MTREPORT_ERROR_LINE;
-	}
-
-	struct dirent *pDirent = NULL;
-	void *pHandle = NULL;
-	std::string sPlusPath(stConfig.szPlusPath);
-	if(*sPlusPath.rbegin() != '/')
-		sPlusPath += "/";
-	std::string sFileName, sFile;
-	int iRet = 0;
-	while(true) 
-	{
-		pDirent = readdir(pDir);
-		if(pDirent != NULL)
-		{
-			DEBUG_LOG("read plus dir:%s type:%d", pDirent->d_name, pDirent->d_type);
-			if(pDirent->d_name[0] != '.' && pDirent->d_type == DT_DIR)
-			{
-				sFileName = pDirent->d_name;
-				sFileName += ".so";
-				sFile = sPlusPath+pDirent->d_name;
-				sFile += "/";
-				sFile += sFileName;
-				pHandle = dlopen(sFile.c_str(), RTLD_NOW);
-				if(!pHandle)
-				{
-					WARN_LOG("dlopen :%s failed, msg:%s", sFile.c_str(), dlerror());
-					continue;
-				}
-				DEBUG_LOG("dlopen plus file:%s", sFile.c_str());
-				TPlusFun *pfun = new TPlusFun;
-
-				pfun->pSlogPlusInit = (int (*)())dlsym(pHandle, "SlogPlusInit");
-				if (pfun->pSlogPlusInit == NULL)
-				{
-					ERROR_LOG("dlsym(SlogPlusInit) failed, plus:%s, msg:%s", sFile.c_str(), dlerror());
-					dlclose(pHandle);
-					return MTREPORT_ERROR_LINE;
-				}
-				pfun->iPlusIndex = g_mtReport.iPlusIndex;
-				pfun->strPlusPath = sPlusPath+pDirent->d_name;
-
-				BeforeEnterPlus(pfun);
-				if((iRet=(*(pfun->pSlogPlusInit))()) != 0) {
-					ERROR_LOG("init plus:%s failed, ret:%d", sFile.c_str(), iRet);
-					return MTREPORT_ERROR_LINE;
-				}
-				AfterEnterPlus(pfun);
-
-				pfun->pSlogPlusOnLoop = (void (*)(uint32_t dwTimeNow))dlsym(pHandle, "SlogPlusOnLoop");
-				if (dlerror() != NULL)
-				{
-					ERROR_LOG("dlsym(SlogPlusOnLoop) failed, plus:%s, msg:%s", sFile.c_str(), dlerror());
-					dlclose(pHandle);
-					return MTREPORT_ERROR_LINE;
-				}
-
-				pfun->pSlogPlusEnd = (void (*)())dlsym(pHandle, "SlogPlusEnd");
-				if (dlerror() != NULL)
-				{
-					ERROR_LOG("dlsym(SlogPlusEnd) failed, plus:%s, msg:%s", sFile.c_str(), dlerror());
-					dlclose(pHandle);
-					return MTREPORT_ERROR_LINE;
-				}
-				pfun->pHandle = pHandle;
-				stConfig.mapPlus[sFileName] = pfun;
-				INFO_LOG("load plus:%s ok, plus path:%s, index:%d", 
-					sFile.c_str(), pfun->strPlusPath.c_str(), pfun->iPlusIndex);
-			}
-		}
-		else
-			break;
-	}
-	closedir(pDir);
-	return 0;
-}
-
-void FinishAllPlus()
-{
-	std::map<std::string, void *>::iterator it = stConfig.mapPlus.begin();
-	TPlusFun *pfun = NULL;
-	for(; it != stConfig.mapPlus.end(); it++) 
-	{
-		pfun = (TPlusFun *)it->second;
-		if(BeforeEnterPlus(pfun) < 0) {
-			continue;
-		}
-		(*(pfun->pSlogPlusEnd))();
-		AfterEnterPlus(pfun);
-		dlclose(it->second);
-		delete pfun;
-	}
-	stConfig.mapPlus.clear();
-}
-
-void RunAllPlus()
-{
-	std::map<std::string, void *>::iterator it = stConfig.mapPlus.begin();
-	TPlusFun *pfun = NULL;
-	for(; it != stConfig.mapPlus.end(); it++) 
-	{
-		pfun = (TPlusFun *)it->second;
-
-		// 进入插件目录
-		if(BeforeEnterPlus(pfun) < 0) {
-			continue;
-		}
-		(*(pfun->pSlogPlusOnLoop))(stConfig.dwCurTime);
-		AfterEnterPlus(pfun);
-	}
-}
-
 int MonitorBusiProcess(int subPid, int argc)
 {
 	INFO_LOG("start monitor process:%d, self:%d", subPid, getpid());
 	char sCmd[128] = {0};
 	int iKillSubPidCount = 0;
 
-	// 加载插件列表
-	if(!stConfig.iDisablePlus && LoadAllPlus() < 0) {
-		FinishAllPlus();
-		stConfig.pReportShm->cIsAgentRun = 0;
-		return 0;
-	}
-
 	while(iKillSubPidCount < 10) {
 		usleep(10000);
 		stConfig.dwCurTime = time(NULL);
-
-		if(!stConfig.iDisablePlus)
-			RunAllPlus();
 
 		int iStatus = 0;
 		int iPid = waitpid(-1, &iStatus, WNOHANG);
@@ -1724,8 +1625,6 @@ int MonitorBusiProcess(int subPid, int argc)
 
 	INFO_LOG("PID: [%d] %d exit, kill count:%d, argc:%d, cIsAgentRun:%d", 
 		subPid, getpid(), iKillSubPidCount, argc, stConfig.pReportShm->cIsAgentRun);
-	FinishAllPlus();
-
 	if(argc <= 1 && stConfig.pReportShm->cIsAgentRun != 0)
 		return 1;
 	return 0;
@@ -1778,7 +1677,6 @@ int main(int argc, char* argv[])
 	stConfig.dwRestartFlag = 0;
 	signal(SIGTERM, deal_exist_sig);
 
-	stConfig.pReportShm->dwKeySetTime = 0;
 	stConfig.pReportShm->dwLastHelloOkTime = 0;
 	stConfig.pReportShm->bFirstHelloCheckOk = 0;
 

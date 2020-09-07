@@ -72,6 +72,7 @@ void CUdpSock::Init()
 	m_iMtClientIndex = -1;
 	m_dwAgentClientIp = 0;
 	m_bIsFirstHello = false;
+	m_pstMachInfo = NULL;
 }
 
 int CUdpSock::InitSignature(TSignature *psig, void *pdata, const char *pKey, int bSigType)
@@ -141,6 +142,48 @@ int32_t CUdpSock::CheckSignature()
 	return 0;
 }
 
+int CUdpSock::SaveMachineInfoToDb(MonitorHelloFirstContent *pctinfo)
+{
+	IM_SQL_PARA* ppara = NULL;
+	if(InitParameter(&ppara) < 0) {
+		ERR_LOG("sql parameter init failed !");
+		return SLOG_ERROR_LINE;
+	}
+
+    AddParameter(&ppara, "last_hello_time", stConfig.dwCurrentTime, "DB_CAL");
+    AddParameter(&ppara, "start_time", stConfig.dwCurrentTime, "DB_CAL");
+    AddParameter(&ppara, "cmp_time", pctinfo->sCmpTime, NULL);
+    AddParameter(&ppara, "agent_version", pctinfo->sVersion, NULL);
+    if(pctinfo->sOsInfo[0] != '\0')
+        AddParameter(&ppara, "agent_os", pctinfo->sOsInfo, NULL);
+    if(pctinfo->sLibcVer[0] != '\0')
+        AddParameter(&ppara, "libc_ver", pctinfo->sLibcVer, NULL);
+    if(pctinfo->sLibcppVer[0] != '\0')
+        AddParameter(&ppara, "libcpp_ver", pctinfo->sLibcppVer, NULL);
+    if(pctinfo->sOsArc[0] != '\0')
+        AddParameter(&ppara, "os_arc", pctinfo->sOsArc, NULL);
+
+	if(m_pstMachInfo != NULL) {
+		m_pstMachInfo->dwAgentStartTime = stConfig.dwCurrentTime;
+		m_pstMachInfo->dwLastHelloTime = stConfig.dwCurrentTime;
+	}
+
+	MyQuery myqu(stConfig.qu, stConfig.db);
+	Query & qu = myqu.GetQuery();
+	std::string strSql;
+	strSql = "update mt_machine set";
+	JoinParameter_Set(&strSql, qu.GetMysql(), ppara);
+	strSql += " where xrk_id=";
+	strSql += itoa(m_iRemoteMachineId);
+	ReleaseParameter(&ppara);
+	if(!qu.execute(strSql)) {
+		ERR_LOG("execute sql:%s failed, msg:%s", strSql.c_str(), qu.GetError().c_str());
+		return SLOG_ERROR_LINE;
+	}
+	DEBUG_LOG("set machine key for machine id:%d ok", m_iRemoteMachineId);
+	return 0;
+}
+
 void CUdpSock::InitMtClientInfo()
 {
 	if(m_pMtClient == NULL) {
@@ -184,7 +227,6 @@ void CUdpSock::SendRealInfo()
 int CUdpSock::GetMtClientInfo()
 {
 	uint32_t isFind = 0;
-	MachineInfo* pstMachInfo = NULL;
 
 	// 非 first hello 一定存在相关索引
 	if(!m_bIsFirstHello && (m_iRemoteMachineId <= 0 || m_iMtClientIndex < 0)) {
@@ -201,17 +243,17 @@ int CUdpSock::GetMtClientInfo()
 
 	if(m_iRemoteMachineId <= 0) {
 		// first hello
-		pstMachInfo = slog.GetMachineInfo(m_dwAgentClientIp);
-		if(pstMachInfo != NULL) {
-			m_iRemoteMachineId = pstMachInfo->id;
+		m_pstMachInfo = slog.GetMachineInfo(m_dwAgentClientIp);
+		if(m_pstMachInfo != NULL) {
+			m_iRemoteMachineId = m_pstMachInfo->id;
 			INFO_LOG("get mtclient machine id:%d", m_iRemoteMachineId);
 		}
 	}
 	else {
 		// not first hello
-		pstMachInfo = slog.GetMachineInfo(m_iRemoteMachineId, NULL);
-		if(pstMachInfo == NULL 
-			|| (m_dwReqCmd == CMD_MONI_SEND_HELLO && !slog.IsIpMatchMachine(pstMachInfo, m_dwAgentClientIp))) 
+		m_pstMachInfo = slog.GetMachineInfo(m_iRemoteMachineId, NULL);
+		if(m_pstMachInfo == NULL 
+			|| (m_dwReqCmd == CMD_MONI_SEND_HELLO && !slog.IsIpMatchMachine(m_pstMachInfo, m_dwAgentClientIp))) 
 		{
 			REQERR_LOG("invalid, have no machine for id:%d", m_iRemoteMachineId);
 			return ERR_NOT_FIND_MACHINE;
@@ -373,6 +415,7 @@ int CUdpSock::DealCmdHelloFirst()
 	// 首个 hello 重新初始化
 	InitMtClientInfo(); 
 
+	SaveMachineInfoToDb(pctinfo);
 	if(psigInfo->bEnableEncryptData) {
 		m_pMtClient->bEnableEncryptData = 1;
 		memcpy(m_pMtClient->sRandKey, psigInfo->sRespEncKey, sizeof(m_pMtClient->sRandKey));
@@ -920,6 +963,32 @@ int CUdpSock::DealCmdCheckSystemConfig()
 	return NO_ERROR;
 }
 
+int CUdpSock::SetHelloTimeToMachineTable()
+{
+    IM_SQL_PARA* ppara = NULL;
+    if(InitParameter(&ppara) < 0) { 
+        ERR_LOG("sql parameter init failed !");
+        return SLOG_ERROR_LINE;
+    }    
+    AddParameter(&ppara, "last_hello_time", stConfig.dwCurrentTime, "DB_CAL");
+
+    MyQuery myqu(stConfig.qu, stConfig.db);
+    Query & qu = myqu.GetQuery();
+
+    std::string strSql;
+    strSql = "update mt_machine set";
+    JoinParameter_Set(&strSql, qu.GetMysql(), ppara);
+    strSql += " where xrk_id=";
+    strSql += itoa(m_iRemoteMachineId);
+    ReleaseParameter(&ppara);
+    if(!qu.execute(strSql)) {
+        ERR_LOG("execute sql:%s failed, msg:%s", strSql.c_str(), qu.GetError().c_str());
+        return SLOG_ERROR_LINE;
+    }    
+    DEBUG_LOG("set machine hello time for machine id:%d ok", m_iRemoteMachineId);
+    return 0;
+}
+
 void CUdpSock::OnRawData(const char *buf, size_t len, struct sockaddr *sa, socklen_t sa_len)
 {
 	int iRet = 0;
@@ -948,6 +1017,7 @@ void CUdpSock::OnRawData(const char *buf, size_t len, struct sockaddr *sa, sockl
 
 		case CMD_MONI_SEND_HELLO:
 			iRet = DealCmdHello();
+			SetHelloTimeToMachineTable();
 			break;
 
 		case CMD_MONI_CHECK_LOG_CONFIG:

@@ -74,11 +74,11 @@
 
 // CGI 调试信息或者coredump 信息输出文件路径
 #define CGI_COREDUMP_DEBUG_OUTPUT_PATH "../htdocs/cgi_debug/" 
-#define CGI_UPLOAD_PATH "../htdocs/monitor/cgi_upload/"
+#define CGI_UPLOAD_PATH "../htdocs/xrkmonitor/cgi_upload/"
 
 #define CGI_PATH "/cgi-bin/"
-#define DOC_PATH "/monitor/"
-#define CS_PATH "../htdocs/monitor/"
+#define DOC_PATH "/xrkmonitor/"
+#define CS_PATH "../htdocs/xrkmonitor/"
 
 // 数据库状态码
 #define RECORD_STATUS_USE 0 // 记录使用中

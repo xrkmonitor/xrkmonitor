@@ -4,9 +4,7 @@ cgi 调试 ：
 *) pause config - ENABLE_CGI_PAUSE 2317893   --- CGI 运行时暂停，可以等待 gdb 调试介入
 *) debug save in/out - ENABLE_CGI_DEBUG  1317791  --- 开启调试，cgi 的输入输出可保存到文件
 
-2 -- mkdir /tmp/cgi/(cgi_name)/ --- cgi 调试的输入输出保存
-cgi req output file : - /tmp/cgi/(cgi_name)/ or /tmp/cgi/cgi_request/
-cgi resp output file : - /tmp/cgi/(cgi_name)/
+2 -- 配置输出文件路径：DEBUG_LOG_FILE  [path] , 注意授权写权限
 
 3 -- 如果没有日志输出，前端显示 500 错误可以直接待任意参数执行 cgi
    比如：./slog_flogin test，查看下控制台的输出(注意运行账号要同 apache执行cgi的账号一样)

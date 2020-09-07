@@ -80,6 +80,9 @@ typedef struct
 	int iCheckEachAppLogSpaceTime;
 	int iCheckLogSpaceTime;
 	std::map<TGetAppLogSizeKey, top::SlogGetAppLogSizeReq*, ReqAppLogSizeCmp> stMapLogSizeReqInfo;
+
+	char szQuickToSlowIp[16];
+	int iQuickToSlowPort;
 }CONFIG;
 
 extern CONFIG stConfig;

@@ -45,8 +45,6 @@
 	char *OI_RandStrURandom(char *buffer, int len);
 	char *ipv4_addr_str(uint32_t dwAddr);
 	const char *GetLocalIP(const char *pszRemoteIp);
-	char *uitodate(uint32_t dwTimeSec);
-	uint32_t datetoui(const char *pdate);
 	char *strchr_n(char *pstr, char c, int n);
 	char *itoa(int i);
 	char *uitoa(unsigned int i);

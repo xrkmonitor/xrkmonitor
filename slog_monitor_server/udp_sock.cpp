@@ -483,6 +483,8 @@ CUdpSock::CUdpSock(ISocketHandler&h): UdpSocket(h), CBasicPacket()
 	m_iKeepDay = 30;
 	m_iKeep = 1;
 	m_pcltMachine = NULL;
+	m_strCommReportMachIp = "127.0.0.1";
+    m_strSlowProcessIp = "127.0.0.1";
 }
 
 CUdpSock::~CUdpSock()
@@ -1837,12 +1839,108 @@ void CUdpSock::ResetRequest()
 	slog.ClearAllCust();
 }
 
+void CUdpSock::ReportQuickToSlowMsg()
+{
+    static uint32_t s_dwSeq = slog.m_iRand;
+
+    ::comm::PkgHead head;
+    head.set_en_cmd(::comm::CMD_QUICK_PROCESS_TO_SLOW_REQ);
+    head.set_uint32_seq(s_dwSeq++);
+    head.set_req_machine(slog.GetLocalMachineId());
+    head.set_reserved_1(m_pcltMachine->id);
+    head.set_reserved_2(::comm::QTS_MACHINE_LAST_ATTR_TIME);
+
+    ::comm::QuickProcessToSlowInfo stInfo;
+    stInfo.set_quick_to_slow_cmd(::comm::QTS_MACHINE_LAST_ATTR_TIME);
+    stInfo.set_machine_id(m_pcltMachine->id);
+    stInfo.set_machine_last_attr_time(m_pcltMachine->dwLastReportAttrTime);
+
+    std::string strHead, strBody;
+    if(!head.AppendToString(&strHead) || !stInfo.AppendToString(&strBody))
+    {
+        ERR_LOG("protobuf AppendToString failed msg:%s", strerror(errno));
+        return;
+    }
+        
+    char *pack = NULL;
+    int iPkgLen = SetPacketPb(strHead, strBody, &pack);
+    if(iPkgLen > 0) {
+        Ipv4Address addr;
+        addr.SetAddress(inet_addr(m_strSlowProcessIp.c_str()), stConfig.wInnerServerPort);
+        SendToBuf(addr, pack, iPkgLen, 0);
+        DEBUG_LOG("send quick to slow msg to server:%s:%d, pkg len:%d",
+            m_strSlowProcessIp.c_str(), stConfig.wInnerServerPort, iPkgLen);
+    }
+}
+
+void CUdpSock::DealQuickProcessMsg()
+{
+    static std::map<uint64_t, ::comm::QuickProcessToSlowInfo *> s_mapMsg;
+    static uint32_t s_dwLastToDbTime = 0;
+
+    ::comm::QuickProcessToSlowInfo * pstInfo = NULL; 
+    // reserved_1 为 agent 机器ID
+    uint64_t key = m_pbHead.reserved_1();
+    key <<= 32;
+    key += m_pbHead.reserved_2();
+
+    std::map<uint64_t, ::comm::QuickProcessToSlowInfo *>::iterator it = s_mapMsg.find(key); 
+    if(it != s_mapMsg.end())
+        pstInfo = it->second;
+    else  {
+        pstInfo = new ::comm::QuickProcessToSlowInfo;
+        s_mapMsg.insert(std::pair<uint64_t, ::comm::QuickProcessToSlowInfo *>(key, pstInfo));
+    }
+
+    ::comm::QuickProcessToSlowInfo &stInfo = *pstInfo;
+    const char *pBody = m_pReqPkg+1+4+m_iPbHeadLen+4;
+    if(!stInfo.ParseFromArray(pBody, m_iPbBodyLen))
+    {
+		REQERR_LOG("ParseFromArray body failed ! bodylen:%d", m_iPbBodyLen);
+        return;
+    }
+
+    if(stInfo.quick_to_slow_cmd() != ::comm::QTS_MACHINE_LAST_ATTR_TIME
+        && stInfo.quick_to_slow_cmd() != ::comm::QTS_MACHINE_LAST_LOG_TIME) {
+        REQERR_LOG("invalid quick to slow msg cmd:%d", stInfo.quick_to_slow_cmd());
+        return;
+    }
+
+    if(s_dwLastToDbTime+20 < slog.m_stNow.tv_sec || s_mapMsg.size() >= 200) {
+        MyQuery myqu_if(m_qu_attr_info, db_attr_info);
+        Query & qu_info = myqu_if.GetQuery();
+        std::ostringstream ss;
+
+        for(it = s_mapMsg.begin(); it != s_mapMsg.end(); it++) {
+            m_pcltMachine = slog.GetMachineInfo(it->second->machine_id(), NULL);
+            if(!m_pcltMachine) {
+                REQERR_LOG("not find machine:%d", it->second->machine_id());
+                delete it->second;
+                continue;
+            }
+
+            ss.str("");
+            if(it->second->quick_to_slow_cmd() == ::comm::QTS_MACHINE_LAST_ATTR_TIME)
+                ss << "update mt_machine set last_attr_time=" << it->second->machine_last_attr_time();
+            else
+                ss << "update mt_machine set last_log_time=" << it->second->machine_last_log_time();
+            ss << " where xrk_id=" << it->second->machine_id();
+            qu_info.execute(ss.str().c_str());
+            delete it->second;
+        }
+
+        s_dwLastToDbTime = slog.m_stNow.tv_sec;
+        s_mapMsg.clear();
+    }
+}
+
 void CUdpSock::OnRawData(const char *buf, size_t len, struct sockaddr *sa, socklen_t sa_len)
 {
 	ResetRequest();
 	SetConnected();
 	m_addrRemote.SetAddress(sa);
 	slog.SetCust_6(m_addrRemote.Convert(true).c_str());
+	slog.CheckTest(NULL);
 
 	// check packet
 	int iRet = 0;
@@ -1854,9 +1952,20 @@ void CUdpSock::OnRawData(const char *buf, size_t len, struct sockaddr *sa, sockl
 		return ;
 	}
 
-	m_pcltMachine = NULL;
-	slog.CheckTest(NULL);
-	OnRawDataClientAttr(buf, len);
+	if(PacketPb()) {
+		if(m_pbHead.en_cmd() == comm::CMD_QUICK_PROCESS_TO_SLOW_REQ) {
+			if(slog.m_iProcessId != 1)
+				WARN_LOG("process msg dispatch invalid, receive not slow process !");
+			DealQuickProcessMsg();
+		}
+		else {
+			REQERR_LOG("unknow cmd:%d, remote:%s", m_pbHead.en_cmd(), m_addrRemote.Convert(true).c_str());
+			AckToReq(ERR_UNKNOW_CMD);
+		}
+	}
+	else {
+		OnRawDataClientAttr(buf, len);
+	}
 }
 
 int32_t CUdpSock::CheckSignature()
@@ -1954,8 +2063,11 @@ int CUdpSock::DealCgiReportAttr(const char *buf, size_t len)
 		}
 	}
 
-	if(iReadAttrCount > 0)
+	if(iReadAttrCount > 0) {
 		DealReportAttr(stReport);
+		if(m_pcltMachine)
+			ReportQuickToSlowMsg();
+	}
 	INFO_LOG("write attr count: %d(%d), from cgi report:%s, from server:%d", 
 		iReadAttrCount, (int)stReport.msg_attr_info_size(), m_addrRemote.Convert().c_str(), iReqMachineId);
 	return NO_ERROR;
@@ -2062,8 +2174,11 @@ int32_t CUdpSock::OnRawDataClientAttr(const char *buf, size_t len)
 		}
 	}
 
-	if(iReadAttrCount > 0)
+	if(iReadAttrCount > 0) {
+        if(m_pcltMachine)
+            ReportQuickToSlowMsg();
 		DealReportAttr(stReport);
+	}
 	INFO_LOG("write attr count: %d(%d), from:%s", 
 		iReadAttrCount, (int)stReport.msg_attr_info_size(), m_addrRemote.Convert(true).c_str());
 	return AckToReq(NO_ERROR);

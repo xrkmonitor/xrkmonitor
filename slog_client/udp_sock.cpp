@@ -32,6 +32,7 @@
 
 #include <supper_log.h>
 #include <sv_struct.h>
+#include <errno.h>
 
 #include <mt_report.h>
 #include "udp_sock.h"
@@ -51,6 +52,40 @@ CUdpSock::CUdpSock(ISocketHandler&h): UdpSocket(h), CBasicPacket()
 CUdpSock::~CUdpSock()
 {
 	DEBUG_LOG("on CUdpSock destruct");
+}
+
+void CUdpSock::ReportQuickToSlowMsg(int iMachineId)
+{
+    static uint32_t s_dwSeq = slog.m_iRand;
+
+    ::comm::PkgHead head;
+    head.set_en_cmd(::comm::CMD_QUICK_PROCESS_TO_SLOW_REQ);
+    head.set_uint32_seq(s_dwSeq++);
+    head.set_req_machine(slog.GetLocalMachineId());
+    head.set_reserved_1(iMachineId);
+    head.set_reserved_2(::comm::QTS_MACHINE_LAST_LOG_TIME);
+
+    ::comm::QuickProcessToSlowInfo stInfo;
+    stInfo.set_quick_to_slow_cmd(::comm::QTS_MACHINE_LAST_LOG_TIME);
+    stInfo.set_machine_id(iMachineId);
+    stInfo.set_machine_last_log_time(slog.m_stNow.tv_sec);
+
+    std::string strHead, strBody;
+    if(!head.AppendToString(&strHead) || !stInfo.AppendToString(&strBody))
+    {
+        ERR_LOG("protobuf AppendToString failed msg:%s", strerror(errno));
+        return;
+    }
+        
+    char *pack = NULL;
+    int iPkgLen = SetPacketPb(strHead, strBody, &pack);
+    if(iPkgLen > 0) {
+        Ipv4Address addr;
+        addr.SetAddress(inet_addr(stConfig.szQuickToSlowIp), stConfig.iQuickToSlowPort);
+        SendToBuf(addr, pack, iPkgLen, 0);
+        DEBUG_LOG("send quick to slow msg to server:%s:%d, pkg len:%d",
+            stConfig.szQuickToSlowIp, stConfig.iQuickToSlowPort, iPkgLen);
+    }
 }
 
 void CUdpSock::OnRawData(const char *buf, size_t len, struct sockaddr *sa, socklen_t sa_len)

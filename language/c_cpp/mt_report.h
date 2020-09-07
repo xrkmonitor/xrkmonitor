@@ -41,6 +41,8 @@
 #define ERROR_LINE -__LINE__
 #endif
 
+#define XRKMONITOR_LIB_VER_NUM 1
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -63,12 +65,15 @@ extern "C"
 #endif
 
 // 内置监控插件初始化函数, 成功返回码大于等于 0， 失败返回小于 0
-// pPlusName 插件名，长度不超过 64 个字节
-// iConfigId 日志配置id, 如果为0则不上报日志
-// pszLocalLogFile 本地日志文件, 为 NULL 则不写本地日志
-// iLocalLogType 本地日志文件记录的日志类型
-int MtReport_Plus_Init(const char *pPlusName, int iConfigId, const char *pszLocalLogFile, int iLocalLogType);
+// pConfigFile - 插件配置文件，在控制台自动生成，请登录控制台下载
+// pBuildVersion - 插件编译时的版本信息
+int MtReport_Plus_Init(const char *pConfigFile, const char *pBuildVersion);
 
+// 内置插件定时调用, agent 用于确定是否存活 
+// 返回非 0 表示插件服务器端验证错误，此时需要结束运行，检查配置后重启插件
+int MtReport_Plus_Hello(uint32_t dwTime);
+
+// 第三方程序内部埋点，lib 初始化函数
 // 日志和监控点 api 初始化, 成功返回码大于等于 0， 失败返回小于 0
 // iConfigId 日志配置id, 如果为0则不上报日志
 // pszLocalLogFile 本地日志文件, 为 NULL 则不写本地日志

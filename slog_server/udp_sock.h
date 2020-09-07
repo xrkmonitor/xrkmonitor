@@ -60,6 +60,8 @@ class CUdpSock: public UdpSocket, public CBasicPacket
 		int32_t CheckBodyTlvMd5(const char *pmd5) { return 0; }
 		virtual int32_t SendResponsePacket(const char *pkg, int len);
 		int CheckSignature();
+		void ReportQuickToSlowMsg(int iMachineId);
+
 
 		int CheckUserAppMatch(int iAppId);
 		uint64_t GetAppLogSize(int iAppId);

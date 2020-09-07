@@ -54,6 +54,12 @@ typedef struct
 {
 	int32_t iMtClientIndex;
 	int32_t iMachineId;
+	char sCmpTime[32];
+	char sVersion[12];
+	char sOsInfo[32];
+	char sOsArc[32];
+	char sLibcVer[32];
+	char sLibcppVer[32];
 }MonitorHelloFirstContent; // req
 
 typedef struct 
@@ -162,6 +168,7 @@ class CUdpSock: public UdpSocket, public CBasicPacket
 			int &iAddCount, int &iModCount, int &iSameCount, int &iUseBufLen, int iMaxBufLen, TPkgBody *pRespTlvBody);
 		int InnerDealLogConfigCheck(int iFirstIdx, int iInfoCount, ContentCheckLogConfig *pctinfo,
 			int &iAddCount, int &iModCount, int &iSameCount, int &iUseBufLen, int iMaxBufLen, TPkgBody *pRespTlvBody);
+		int SetHelloTimeToMachineTable();
 
 		int SetAppInfoCheck(ContentCheckAppInfo *pctinfo);
 		int DealCmdCheckServerInfo();
@@ -172,6 +179,7 @@ class CUdpSock: public UdpSocket, public CBasicPacket
 		int GetUserMasterInfo();
 		int GetMtClientInfo();
 		int SetKeyToMachineTable();
+		int SaveMachineInfoToDb(MonitorHelloFirstContent *pctinfo);
 
 		uint32_t m_dwUserMasterId;
 		char m_sDecryptBuf[MAX_SIGNATURE_LEN+16];
@@ -179,6 +187,7 @@ class CUdpSock: public UdpSocket, public CBasicPacket
 		MtClientInfo *m_pMtClient;
 		SLogConfig *m_pConfig;
 		SLogAppInfo *m_pAppInfo;
+		MachineInfo* m_pstMachInfo;
 		int32_t m_iUserMasterIndex;
 		int32_t m_iMtClientIndex;
 		int32_t m_iRemoteMachineId;

@@ -68,6 +68,9 @@ const std::string g_str_unknow("unknow");
 using namespace SOCKETS_NAMESPACE;
 #endif 
 
+int IsStrEqual(const char *str1, const char *str2);
+void GetOsType(const char *pos, std::string &osType);
+
 #pragma pack(1)
 
 // 通用邮件发送共享内存数据结构
@@ -704,6 +707,67 @@ typedef struct
     uint8_t bReportCpuUseSec; // cpu 使用率多久上报一次
 }MtSystemConfigClient;
 
+// 监控系统事件，相关服务必须尽快处理跟自己相关的事件, 事件一旦超时将被回收(slog_config)
+// 事件过期事件不可太久否则会导致时间满
+#define MAX_EVENT_COUNT 200
+enum {
+    // 一键部署插件事件 - slog_mtreport_server 处理, slog_config 生成
+    EVENT_PREINSTALL_PLUGIN = 1,
+    EVENT_PREINSTALL_PLUGIN_EXPIRE_SEC = 30
+};
+
+// 事件 EVENT_PREINSTALL_PLUGIN 处理的进度标记
+enum {
+    EV_PREINSTALL_START = 1, // 开始-cgi 写入DB
+    EV_PREINSTALL_DB_RECV = 2, // slog_config 设置到机器登录的服务器共享内存
+    EV_PREINSTALL_TO_CLIENT_START = 3, // slog_mtreport_server 处理事件下发任务 
+    EV_PREINSTALL_TO_CLIENT_OK = 4, // client 上报, slog_mtreport_server 收到client任务确认包
+    EV_PREINSTALL_CLIENT_GET_DOWN_URL = 5, // client 上报, 获取到安装包下载地址
+    EV_PREINSTALL_CLIENT_GET_PACKET = 6, // client 上报, 已下载插件部署包
+    EV_PREINSTALL_CLIENT_START_PLUGIN = 7, // client 上报, 已部署并启动插件
+    EV_PREINSTALL_SERVER_RECV_PLUGIN_MSG = 8, // client 上报, slog_mtreport_server 收到插件心跳
+    EV_PREINSTALL_STATUS_MAX = 8,
+
+    EV_PREINSTALL_ERR_MIN = 20,
+    EV_PREINSTALL_ERR_GET_URL = 20, // 获取下载地址失败
+    EV_PREINSTALL_ERR_GET_URL_RET = 21, // 获取下载地址返回错误码
+    EV_PREINSTALL_ERR_GET_URL_PARSE_RET = 22, // 解析回包错误
+    EV_PREINSTALL_ERR_DOWNLOAD_PACK = 23, // 下载部署包失败
+    EV_PREINSTALL_ERR_UNPACK = 24, // 解压部署包失败
+    EV_PREINSTALL_ERR_MKDIR = 25, // 创建部署目录失败，请检查agent 是否有权限
+    EV_PREINSTALL_ERR_START_PLUGIN = 26, // 启动插件失败，可能是不兼容导致
+    EV_PREINSTALL_ERR_MAX = 26,
+};
+
+typedef struct _TEventPreInstallPlugin {
+    int32_t iPluginId;
+    int32_t iMachineId;
+    int32_t iDbId;
+    void Show() {
+        SHOW_FIELD_VALUE_INT(iPluginId);
+        SHOW_FIELD_VALUE_INT(iMachineId);
+        SHOW_FIELD_VALUE_INT(iDbId);
+    }
+}TEventPreInstallPlugin;
+
+typedef struct _TEventInfo
+{
+    int iEventType; // 为 0 表示无事件
+    uint32_t dwExpireTime; // 事件过期时间，过期后即可回收
+    union {
+        TEventPreInstallPlugin stPreInstall;
+        char sEvBuf[256];
+    }ev;
+    void Show() {
+        SHOW_FIELD_VALUE_INT(iEventType);
+        SHOW_FIELD_VALUE_UINT_TIME(dwExpireTime);
+        if(iEventType == EVENT_PREINSTALL_PLUGIN)
+            ev.stPreInstall.Show();
+    }
+    ~_TEventInfo() {
+        iEventType = 0;
+    }
+}TEventInfo;
 
 #define SYSTEM_FLAG_DAEMON 1 // 演示版标记
 
@@ -795,10 +859,16 @@ typedef struct
 	int32_t iReserved3;
 
 	uint32_t dwSystemFlag; // 系统标志位
-
 	TRealTimeInfoShm stRealInfoShm;
 
-	char sReserved[128];
+	// 监控系统事件
+	uint8_t bEventModFlag;
+	TEventInfo stEvent[MAX_EVENT_COUNT];
+
+	// 一键部署校验码
+	char sPreInstallCheckStr[16];
+
+	char sReserved[112];
 	void Show() {
 		SHOW_FIELD_VALUE_UINT(wHelloRetryTimes);
 		SHOW_FIELD_VALUE_UINT(wHelloPerTimeSec);
@@ -854,6 +924,16 @@ typedef struct
 		SHOW_FIELD_VALUE_UINT(dwMonitorRecordsId);
 		SHOW_FIELD_VALUE_INT(iLastSaveAttrToDbIdx);
 		SHOW_FIELD_VALUE_UINT(dwSystemFlag);
+
+		printf("\nevent info as followed: \n");
+		SHOW_FIELD_VALUE_UINT(bEventModFlag);
+		for(int i=0; i < MAX_EVENT_COUNT; i++) {
+			if(stEvent[i].iEventType) {
+				stEvent[i].Show();
+				printf("\n");
+			}
+		}
+		SHOW_FIELD_VALUE_CSTR(sPreInstallCheckStr);
 	}
 }MtSystemConfig;
 
@@ -1014,7 +1094,10 @@ typedef struct
 	uint32_t dwLastModTime;
 	int32_t iNameVmemIdx;
 	int32_t iDescVmemIdx;
-	char sReserved[12];
+
+	uint32_t dwLastHelloTime; // 最后一次 hello 时间, slog_mtreport_server 写入 
+    uint32_t dwAgentStartTime; // agent 启动时间
+	char sReserved[4];
 
 	char sRandKey[17]; // 数据上报加密 key 16 字节带结尾 0
 
@@ -1059,9 +1142,10 @@ typedef struct
 
 		SHOW_FIELD_VALUE_UINT_TIME(dwLastReportAttrTime);
 		SHOW_FIELD_VALUE_UINT_TIME(dwLastReportLogTime);
+		SHOW_FIELD_VALUE_UINT_TIME(dwLastHelloTime);
+		SHOW_FIELD_VALUE_UINT_TIME(dwAgentStartTime);
 		SHOW_FIELD_VALUE_INT(iPreIndex);
 		SHOW_FIELD_VALUE_INT(iNextIndex);
-		SHOW_FIELD_VALUE_BIN(16, sReserved);
 	}
 }MachineInfo;
 

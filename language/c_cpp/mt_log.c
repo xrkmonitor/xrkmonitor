@@ -37,34 +37,143 @@
 #include <arpa/inet.h>
 #include <stdio.h>
 #include <sys/time.h>
+#include <errno.h>
 
 #include "mt_report.h"
 #include "mt_log.h"
+#include "sv_cfg.h"
 #include "mt_shm.h"
 #include "mt_vmem.h"
 
 MtReport g_mtReport = {0};
-
-int MtReport_Plus_Init(const char *pPlusName, int iConfigId, const char *pszLocalLogFile, int iLocalLogType)
+char *uitodate(uint32_t dwTimeSec)
 {
-	if(!g_mtReport.cIsInit)
-		return -1;
+	static char sBuf[64];
+	struct tm stTm;
+	time_t tmnew = dwTimeSec;
+	localtime_r(&tmnew, &stTm);
+	strftime(sBuf, sizeof(sBuf), "%Y-%m-%d %H:%M:%S", &stTm);
+	return sBuf;
+}
 
-	if(g_mtReport.iPlusCount+1 >= MAX_INNER_PLUS_COUNT)
-		return -2;
+uint32_t datetoui(const char *pdate)
+{
+	struct tm t;
+	memset(&t, 0, sizeof(t));
+	if(sscanf(pdate, "%d-%d-%d %d:%d:%d",
+		&t.tm_year, &t.tm_mon, &t.tm_mday, &t.tm_hour, &t.tm_min, &t.tm_sec) != 6)
+		return 0;
 
-	g_mtReport.iPlusIndex = g_mtReport.iPlusCount;
-	g_mtReport.iPlusCount++;
+	if(t.tm_year == 0)
+		return 0;
 
-	memset(g_mtReport.stPlusInfo+g_mtReport.iPlusIndex, 0, sizeof(TInnerPlusInfo));
-	strncpy(g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].szPlusName, pPlusName,
-		sizeof(g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].szPlusName)-1);
-	g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].dwLogCfgId = iConfigId;
-	if(pszLocalLogFile != NULL && iLocalLogType != 0) {
-		g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].iLocalLogType = iLocalLogType;
-		strncpy(g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].szLocalLogFile, pszLocalLogFile,
-			sizeof(g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].szLocalLogFile)-1);
+	t.tm_year -= 1900;
+	t.tm_mon -= 1;
+	return mktime(&t);
+}
+
+int MtReport_Plus_Hello(uint32_t dwTime)
+{
+    if(g_mtReport.iPluginIndex >= 0 && g_mtReport.iPluginIndex < MAX_INNER_PLUS_COUNT) {
+        TInnerPlusInfo *plugin = g_mtReport.pMtShm->stPluginInfo + g_mtReport.iPluginIndex;
+        if(plugin->iPluginId != 0) {
+            if(plugin->bCheckRet)
+                return 1;
+            if(!dwTime)
+                plugin->dwLastHelloTime = time(NULL);
+            else
+                plugin->dwLastHelloTime = dwTime;
+            return 0;
+        }
+        return 2;
+    }
+    return 3;
+}
+
+int MtReport_Plus_Init(const char *pConfigFile, const char *pBuildVersion)
+{
+    TInnerPlusInfo stPluginInfo;
+	int iRet = 0, i = 0;
+	char szLocalLogFile[256] = {0};
+	int32_t iLocalLogType = 0;
+	char szTypeString[300] = {0};
+	int32_t iCfgId = 0;
+    int32_t iShmKey = 0;
+
+	if(g_mtReport.cIsInit)
+		return 1;
+    if(!pBuildVersion || pBuildVersion[0] == '\0') {
+        fprintf(stderr, "invalid pBuildVersion\n");
+        return ERROR_LINE;
+    }
+
+    memset(&stPluginInfo, 0, sizeof(stPluginInfo));
+	if((iRet=LoadConfig(pConfigFile,
+        "XRK_PLUGIN_NAME", CFG_STRING, stPluginInfo.szPlusName, "", sizeof(stPluginInfo.szPlusName),
+        "XRK_PLUGIN_ID", CFG_INT, &(stPluginInfo.iPluginId), 0,
+        "XRK_PLUGIN_CONFIG_FILE_VER", CFG_STRING, stPluginInfo.szVersion, "", sizeof(stPluginInfo.szVersion),
+		"XRK_PLUGIN_CONFIG_ID", CFG_INT, &iCfgId, 0,
+		"XRK_CONFIG_SHM_KEY", CFG_INT, &iShmKey, MT_REPORT_DEF_SHM_KEY,
+		"XRK_LOCAL_LOG_TYPE", CFG_STRING, szTypeString, "", sizeof(szTypeString),
+		"XRK_LOCAL_LOG_FILE", CFG_STRING, szLocalLogFile, "", sizeof(szLocalLogFile),
+		(void*)NULL)) < 0)
+	{
+		fprintf(stderr, "loadconfig from:%s failed, msg:%s !\n", pConfigFile, strerror(errno));
+		return ERROR_LINE;
 	}
+
+    if(stPluginInfo.szPlusName[0] == '\0' || stPluginInfo.iPluginId == 0 || stPluginInfo.szVersion[0] == '\0') {
+        fprintf(stderr, "invalid config\n");
+        return ERROR_LINE;
+    }
+
+	iLocalLogType = GetLogTypeByStr(szTypeString);
+	if((iRet=MtReport_Init(iCfgId, szLocalLogFile, iLocalLogType, iShmKey)) < 0 || !g_mtReport.pMtShm)
+	{
+		fprintf(stderr, "MtReport_Init failed, ret:%d\n", iRet);
+		return ERROR_LINE;
+	}
+    strncpy(stPluginInfo.szBuildVer, pBuildVersion, sizeof(stPluginInfo.szBuildVer));
+    stPluginInfo.dwPluginStartTime = time(NULL);
+    stPluginInfo.iLibVerNum = XRKMONITOR_LIB_VER_NUM;
+
+    MTREPORT_SHM *pshm = g_mtReport.pMtShm;
+
+    // 是否已存在
+    for(i=0; i < MAX_INNER_PLUS_COUNT; i++) {
+        if(pshm->stPluginInfo[i].iPluginId == stPluginInfo.iPluginId) {
+            memcpy(pshm->stPluginInfo+i, &stPluginInfo, sizeof(stPluginInfo));
+            break;
+        }
+    }
+
+    if(i >= MAX_INNER_PLUS_COUNT) {
+        if(pshm->iPluginInfoCount >= MAX_INNER_PLUS_COUNT) {
+            fprintf(stderr, "plugin count over limit:%d\n", MAX_INNER_PLUS_COUNT);
+            return ERROR_LINE;
+        }
+        // 获取 flag 如果失败，可能是有插件初始化时异常退出导致
+        for(i=0; i < 20; i++) {
+            if(VARMEM_CAS_GET(&(pshm->bAddPluginInfoFlag)))
+                break;
+            usleep(2000);
+        }
+
+        for(i=0; i < MAX_INNER_PLUS_COUNT; i++) {
+            if(pshm->stPluginInfo[i].iPluginId == 0)
+                break;
+        }
+        if(i < MAX_INNER_PLUS_COUNT) {
+            memcpy(pshm->stPluginInfo+i, &stPluginInfo, sizeof(stPluginInfo));
+            pshm->iPluginInfoCount++;
+            VARMEM_CAS_FREE(pshm->bAddPluginInfoFlag);
+        }
+        else {
+            fprintf(stderr, "need space to save plugin info\n");
+            return ERROR_LINE;
+        }
+    }
+    g_mtReport.iPluginIndex = i;
 	return 0;
 }
 
@@ -92,21 +201,14 @@ int MtReport_Init_ByKey(unsigned int iConfigId, int iConfigShmKey, int iFlag)
 	}
 
 	if(iConfigId != 0) {
-		g_mtReport.iPlusCount = 1;
-		g_mtReport.iPlusIndex = 0;
-
 		// 这里可能查找失败，agent 有可能没有同步完，写日志的时候会检查
-		g_mtReport.stPlusInfo[0].dwLogCfgId = iConfigId;
+		g_mtReport.stLogInfo.dwLogCfgId = iConfigId;
 		for(i=0; iConfigId != 0 && i < pShm->wLogConfigCount; i++) {
 			if(pShm->stLogConfig[i].dwCfgId == iConfigId) {
-				g_mtReport.stPlusInfo[0].pCurConfigInfo = pShm->stLogConfig+i;
+				g_mtReport.stLogInfo.pCurConfigInfo = pShm->stLogConfig+i;
 				break;
 			}
 		}
-	}
-	else {
-		g_mtReport.iPlusCount = 0;
-		g_mtReport.iPlusIndex = 0;
 	}
 
 	// vmem 
@@ -125,37 +227,12 @@ int MtReport_Init_ByKey(unsigned int iConfigId, int iConfigShmKey, int iFlag)
 	return iRet;
 }
 
-int MtReport_Init_Local(const char *pLocalLogFile, int iLocalLogType)
-{
-	if(g_mtReport.cIsInit)
-		return 0;
-
-	if(g_mtReport.iPlusCount != 0 || g_mtReport.iPlusIndex != 0)
-		return -1;
-
-	if(pLocalLogFile != NULL && iLocalLogType != 0)
-	{
-		strncpy(g_mtReport.stPlusInfo[0].szLocalLogFile, pLocalLogFile, sizeof(g_mtReport.stPlusInfo[0].szLocalLogFile));
-		g_mtReport.stPlusInfo[0].iLocalLogType = iLocalLogType;
-	}
-	else
-	{
-		g_mtReport.stPlusInfo[0].szLocalLogFile[0] = '\0';
-		g_mtReport.stPlusInfo[0].iLocalLogType = 0;
-	}
-	g_mtReport.cIsInit = 1;
-	return 0;
-}
-
-// 外置监控插件或者用户程序调用
+// 第三方程序埋点时初始化库
 int MtReport_Init(int iConfigId, const char *pLocalLogFile, int iLocalLogType, int iConfigShmKey)
 {
 	int iRet = 0;
 	if(g_mtReport.cIsInit)
 		return 0;
-
-	if(g_mtReport.iPlusCount != 0 || g_mtReport.iPlusIndex != 0)
-		return -1;
 
 	if(iConfigShmKey == 0)
 		iRet = MtReport_Init_ByKey(iConfigId, MT_REPORT_DEF_SHM_KEY, 0666);
@@ -164,83 +241,83 @@ int MtReport_Init(int iConfigId, const char *pLocalLogFile, int iLocalLogType, i
 
 	if(pLocalLogFile != NULL && iLocalLogType != 0)
 	{
-		strncpy(g_mtReport.stPlusInfo[0].szLocalLogFile, pLocalLogFile, sizeof(g_mtReport.stPlusInfo[0].szLocalLogFile));
-		g_mtReport.stPlusInfo[0].iLocalLogType = iLocalLogType;
+		strncpy(g_mtReport.stLogInfo.szLocalLogFile, pLocalLogFile, sizeof(g_mtReport.stLogInfo.szLocalLogFile));
+		g_mtReport.stLogInfo.iLocalLogType = iLocalLogType;
 	}
 	else
 	{
-		g_mtReport.stPlusInfo[0].szLocalLogFile[0] = '\0';
-		g_mtReport.stPlusInfo[0].iLocalLogType = 0;
+		g_mtReport.stLogInfo.szLocalLogFile[0] = '\0';
+		g_mtReport.stLogInfo.iLocalLogType = 0;
 	}
 	return iRet;
 }
 
 inline void MtReport_Log_SetCust1(uint32_t dwCust)
 {
-	g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].stCust.dwCust_1 = dwCust;
-	SET_BIT(g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].stCust.bCustFlag, MTLOG_CUST_FLAG_C1_SET);
+	g_mtReport.stLogInfo.stCust.dwCust_1 = dwCust;
+	SET_BIT(g_mtReport.stLogInfo.stCust.bCustFlag, MTLOG_CUST_FLAG_C1_SET);
 }
 
 inline void MtReport_Log_ClearCust1()
 {
-	CLEAR_BIT(g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].stCust.bCustFlag, MTLOG_CUST_FLAG_C1_SET);
+	CLEAR_BIT(g_mtReport.stLogInfo.stCust.bCustFlag, MTLOG_CUST_FLAG_C1_SET);
 }
 
 inline void MtReport_Log_SetCust2(uint32_t dwCust)
 {
-	g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].stCust.dwCust_2 = dwCust;
-	SET_BIT(g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].stCust.bCustFlag, MTLOG_CUST_FLAG_C2_SET);
+	g_mtReport.stLogInfo.stCust.dwCust_2 = dwCust;
+	SET_BIT(g_mtReport.stLogInfo.stCust.bCustFlag, MTLOG_CUST_FLAG_C2_SET);
 }
 
 inline void MtReport_Log_ClearCust2()
 {
-	CLEAR_BIT(g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].stCust.bCustFlag, MTLOG_CUST_FLAG_C2_SET);
+	CLEAR_BIT(g_mtReport.stLogInfo.stCust.bCustFlag, MTLOG_CUST_FLAG_C2_SET);
 }
 
 inline void MtReport_Log_SetCust3(int32_t iCust)
 {
-	g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].stCust.iCust_3 = iCust;
-	SET_BIT(g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].stCust.bCustFlag, MTLOG_CUST_FLAG_C3_SET);
+	g_mtReport.stLogInfo.stCust.iCust_3 = iCust;
+	SET_BIT(g_mtReport.stLogInfo.stCust.bCustFlag, MTLOG_CUST_FLAG_C3_SET);
 }
 
 inline void MtReport_Log_ClearCust3()
 {
-	CLEAR_BIT(g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].stCust.bCustFlag, MTLOG_CUST_FLAG_C3_SET);
+	CLEAR_BIT(g_mtReport.stLogInfo.stCust.bCustFlag, MTLOG_CUST_FLAG_C3_SET);
 }
 
 inline void MtReport_Log_SetCust4(int32_t iCust)
 {
-	g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].stCust.iCust_4 = iCust;
-	SET_BIT(g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].stCust.bCustFlag, MTLOG_CUST_FLAG_C4_SET);
+	g_mtReport.stLogInfo.stCust.iCust_4 = iCust;
+	SET_BIT(g_mtReport.stLogInfo.stCust.bCustFlag, MTLOG_CUST_FLAG_C4_SET);
 }
 
 inline void MtReport_Log_ClearCust4()
 {
-	CLEAR_BIT(g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].stCust.bCustFlag, MTLOG_CUST_FLAG_C4_SET);
+	CLEAR_BIT(g_mtReport.stLogInfo.stCust.bCustFlag, MTLOG_CUST_FLAG_C4_SET);
 }
 
 inline void MtReport_Log_SetCust5(const char *pstrCust)
 {
-	strncpy(g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].stCust.szCust_5, 
-		pstrCust, MYSIZEOF(g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].stCust.szCust_5)-1);
-	SET_BIT(g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].stCust.bCustFlag, MTLOG_CUST_FLAG_C5_SET);
+	strncpy(g_mtReport.stLogInfo.stCust.szCust_5, 
+		pstrCust, MYSIZEOF(g_mtReport.stLogInfo.stCust.szCust_5)-1);
+	SET_BIT(g_mtReport.stLogInfo.stCust.bCustFlag, MTLOG_CUST_FLAG_C5_SET);
 }
 
 inline void MtReport_Log_ClearCust5()
 {
-	CLEAR_BIT(g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].stCust.bCustFlag, MTLOG_CUST_FLAG_C5_SET);
+	CLEAR_BIT(g_mtReport.stLogInfo.stCust.bCustFlag, MTLOG_CUST_FLAG_C5_SET);
 }
 
 inline void MtReport_Log_SetCust6(const char *pstrCust)
 {
-	strncpy(g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].stCust.szCust_6, 
-		pstrCust, MYSIZEOF(g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].stCust.szCust_6)-1);
-	SET_BIT(g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].stCust.bCustFlag, MTLOG_CUST_FLAG_C6_SET);
+	strncpy(g_mtReport.stLogInfo.stCust.szCust_6, 
+		pstrCust, MYSIZEOF(g_mtReport.stLogInfo.stCust.szCust_6)-1);
+	SET_BIT(g_mtReport.stLogInfo.stCust.bCustFlag, MTLOG_CUST_FLAG_C6_SET);
 }
 
 inline void MtReport_Log_ClearCust6()
 {
-	CLEAR_BIT(g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].stCust.bCustFlag, MTLOG_CUST_FLAG_C6_SET);
+	CLEAR_BIT(g_mtReport.stLogInfo.stCust.bCustFlag, MTLOG_CUST_FLAG_C6_SET);
 }
 
 // 返回码说明
@@ -289,7 +366,7 @@ static int MtReport_Log_To_Spec(int iLogType, const char *pszFmt, va_list ap)
 	g_mtReport.pMtShm->sLogListSpec[iIndex].dwLogSeq = 0;
 
 	g_mtReport.pMtShm->sLogListSpec[iIndex].wLogType = iLogType;
-	g_mtReport.pMtShm->sLogListSpec[iIndex].dwLogConfigId = g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].dwLogCfgId;
+	g_mtReport.pMtShm->sLogListSpec[iIndex].dwLogConfigId = g_mtReport.stLogInfo.dwLogCfgId;
 
 	if(g_mtReport.pMtShm->dwFirstLogWriteTime == 0)
 		g_mtReport.pMtShm->dwFirstLogWriteTime = stNow.tv_sec;
@@ -329,38 +406,38 @@ static int MtReport_Save_LogCust()
 {
 	char sCustBuf[256] = {0};
 	int iCustUseLen = 0;
-	sCustBuf[iCustUseLen] = (char)g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].stCust.bCustFlag;
+	sCustBuf[iCustUseLen] = (char)g_mtReport.stLogInfo.stCust.bCustFlag;
 	iCustUseLen++;
-	if(IS_SET_BIT(g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].stCust.bCustFlag, MTLOG_CUST_FLAG_C1_SET)) {
-		*(uint32_t*)(sCustBuf+iCustUseLen) = htonl(g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].stCust.dwCust_1);
+	if(IS_SET_BIT(g_mtReport.stLogInfo.stCust.bCustFlag, MTLOG_CUST_FLAG_C1_SET)) {
+		*(uint32_t*)(sCustBuf+iCustUseLen) = htonl(g_mtReport.stLogInfo.stCust.dwCust_1);
 		iCustUseLen+=MYSIZEOF(uint32_t);
 	}
 
-	if(IS_SET_BIT(g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].stCust.bCustFlag, MTLOG_CUST_FLAG_C2_SET)) {
-		*(uint32_t*)(sCustBuf+iCustUseLen) = htonl(g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].stCust.dwCust_2);
+	if(IS_SET_BIT(g_mtReport.stLogInfo.stCust.bCustFlag, MTLOG_CUST_FLAG_C2_SET)) {
+		*(uint32_t*)(sCustBuf+iCustUseLen) = htonl(g_mtReport.stLogInfo.stCust.dwCust_2);
 		iCustUseLen+=MYSIZEOF(uint32_t);
 	}
 
-	if(IS_SET_BIT(g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].stCust.bCustFlag, MTLOG_CUST_FLAG_C3_SET)) {
-		*(uint32_t*)(sCustBuf+iCustUseLen) = htonl(g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].stCust.iCust_3);
+	if(IS_SET_BIT(g_mtReport.stLogInfo.stCust.bCustFlag, MTLOG_CUST_FLAG_C3_SET)) {
+		*(uint32_t*)(sCustBuf+iCustUseLen) = htonl(g_mtReport.stLogInfo.stCust.iCust_3);
 		iCustUseLen+=MYSIZEOF(uint32_t);
 	}
 
-	if(IS_SET_BIT(g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].stCust.bCustFlag, MTLOG_CUST_FLAG_C4_SET)) {
-		*(uint32_t*)(sCustBuf+iCustUseLen) = htonl(g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].stCust.iCust_4);
+	if(IS_SET_BIT(g_mtReport.stLogInfo.stCust.bCustFlag, MTLOG_CUST_FLAG_C4_SET)) {
+		*(uint32_t*)(sCustBuf+iCustUseLen) = htonl(g_mtReport.stLogInfo.stCust.iCust_4);
 		iCustUseLen+=MYSIZEOF(uint32_t);
 	}
 
-	if(IS_SET_BIT(g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].stCust.bCustFlag, MTLOG_CUST_FLAG_C5_SET)) {
-		strncpy(sCustBuf+iCustUseLen, g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].stCust.szCust_5,
-			MYSIZEOF(g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].stCust.szCust_5)-1);
-		iCustUseLen += MYSIZEOF(g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].stCust.szCust_5);
+	if(IS_SET_BIT(g_mtReport.stLogInfo.stCust.bCustFlag, MTLOG_CUST_FLAG_C5_SET)) {
+		strncpy(sCustBuf+iCustUseLen, g_mtReport.stLogInfo.stCust.szCust_5,
+			MYSIZEOF(g_mtReport.stLogInfo.stCust.szCust_5)-1);
+		iCustUseLen += strlen(sCustBuf+iCustUseLen)+1;
 	}
 
-	if(IS_SET_BIT(g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].stCust.bCustFlag, MTLOG_CUST_FLAG_C6_SET)) {
-		strncpy(sCustBuf+iCustUseLen, g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].stCust.szCust_6,
-			MYSIZEOF(g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].stCust.szCust_6)-1);
-		iCustUseLen += MYSIZEOF(g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].stCust.szCust_6);
+	if(IS_SET_BIT(g_mtReport.stLogInfo.stCust.bCustFlag, MTLOG_CUST_FLAG_C6_SET)) {
+		strncpy(sCustBuf+iCustUseLen, g_mtReport.stLogInfo.stCust.szCust_6,
+			MYSIZEOF(g_mtReport.stLogInfo.stCust.szCust_6)-1);
+		iCustUseLen += strlen(sCustBuf+iCustUseLen)+1;
 	}
 
 	int iRet = MtReport_SaveToVmem(sCustBuf, iCustUseLen);
@@ -411,21 +488,21 @@ static void MtReport_Log_To_Local(int iLogType, const char *pszFmt, va_list ap)
 	localtime_r(&stNow.tv_sec, &stTm);
 	strftime(sBuf, MYSIZEOF(sBuf), "%Y-%m-%d %H:%M:%S", &stTm);
 
-	if(!strcmp(g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].szLocalLogFile, "stdout")) {
+	if(!strcmp(g_mtReport.stLogInfo.szLocalLogFile, "stdout")) {
 		printf("%s.%06u - %s - ", sBuf, (uint32_t)stNow.tv_usec, sTypeStr);
 		vprintf(pszFmt, ap);
 		printf("\n");
 		return;
 	}
 
-	fp = fopen(g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].szLocalLogFile, "a+");
+	fp = fopen(g_mtReport.stLogInfo.szLocalLogFile, "a+");
 	if(fp != NULL)
 	{
 		fseek(fp, 0, SEEK_END);
 		int iCurSize = ftell(fp);
 		if(iCurSize >= 1024*1024*50) {
 			fclose(fp);
-			fp = fopen(g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].szLocalLogFile, "w+");
+			fp = fopen(g_mtReport.stLogInfo.szLocalLogFile, "w+");
 		}
 		if(fp != NULL) {
 			fprintf(fp, "%s.%06u - %s - ", sBuf, (uint32_t)stNow.tv_usec, sTypeStr);
@@ -439,7 +516,7 @@ static void MtReport_Log_To_Local(int iLogType, const char *pszFmt, va_list ap)
 		fp = fopen("/tmp/mtreport_write_error.log", "w+");
 		if(fp) {
 			fprintf(fp, "%s.%06u - open file:%s failed, for log - %s - \n\t",
-				sBuf, (uint32_t)stNow.tv_usec, g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].szLocalLogFile, sTypeStr);
+				sBuf, (uint32_t)stNow.tv_usec, g_mtReport.stLogInfo.szLocalLogFile, sTypeStr);
 			vfprintf(fp, pszFmt, ap); 
 			fprintf(fp, "\n");
 			fclose(fp);
@@ -450,23 +527,23 @@ static void MtReport_Log_To_Local(int iLogType, const char *pszFmt, va_list ap)
 void MtReport_Check_Test(FunCheckTestCallBack isTest, const void *pdata)
 {
 	int i = 0;
-	if(g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].pCurConfigInfo == NULL) 
+	if(g_mtReport.stLogInfo.pCurConfigInfo == NULL) 
 		return;
-	for(; i < g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].pCurConfigInfo->wTestKeyCount; i++)
+	for(; i < g_mtReport.stLogInfo.pCurConfigInfo->wTestKeyCount; i++)
 	{
-		if(isTest(g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].pCurConfigInfo->stTestKeys[i].bKeyType,
-			g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].pCurConfigInfo->stTestKeys[i].szKeyValue, pdata))
+		if(isTest(g_mtReport.stLogInfo.pCurConfigInfo->stTestKeys[i].bKeyType,
+			g_mtReport.stLogInfo.pCurConfigInfo->stTestKeys[i].szKeyValue, pdata))
 		{
-			g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].cIsTest = 1;
+			g_mtReport.stLogInfo.cIsTest = 1;
 			return;
 		}
 	}
-	g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].cIsTest = 0;
+	g_mtReport.stLogInfo.cIsTest = 0;
 }
 
 void MtReport_Clear_Test()
 {
-	g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].cIsTest = 0;
+	g_mtReport.stLogInfo.cIsTest = 0;
 }
 
 // 返回码说明
@@ -484,8 +561,8 @@ int MtReport_Log(int iLogType, const char *pszFmt, ...)
 	if(!g_mtReport.cIsInit)
 		return -1;
 
-	if('\0' != g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].szLocalLogFile[0] 
-		&& (iLogType & g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].iLocalLogType))
+	if('\0' != g_mtReport.stLogInfo.szLocalLogFile[0] 
+		&& (iLogType & g_mtReport.stLogInfo.iLocalLogType))
 	{
 		va_start(ap, pszFmt);
 		MtReport_Log_To_Local(iLogType, pszFmt, ap);
@@ -493,23 +570,23 @@ int MtReport_Log(int iLogType, const char *pszFmt, ...)
 	}
 
 	// config id 为0， 不上报日志
-	if(g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].dwLogCfgId == 0 || g_mtReport.pMtShm == NULL)
+	if(g_mtReport.stLogInfo.dwLogCfgId == 0 || g_mtReport.pMtShm == NULL)
 		return 0;
 
-	if(g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].pCurConfigInfo == NULL) {
+	if(g_mtReport.stLogInfo.pCurConfigInfo == NULL) {
 		if(g_mtReport.pMtShm != NULL)
 		{
 			for(i=0; i < g_mtReport.pMtShm->wLogConfigCount; i++) {
 				if(g_mtReport.pMtShm->stLogConfig[i].dwCfgId 
-					== g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].dwLogCfgId) 
+					== g_mtReport.stLogInfo.dwLogCfgId) 
 				{
-					g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].pCurConfigInfo = g_mtReport.pMtShm->stLogConfig+i;
+					g_mtReport.stLogInfo.pCurConfigInfo = g_mtReport.pMtShm->stLogConfig+i;
 					break;
 				}
 			}
 		}
 
-		if(g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].pCurConfigInfo == NULL) {
+		if(g_mtReport.stLogInfo.pCurConfigInfo == NULL) {
 			if(g_mtReport.pMtShm != NULL)
 			{
 				va_start(ap, pszFmt);
@@ -520,10 +597,10 @@ int MtReport_Log(int iLogType, const char *pszFmt, ...)
 		}
 	}
 
-	SLogConfig *pCurConfigInfo = g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].pCurConfigInfo;
+	SLogConfig *pCurConfigInfo = g_mtReport.stLogInfo.pCurConfigInfo;
 
 	// 染色标志如果设置了，则不检查日志类型
-	if(!g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].cIsTest && !(pCurConfigInfo->iLogType & iLogType))
+	if(!g_mtReport.stLogInfo.cIsTest && !(pCurConfigInfo->iLogType & iLogType))
 	{
 		g_mtReport.pMtShm->dwLogTypeLimited++;
 		return -2;
@@ -531,6 +608,13 @@ int MtReport_Log(int iLogType, const char *pszFmt, ...)
 
 	struct timeval stNow;
 	gettimeofday(&stNow, 0);
+
+	if(g_mtReport.iPluginIndex >= 0 && g_mtReport.iPluginIndex < MAX_INNER_PLUS_COUNT) {
+        TInnerPlusInfo *plugin = g_mtReport.pMtShm->stPluginInfo + g_mtReport.iPluginIndex;
+        if(plugin->iPluginId != 0) {
+            plugin->dwLastReportLogTime = stNow.tv_sec;
+        }
+    }
 
 	// 日志频率限制
 	if(pCurConfigInfo->dwSpeedFreq != 0) 
@@ -615,7 +699,7 @@ int MtReport_Log(int iLogType, const char *pszFmt, ...)
 	pShmLog->sLogList[iIndex].wLogType = iLogType;
 	pShmLog->sLogList[iIndex].dwLogConfigId = pCurConfigInfo->dwCfgId;
 
-	if(g_mtReport.stPlusInfo[g_mtReport.iPlusIndex].stCust.bCustFlag != 0) 
+	if(g_mtReport.stLogInfo.stCust.bCustFlag != 0) 
 		pShmLog->sLogList[iIndex].iCustVmemIndex = MtReport_Save_LogCust(); 
 	else 
 		pShmLog->sLogList[iIndex].iCustVmemIndex = 0;

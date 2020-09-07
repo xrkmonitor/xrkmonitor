@@ -58,6 +58,33 @@ extern "C" {
 	int MtReport_Init_ByKey(unsigned int iConfigId, int iConfigShmKey, int iFlag);
 }
 
+int IsStrEqual(const char *str1, const char *str2)
+{           
+	if(!str1 && !str2) 
+		return 1;
+	if(!str1 || !str2)
+		return 0;
+	return !strcmp(str1, str2);
+}
+
+void GetOsType(const char *pos, std::string &osType)
+{
+	static const char *pLinuxOs[] = { "CentOS","Slackware","Mint","Mageia","Arch",
+		"PCLinuxOS","FreeBSD","Red,Hat","Aliyun","Fedora","Debian","openSUSE","Ubuntu", NULL };
+
+	osType = "unknow";
+	if(IsStrEqual(pos, "Windows"))
+		osType = "Windows";
+	else {
+		for(int i=0; pLinuxOs[i]; i++) {
+			if(IsStrEqual(pos, pLinuxOs[i])) {
+				osType = "Linux";
+				break;
+			}    
+		}    
+	}    
+}
+
 // class CLogTimeCur 
 // ------------------------------------------------------------------------------------------------------
 CLogTimeCur::CLogTimeCur()

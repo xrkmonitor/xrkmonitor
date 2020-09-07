@@ -58,6 +58,8 @@ int Init(const char *pFile = NULL)
 		"CHECK_EACH_APP_LOG_SIZE_TIME_SEC", CFG_INT, &stConfig.iCheckEachAppLogSpaceTime, 20,
 		"CHECK_LOG_SPACE_TIME_SEC", CFG_INT, &stConfig.iCheckLogSpaceTime, 10,
 		"LOCAL_MACHINE_ID", CFG_INT, &stConfig.iLocalMachineId, 0, 
+		"QUICK_TO_SLOW_IP", CFG_STRING, stConfig.szQuickToSlowIp, "127.0.0.1", sizeof(stConfig.szQuickToSlowIp),
+		"QUICK_TO_SLOW_PORT", CFG_INT, &stConfig.iQuickToSlowPort, 38081,
 		(void*)NULL)) < 0)
 	{   
 		ERR_LOG("LoadConfig:%s failed ! ret:%d", pConfFile, iRet);

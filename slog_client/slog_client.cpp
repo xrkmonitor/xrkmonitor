@@ -39,58 +39,6 @@
 #define CONFIG_FILE "./slog_client.conf"
 #define MAX_LOG_COUNT_PER_SEND 1000
 
-class TLogClientInfo
-{
-	public:
-		TLogClientInfo() {
-			pAppInfo = NULL;
-			pstLogClient = NULL;
-		}
-
-		TLogClientInfo & operator=(const TLogClientInfo &clt)
-		{
-			pAppInfo = clt.pAppInfo;
-			pstLogClient = clt.pstLogClient;
-			return *this;
-		}
-
-		AppInfo * pAppInfo;
-		CSLogClient *pstLogClient;
-};
-
-typedef std::map<int, TLogClientInfo> TMapLogClientInfo;
-typedef std::map<int, TLogClientInfo>::iterator TMapLogClientInfoIt;
-typedef std::map<uint32_t, uint32_t> TMapHeartToServerInfo;
-typedef std::map<uint32_t, uint32_t>::iterator TMapHeartToServerInfoIt;
-
-typedef struct _CONFIG
-{
-	char szLocalIp[20];
-
-	int iLocalMachineId;
-	MachineInfo *pLocalMachineInfo;
-
-	TMapHeartToServerInfo stMapHeartInfo;
-
-	uint32_t dwSendLogCount;
-	uint32_t dwCurrentTime;
-	TMapLogClientInfo mapLogClient;
-	SLogAppInfo *pAppShmInfoList;
-	AppInfo * pSelfApp;
-	int32_t iSendHeartTimeSec;
-	int32_t iCheckLogClientTimeSec;
-	_CONFIG() {
-		memset(szLocalIp, 0, sizeof(szLocalIp));
-
-		dwSendLogCount = 0;
-		dwCurrentTime = 0;
-		pAppShmInfoList = NULL;
-		pSelfApp = NULL;
-		iSendHeartTimeSec = 0;
-		iCheckLogClientTimeSec = 0;
-	}
-}CONFIG;
-
 CONFIG stConfig;
 CSupperLog slog;
 
@@ -108,6 +56,8 @@ int Init(const char *pFile = NULL)
 		"LOCAL_HEARTBEAT_TIME_SEC", CFG_INT, &stConfig.iSendHeartTimeSec, 5,
 		"LOCAL_MACHINE_ID", CFG_INT, &stConfig.iLocalMachineId, 0,
 		"LOCAL_CHECK_LOG_CLIENT_TIME_SEC", CFG_INT, &stConfig.iCheckLogClientTimeSec, 10,
+        "QUICK_TO_SLOW_IP", CFG_STRING, stConfig.szQuickToSlowIp, "127.0.0.1", sizeof(stConfig.szQuickToSlowIp),
+        "QUICK_TO_SLOW_PORT", CFG_INT, &stConfig.iQuickToSlowPort, 38081,
 		(void*)NULL)) < 0)
 	{   
 		ERR_LOG("LoadConfig:%s failed ! ret:%d", pConfFile, iRet);
@@ -547,6 +497,8 @@ int main(int argc, char *argv[])
 					pLocalMachineInfo->ip1, pLocalMachineInfo->ip2, pLocalMachineInfo->ip3,
 					pLocalMachineInfo->ip4, ipv4_addr_str(it->second.pAppInfo->dwAppSrvMaster),
 					it->second.pAppInfo->dwAppSrvMaster, it->first);
+				pLocalMachineInfo->dwLastReportLogTime = slog.m_stNow.tv_sec;
+				stSock.ReportQuickToSlowMsg(pLocalMachineInfo->id);
 				//SendHeart(stSock, it->second, it->second.pAppInfo->dwAppSrvMaster);
 				continue;
 			}

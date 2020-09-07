@@ -103,7 +103,7 @@ static int AddSearchInfo(char *psql, int ibufLen, SearchInfo *pinfo)
 	int iFilter = 0;
 	if(pinfo->id != 0)
 	{
-		sprintf(sTmpBuf, " and id=%d", pinfo->id);
+		sprintf(sTmpBuf, " and xrk_id=%d", pinfo->id);
 		strcat(psql, sTmpBuf);
 		hdf_set_int_value(stConfig.cgi->hdf, "config.dm_machine_id", pinfo->id);
 		iFilter++;
@@ -168,16 +168,7 @@ static int GetMachineTotalRecords(SearchInfo *pinfo=NULL)
 		return (int)stConfig.stUser.pSysInfo->wMachineCount;
 	}
 	
-	DEBUG_LOG("get machine count - exesql:%s", sSqlBuf);
-	if(qu.get_result(sSqlBuf) == NULL || qu.num_rows() <= 0)
-	{
-		qu.free_result();
-		return 0;
-	}
-
-	qu.fetch_row();
-	int iCount = qu.getval(0);
-	qu.free_result();
+	int iCount = qu.get_count(sSqlBuf);
 	DEBUG_LOG("machine records count:%d", iCount);
 	return iCount;
 }
@@ -220,9 +211,253 @@ static void DeleteMachineFromShm(int id)
 	DEBUG_LOG("delete machine:%d from shm, remain count:%d", id, stConfig.stUser.pSysInfo->wMachineCount);
 }
 
+static int DealMachineAddPlugin()
+{
+	int id = hdf_get_int_value(stConfig.cgi->hdf, "Query.id", 0);
+	if(id==0)
+	{
+		REQERR_LOG("invalid parameter from:%s", stConfig.remote);
+		hdf_set_value(stConfig.cgi->hdf, "err.msg", CGI_REQERR);
+		return SLOG_ERROR_LINE;
+	}
+
+    MachineInfo *pMachinfo = slog.GetMachineInfo(id, NULL);
+    if(!pMachinfo) {
+        REQERR_LOG("not find machine : %d", id);
+		hdf_set_value(stConfig.cgi->hdf, "err.msg", CGI_REQERR);
+        return SLOG_ERROR_LINE;
+    }
+    std::string ips;
+    if(pMachinfo->ip1 != 0) {
+        ips += ipv4_addr_str(pMachinfo->ip1);
+        ips += " | ";
+    }
+    if(pMachinfo->ip2 != 0) {
+        ips += ipv4_addr_str(pMachinfo->ip2);
+        ips += " | ";
+    }
+    if(pMachinfo->ip3 != 0) {
+        ips += ipv4_addr_str(pMachinfo->ip3);
+        ips += " | ";
+    }
+    if(pMachinfo->ip4 != 0) {
+        ips += ipv4_addr_str(pMachinfo->ip4);
+        ips += " | ";
+    }
+    if(ips.length() > 3)
+        ips.erase(ips.length()-3, 3);
+    hdf_set_int_value(stConfig.cgi->hdf, "config.machine_id", id);
+    hdf_set_value(stConfig.cgi->hdf, "config.machine_ip", ips.c_str());
+    const char *pname = MtReport_GetFromVmem_Local(pMachinfo->iNameVmemIdx);
+    hdf_set_value(stConfig.cgi->hdf, "config.machine_name", pname ? pname : "unknow");
+
+    int iCurAgentRunTime = 0;
+    if(pMachinfo->dwLastHelloTime+300 >= stConfig.dwCurTime && stConfig.dwCurTime > pMachinfo->dwLastHelloTime)  {
+        hdf_set_int_value(stConfig.cgi->hdf, "config.run_time", stConfig.dwCurTime-pMachinfo->dwAgentStartTime);
+        iCurAgentRunTime = stConfig.dwCurTime-pMachinfo->dwAgentStartTime;
+    }
+    else
+        hdf_set_int_value(stConfig.cgi->hdf, "config.run_time", 0);
+
+    std::ostringstream ss;
+    ss << "select agent_os,os_arc,libc_ver,libcpp_ver from mt_machine where xrk_id=" << id;
+	Query & qu = *stConfig.qu;
+    if(qu.get_result(ss.str().c_str()) && qu.num_rows() > 0) {
+        qu.fetch_row();
+        hdf_set_value(stConfig.cgi->hdf, "config.run_os", qu.getstr("agent_os"));
+        hdf_set_value(stConfig.cgi->hdf, "config.os_arc", qu.getstr("os_arc"));
+        hdf_set_value(stConfig.cgi->hdf, "config.libc_ver", qu.getstr("libc_ver"));
+        hdf_set_value(stConfig.cgi->hdf, "config.libcpp_ver", qu.getstr("libcpp_ver"));
+    }
+    qu.free_result();
+
+    std::map<int, int> stAlreadyInstall;
+    ss.str("");
+    ss << "select xrk_id,open_plugin_id from mt_plugin_machine where install_proc=0 and machine_id=" 
+        << pMachinfo->id << " and xrk_status=0";
+    if(qu.get_result(ss.str().c_str()) && qu.num_rows() > 0) {
+	    for(int i=0; i < qu.num_rows() && qu.fetch_row() != NULL; i++) {
+            stAlreadyInstall.insert(std::pair<int, int>(qu.getval("open_plugin_id"), qu.getval("xrk_id")));
+        }
+    }
+    qu.free_result();
+
+    Json js;
+    const char *ptmp = NULL;
+    const char *pm_os = hdf_get_value(stConfig.cgi->hdf, "config.run_os", NULL);
+    int iPluginCount = 0;
+
+	ss.str("");
+	ss << " select * from mt_plugin where xrk_status=0";
+	if(!qu.get_result(ss.str().c_str()) || qu.num_rows() <= 0) {
+		WARN_LOG("get no plugin !");
+	}
+	else {
+		const char *pinfo = NULL;
+		size_t iParseIdx = 0;
+		size_t iReadLen = 0;
+	
+		while(qu.fetch_row()) {
+			Json plugin;
+			pinfo = qu.getstr("pb_info");
+			iParseIdx = 0;
+			iReadLen = strlen(pinfo);
+			plugin.Parse(pinfo, iParseIdx);
+			if(iParseIdx != iReadLen) {
+				WARN_LOG("parse json content, size:%u!=%u", (uint32_t)iParseIdx, (uint32_t)iReadLen);
+				continue;
+			}
+
+			Json jp;
+            if(stAlreadyInstall.find((int)(plugin["plugin_id"])) != stAlreadyInstall.end())
+                jp["installed"] = 1;
+            else {
+                // agent 未部署或未运行，不能一键部署插件
+                if(iCurAgentRunTime <= 0)
+                    continue;
+
+                // 插件是否支持一键部署
+                ptmp = plugin["install_tp_file"];
+                if(ptmp[0] == '\0' || !strcmp(ptmp, "no"))
+                    continue;
+
+                // 运行平台是否适合部署
+                std::string strBigOsType;
+                GetOsType(pm_os, strBigOsType);
+                ptmp = plugin["run_os"];
+                if(!IsStrEqual(pm_os, ptmp) && !IsStrEqual(ptmp, strBigOsType.c_str())) {
+                    DEBUG_LOG("os not macth, mach:%s(%s), plugin:%s", pm_os, strBigOsType.c_str(), ptmp);
+                    continue;
+                }
+                jp["installed"] = 0;
+            }
+
+            jp["id"] = (int)(plugin["plugin_id"]);
+            jp["name"] = (const char*)(plugin["plus_name"]);
+            jp["show_name"] = (const char*)(plugin["show_name"]);
+            jp["language"] = (const char*)(plugin["dev_language"]);
+            jp["auth"] = (const char*)(plugin["plugin_auth"]);
+            jp["last_version"] = (const char*)(plugin["plus_version"]);
+			jp["run_os"] = (const char*)(plugin["run_os"]);
+
+            ss.str("");
+            ss << "http://" << stConfig.szXrkmonitorSiteAddr << "/plugin/" << (const char*)(jp["name"]) << ".html";
+            jp["desc_url"] = ss.str();
+            js["plugins"].Add(jp);
+            iPluginCount++;
+        }
+    }
+    js["count"] = iPluginCount;
+
+    std::string str(js.ToString());
+    hdf_set_value(stConfig.cgi->hdf, "config.machine_plugins", str.c_str());
+	DEBUG_LOG("machine:%d, add plugin", id);
+    return 0;
+}
+
+static int DealShowMachineStatus()
+{
+	int id = hdf_get_int_value(stConfig.cgi->hdf, "Query.id", 0);
+	if(id==0)
+	{
+		REQERR_LOG("invalid parameter from:%s", stConfig.remote);
+		hdf_set_value(stConfig.cgi->hdf, "err.msg", CGI_REQERR);
+		return SLOG_ERROR_LINE;
+	}
+
+    MachineInfo *pMachinfo = slog.GetMachineInfo(id, NULL);
+    if(!pMachinfo) {
+        REQERR_LOG("not find machine : %d", id);
+		hdf_set_value(stConfig.cgi->hdf, "err.msg", CGI_REQERR);
+        return SLOG_ERROR_LINE;
+    }
+    std::string ips;
+    if(pMachinfo->ip1 != 0) {
+        ips += ipv4_addr_str(pMachinfo->ip1);
+        ips += " | ";
+    }
+    if(pMachinfo->ip2 != 0) {
+        ips += ipv4_addr_str(pMachinfo->ip2);
+        ips += " | ";
+    }
+    if(pMachinfo->ip3 != 0) {
+        ips += ipv4_addr_str(pMachinfo->ip3);
+        ips += " | ";
+    }
+    if(pMachinfo->ip4 != 0) {
+        ips += ipv4_addr_str(pMachinfo->ip4);
+        ips += " | ";
+    }
+    if(ips.length() > 3)
+        ips.erase(ips.length()-3, 3);
+    hdf_set_int_value(stConfig.cgi->hdf, "config.machine_id", id);
+    hdf_set_value(stConfig.cgi->hdf, "config.machine_ip", ips.c_str());
+    const char *pname = MtReport_GetFromVmem_Local(pMachinfo->iNameVmemIdx);
+    hdf_set_value(stConfig.cgi->hdf, "config.machine_name", pname ? pname : "unknow");
+    hdf_set_value(stConfig.cgi->hdf, "config.last_attr", uitodate(pMachinfo->dwLastReportAttrTime));
+
+    hdf_set_value(stConfig.cgi->hdf, "config.last_log", uitodate(pMachinfo->dwLastReportLogTime));
+	DEBUG_LOG("machine time, attr:%u, log:%u, hello:%u", pMachinfo->dwLastReportAttrTime,
+		pMachinfo->dwLastReportLogTime, pMachinfo->dwLastHelloTime);
+
+    hdf_set_value(stConfig.cgi->hdf, "config.last_hello", uitodate(pMachinfo->dwLastHelloTime));
+    hdf_set_int_value(stConfig.cgi->hdf, "config.rep_status", GetMachineRepStatus(pMachinfo, stConfig));
+    if(pMachinfo->dwLastHelloTime+300 >= stConfig.dwCurTime && stConfig.dwCurTime > pMachinfo->dwLastHelloTime) 
+        hdf_set_int_value(stConfig.cgi->hdf, "config.run_time", stConfig.dwCurTime-pMachinfo->dwAgentStartTime);
+    else
+        hdf_set_int_value(stConfig.cgi->hdf, "config.run_time", 0);
+
+	Query & qu = *stConfig.qu;
+    std::ostringstream ss;
+    Json js;
+    ss << "select * from mt_plugin_machine where install_proc=0 and machine_id=" << pMachinfo->id << " and xrk_status=0";
+    if(qu.get_result(ss.str().c_str()) && qu.num_rows() > 0) {
+		Query myqu(*stConfig.db);
+	    for(int i=0; i < qu.num_rows() && qu.fetch_row() != NULL; i++)
+        {
+            Json info;
+            info["id"] = qu.getval("open_plugin_id");
+			ss.str("");
+			ss << "select plugin_name,plugin_show_name from mt_plugin where open_plugin_id=" << (int)(info["id"]);
+			if(!myqu.get_result(ss.str().c_str()) || myqu.num_rows() <= 0) {
+				WARN_LOG("not find plugin:%d, machine id:%d", (int)(info["id"]), pMachinfo->id);
+				continue;
+			}
+			myqu.fetch_row();
+			info["name"] = myqu.getstr("plugin_name");
+			info["show_name"] = myqu.getstr("plugin_show_name");
+			myqu.free_result();
+
+            info["last_attr_time"] = uitodate(qu.getuval("last_attr_time"));
+            info["last_log_time"] = uitodate(qu.getuval("last_log_time"));
+            info["start_time"] = uitodate(qu.getuval("start_time"));
+            if(qu.getuval("last_hello_time")+300 >= stConfig.dwCurTime && stConfig.dwCurTime > qu.getuval("last_hello_time")) 
+                info["run_time"] = stConfig.dwCurTime-qu.getuval("start_time");
+            else
+                info["run_time"] = 0;
+            info["last_hello_time"] = uitodate(qu.getuval("last_hello_time"));
+            info["lib_ver_num"] = uitodate(qu.getuval("lib_ver_num"));
+            info["cfg_version"] = qu.getstr("cfg_version");
+            info["build_version"] = qu.getstr("build_version");
+            info["rep_status"] = ReportStatus(qu.getuval("last_attr_time"),
+                qu.getuval("last_log_time"), qu.getuval("last_hello_time"), stConfig);
+            js["list"].Add(info);
+        }
+        js["count"] = qu.num_rows();
+    }
+    else {
+        js["count"] = 0;
+    }
+    qu.free_result();
+
+    std::string str(js.ToString());
+    hdf_set_value(stConfig.cgi->hdf, "config.machine_plugins", str.c_str());
+	DEBUG_LOG("show status machine:%d, plugins:%s", id, str.c_str());
+    return 0;
+}
+
 static int GetMachineListFromShm(Json &js, int iCurPage, int iNumPerPage)
 {
-	uint32_t dwTime = 0;
 	int iStart = iNumPerPage*(iCurPage-1);
 	int iStartIdx = stConfig.stUser.pSysInfo->iMachineListIndexStart;
 	SharedHashTableNoList *pMachHash = slog.GetMachineHash();
@@ -264,10 +499,7 @@ static int GetMachineListFromShm(Json &js, int iCurPage, int iNumPerPage)
 
 		info["model"] = pInfo->bModelId;
 		info["warn_flag"] = pInfo->bWarnFlag;
-		dwTime = pInfo->dwLastReportAttrTime;
-		info["last_attr_report_time"] = uitodate(dwTime);
-		dwTime = pInfo->dwLastReportLogTime;
-		info["last_log_report_time"] = uitodate(dwTime);
+        info["rep_status"] = GetMachineRepStatus(pInfo, stConfig);
 		js["list"].Add(info);
 	}
 	js["count"] = iCount;
@@ -287,7 +519,7 @@ static int GetMachineList(Json &js, SearchInfo *pinfo=NULL)
 	}
 
 	int iFilter = 0;
-	sprintf(sSqlBuf, "select * from mt_machine where xrk_status=%d", RECORD_STATUS_USE);
+	sprintf(sSqlBuf, "select xrk_id from mt_machine where xrk_status=%d", RECORD_STATUS_USE);
 	if(pinfo != NULL && (iFilter=AddSearchInfo(sSqlBuf, sizeof(sSqlBuf), pinfo)) < 0)
 		return SLOG_ERROR_LINE;
 
@@ -307,21 +539,40 @@ static int GetMachineList(Json &js, SearchInfo *pinfo=NULL)
 
 	qu.get_result(sSqlBuf);
 	int i=0;
+	MachineInfo *pInfo = NULL;
+	const char *pvname = NULL;
 	for(i=0; i < qu.num_rows() && qu.fetch_row() != NULL; i++)
 	{
 		Json info;
 		info["id"] = qu.getuval("xrk_id");
-		info["name"] = qu.getstr("xrk_name");
 
-		info["ip"] = ipv4_addr_str(qu.getuval("ip1"));
-		if(qu.getuval("ip2") != 0) {
-			info["ip2"] = ipv4_addr_str(qu.getuval("ip2"));
-		}
-		info["model"] = qu.getval("model_id");
-		info["warn_flag"] = qu.getval("warn_flag");
-		info["last_attr_report_time"] = 0;
-		info["last_log_report_time"] = 0;
-		info["desc"] = qu.getstr("machine_desc");
+		pInfo = slog.GetMachineInfo((int)(info["id"]), NULL);
+        if(!pInfo)
+            continue;
+
+		pvname = NULL;
+		if(pInfo->iNameVmemIdx > 0)
+			pvname = MtReport_GetFromVmem_Local(pInfo->iNameVmemIdx);
+		if(pvname == NULL)
+			info["name"] = " ";
+		else
+			info["name"] = pvname;
+
+		pvname = NULL;
+		if(pInfo->iDescVmemIdx > 0)
+			pvname = MtReport_GetFromVmem_Local(pInfo->iDescVmemIdx);
+		if(pvname == NULL)
+			info["desc"] = " ";
+		else
+			info["desc"] = pvname;
+
+		info["ip"] = ipv4_addr_str(pInfo->ip1);
+		if(pInfo->ip2 != 0)
+			info["ip2"] = ipv4_addr_str(pInfo->ip2);
+
+		info["model"] = pInfo->bModelId;
+		info["warn_flag"] = pInfo->bWarnFlag;
+        info["rep_status"] = GetMachineRepStatus(pInfo, stConfig);
 		js["list"].Add(info);
 	}
 	js["count"] = i; 
@@ -1095,7 +1346,9 @@ int main(int argc, char **argv, char **envp)
 		else if(iRet < 0)
 			break;
 
-		if(!strcmp(pAction, "add"))
+        if(!strcmp(pAction, "show_status"))
+            iRet = DealShowMachineStatus();
+		else if(!strcmp(pAction, "add"))
 			iRet = DealAddMachine();
 		else if(!strcmp(pAction, "delete"))
 			iRet = DeleteMachine();
@@ -1121,6 +1374,8 @@ int main(int argc, char **argv, char **envp)
 			iRet = DealSaveSysSrv(false);
 		else if(!strcmp(pAction, "delete_syssrv"))
 			iRet = DealDelSysSrv();
+		else if(!strcmp(pAction, "machine_add_plugin"))
+			iRet = DealMachineAddPlugin();
 		else  // default -- list
 		{
 			pAction = "list";
@@ -1128,7 +1383,9 @@ int main(int argc, char **argv, char **envp)
 		}
 
 		const char *pcsTemplate = NULL;
-		if(!strcmp(pAction, "add") || !strcmp(pAction, "mod"))
+        if(!strcmp(pAction, "show_status"))
+			pcsTemplate = "dmt_dlg_machine_status.html";
+		else if(!strcmp(pAction, "add") || !strcmp(pAction, "mod"))
 			pcsTemplate = "dmt_machine_manage.html";
 		else if(!strcmp(pAction, "list") || !strcmp(pAction, "search"))
 			pcsTemplate = "dmt_machine.html";
@@ -1138,6 +1395,9 @@ int main(int argc, char **argv, char **envp)
 			pcsTemplate = "dmt_sys_srv.html";
 		else if(!strcmp(pAction, "add_syssrv") || !strcmp(pAction, "mod_syssrv"))
 			pcsTemplate = "dmt_dlg_add_sys_srv_config.html";
+		else if(!strcmp(pAction, "machine_add_plugin"))
+			pcsTemplate = "dmt_machine_add_plugin.html";
+
 		if(iRet < 0)
 		{
 			if(pcsTemplate)

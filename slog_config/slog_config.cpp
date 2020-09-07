@@ -2223,6 +2223,11 @@ int32_t ReadTableMachine(Database &db, uint32_t uid=0)
 					pInfo->sRandKey[16] = '\0';
 				}
 
+				pInfo->dwLastReportLogTime = qu.getuval("last_log_time");
+				pInfo->dwLastReportAttrTime = qu.getuval("last_attr_time");
+				pInfo->dwLastHelloTime = qu.getuval("last_hello_time");
+				pInfo->dwAgentStartTime = qu.getuval("start_time");
+
 				pInfo->dwLastModTime = dwLastModTime;
 				DEBUG_LOG("add machine info id:%d ip1:%s bWarnFlag:%d bModelId:%d",
 					iMachineId, ipv4_addr_str(qu.getuval("ip1")), qu.getval("warn_flag"), qu.getval("model_id"));
@@ -2271,6 +2276,18 @@ int32_t ReadTableMachine(Database &db, uint32_t uid=0)
 				memcpy(pInfo->sRandKey, ptmp, 16);
 				pInfo->sRandKey[16] = '\0';
 			}
+
+			if(pInfo->dwLastHelloTime < qu.getuval("last_hello_time"))
+				pInfo->dwLastHelloTime = qu.getuval("last_hello_time");
+
+			if(pInfo->dwLastReportAttrTime < qu.getuval("last_attr_time"))
+				pInfo->dwLastReportAttrTime = qu.getuval("last_attr_time");
+
+			if(pInfo->dwLastReportLogTime < qu.getuval("last_log_time"))
+				pInfo->dwLastReportLogTime = qu.getuval("last_log_time");
+
+			if(pInfo->dwAgentStartTime < qu.getuval("start_time"))
+				pInfo->dwAgentStartTime = qu.getuval("start_time");
 
 			DEBUG_LOG("update machine info id:%d ip1:%s bWarnFlag:%d bModelId:%d mod time:%u, name:%d",
 				iMachineId, ipv4_addr_str(qu.getuval("ip1")), qu.getval("warn_flag"), qu.getval("model_id"),

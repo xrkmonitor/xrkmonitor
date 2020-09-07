@@ -1,18 +1,12 @@
 #!/bin/bash
 # 发布包 agent slog_mtreport_client 打包脚本
 
-if [ ! -f slog_mtreport_client -o ! -f libmtreport/libmtreport_api.so.1 ]; then
-	echo 'have no file: slog_mtreport_client or libmtreport/libmtreport_api.so.1'
-	exit 1
-fi
+TARGET=slog_mtreport_client.tar.gz
+AGENT=slog_mtreport_client 
 
-targetdir=xrkmonitor_agent
-mkdir ${targetdir} 
-cp slog_mtreport_client ./${targetdir}
-cp slog_mtreport_client.conf ./${targetdir}/_slog_mtreport_client.conf
-cp libmtreport ./${targetdir} -r
-cp xrkmonitor_plus ./${targetdir} -r
-
-tar zcvf  ${targetdir}.tar.gz ./${targetdir}
-rm -fr ${targetdir}
+rm -f ${TARGET}
+mv ${AGENT}.conf _${AGENT}.conf
+cp fabu_mtreport_client.conf ${AGENT}.conf
+tar -czf ${TARGET} restart.sh start.sh stop.sh add_crontab.sh remove_crontab.sh run_tool.sh check_xrkmonitor_agent_client.sh ${AGENT}.conf ${AGENT} rmshm.sh
+mv _${AGENT}.conf ${AGENT}.conf
 

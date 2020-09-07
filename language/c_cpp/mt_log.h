@@ -30,8 +30,8 @@
 
 ****/
 
-#ifndef _MTLOG_20141117_H_
-#define _MTLOG_20141117_H_ (1)
+#ifndef _MTLOG_141117_H_
+#define _MTLOG_141117_H_ (1)
 
 #include <inttypes.h>
 #include "mt_attr.h"
@@ -74,6 +74,9 @@ extern "C"
 #define MTLOG_CUST_FLAG_C4_SET 8
 #define MTLOG_CUST_FLAG_C5_SET 16
 #define MTLOG_CUST_FLAG_C6_SET 32 
+
+// 最多支持的内置监控插件数目
+#define MAX_INNER_PLUS_COUNT 200
 
 #pragma pack(1)
 
@@ -181,8 +184,28 @@ typedef struct
     uint32_t dwConfigSeq;
     uint8_t bAttrSendPerTimeSec; // attr 上报时间间隔
     uint8_t bLogSendPerTimeSec; // log 上报时间间隔
-	uint8_t bReportCpuUseSec; // cpu 使用率多久上报一次
+	uint8_t bReserved_2;
 }MtSystemConfig;
+
+// 插件信息
+typedef struct _TInnerPlusInfo {
+    char szPlusName[64]; // 插件名称
+    int iPluginId; // 插件 id
+    char szVersion[12]; // 配置文件中的插件版本
+    char szBuildVer[12]; // 插件编译时的版本信息 
+    int iLibVerNum; // 使用的开发库版本编号
+    uint32_t dwLastReportAttrTime; // 最后一次 attr 上报时间
+    uint32_t dwLastReportLogTime; // 最后一次 log 上报时间
+    uint32_t dwPluginStartTime; // 插件启动时间
+
+    uint32_t dwLastReportSelfInfoTime; // 插件自身最后一次信息上报时间
+    uint32_t dwRep_LastReportLogTime;
+    uint32_t dwRep_LastReportAttrTime;
+    uint32_t dwLastHelloTime; // 存活校验
+    uint32_t dwRep_LastHelloTime;
+    uint8_t bCheckRet; // 服务端验证结果, 0 OK, 1 失败
+    char sReserved[11];
+}TInnerPlusInfo;
 
 // agent client or api 共享内存结构
 typedef struct
@@ -192,7 +215,7 @@ typedef struct
 	int32_t iMtClientIndex;
 	int32_t iMachineId;
 	uint32_t dwConnServerIp; // 接入　mtreport_server 的地址
-	uint32_t dwKeySetTime;
+	uint32_t dwReserved;
 	char sRandKey[16];
 	uint32_t dwPkgSeq;
 	uint32_t dwLastHelloOkTime;
@@ -268,35 +291,33 @@ typedef struct
 	VmemBufNode128 pV128Shm[VMEM_SHM_COUNT*VMEM_128_NODE_COUNT];
 	VmemBufNode255 pV255Shm[VMEM_SHM_COUNT*VMEM_255_NODE_COUNT];
 
+    // plugin info
+    uint8_t bAddPluginInfoFlag;
+    int iPluginInfoCount;
+    TInnerPlusInfo stPluginInfo[MAX_INNER_PLUS_COUNT];
+
 	char cReserved[128];
 }MTREPORT_SHM;
 
 #pragma pack()
 
-// 最多支持的内置监控插件数目
-// 内置监控插件在 agent slog_mtreport_client 中运行
-#define MAX_INNER_PLUS_COUNT 100
-
-// 内置监控插件配置信息
-typedef struct _TInnerPlusInfo {
-	char szPlusName[64]; // 插件名称
+// 日志相关
+typedef struct _TLogConfig{
 	uint32_t dwLogCfgId; // 日志配置 id
-	char cIsTest; // 插件的日志染色标记
-	MTLogCust stCust; // 插件设置的日志自定义值
-	SLogConfig *pCurConfigInfo; // 插件的日志配置信息 
-	char szLocalLogFile[256]; // 插件设置的本地日志文件
-	int iLocalLogType; // 插件本地日志记录类型, 为0表示不写本地日志
-}TInnerPlusInfo;
+	char cIsTest; // 日志染色标记
+	MTLogCust stCust; // 日志自定义值
+	SLogConfig *pCurConfigInfo; // 日志配置信息 
+	char szLocalLogFile[256]; // 本地日志文件
+	int iLocalLogType; // 本地日志记录类型, 为0表示不写本地日志
+    char sReserved[128];
+}TLogConfig;
 
 // log struct 
 typedef struct {
 	char cIsInit;
 	MTREPORT_SHM *pMtShm;
-
-	int iPlusCount; // 共加载的插件数目
-	int iPlusIndex; // 当前插件信息索引
-	TInnerPlusInfo stPlusInfo[MAX_INNER_PLUS_COUNT];
-
+    int iPluginIndex; // 内置插件共享内存索引
+	TLogConfig stLogInfo;
 	char cIsAttrInit;
 	SharedHashTable stAttrHash[MTATTR_SHM_DEF_COUNT];
 
@@ -314,6 +335,8 @@ typedef struct {
 
 extern MtReport g_mtReport;
 
+uint32_t datetoui(const char *pdate);
+char *uitodate(uint32_t dwTimeSec);
 int MtReport_Init_ByKey(unsigned int iConfigId, int iShmKey, int iFlag);
 
 #ifdef __cplusplus
