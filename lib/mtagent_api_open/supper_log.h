@@ -764,8 +764,9 @@ typedef struct _TEventInfo
         if(iEventType == EVENT_PREINSTALL_PLUGIN)
             ev.stPreInstall.Show();
     }
-    ~_TEventInfo() {
+    _TEventInfo() {
         iEventType = 0;
+		dwExpireTime = 0;
     }
 }TEventInfo;
 

@@ -506,7 +506,8 @@ int32_t CBasicPacket::MakePacket(char *pBuf, int *piBufLen, int iRetCode)
 {
     char *pdata = pBuf;
 	if(pdata == NULL || !piBufLen || *piBufLen == 0) {
-		pdata = (char*)m_sCommBuf;
+		pBuf = (char*)m_sCommBuf;
+		pdata = pBuf;
 		m_iCommLen = (int)(sizeof(m_sCommBuf));
 		piBufLen = &m_iCommLen;
 	}

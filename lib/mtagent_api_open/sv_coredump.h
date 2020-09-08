@@ -29,8 +29,8 @@
 
 ****/
 
-#ifndef __SV_COREDUMP_H_20130505__
-#define __SV_COREDUMP_H_20130505__ 1
+#ifndef __SV_COREDUMP_H_21130505__
+#define __SV_COREDUMP_H_21130505__ 1
 
 #define BACKTRACE_DUMP_LEVELS 10
 #define BACKTRACE_DEF_DUMP_FILE "/tmp/backtrace_dump.log"

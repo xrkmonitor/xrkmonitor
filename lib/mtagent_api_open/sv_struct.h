@@ -163,6 +163,8 @@
 #define CMD_CGI_SEND_ATTR 215 
 #define CMD_CGI_SEND_STR_ATTR 216 
 #define CMD_CGI_SEND_LOG 217 
+#define CMD_MONI_SEND_PLUGIN_INFO 218 // client send plugin info 
+#define CMD_MONI_PREINSTALL_REPORT 219 // client send 一键部署进度 
 
 // monitor system cmd: 400 - 500 用于 pc 告警客户端
 #define CMD_MONI_PC_DETECT_SERVER 400
@@ -170,12 +172,13 @@
 #define CMD_MONI_PC_PUSH_WARN 402
 #define CMD_MONI_PC_PUSH_WARN_NO_ACK 403
 
-// cmd for protobuf 501-1000 -- protobuf 协议使用命令范围
+// cmd for protobuf 501-700 -- protobuf 协议使用命令范围
 #define CMD_INNER_SEND_REALINFO 501 
 
-// monitor system s2c cmd: 1001-1000
-#define CMD_MONI_S2C_LOG_CONFIG_NOTIFY 1001 
-#define CMD_MONI_S2C_APP_CONFIG_NOTIFY 1002 
+// monitor system s2c cmd: 701-999
+#define CMD_MONI_S2C_LOG_CONFIG_NOTIFY 701 
+#define CMD_MONI_S2C_APP_CONFIG_NOTIFY 702 
+#define CMD_MONI_S2C_PRE_INSTALL_NOTIFY 703 
 
 // monitor system s2c cmd: 1000-1100 用于 pc 告警客户端
 #define CMD_MONI_PC_S2C_WARN_INFO 1000
