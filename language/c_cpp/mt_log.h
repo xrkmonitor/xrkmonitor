@@ -296,7 +296,8 @@ typedef struct
     int iPluginInfoCount;
     TInnerPlusInfo stPluginInfo[MAX_INNER_PLUS_COUNT];
 
-	char cReserved[128];
+	int32_t iBindCloudUserId;
+	char cReserved[124];
 }MTREPORT_SHM;
 
 #pragma pack()

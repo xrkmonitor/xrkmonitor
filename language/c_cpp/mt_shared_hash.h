@@ -30,8 +30,8 @@
 
 ****/
 
-#ifndef _MT_SHARED_HASH_H_20130304_
-#define _MT_SHARED_HASH_H_20130304_ 1
+#ifndef _MT_SHARED_HASH_H_11130304_
+#define _MT_SHARED_HASH_H_11130304_ 1
 
 /*
    *

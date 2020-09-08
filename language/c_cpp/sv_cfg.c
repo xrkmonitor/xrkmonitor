@@ -43,6 +43,50 @@
 
 #define MAX_CONFIG_LINE_LEN (1024 - 1)
 
+
+inline int get_char_count(const char *pstr, char c)
+{
+	int i = 0;
+	while(*pstr != '\0') {
+		if(*pstr == c)  
+			i++; 
+		pstr++;
+	}   
+	return i;
+}   
+
+
+// 版本号: v2.2.2 or v1.1
+int IsVersionOk(const char *pbig_eq, const char *psmall)
+{
+    uint32_t dwBigEq = 0, dwSmall = 0;
+    int b1 = 0, b2 = 0, b3 = 0, s1 = 0, s2 = 0, s3 = 0;
+
+    int i = get_char_count(pbig_eq, '.');
+    if(i == 2)
+        sscanf(pbig_eq, "%*[vV]%d.%d.%d", &b1, &b2, &b3);
+    else if(i == 1)
+        sscanf(pbig_eq, "%*[vV]%d.%d", &b1, &b2);
+    else
+        return 0;
+
+    dwBigEq |= b1; dwBigEq <<= 8;
+    dwBigEq |= b2; dwBigEq <<= 8;
+    dwBigEq |= b3;
+
+    i = get_char_count(psmall, '.');
+    if(i == 2)
+        sscanf(psmall, "%*[vV]%d.%d.%d", &s1, &s2, &s3);
+    else if(i == 1)
+        sscanf(psmall, "%*[vV]%d.%d", &s1, &s2);
+    else
+        return 0;
+    dwSmall |= s1; dwSmall <<= 8;
+    dwSmall |= s2; dwSmall <<= 8;
+    dwSmall |= s3;
+    return (dwBigEq >= dwSmall);
+}
+
 int GetConfigFile(const char *pAppStr, char **pconfOut)
 {
 	if(pconfOut == NULL)
@@ -311,4 +355,5 @@ int GetLogTypeByStr(const char *pstrType)
 		iType += MTLOG_TYPE_FATAL;
 	return iType;
 }
+
 

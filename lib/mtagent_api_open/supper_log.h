@@ -736,7 +736,8 @@ enum {
     EV_PREINSTALL_ERR_UNPACK = 24, // 解压部署包失败
     EV_PREINSTALL_ERR_MKDIR = 25, // 创建部署目录失败，请检查agent 是否有权限
     EV_PREINSTALL_ERR_START_PLUGIN = 26, // 启动插件失败，可能是不兼容导致
-    EV_PREINSTALL_ERR_MAX = 26,
+	EV_PREINSTALL_ERR_DOWNLOAD_OPEN_CFG = 27, // 开源版配置文件下载失败
+    EV_PREINSTALL_ERR_MAX = 27,
 };
 
 typedef struct _TEventPreInstallPlugin {

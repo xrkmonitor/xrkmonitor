@@ -51,7 +51,7 @@
 #define MAX_SIGNATURE_LEN 128 
 
 // ------------- cmd define start --------------------
-// monitor system cmd: 201-1000 , 与 c_comm 中的 sv_struct.h 中定义一致
+// monitor system cmd: 201-400 , 与 c_comm 中的 sv_struct.h 中定义一致
 #define CMD_MONI_SEND_HELLO_FIRST 201 // 首个 hello 命令
 #define CMD_MONI_SEND_HELLO 202 // 普通 hello 命令，用于探测服务器是否可用
 #define CMD_MONI_SEND_ATTR 203
@@ -60,6 +60,16 @@
 #define CMD_MONI_SEND_LOG 209
 #define CMD_MONI_CHECK_SYSTEM_CONFIG 213
 #define CMD_MONI_SEND_STR_ATTR 214 // client send str attr
+#define CMD_CGI_SEND_ATTR 215 
+#define CMD_CGI_SEND_STR_ATTR 216 
+#define CMD_CGI_SEND_LOG 217 
+#define CMD_MONI_SEND_PLUGIN_INFO 218 // client send plugin info 
+#define CMD_MONI_PREINSTALL_REPORT 219 // client send 一键部署进度 
+
+// monitor system s2c cmd: 701-999
+#define CMD_MONI_S2C_LOG_CONFIG_NOTIFY 701 
+#define CMD_MONI_S2C_APP_CONFIG_NOTIFY 702 
+#define CMD_MONI_S2C_PRE_INSTALL_NOTIFY 703 
 // ------------- cmd define end --------------------
 
 // ------------------------------ tlv define start -------------------

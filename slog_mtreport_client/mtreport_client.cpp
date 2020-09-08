@@ -70,8 +70,8 @@ CONFIG stConfig;
 
 int InitReportLog();
 int InitReportAttr();
+int InitReportPluginInfo();
 int OnEventTimer(TimerNode *pNodeShm, unsigned uiDataLen, char *pData);
-
 
 int get_cmd_result(const char *cmd, std::string &strResult)
 {
@@ -126,6 +126,16 @@ void OnMtreportPkg(struct MtSocket *psock, char * sBuf, int iLen, time_t uiTime)
 			return ;
 	}
 
+	// 先看看是否是 S2C	push 请求 --------- start
+	switch(pkg.m_dwReqCmd) {
+        case CMD_MONI_S2C_PRE_INSTALL_NOTIFY:
+            iRet = DealPreInstallNotify(pkg);
+            return;
+
+		default:
+			break;
+	}
+
 	TimerNode *pNode = NULL;
 	stConfig.uiSessDataLen = MYSIZEOF(stConfig.sSessBuf)-MYSIZEOF(PKGSESSION);
 	if((iRet=GetTimer(pkg.m_dwReqSeq, &pNode, &stConfig.uiSessDataLen, stConfig.sSessBuf)) < 0) {
@@ -166,6 +176,12 @@ void OnMtreportPkg(struct MtSocket *psock, char * sBuf, int iLen, time_t uiTime)
 
 				if((iRet=InitReportLog()) < 0) {
 					FATAL_LOG("init report log failed , ret:%d", iRet);
+					stConfig.pReportShm->cIsAgentRun = 2;
+					return ;
+				}
+
+				if((iRet=InitReportPluginInfo()) < 0) {
+					FATAL_LOG("init report plugin info failed , ret:%d", iRet);
 					stConfig.pReportShm->cIsAgentRun = 2;
 					return ;
 				}
@@ -219,6 +235,10 @@ void OnMtreportPkg(struct MtSocket *psock, char * sBuf, int iLen, time_t uiTime)
 			}
 		}
 		break;
+
+		case CMD_MONI_SEND_PLUGIN_INFO:
+			iRet = DealRespRepPluginInfo(pkg);
+			break;
 
 		case CMD_MONI_SEND_STR_ATTR:
 		case CMD_MONI_SEND_ATTR:
@@ -411,7 +431,8 @@ static int Init()
 	INFO_LOG("%s shm ok -- size:%u, current path:%s",
 		(iRet==1 ? "create" : "init"), MYSIZEOF(MTREPORT_SHM), stConfig.szCurPath); 
 	INFO_LOG("read config - server:%s:%d ", stConfig.szSrvIp_master, stConfig.iSrvPort);
-	INFO_LOG("local ip:%s, config:%s, cmp time:%s", pip, stConfig.szLocalIP, g_strCmpTime.c_str());
+	INFO_LOG("local ip:%s, config:%s, cmp time:%s, cloud domain:%s", 
+		pip, stConfig.szLocalIP, g_strCmpTime.c_str(), stConfig.szCloudUrl);
 
 	// 基础信息，用于一键部署插件
 	if(stConfig.szOs[0] == '\0') {
@@ -1130,10 +1151,50 @@ int EnvSendAppLogToServer(TAppLogRead &stAppLog)
 	return 1;
 }
 
+int EnvSendPluginInfoToServer()
+{
+    stConfig.pPkgSess = (PKGSESSION*)stConfig.sSessBuf;
+    stConfig.pPkg = stConfig.sSessBuf+MYSIZEOF(PKGSESSION);
+    stConfig.iPkgLen = MAX_ATTR_PKG_LENGTH;
+
+    struct sockaddr_in addr_server;
+    addr_server.sin_family = PF_INET;
+    addr_server.sin_port = htons(stConfig.iSrvPort);
+    addr_server.sin_addr.s_addr = inet_addr(stConfig.szSrvIp_master);
+    uint32_t dwKey = MakeRepPluginInfoToServer();
+    if(!dwKey)
+        return 0;
+
+    stConfig.pPkgSess->iSockIndex = stConfig.pEnvSess->iSockIndex; 
+    int iRet = SendPacket(stConfig.pPkgSess->iSockIndex, &addr_server, stConfig.pPkg, stConfig.iPkgLen);
+    if(iRet != stConfig.iPkgLen) {
+        ERROR_LOG("SendPacket(report plugin info) failed, pkglen:%d, ret:%d", stConfig.iPkgLen, iRet);
+        return MTREPORT_ERROR_LINE;
+    }    
+    else {
+        stConfig.pPkgSess->dwSendTimeSec = stConfig.stTimeCur.tv_sec;
+        stConfig.pPkgSess->dwSendTimeUsec = stConfig.stTimeCur.tv_usec;
+        stConfig.pPkgSess->bSessStatus = SESS_FLAG_WAIT_RESPONSE;
+		stConfig.pPkgSess->stCmdSessData.plugin.bTrySrvCount = 1;
+        stConfig.pPkgSess->stCmdSessData.plugin.dwConfigSrvIP = addr_server.sin_addr.s_addr;
+        SetSocketAddress(
+            stConfig.pPkgSess->iSockIndex, addr_server.sin_addr.s_addr, ntohs(addr_server.sin_port));
+
+        int iTime = GetMaxResponseTime(stConfig.pPkgSess->iSockIndex)+1000;
+        iRet = AddTimer(dwKey, iTime, OnPkgExpire,
+            stConfig.pPkgSess, MYSIZEOF(PKGSESSION), stConfig.iPkgLen, stConfig.pPkg);
+        if(iRet < 0) {
+            ERROR_LOG("AddTimer(report plugin info) failed ! pkglen:%d, key:%u, ret:%d", stConfig.iPkgLen, dwKey, iRet);
+            return MTREPORT_ERROR_LINE;
+        }
+    }
+    return 1;
+}
+
 int OnEventTimer(TimerNode *pNodeShm, unsigned uiDataLen, char *pData)
 {
 	int iRet = 0, i=0, j=0;
-	int iSendAttr = 0, iSendStrAttr = 0;
+	int iSendAttr = 0, iSendStrAttr = 0, iSendPlugin = 0;
 
 	stConfig.pEnvSess = (ENVSESSION*)pNodeShm->sSessData;
 	switch(stConfig.pEnvSess->bEventType)
@@ -1160,6 +1221,19 @@ int OnEventTimer(TimerNode *pNodeShm, unsigned uiDataLen, char *pData)
 			if(stConfig.pReportShm->stSysCfg.bLogSendPerTimeSec != 0)
 				pNodeShm->uiTimeOut = stConfig.pReportShm->stSysCfg.bLogSendPerTimeSec*1000;
 			DEBUG_LOG("re add event read log timer, timeout:%d ms", pNodeShm->uiTimeOut);
+			break;
+
+		case EVENT_TYPE_REPORT_PLUGIN_INFO:
+			iRet = 1;
+			if(!IsHelloValid()) {
+				WARN_LOG("event send plugin info failed -- hello is invalid , wait ...");
+				sleep(5);
+				break;
+			}
+			iSendPlugin = EnvSendPluginInfoToServer();
+			pNodeShm->uiTimeOut = (7+(stConfig.qwCurTime%4))*1000;
+			DEBUG_LOG("send plugin info, count:%d, re add event plugin info timer, timeout:%d ms",
+				iSendPlugin, pNodeShm->uiTimeOut);
 			break;
 
 		case EVENT_TYPE_M_ATTR:
@@ -1213,6 +1287,26 @@ int OnEventTimer(TimerNode *pNodeShm, unsigned uiDataLen, char *pData)
 		return 1;
 	}
 	return iRet;
+}
+
+int InitReportPluginInfo()
+{
+    stConfig.pEnvSess = (ENVSESSION*)stConfig.sSessBuf;
+    stConfig.pEnvSess->iSockIndex = stConfig.iConfigSocketIndex; 
+    stConfig.pEnvSess->dwEventSetTimeSec = stConfig.stTimeCur.tv_sec;
+    stConfig.pEnvSess->dwEventSetTimeUsec = stConfig.stTimeCur.tv_usec;
+    stConfig.pEnvSess->bEventType = EVENT_TYPE_REPORT_PLUGIN_INFO;
+
+    uint32_t dwKey = rand();
+    stConfig.pEnvSess->iExpireTimeMs = 15*1000;
+    int iRet = AddTimer(dwKey, stConfig.pEnvSess->iExpireTimeMs,
+        OnEventTimer, stConfig.pEnvSess, MYSIZEOF(ENVSESSION), 0, NULL);
+    if(iRet < 0) { 
+        ERROR_LOG("AddTimer for report plugin info failed, key:%u, ret:%d", dwKey, iRet);
+        return MTREPORT_ERROR_LINE;
+    }    
+    DEBUG_LOG("add report plugin info timer key:%u", dwKey);
+    return 0;
 }
 
 int InitReportLog()
@@ -1383,6 +1477,7 @@ void ShowShm()
 	printf("\n-----vmem info ---- \n");
 	SHOW_FIELD_VALUE_INT(cIsAgentRun);
 	SHOW_FIELD_VALUE_INT(cIsVmemInit);
+	SHOW_FIELD_VALUE_INT(iBindCloudUserId);
 }
 
 void ShowMTLogCust(MTLogCust & str)

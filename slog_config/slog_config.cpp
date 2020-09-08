@@ -101,6 +101,8 @@ typedef struct
 	StrAttrNodeValShmInfo *pStrAttrShm;
 	Database *pdb;
 	Query *qu_info;
+
+	char szPluginCheckStr[16];
 }CONFIG;
 
 CONFIG stConfig;
@@ -310,6 +312,7 @@ int Init(const char *pFile = NULL)
 	int32_t iRet = 0, iLogToStd = 0, iLogWriteSpeed = 100, iSysDaemon = 0;
 	int32_t  iConfigId = 0, iVmemShmKey = 0, iLoginShmKey = 0;
 	if((iRet=LoadConfig(pConfFile,
+		"PLUGIN_INSTALL_CHECKSTR", CFG_STRING, stConfig.szPluginCheckStr, "2342@#@!dcheck", MYSIZEOF(stConfig.szPluginCheckStr),
 		"MYSQL_SERVER", CFG_STRING, stConfig.szDbHost, "127.0.0.1", MYSIZEOF(stConfig.szDbHost),
 		"MYSQL_USER", CFG_STRING, stConfig.szUserName, "mtreport", MYSIZEOF(stConfig.szUserName),
 		"MYSQL_PASS", CFG_STRING, stConfig.szPass, "mtreport875", MYSIZEOF(stConfig.szPass),
@@ -435,6 +438,12 @@ int Init(const char *pFile = NULL)
 	if(slog.InitWarnInfo() < 0)
 	{
 		ERR_LOG("init InitwarnInfo shm failed !");
+		return SLOG_ERROR_LINE;
+	}
+
+	if(slog.InitMtClientInfo() < 0)
+	{
+		ERR_LOG("init InitMtClientInfo shm failed !");
 		return SLOG_ERROR_LINE;
 	}
 
@@ -2143,6 +2152,79 @@ int32_t ReadTableAttrType(Database &db, uint32_t uid=0)
 	return 0;
 }
 
+int32_t ReadTablePluginMachineInfo(Database &db, uint32_t up_id=0)
+{
+	char sSql[512];
+	if(up_id != 0)
+		snprintf(sSql, sizeof(sSql), "select local_cfg_url,machine_id,open_plugin_id "
+            " from mt_plugin_machine where xrk_id=%u and xrk_status=0 and install_proc=%d", up_id, EV_PREINSTALL_START);
+	else {
+        WARN_LOG("mt_plugin_machine try read all !");
+        return 0;
+    }
+	Query qu(db);
+	if(!qu.get_result(sSql))
+	{
+		ERR_LOG("get mt_plugin_machine failed (sql:%s)", sSql);
+		return SLOG_ERROR_LINE;
+	}
+
+    int32_t iMachineId = 0, i = 0;
+    MtClientInfo *pclient = NULL;
+
+	Query qutmp(db);
+	while(qu.fetch_row() && qu.num_rows() > 0)
+    {
+        iMachineId = qu.getval("machine_id");
+
+        // pclient 用于将任务发放到 agent 登录的服务器上
+        pclient = slog.GetMtClientInfo(iMachineId, (uint32_t *)NULL);
+        if(!pclient) {
+            DEBUG_LOG("not find machine client, machine:%d", iMachineId);
+            continue;
+        }
+
+        for(i=0; i < 20; i++) {
+            if(SYNC_FLAG_CAS_GET(&(stConfig.pShmConfig->stSysCfg.bEventModFlag)))
+                break;
+            usleep(slog.m_iRand%10000);
+        }
+        if(i >= 20) 
+            ERR_LOG("get bEventModFlag failed !");
+        for(i=0; i < MAX_EVENT_COUNT; i++) {
+            if(stConfig.pShmConfig->stSysCfg.stEvent[i].iEventType == 0
+                || stConfig.pShmConfig->stSysCfg.stEvent[i].dwExpireTime < slog.m_stNow.tv_sec) {
+                break;
+            }
+        }
+        if(i >= MAX_EVENT_COUNT) {
+            ERR_LOG("have no space to save event !");
+            SYNC_FLAG_CAS_FREE(stConfig.pShmConfig->stSysCfg.bEventModFlag);
+            continue;
+        }
+
+        SYNC_FLAG_CAS_FREE(stConfig.pShmConfig->stSysCfg.bEventModFlag);
+        stConfig.pShmConfig->stSysCfg.stEvent[i].iEventType = EVENT_PREINSTALL_PLUGIN;
+        stConfig.pShmConfig->stSysCfg.stEvent[i].dwExpireTime = EVENT_PREINSTALL_PLUGIN_EXPIRE_SEC+slog.m_stNow.tv_sec;
+        stConfig.pShmConfig->stSysCfg.stEvent[i].ev.stPreInstall.iPluginId = qu.getval("open_plugin_id");
+        stConfig.pShmConfig->stSysCfg.stEvent[i].ev.stPreInstall.iMachineId = iMachineId;
+        stConfig.pShmConfig->stSysCfg.stEvent[i].ev.stPreInstall.iDbId = up_id;
+
+		const char *ptmp = qu.getstr("local_cfg_url");
+		if(!ptmp ||ptmp[0] == '\0'){
+			WARN_LOG("invalid local config url, plugin:%d, machine:%d", qu.getval("open_plugin_id"), iMachineId);
+			stConfig.pShmConfig->stSysCfg.stEvent[i].iEventType = 0;
+			continue;
+		}
+        snprintf(sSql, sizeof(sSql), 
+            "update mt_plugin_machine set install_proc=%d where xrk_id=%u", EV_PREINSTALL_DB_RECV, up_id);
+        DEBUG_LOG("get preinstall plugin message, plugin:%d, event:%d, machine:%d", qu.getval("open_plugin_id"), i, iMachineId);
+        qutmp.execute(sSql);
+    }
+	qu.free_result();
+    return 0;
+}
+
 int32_t ReadTableMachine(Database &db, uint32_t uid=0)
 {
 	char sSql[256];
@@ -2417,10 +2499,7 @@ void InitSysConfig()
 	strncpy(sys.szPass, stConfig.szPass, sizeof(sys.szPass));
 	strncpy(sys.szDbName, stConfig.szDbName, sizeof(sys.szDbName));
 	sys.iDbPort = stConfig.iDbPort;
-
-	// 已初始化过，不用再次初始化了，交由 tv config 管理
-	if(sys.dwConfigSeq != 0)
-		return;
+	strncpy(sys.sPreInstallCheckStr, stConfig.szPluginCheckStr, sizeof(sys.sPreInstallCheckStr));
 	sys.dwConfigSeq = rand();
 	if(sys.dwConfigSeq == 0)
 		sys.dwConfigSeq = 1;
@@ -2966,6 +3045,10 @@ int ReadAllUpdateTableRecord(Database &db)
 			if(ReadTableTestKeyInfo(db, r_up_id) < 0)
 				return SLOG_ERROR_LINE;
 		}
+		else if(IsStrEqual(ptab, "mt_plugin_machine")) {
+            if(ReadTablePluginMachineInfo(db, r_up_id) < 0)
+                return SLOG_ERROR_LINE;
+        }
 	}
 	qu.free_result();
 	return 0;

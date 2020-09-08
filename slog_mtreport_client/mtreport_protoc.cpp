@@ -37,12 +37,14 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <set>
+#include <sstream>
 #include <string>
 #include "sv_socket.h"
 #include "mtreport_client.h"
 #include "mtreport_protoc.h"
 #include "mtreport_basic_pkg.h"
 #include "sv_str.h"
+#include "Json.h"
 #include "aes.h"
 #include "sv_struct.h"
 #include "sv_md5.h"
@@ -53,6 +55,72 @@ int IsHelloValid()
 {
 	// 最近一次正确 hello 时间在2分钟之内
 	return (stConfig.pReportShm->dwLastHelloOkTime+2*60 > stConfig.dwCurTime);
+}
+
+uint32_t MakePreInstallReportPkg(CmdS2cPreInstallContentReq *pct, int status)
+{
+	CBasicPacket pkg;
+
+	// head
+	ReqPkgHead stHead;
+	pkg.InitReqPkgHead(&stHead, CMD_MONI_PREINSTALL_REPORT);
+
+	// cmd content
+	CmdPreInstallReportContent stInfo;
+    stInfo.iPluginId = htonl(pct->iPluginId);
+    stInfo.iMachineId = htonl(pct->iMachineId);
+    stInfo.iDbId = htonl(pct->iDbId);
+    strncpy(stInfo.sCheckStr, pct->sCheckStr, sizeof(stInfo.sCheckStr));
+    stInfo.iStatus = htonl(status);
+	pkg.InitCmdContent((void*)&stInfo, (uint16_t)MYSIZEOF(stInfo));
+
+	// 签名
+	char sSig[MAX_SIGNATURE_LEN+MYSIZEOF(TSignature)]={0};
+	TSignature *psig = (TSignature*)sSig;
+	if(stConfig.iEnableEncryptData) {
+		MonitorCommSig stSigInfo;
+		stSigInfo.dwSeq = htonl(pkg.m_dwReqSeq);
+		stSigInfo.dwCmd = htonl(pkg.m_dwReqCmd);
+		if(InitSignature(psig, &stSigInfo, stConfig.pReportShm->sRandKey, MT_SIGNATURE_TYPE_COMMON) < 0)
+			return 0;
+	}
+	pkg.InitSignature(psig);
+
+	// tlv
+	char sTlvBuf[128];
+	TPkgBody *pbody = (TPkgBody*)sTlvBuf;
+	TlvMoniCommInfo stTlvInfo;
+	stTlvInfo.iMtClientIndex = htonl(stConfig.pReportShm->iMtClientIndex);
+	stTlvInfo.iMachineId = htonl(stConfig.pReportShm->iMachineId);
+	stTlvInfo.dwReserved_1 = htonl(stConfig.dwLocalIp);
+
+	int iTlvBodyLen = MYSIZEOF(TPkgBody);
+	iTlvBodyLen += SetWTlv(
+		pbody->stTlv, TLV_MONI_COMM_INFO, MYSIZEOF(stTlvInfo), (const char*)&stTlvInfo);
+	pbody->bTlvNum = 1;
+	pkg.InitPkgBody(pbody, iTlvBodyLen);
+	return pkg.MakeReqPkg(stConfig.pPkg, &stConfig.iPkgLen);
+}
+
+void SendPreInstallStatusToServer(CmdS2cPreInstallContentReq *pct, int status)
+{
+	stConfig.pPkgSess = (PKGSESSION*)stConfig.sSessBuf;
+	stConfig.pPkg = stConfig.sSessBuf+MYSIZEOF(PKGSESSION);
+	stConfig.iPkgLen = PKG_BUFF_LENGTH;
+
+    if(MakePreInstallReportPkg(pct, status) > 0) {
+        struct sockaddr_in addr_server;
+        addr_server.sin_family = PF_INET;
+        addr_server.sin_port = htons(stConfig.iSrvPort);
+        addr_server.sin_addr.s_addr = inet_addr(stConfig.szSrvIp_master);
+        int iRet = SendPacket(stConfig.iConfigSocketIndex, &addr_server, stConfig.pPkg, stConfig.iPkgLen);
+        if(iRet != stConfig.iPkgLen) {
+		    ERROR_LOG("SendPacket(report preinstall status) failed, pkglen:%d, ret:%d", stConfig.iPkgLen, iRet);
+        }
+    }
+    else {
+        ERROR_LOG("MakePreInstallReportPkg failed !");
+    }
 }
 
 // 首个 hello 包
@@ -252,6 +320,224 @@ static int HelloFirstExpire(TimerNode *pNodeShm, unsigned uiDataLen, char *pData
 	return 1;
 }
 
+int MakeRepPluginInfoToServer()
+{
+    // 用于循环上报插件信息
+    static int s_iLastSendPluginIdx = -1;
+
+    // 启动后首次调用, 全部重新上报下
+    if(s_iLastSendPluginIdx < 0) { 
+        for(int i=0; i < MAX_INNER_PLUS_COUNT; i++)  {
+            if(stConfig.pReportShm->stPluginInfo[i].iPluginId != 0)
+                stConfig.pReportShm->stPluginInfo[i].dwLastReportSelfInfoTime = 0; 
+        }    
+        s_iLastSendPluginIdx = 0; 
+    }    
+
+    CBasicPacket pkg; 
+
+    // head
+    ReqPkgHead stHead;
+    pkg.InitReqPkgHead(&stHead, CMD_MONI_SEND_PLUGIN_INFO);
+
+    // cmd content
+    static char sContentBuf[1000] = {0}; 
+    MonitorRepPluginInfoContent stInfo;
+    memset(&stInfo, 0, MYSIZEOF(stInfo));
+    uint16_t wContentLen = sizeof(stInfo);
+
+    char *pbuf = sContentBuf+sizeof(stInfo);
+    TRepPluginInfoFirst stPluginFirst;
+    TRepPluginInfo stPlugin;
+    int i = s_iLastSendPluginIdx, j = 0; 
+    for(j=0; wContentLen < 1000-sizeof(TRepPluginInfoFirst) && j < MAX_INNER_PLUS_COUNT; j++) 
+    {
+        if(stConfig.pReportShm->stPluginInfo[i].iPluginId != 0)
+        {
+            if(stConfig.pReportShm->stPluginInfo[i].dwLastReportSelfInfoTime != 0) {
+                // 非首次上报信息
+                if(stConfig.pReportShm->stPluginInfo[i].dwLastReportAttrTime ==
+                    stConfig.pReportShm->stPluginInfo[i].dwRep_LastReportAttrTime
+                    && stConfig.pReportShm->stPluginInfo[i].dwLastReportLogTime ==
+                    stConfig.pReportShm->stPluginInfo[i].dwRep_LastReportLogTime
+                    && stConfig.pReportShm->stPluginInfo[i].dwLastHelloTime <
+                    stConfig.pReportShm->stPluginInfo[i].dwRep_LastHelloTime+15)
+                {
+                    // 信息没有变化，不用上报
+                    i++;
+                    if(i >= MAX_INNER_PLUS_COUNT)
+                        i = 0;
+                    continue;
+                }
+
+                stPlugin.iPluginId = htonl(stConfig.pReportShm->stPluginInfo[i].iPluginId);
+                stPlugin.dwLastReportAttrTime = htonl(stConfig.pReportShm->stPluginInfo[i].dwLastReportAttrTime);
+                stPlugin.dwLastReportLogTime = htonl(stConfig.pReportShm->stPluginInfo[i].dwLastReportLogTime);
+                stPlugin.dwLastHelloTime = htonl(stConfig.pReportShm->stPluginInfo[i].dwLastHelloTime);
+                *((uint8_t*)pbuf) = (uint8_t)sizeof(stPlugin);
+                pbuf += sizeof(uint8_t);
+                memcpy(pbuf, &stPlugin, sizeof(stPlugin));
+                pbuf += sizeof(stPlugin);
+                wContentLen += sizeof(uint8_t) + sizeof(stPlugin);
+                DEBUG_LOG("not first report plugin info, plugin:%d(%s)",
+                    stConfig.pReportShm->stPluginInfo[i].iPluginId, stConfig.pReportShm->stPluginInfo[i].szPlusName);
+            }else {
+                // 首次上报插件信息
+                stPluginFirst.iPluginId = htonl(stConfig.pReportShm->stPluginInfo[i].iPluginId);
+                strcpy(stPluginFirst.szVersion, stConfig.pReportShm->stPluginInfo[i].szVersion);
+                strcpy(stPluginFirst.szBuildVer, stConfig.pReportShm->stPluginInfo[i].szBuildVer);
+                stPluginFirst.iLibVerNum = htonl(stConfig.pReportShm->stPluginInfo[i].iLibVerNum);
+                stPluginFirst.dwLastReportAttrTime = htonl(stConfig.pReportShm->stPluginInfo[i].dwLastReportAttrTime);
+                stPluginFirst.dwLastReportLogTime = htonl(stConfig.pReportShm->stPluginInfo[i].dwLastReportLogTime);
+                stPluginFirst.dwPluginStartTime = htonl(stConfig.pReportShm->stPluginInfo[i].dwPluginStartTime);
+                stPluginFirst.dwLastHelloTime = htonl(stConfig.pReportShm->stPluginInfo[i].dwLastHelloTime);
+                stPluginFirst.bPluginNameLen = strlen(stConfig.pReportShm->stPluginInfo[i].szPlusName)+1;
+                *((uint8_t*)pbuf) = (uint8_t)sizeof(stPluginFirst)+stPluginFirst.bPluginNameLen;
+                pbuf += sizeof(uint8_t);
+                memcpy(pbuf, &stPluginFirst, sizeof(stPluginFirst));
+                pbuf += sizeof(stPluginFirst);
+                wContentLen += 1 + sizeof(stPluginFirst);
+
+                // 插件名
+                memcpy(pbuf, stConfig.pReportShm->stPluginInfo[i].szPlusName, stPluginFirst.bPluginNameLen);
+                pbuf += stPluginFirst.bPluginNameLen;
+                wContentLen += stPluginFirst.bPluginNameLen;
+                DEBUG_LOG("first report plugin info, plugin:%d(%s), plugin start:%s",
+                    stConfig.pReportShm->stPluginInfo[i].iPluginId,
+                    stConfig.pReportShm->stPluginInfo[i].szPlusName, uitodate(stPluginFirst.dwPluginStartTime));
+            }
+            stConfig.pReportShm->stPluginInfo[i].dwRep_LastReportAttrTime = stConfig.pReportShm->stPluginInfo[i].dwLastReportAttrTime;
+            stConfig.pReportShm->stPluginInfo[i].dwRep_LastReportLogTime = stConfig.pReportShm->stPluginInfo[i].dwLastReportLogTime;
+            stConfig.pReportShm->stPluginInfo[i].dwRep_LastHelloTime = stConfig.pReportShm->stPluginInfo[i].dwLastHelloTime;
+
+            stConfig.pReportShm->stPluginInfo[i].dwLastReportSelfInfoTime = stConfig.dwCurTime;
+            stInfo.bPluginCount++;
+       }
+        i++;
+        if(i >= MAX_INNER_PLUS_COUNT)
+            i = 0;
+    }
+    s_iLastSendPluginIdx = i;
+    if(stInfo.bPluginCount <= 0)
+        return 0;
+
+    memcpy(sContentBuf, &stInfo, sizeof(stInfo));
+    pkg.InitCmdContent((void*)sContentBuf, wContentLen);
+
+	// 签名
+	char sSig[MAX_SIGNATURE_LEN+MYSIZEOF(TSignature)]={0};
+	TSignature *psig = (TSignature*)sSig;
+	if(stConfig.iEnableEncryptData) {
+		MonitorCommSig stSigInfo;
+		stSigInfo.dwSeq = htonl(pkg.m_dwReqSeq);
+		stSigInfo.dwCmd = htonl(pkg.m_dwReqCmd);
+		if(InitSignature(psig, &stSigInfo, stConfig.pReportShm->sRandKey, MT_SIGNATURE_TYPE_COMMON) < 0)
+			return 0;
+	}
+	pkg.InitSignature(psig);
+
+	// tlv
+	char sTlvBuf[128];
+	TPkgBody *pbody = (TPkgBody*)sTlvBuf;
+	TlvMoniCommInfo stTlvInfo;
+	stTlvInfo.iMtClientIndex = htonl(stConfig.pReportShm->iMtClientIndex);
+	stTlvInfo.iMachineId = htonl(stConfig.pReportShm->iMachineId);
+	stTlvInfo.dwReserved_1 = htonl(stConfig.dwLocalIp);
+
+	int iTlvBodyLen = MYSIZEOF(TPkgBody);
+	iTlvBodyLen += SetWTlv(
+		pbody->stTlv, TLV_MONI_COMM_INFO, MYSIZEOF(stTlvInfo), (const char*)&stTlvInfo);
+	pbody->bTlvNum = 1;
+	pkg.InitPkgBody(pbody, iTlvBodyLen);
+    return pkg.MakeReqPkg(stConfig.pPkg, &stConfig.iPkgLen);
+}
+
+int DealRespRepPluginInfo(CBasicPacket &pkg)
+{
+    if(pkg.m_bRetCode != NO_ERROR) {
+        WARN_LOG("cmd report plugin ret failed ! (%d)", pkg.m_bRetCode);
+        return pkg.m_bRetCode;
+    }    
+
+    char sCmdContentBuf[2048] = {0}; 
+    int iBufLen = (int)(MYSIZEOF(sCmdContentBuf));
+    MonitorRepPluginInfoContentResp *presp = NULL;
+	if(stConfig.iEnableEncryptData) {
+		size_t iDecSigLen = 0;
+		aes_decipher_data((const uint8_t*)pkg.m_pstCmdContent, pkg.m_wCmdContentLen,
+			(uint8_t*)sCmdContentBuf, &iDecSigLen, (const uint8_t*)stConfig.pReportShm->sRandKey, AES_128);
+		iBufLen = iDecSigLen;
+		presp = (MonitorRepPluginInfoContentResp*)sCmdContentBuf;
+	}
+	else {
+		iBufLen = pkg.m_wCmdContentLen;
+    	presp = (MonitorRepPluginInfoContentResp*)pkg.m_pstCmdContent;
+	}
+
+    if(iBufLen < (int)MYSIZEOF(MonitorRepPluginInfoContentResp)) {
+        REQERR_LOG("check report plugin response data len failed %d < %d, encrypt:%d",
+            (int)MYSIZEOF(MonitorRepPluginInfoContentResp), iBufLen, stConfig.iEnableEncryptData);
+        return ERR_CHECK_DATA_FAILED;
+    }    
+
+    MonitorPluginCheckResult *pRlt = (MonitorPluginCheckResult*)(sCmdContentBuf+sizeof(MonitorRepPluginInfoContentResp));
+    int iOk = 0, iFail = 0; 
+    for(int i=0; i < presp->bPluginCount; i++) {
+        if(pRlt->bCheckResult) {
+            iFail++;
+            pRlt->iPluginId = ntohl(pRlt->iPluginId);
+            for(int j=0; j < MAX_INNER_PLUS_COUNT; j++) {
+                if(pRlt->iPluginId == stConfig.pReportShm->stPluginInfo[j].iPluginId) {
+                    stConfig.pReportShm->stPluginInfo[j].bCheckRet = 1;
+                    INFO_LOG("report plugin id:%d, name:%s check failed",
+                        pRlt->iPluginId, stConfig.pReportShm->stPluginInfo[j].szPlusName);
+                    break;
+                }
+            }
+        }
+        else
+            iOk++;
+        pRlt++;
+    }
+    DEBUG_LOG("report plugin info response, count:%d, ok:%d, fail:%d", presp->bPluginCount, iOk, iFail);
+    return 0;
+}
+
+static int ReportPluginInfoExpire(TimerNode *pNodeShm, unsigned uiDataLen, char *pData)
+{
+    PKGSESSION *pPkgSess = (PKGSESSION*)pNodeShm->sSessData;
+    ReqPkgHead *pHead = (ReqPkgHead*)(pData+1);
+    int iRet = 0; 
+
+    DEBUG_LOG("report plugin info(cmd:%d) to srv:%s timeout - socket:%d resend:%d", ntohl(pHead->dwCmd),
+        ipv4_addr_str(pPkgSess->stCmdSessData.plugin.dwConfigSrvIP), pPkgSess->iSockIndex, pHead->bResendTimes);
+    pHead->bResendTimes++;
+    if(pHead->bResendTimes > TRY_MAX_TIMES_PER_SERVER){
+        ERROR_LOG("report plugin info failed, server no response !");
+        return 0;
+    }    
+    else if(pHead->bResendTimes <= TRY_MAX_TIMES_PER_SERVER) {
+        pNodeShm->uiTimeOut *= 2;
+        if(pNodeShm->uiTimeOut > PKG_TIMEOUT_MAX_MS)
+            pNodeShm->uiTimeOut = PKG_TIMEOUT_MAX_MS;
+        iRet = SendPacket(pPkgSess->iSockIndex, NULL, pData, uiDataLen);
+    }    
+
+    if(iRet != (int)uiDataLen)
+        ERROR_LOG("SendPacket failed ! ret:%d packet length:%d", iRet, uiDataLen);
+    else {
+        pPkgSess->dwSendTimeSec = stConfig.stTimeCur.tv_sec;
+        pPkgSess->dwSendTimeUsec = stConfig.stTimeCur.tv_usec;
+        pPkgSess->bSessStatus = SESS_FLAG_WAIT_RESPONSE;
+    }   
+    iRet = UpdateTimer(pNodeShm, uiDataLen, pData);
+    if(iRet != 0) { 
+        ERROR_LOG("UpdateTimer failed packet length:%d ret:%d", uiDataLen, iRet);
+        return 0;
+    }
+    return 1;
+}
+
 int OnPkgExpire(TimerNode *pNodeShm, unsigned uiDataLen, char *pData)
 {
 	DEBUG_LOG("on expire - key:%u data len:%u", pNodeShm->uiKey, uiDataLen);
@@ -276,6 +562,10 @@ int OnPkgExpire(TimerNode *pNodeShm, unsigned uiDataLen, char *pData)
 
 		case CMD_MONI_SEND_LOG:
 			iRet = SendAppLogExpire(pNodeShm, uiDataLen, pData);
+			break;
+
+		case CMD_MONI_SEND_PLUGIN_INFO:
+			iRet = ReportPluginInfoExpire(pNodeShm, uiDataLen, pData);
 			break;
 
 		case CMD_MONI_SEND_STR_ATTR:
@@ -477,9 +767,11 @@ int DealResponseHelloFirst(CBasicPacket &pkg)
 	stConfig.pReportShm->dwLastHelloOkTime = stConfig.dwCurTime;
 	stConfig.pReportShm->wAttrServerPort = ntohs(presp->wAttrSrvPort);
 	stConfig.pReportShm->dwAttrSrvIp = presp->dwAttrSrvIp;
+	stConfig.pReportShm->iBindCloudUserId = ntohl(presp->iBindCloudUserId);
 
-	INFO_LOG("first hello response ok - client index:%d, machine:%d, enc:%d", 
-		stConfig.pReportShm->iMtClientIndex,  stConfig.pReportShm->iMachineId, stConfig.iEnableEncryptData);
+	INFO_LOG("first hello response ok - client index:%d, machine:%d, enc:%d, bind user:%d", 
+		stConfig.pReportShm->iMtClientIndex,  stConfig.pReportShm->iMachineId, stConfig.iEnableEncryptData,
+		stConfig.pReportShm->iBindCloudUserId);
 
 	TConfigItemList list;
 	TConfigItem *pitem = NULL;
@@ -521,6 +813,198 @@ static int CmpSLogConfig(const void *a, const void *b)
 static int CmpAppConfig(const void *a, const void *b)
 {
 	return ((AppInfo*)a)->iAppId - ((AppInfo*)b)->iAppId;
+}
+
+static int DownloadPluginPacket(CmdS2cPreInstallContentReq *pct, Json &jsret)
+{
+    std::ostringstream sInstallPath;
+    if(stConfig.szPlusPath[0] != '/') 
+        sInstallPath << stConfig.szCurPath << "/" << stConfig.szPlusPath << "/" << (const char*)(jsret["plugin_name"]);
+    else 
+        sInstallPath << stConfig.szPlusPath << "/" << (const char*)(jsret["plugin_name"]);
+
+    // 创建部署目录
+    std::ostringstream ss;
+    ss << "mkdir -p " << sInstallPath.str() << "; echo $?";
+    std::string strResult;
+    if(get_cmd_result(ss.str().c_str(), strResult) == 0 && strResult.length() > 0) {
+        if(strResult != "0") {
+            SendPreInstallStatusToServer(pct, EV_PREINSTALL_ERR_MKDIR);
+            WARN_LOG("preinstall plugin:%d, mkdir:%s failed, msg:%s",
+                pct->iPluginId, sInstallPath.str().c_str(), strerror(errno));
+            return 1;
+        }
+    }
+    else {
+        SendPreInstallStatusToServer(pct, EV_PREINSTALL_ERR_MKDIR);
+        WARN_LOG("preinstall plugin:%d, execute:%s failed, msg:%s", pct->iPluginId, ss.str().c_str(), strerror(errno));
+        return 2;
+    }
+
+    // 下载后压缩包名
+    std::ostringstream ss_local_name;
+    ss_local_name << (const char*)(jsret["plugin_name"]) << ".tar.gz";
+
+    // 使用 wget 执行下载
+    std::ostringstream ss_down;
+    ss_down << "cd " << sInstallPath.str() << "; wget -o plugin_download.log -T 30 -O " << ss_local_name.str();
+    ss_down << " http://" << stConfig.szCloudUrl << "/" << (const char*)(jsret["download_uri"]) << "; echo 0"; 
+    get_cmd_result(ss_down.str().c_str(), strResult);
+
+    // 检查插件压缩包是否存在
+    ss.str("");
+    ss << "cd " << sInstallPath.str() << ";";
+    ss << " [ -s " << ss_local_name.str() << " ] && echo 0 || echo 1";
+    get_cmd_result(ss.str().c_str(), strResult);
+    if(strResult != "0") {
+        SendPreInstallStatusToServer(pct, EV_PREINSTALL_ERR_DOWNLOAD_PACK);
+        WARN_LOG("preinstall plugin:%d, download failed, cmd:%s", pct->iPluginId, ss_down.str().c_str());
+        return 3;
+    }
+    jsret["local_tar_name"] = ss_local_name.str();
+    jsret["local_plugin_path"] = sInstallPath.str();
+
+	// 下载开源版配置文件
+	ss.str("");
+    ss_down.str("");
+	ss_local_name.str("");
+	ss_local_name << "xrk_" << (const char*)(jsret["plugin_name"]) << ".conf";
+    ss_down << "cd " << sInstallPath.str() << "; wget -o open_plugin_download.log -T 30 -O " << ss_local_name.str();
+    ss_down << " " << pct->sLocalCfgUrl << "; echo 0"; 
+    get_cmd_result(ss_down.str().c_str(), strResult);
+
+    // 检查插件开源版配置文件是否存在
+    ss.str("");
+    ss << "cd " << sInstallPath.str() << ";";
+    ss << " [ -s " << ss_local_name.str() << " ] && echo 0 || echo 1";
+    get_cmd_result(ss.str().c_str(), strResult);
+    if(strResult != "0") {
+        SendPreInstallStatusToServer(pct, EV_PREINSTALL_ERR_DOWNLOAD_OPEN_CFG);
+        WARN_LOG("preinstall plugin:%d, download open config file failed, cmd:%s", pct->iPluginId, ss_down.str().c_str());
+        return 4;
+    }
+
+    INFO_LOG("preinstall plugin:%d, get packet ok, local path:%s", pct->iPluginId, sInstallPath.str().c_str());
+    return 0;
+}
+
+static int InstallPluginPacket(CmdS2cPreInstallContentReq *pct, Json &jsret)
+{
+    // 解压压缩包，并检查是否存在部署脚本、配置文件、可执行文件
+    std::ostringstream ss;
+    ss << "cd " << (const char*)(jsret["local_plugin_path"]) << "; tar -zxf " 
+        << (const char*)(jsret["local_tar_name"]) << "; [ -s start.sh -a -s xrk_" 
+        << (const char*)(jsret["plugin_name"]) << " -a -s add_crontab.sh -a -s xrk_"
+        << (const char*)(jsret["plugin_name"]) << ".conf ] && echo 0 || echo 1";
+    std::string strResult;
+    get_cmd_result(ss.str().c_str(), strResult);
+    if(strResult != "0") {
+        WARN_LOG("preinstall plugin:%d failed, cmd:%s", pct->iPluginId, ss.str().c_str());
+        SendPreInstallStatusToServer(pct, EV_PREINSTALL_ERR_UNPACK);
+        return 1;
+    }
+
+    ss.str("");
+    ss << "cd " << (const char*)(jsret["local_plugin_path"]) << "; ./start.sh agent_check; echo $? ";
+    get_cmd_result(ss.str().c_str(), strResult);
+    if(strResult != "0") {
+        WARN_LOG("preinstall plugin:%d, start failed, cmd:%s", pct->iPluginId, ss.str().c_str());
+        SendPreInstallStatusToServer(pct, EV_PREINSTALL_ERR_START_PLUGIN);
+        return 2;
+    }
+    DEBUG_LOG("preinstall plugin:%d, start ok", pct->iPluginId);
+
+    // 添加 crontab 监控
+    ss.str("");
+    ss << "cd " << (const char*)(jsret["local_plugin_path"]) << "; ./add_crontab.sh;";
+    get_cmd_result(ss.str().c_str(), strResult);
+    if(strResult.find("failed") != std::string::npos) {
+        WARN_LOG("preinstall plugin:%d, add_crontab failed, result:%s, cmd:%s", 
+			pct->iPluginId, strResult.c_str(), ss.str().c_str());
+    }
+    SendPreInstallStatusToServer(pct, EV_PREINSTALL_CLIENT_START_PLUGIN);
+    return 0;
+}
+
+// s2c install plugin notify msg
+int DealPreInstallNotify(CBasicPacket &pkg)
+{
+	CmdS2cPreInstallContentReq *pct = NULL;
+	int iBufLen = 0;
+	if(stConfig.iEnableEncryptData) {
+		static char sCmdContentBuf[2048+1024] = {0};
+		size_t iDecSigLen = 0;
+		aes_decipher_data((const uint8_t*)pkg.m_pstCmdContent, pkg.m_wCmdContentLen,
+			(uint8_t*)sCmdContentBuf, &iDecSigLen, (const uint8_t*)stConfig.pReportShm->sRandKey, AES_128);
+		pct = (CmdS2cPreInstallContentReq*)sCmdContentBuf;
+		iBufLen = (int)iDecSigLen;
+	}
+	else {
+		pct = (CmdS2cPreInstallContentReq*)pkg.m_pstCmdContent;
+		iBufLen = pkg.m_wCmdContentLen;
+	}
+
+    if(iBufLen < (int)sizeof(CmdS2cPreInstallContentReq)
+		|| iBufLen != (int)(ntohl(pct->iUrlLen)+sizeof(CmdS2cPreInstallContentReq))) {
+        REQERR_LOG("check content failed, %d, %u-%d", 
+			iBufLen, MYSIZEOF(CmdS2cPreInstallContentReq), ntohl(pct->iUrlLen));
+        return ERR_INVALID_PACKET_LEN;
+    }
+
+    pct->iPluginId = ntohl(pct->iPluginId);
+    pct->iMachineId = ntohl(pct->iMachineId);
+    pct->iDbId = ntohl(pct->iDbId);
+	pct->iUrlLen = ntohl(pct->iUrlLen);
+	DEBUG_LOG("get preinstall notify msg, plugin:%d, machine:%d, db:%d, checkstr:%s", 
+		pct->iPluginId, pct->iMachineId, pct->iDbId, pct->sCheckStr);
+
+    // 上报一下进度
+    SendPreInstallStatusToServer(pct, EV_PREINSTALL_TO_CLIENT_OK);
+
+    std::ostringstream ss;
+    ss << "resp=`wget -t 1 -q -O - --dns-timeout=2 --connect-timeout=2 --read-timeout=5 \"http://" 
+        << stConfig.szCloudUrl << "/" << "cgi-bin/mt_slog_open?action=open_preinstall_plugin";
+    ss << "&os=" << stConfig.szOs << "&os_arc=" << stConfig.szOsArc << "&agent_ver=" << g_strVersion
+        << "&libc_ver=" << stConfig.szLibcVer << "&libcpp_ver=" << stConfig.szLibcppVer
+        << "&plugin=" << pct->iPluginId << "&user=" << stConfig.pReportShm->iBindCloudUserId << "\"`; echo $resp";
+
+    std::string strResult;
+    if(get_cmd_result(ss.str().c_str(), strResult) == 0 && strResult.length() > 0) {
+        Json jsrsp;
+        try{
+            size_t iParseIdx = 0;
+            jsrsp.Parse(strResult.c_str(), iParseIdx);
+            if(iParseIdx != strResult.size()) {
+                REQERR_LOG("preinstall plugin:%d, parse json:%s failed, %lu != %lu", 
+                    pct->iPluginId, strResult.c_str(), iParseIdx, strResult.size());
+                SendPreInstallStatusToServer(pct, EV_PREINSTALL_ERR_GET_URL_PARSE_RET);
+            }
+            else if((int)(jsrsp["ret"]) != 0) {
+                REQERR_LOG("preinstall plugin:%d, get url failed, ret:%s", pct->iPluginId, strResult.c_str());
+                SendPreInstallStatusToServer(pct, EV_PREINSTALL_ERR_GET_URL_RET);
+            }
+        }catch(Exception e) {
+            SendPreInstallStatusToServer(pct, EV_PREINSTALL_ERR_GET_URL_PARSE_RET);
+            REQERR_LOG("preinstall plugin:%d, js:%s, json exception:%s", 
+                pct->iPluginId, strResult.c_str(), e.ToString().c_str());
+            return 0;
+        };
+
+        if((int)(jsrsp["ret"]) == 0) {
+            SendPreInstallStatusToServer(pct, EV_PREINSTALL_CLIENT_GET_DOWN_URL);
+            if(DownloadPluginPacket(pct, jsrsp) == 0) {
+                SendPreInstallStatusToServer(pct, EV_PREINSTALL_CLIENT_GET_PACKET);
+                InstallPluginPacket(pct, jsrsp);
+                // 切回工作目录
+                chdir(stConfig.szCurPath);
+            }
+        }
+    }
+    else {
+        REQERR_LOG("get preinstall packet url failed, plugin:%d, cmd:%s", pct->iPluginId, ss.str().c_str());
+        SendPreInstallStatusToServer(pct, EV_PREINSTALL_ERR_GET_URL);
+    }
+	return 0;
 }
 
 int DealRespCheckLogConfig(CBasicPacket &pkg)

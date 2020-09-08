@@ -3034,12 +3034,17 @@ static int MakePluginConfFile_def(Json &plug_info, ostringstream &oAbsFile)
     FCGI_fprintf(fp, "#该文件为字符云监控系统插件部署配置文件, 在部署插件时需要该文件\r\n");
     FCGI_fprintf(fp, "#如您修改了该文件, 插件升级重新部署时注意合并修改到新配置文件\r\n");
     FCGI_fprintf(fp, "#\r\n");
+	FCGI_fprintf(fp, "#适用版本: 开源版\r\n");
+	FCGI_fprintf(fp, "#插件显示名: %s\r\n", (const char*)(plug_info["show_name"]));
     FCGI_fprintf(fp, "#插件名: %s\r\n", (const char*)(plug_info["plus_name"]));
     FCGI_fprintf(fp, "#插件ID: %u\r\n", (int)(plug_info["plugin_id"]));
     FCGI_fprintf(fp, "#文件版本: %s\r\n", (const char*)(plug_info["plus_version"]));
     FCGI_fprintf(fp, "#\r\n");
     FCGI_fprintf(fp, "###########################################################################\r\n");
     FCGI_fprintf(fp, "\r\n");
+    FCGI_fprintf(fp, "\r\n");
+	FCGI_fprintf(fp, "#适用云版本(开源版请在您部署的开源版控制台生成) \r\n");
+	FCGI_fprintf(fp, "XRK_PLUGIN_CONFIG_PLAT open\r\n");
     FCGI_fprintf(fp, "\r\n");
     FCGI_fprintf(fp, "#配置文件版本 \r\n");
     FCGI_fprintf(fp, "XRK_PLUGIN_CONFIG_FILE_VER %s\r\n", (const char*)(plug_info["plus_version"]));
@@ -3077,6 +3082,10 @@ static int MakePluginConfFile_def(Json &plug_info, ostringstream &oAbsFile)
         FCGI_fprintf(fp, "\r\n");
     }
 
+	FCGI_fprintf(fp, "#插件ID\r\n");
+	FCGI_fprintf(fp, "XRK_PLUGIN_ID %d\r\n", (int)(plug_info["plugin_id"]));
+	FCGI_fprintf(fp, "#插件部署名\r\n");
+	FCGI_fprintf(fp, "XRK_PLUGIN_NAME %s\r\n", (const char*)(plug_info["plus_name"]));
     FCGI_fprintf(fp, "\r\n");
     FCGI_fclose(fp);
     DEBUG_LOG("create config file:%s ok", oAbsFile.str().c_str());
@@ -3218,15 +3227,47 @@ static int DealRefreshPreInstallStatus()
     return my_cgi_output(str.c_str(), stConfig);
 }
 
+static int MakeLocalPluginConf(
+	const char *pself_domain, int iPluginId, ostringstream &oDownUrl, ostringstream &oFile)
+{
+	Json js_local;
+	if(GetLocalPlugin(js_local, iPluginId) < 0)
+		return SLOG_ERROR_LINE;
+
+	if(pself_domain == NULL)
+		pself_domain = hdf_get_value(stConfig.cgi->hdf, "CGI.ServerAddress", "");
+	js_local["self_domain"] = pself_domain;
+
+	ostringstream ostrFile;
+	if(!strcmp((const char*)(js_local["dev_language"]), "javascript"))  {
+		ostrFile << stConfig.szCsPath << "download/" << (const char*)(js_local["plus_name"]);
+		ostrFile << "_conf.js";
+		oFile << (const char*)(js_local["plus_name"]) << "_conf.js";
+		oDownUrl << stConfig.szDocPath << "download/" << oFile.str();
+	}
+	else {
+		ostrFile << stConfig.szCsPath << "download/xrk_" << (const char*)(js_local["plus_name"]);
+		ostrFile << ".conf";
+		oFile << "xrk_" << (const char*)(js_local["plus_name"]) << ".conf";
+		oDownUrl << stConfig.szDocPath << "download/" << oFile.str();
+	}
+
+	if(MakePluginConfFile(js_local, ostrFile) < 0)
+		return SLOG_ERROR_LINE;
+	return 0;
+}
+
+
 // 整个安装过程需要执行的操作步骤数
 #define MAX_INSTALL_PLUGIN_PROC 8
 static int DealPreInstallPlugin(std::string &strCsTemplateFile)
 {
 	int mid = hdf_get_int_value(stConfig.cgi->hdf, "Query.mach", 0);
     int pid = hdf_get_int_value(stConfig.cgi->hdf, "Query.plugin", 0);
-	if(mid==0 || pid==0)
+	const char *pself_domain = hdf_get_value(stConfig.cgi->hdf, "Query.self_domain", NULL);
+	if(mid==0 || pid==0 || !pself_domain)
 	{
-		REQERR_LOG("invalid parameter mid:%d, pid:%d", mid, pid);
+		REQERR_LOG("invalid parameter mid:%d, pid:%d, local:%p", mid, pid, pself_domain);
 		hdf_set_value(stConfig.cgi->hdf, "err.msg", CGI_REQERR);
 		return SLOG_ERROR_LINE;
 	}
@@ -3281,6 +3322,16 @@ static int DealPreInstallPlugin(std::string &strCsTemplateFile)
     hdf_set_value(stConfig.cgi->hdf, "config.machine_name", ptmp ? ptmp : "unknow");
     hdf_set_int_value(stConfig.cgi->hdf, "config.max_install_proc", MAX_INSTALL_PLUGIN_PROC);;
 
+	if(pself_domain == NULL)
+		pself_domain = hdf_get_value(stConfig.cgi->hdf, "CGI.ServerAddress", "");
+
+	ostringstream oDownUrl;
+	ostringstream oFile;
+	if(MakeLocalPluginConf(pself_domain, pid, oDownUrl, oFile) < 0) {
+		WARN_LOG("MakeLocalPluginConf failed, plugin:%d", pid);
+		return SLOG_ERROR_LINE;
+	}
+
 	Query & qu = *stConfig.qu;
     std::ostringstream ss;
     ss << "select start_time,install_proc from mt_plugin_machine where machine_id=" << mid;
@@ -3314,6 +3365,7 @@ static int DealPreInstallPlugin(std::string &strCsTemplateFile)
         ss << ", start_time=" << stConfig.dwCurTime;
         ss << ", cfg_version=\'" << (const char*)(js_local["plus_version"]) << "\'";
         ss << ", build_version=\'" << (const char*)(js_local["plus_version"]) << "\'";
+		ss << ", local_cfg_url=\'http://" << pself_domain << oDownUrl.str() << "\'";
         if(!qu.execute(ss.str().c_str())) 
             hdf_set_int_value(stConfig.cgi->hdf, "config.install_proc", MAX_INSTALL_PLUGIN_PROC+1);
         else 
@@ -3438,32 +3490,12 @@ static int DealDownloadPluginConf(CGI *cgi)
 		return SLOG_ERROR_LINE;
 	}
 
-	Json js_local;
-	if(GetLocalPlugin(js_local, iPluginId) < 0)
-		return SLOG_ERROR_LINE;
-
-	if(pself_domain == NULL)
-		pself_domain = hdf_get_value(stConfig.cgi->hdf, "CGI.ServerAddress", "");
-	js_local["self_domain"] = pself_domain;
-
-	ostringstream ostrFile;
 	ostringstream oDownUrl;
 	ostringstream oFile;
-	if(!strcmp((const char*)(js_local["dev_language"]), "javascript"))  {
-		ostrFile << stConfig.szCsPath << "download/" << (const char*)(js_local["plus_name"]);
-		ostrFile << "_conf.js";
-		oFile << (const char*)(js_local["plus_name"]) << "_conf.js";
-		oDownUrl << stConfig.szDocPath << "download/" << oFile.str();
-	}
-	else {
-		ostrFile << stConfig.szCsPath << "download/xrk_" << (const char*)(js_local["plus_name"]);
-		ostrFile << ".conf";
-		oFile << "xrk_" << (const char*)(js_local["plus_name"]) << ".conf";
-		oDownUrl << stConfig.szDocPath << "download/" << oFile.str();
-	}
-
-	if(MakePluginConfFile(js_local, ostrFile) < 0)
+	if(MakeLocalPluginConf(pself_domain, iPluginId, oDownUrl, oFile) < 0) {
+		ERR_LOG("MakeLocalPluginConf failed, plugin:%d", iPluginId);
 		return SLOG_ERROR_LINE;
+	}
 
 	Json js;
 	js["ret"] = 0;
@@ -3479,8 +3511,7 @@ static int DealDownloadPluginConf(CGI *cgi)
 		return SLOG_ERROR_LINE;
 	}
 	string_clear(&str);
-	DEBUG_LOG("make plugin:%s config file:%s success", 
-		(const char*)(js_local["plus_name"]), ostrFile.str().c_str());
+	DEBUG_LOG("make plugin:%d config file:%s success", iPluginId, oFile.str().c_str());
 	return 0;
 }
 

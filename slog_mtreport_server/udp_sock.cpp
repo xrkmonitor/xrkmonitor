@@ -380,6 +380,129 @@ int CUdpSock::SetKeyToMachineTable()
 	return 0;
 }
 
+int CUdpSock::MakePreInstallNotifyPkg(TEventPreInstallPlugin &ev, std::ostringstream &sCfgUrl)
+{
+    // head
+    ReqPkgHead stHead;
+    InitReqPkgHead(&stHead, CMD_MONI_S2C_PRE_INSTALL_NOTIFY, stConfig.dwPkgSeq++);
+
+    // cmd content
+	char sBuf[1400];
+	CmdS2cPreInstallContentReq *req = (CmdS2cPreInstallContentReq*)sBuf;
+    req->iPluginId = htonl(ev.iPluginId);
+    req->iMachineId = htonl(ev.iMachineId);
+    req->iDbId = htonl(ev.iDbId);
+	if(m_pConfig->stSysCfg.sPreInstallCheckStr[0] != '\0')
+	    strncpy(req->sCheckStr, m_pConfig->stSysCfg.sPreInstallCheckStr, sizeof(req->sCheckStr)-1);
+	else
+		req->sCheckStr[0] = '\0';
+	if(sCfgUrl.str().length()+1 + sizeof(*req) > sizeof(sBuf)) {
+		ERR_LOG("need more space to save config url:%s", sCfgUrl.str().c_str());
+		return SLOG_ERROR_LINE;
+	}
+	req->iUrlLen = htonl(sCfgUrl.str().length()+1);
+	strcpy(req->sLocalCfgUrl, sCfgUrl.str().c_str());
+
+	if(m_pMtClient->bEnableEncryptData) {
+		static char sContentBuf[2048+256];
+		int iUseBufLen = (int)sizeof(*req)+ntohl(req->iUrlLen);
+		int iSigBufLen = ((iUseBufLen>>4)+1)<<4;
+		if(iSigBufLen > (int)sizeof(sContentBuf)) {
+			ERR_LOG("need more space %d > %d", iSigBufLen, (int)sizeof(sContentBuf));
+			return ERR_SERVER;
+		}
+		aes_cipher_data((const uint8_t*)req, iUseBufLen,
+			(uint8_t*)sContentBuf, (const uint8_t*)m_pMtClient->sRandKey, AES_128);
+		InitCmdContent(sContentBuf, iSigBufLen);
+	}
+	else {
+    	InitCmdContent(req, sizeof(*req)+ntohl(req->iUrlLen));
+	}
+
+    DEBUG_LOG("packet content length:%d, seq:%u", (int)(sizeof(*req)+ntohl(req->iUrlLen)), stHead.dwSeq);
+    return MakeReqPkg(NULL, NULL);
+}
+
+void CUdpSock::DealEventPreInstall(TEventPreInstallPlugin &ev) 
+{
+    m_pMtClient = slog.GetMtClientInfo(ev.iMachineId, (uint32_t*)NULL);
+    if(!m_pMtClient) {
+        ERR_LOG("not find machine client, machine:%d", ev.iMachineId);
+        return;
+    }    
+
+    MyQuery myqu(stConfig.qu, stConfig.db);
+    Query & qu = myqu.GetQuery();
+    std::ostringstream ss;
+    ss << "select install_proc,local_cfg_url from mt_plugin_machine where xrk_id=" << ev.iDbId << " and xrk_status=0";
+    if(!qu.get_result(ss.str().c_str()) || qu.num_rows() <= 0 || !qu.fetch_row()) {
+        WARN_LOG("check preinstall failed, machine:%d, plugin:%d", ev.iMachineId, ev.iPluginId);
+        qu.free_result();
+        return;
+    }    
+    if(qu.getval("install_proc") != EV_PREINSTALL_DB_RECV)
+    {    
+        WARN_LOG("check preinstall process failed, proc:%d != %d, machine:%d, plugin:%d",
+            qu.getval("install_proc"), EV_PREINSTALL_DB_RECV, ev.iMachineId, ev.iPluginId);
+        qu.free_result();
+        return;
+    }    
+
+	ss.str("");
+	ss << qu.getstr("local_cfg_url");
+    qu.free_result();
+
+    m_iCommLen = MakePreInstallNotifyPkg(ev, ss);
+    if(m_iCommLen > 0) {
+        SendToBuf(m_pMtClient->dwAddress, m_pMtClient->wBasePort, m_sCommBuf, m_iCommLen, 0);
+        INFO_LOG("send preinstall plugin event to client :%s:%d pkg len:%d, local cfg url:%s",
+            ipv4_addr_str(m_pMtClient->dwAddress), m_pMtClient->wBasePort, m_iCommLen, ss.str().c_str());
+
+        // 更新安装进度到 db 
+        ss.str("");
+        ss << "update mt_plugin_machine set install_proc=" << EV_PREINSTALL_TO_CLIENT_START;
+        ss << " where xrk_id=" << ev.iDbId << " and xrk_status=0";
+        qu.execute(ss.str().c_str());
+    }
+}
+
+void CUdpSock::DealEvent()
+{           
+    if(!SYNC_FLAG_CAS_GET(&(m_pConfig->stSysCfg.bEventModFlag)))
+        return;
+    TEventInfo stEvLocal;
+    for(int i=0; i < MAX_EVENT_COUNT; i++) {
+        if(m_pConfig->stSysCfg.stEvent[i].iEventType == EVENT_PREINSTALL_PLUGIN
+            && m_pConfig->stSysCfg.stEvent[i].dwExpireTime >= slog.m_stNow.tv_sec)
+        {
+            memcpy(&stEvLocal, m_pConfig->stSysCfg.stEvent+i, sizeof(stEvLocal));
+            m_pConfig->stSysCfg.stEvent[i].iEventType = 0;
+            break;
+        }
+    }  
+    SYNC_FLAG_CAS_FREE(m_pConfig->stSysCfg.bEventModFlag);
+   
+    if(stEvLocal.iEventType == EVENT_PREINSTALL_PLUGIN)  {
+        Init();
+        DealEventPreInstall(stEvLocal.ev.stPreInstall);
+    }
+}
+
+int CUdpSock::GetBindxrkmonitorUid()
+{
+	// 从内置管理员账号中获取云账号绑定情况
+	MyQuery myqu(stConfig.qu, stConfig.db);
+	Query & qu = myqu.GetQuery();
+	char sBuf[128] = {0};
+	snprintf(sBuf, sizeof(sBuf),
+		"select bind_xrkmonitor_uid from flogin_user where user_id=1 and login_type=1 and xrk_status=0");
+	int iBindXrkmonitorUid = 0;
+	if(qu.get_result(sBuf) && qu.fetch_row())
+		iBindXrkmonitorUid = qu.getval("bind_xrkmonitor_uid");
+	qu.free_result();
+	return iBindXrkmonitorUid;
+}
+
 int CUdpSock::DealCmdHelloFirst()
 {
 	if(m_wCmdContentLen != MYSIZEOF(MonitorHelloFirstContent)) {
@@ -435,6 +558,7 @@ int CUdpSock::DealCmdHelloFirst()
 	stResp.dwConnServerIp = m_pMtClient->dwAddress;
 	stResp.wAttrSrvPort = htons(stConfig.psysConfig->wAttrSrvPort);
 	stResp.dwAttrSrvIp = stConfig.psysConfig->dwAttrSrvMasterIp;
+	stResp.iBindCloudUserId = htonl(GetBindxrkmonitorUid());
 	INFO_LOG("set attr server %s:%d", ipv4_addr_str(stResp.dwAttrSrvIp), stConfig.psysConfig->wAttrSrvPort);
 	
 	// 下发下最新的接入服务器 slog_mtreport_server 地址
@@ -989,6 +1113,197 @@ int CUdpSock::SetHelloTimeToMachineTable()
     return 0;
 }
 
+int CUdpSock::DealCmdReportPluginInfo()
+{
+    std::map<int, uint8_t> mpPluginCheck;
+
+    if(m_wCmdContentLen <= MYSIZEOF(MonitorRepPluginInfoContent)) {
+        REQERR_LOG("invalid cmd content %u != %u", m_wCmdContentLen, MYSIZEOF(MonitorRepPluginInfoContent));
+        return ERR_INVALID_CMD_CONTENT;
+    }    
+
+    int iRet = 0; 
+    if((iRet=DealCommInfo()) != NO_ERROR)
+        return iRet;
+
+    MonitorRepPluginInfoContent *pctinfo = (MonitorRepPluginInfoContent*)m_pstCmdContent;
+    DEBUG_LOG("report plugin info, plugin count:%d", pctinfo->bPluginCount);
+
+    uint8_t *pInfo = (uint8_t*)(pctinfo->plugins), iItemLen = 0; 
+    TRepPluginInfoFirst *pstFirst;
+    TRepPluginInfo *pstInfo;
+    uint16_t wLen = m_wCmdContentLen-sizeof(MonitorRepPluginInfoContent);
+    int i = 0; 
+
+    MyQuery myqu(stConfig.qu, stConfig.db);
+    Query & qu = myqu.GetQuery();
+    std::ostringstream ss;
+    for(i=0; wLen > 0 && i < pctinfo->bPluginCount; i++, pInfo += 1+iItemLen, wLen -= 1+iItemLen) {
+        ss.str("");
+        iItemLen = *pInfo;
+        if(*pInfo == sizeof(*pstInfo)) {
+            pstInfo = (TRepPluginInfo*)(pInfo+1);
+            pstInfo->iPluginId = ntohl(pstInfo->iPluginId);
+            pstInfo->dwLastReportAttrTime = ntohl(pstInfo->dwLastReportAttrTime);
+            pstInfo->dwLastReportLogTime = ntohl(pstInfo->dwLastReportLogTime);
+            pstInfo->dwLastHelloTime = ntohl(pstInfo->dwLastHelloTime);
+            ss << "update mt_plugin_machine set last_hello_time=" << pstInfo->dwLastHelloTime << ", install_proc=0";
+            if(pstInfo->dwLastReportAttrTime > 0)
+                ss << ", last_attr_time=" << pstInfo->dwLastReportAttrTime;
+            if(pstInfo->dwLastReportLogTime > 0)
+                ss << ", last_log_time=" << pstInfo->dwLastReportLogTime;
+            ss << " where machine_id=" << m_iRemoteMachineId;
+            ss << " and open_plugin_id=" << pstInfo->iPluginId;
+            qu.execute(ss.str().c_str());
+            mpPluginCheck.insert(std::pair<int,int>(pstInfo->iPluginId, 0));
+            DEBUG_LOG("report plugin info ok - plugin:%d", pstInfo->iPluginId);
+        }else if(*pInfo > sizeof(*pstFirst))  {
+            pstFirst = (TRepPluginInfoFirst*)(pInfo+1);
+            pstFirst->iPluginId = ntohl(pstFirst->iPluginId);
+            pstFirst->iLibVerNum = ntohl(pstFirst->iLibVerNum);
+            pstFirst->dwLastReportAttrTime = ntohl(pstFirst->dwLastReportAttrTime);
+            pstFirst->dwLastReportLogTime = ntohl(pstFirst->dwLastReportLogTime);
+            pstFirst->dwPluginStartTime = ntohl(pstFirst->dwPluginStartTime);
+            pstFirst->dwLastHelloTime = ntohl(pstFirst->dwLastHelloTime);
+
+			/*
+            //  合法性校验
+			    // 这里可以校验下插件部署名
+				if(CheckPluginName() < 0) {
+	            	mpPluginCheck.insert(std::pair<int,int>(pstFirst->iPluginId, 1));
+					continue;
+				}
+			*/
+
+            ss << "select xrk_id from mt_plugin_machine where machine_id=" << m_iRemoteMachineId;
+            ss << " and open_plugin_id=" << pstFirst->iPluginId << " and xrk_status=0 ";
+            if(qu.get_result(ss.str().c_str()) && qu.num_rows() > 0) {
+                qu.fetch_row();
+                int id = qu.getval("xrk_id");
+                ss.str("");
+                qu.free_result();
+
+                ss << "update mt_plugin_machine set install_proc=0,last_hello_time=" << pstFirst->dwLastHelloTime;
+                if(pstFirst->dwLastReportAttrTime > 0)
+                    ss << ", last_attr_time=" << pstFirst->dwLastReportAttrTime;
+                if(pstFirst->dwLastReportLogTime > 0)
+                    ss << ", last_log_time=" << pstFirst->dwLastReportLogTime;
+                ss << ", lib_ver_num=" << pstFirst->iLibVerNum;
+                ss << ", cfg_version=\'" << pstFirst->szVersion << "\'";
+                ss << ", build_version=\'" << pstFirst->szBuildVer << "\'";
+                ss << ", start_time=" << pstFirst->dwPluginStartTime << " where xrk_id=" << id;
+                qu.execute(ss.str().c_str());
+            }
+            else {
+                ss.str("");
+                qu.free_result();
+
+                ss << "insert into mt_plugin_machine set last_attr_time=" << pstFirst->dwLastReportAttrTime;
+                ss << ", last_log_time=" << pstFirst->dwLastReportLogTime;
+                ss << ", last_hello_time=" << pstFirst->dwLastHelloTime;
+                ss << ", lib_ver_num=" << pstFirst->iLibVerNum;
+                ss << ", start_time=" << pstFirst->dwPluginStartTime;
+                ss << ", machine_id=" << m_iRemoteMachineId;
+                ss << ", open_plugin_id=" << pstFirst->iPluginId;
+                ss << ", cfg_version=\'" << pstFirst->szVersion << "\'";
+                ss << ", build_version=\'" << pstFirst->szBuildVer << "\'";
+                qu.execute(ss.str().c_str());
+            }
+            DEBUG_LOG("first report plugin info ok - plugin:%d", pstFirst->iPluginId);
+            mpPluginCheck.insert(std::pair<int,int>(pstFirst->iPluginId, 0));
+        }
+        else {
+            REQERR_LOG("invalid report plugin info, len:%d", *pInfo);
+            break;
+        }
+    }
+    if(i < pctinfo->bPluginCount || wLen > 0) {
+        REQERR_LOG("report plugin check failed, count:%d<%d, len:%u", i, pctinfo->bPluginCount, wLen);
+        return ERR_INVALID_PACKET;
+    }
+
+    // 成功响应
+    char sRspBuf[512] = {0};
+    MonitorRepPluginInfoContentResp *pstResp = (MonitorRepPluginInfoContentResp*)sRspBuf;
+    MonitorPluginCheckResult *pRlt = (MonitorPluginCheckResult*)(sRspBuf+sizeof(MonitorRepPluginInfoContentResp));
+    pstResp->bPluginCount=(int)(mpPluginCheck.size());
+    std::map<int, uint8_t>::iterator it = mpPluginCheck.begin();
+    int iOk = 0, iFail = 0;
+    for(; it != mpPluginCheck.end(); it++) {
+        pRlt->iPluginId = htonl(it->first);
+        pRlt->bCheckResult = it->second;
+        pRlt++;
+        if(it->second)
+            iFail++;
+        else
+            iOk++;
+    }
+    wLen = sizeof(MonitorRepPluginInfoContentResp)+sizeof(MonitorPluginCheckResult)*pstResp->bPluginCount;
+
+	if(m_pMtClient->bEnableEncryptData) {
+		static char sContentBuf[1024+256];
+		int iSigBufLen = ((wLen>>4)+1)<<4;
+		if(iSigBufLen > (int)sizeof(sContentBuf)) {
+			ERR_LOG("need more space %d > %d", iSigBufLen, (int)sizeof(sContentBuf));
+			return ERR_SERVER;
+		}
+		aes_cipher_data((const uint8_t*)pstResp,
+			wLen, (uint8_t*)sContentBuf, (const uint8_t*)m_pMtClient->sRandKey, AES_128);
+		InitCmdContent(sContentBuf, iSigBufLen);
+	}
+	else {
+		InitCmdContent(pstResp, wLen);
+	}
+
+    DEBUG_LOG("report plugin info, plugin count:%d, ok:%d, failed:%d, content len:%u",
+        pctinfo->bPluginCount, iOk, iFail, wLen);
+    AckToReq(NO_ERROR);
+    return NO_ERROR;
+}
+
+int CUdpSock::DealCmdPreInstallReport()
+{
+	if(m_wCmdContentLen != MYSIZEOF(CmdPreInstallReportContent)) {
+		REQERR_LOG("invalid cmd content %u != %u", m_wCmdContentLen, MYSIZEOF(CmdPreInstallReportContent));
+		return ERR_INVALID_CMD_CONTENT;
+	}
+
+	int iRet = 0;
+	if((iRet=DealCommInfo()) != NO_ERROR)
+		return iRet;
+
+	CmdPreInstallReportContent *pctinfo = (CmdPreInstallReportContent*)m_pstCmdContent;
+    pctinfo->iPluginId = ntohl(pctinfo->iPluginId);
+    pctinfo->iMachineId = ntohl(pctinfo->iMachineId);
+    pctinfo->iDbId = ntohl(pctinfo->iDbId);
+    pctinfo->iStatus = ntohl(pctinfo->iStatus);
+    if(m_pConfig->stSysCfg.sPreInstallCheckStr[0] != '\0'
+        && !IsStrEqual(pctinfo->sCheckStr, m_pConfig->stSysCfg.sPreInstallCheckStr)) {
+        REQERR_LOG("check preinstall string failed !");
+        return ERR_INVALID_PACKET;
+    }
+	DEBUG_LOG("report preinstall status, plugin:%d, status:%d", pctinfo->iPluginId, pctinfo->iStatus);
+
+    if((pctinfo->iStatus < EV_PREINSTALL_TO_CLIENT_OK || pctinfo->iStatus > EV_PREINSTALL_STATUS_MAX)
+        && (pctinfo->iStatus < EV_PREINSTALL_ERR_MIN || pctinfo->iStatus > EV_PREINSTALL_ERR_MAX))
+    {
+        REQERR_LOG("check preinstall status failed:%d (%d - %d or %d - %d)",
+            pctinfo->iStatus, EV_PREINSTALL_TO_CLIENT_OK, EV_PREINSTALL_STATUS_MAX,
+            EV_PREINSTALL_ERR_MIN, EV_PREINSTALL_ERR_MAX);
+        return ERR_INVALID_PACKET;
+    }
+
+	MyQuery myqu(stConfig.qu, stConfig.db);
+	Query & qu = myqu.GetQuery();
+
+    // install_proc < 上报的进度, 才更新避免包错乱时进度回退
+    std::ostringstream ss;
+    ss << "update mt_plugin_machine set install_proc=" << pctinfo->iStatus 
+        << " where xrk_id=" << pctinfo->iDbId << " and xrk_status=0 and install_proc < " << pctinfo->iStatus;
+    qu.execute(ss.str().c_str());
+    return 0;
+}
+
 void CUdpSock::OnRawData(const char *buf, size_t len, struct sockaddr *sa, socklen_t sa_len)
 {
 	int iRet = 0;
@@ -1030,6 +1345,14 @@ void CUdpSock::OnRawData(const char *buf, size_t len, struct sockaddr *sa, sockl
 
 		case CMD_MONI_CHECK_SYSTEM_CONFIG:
 			iRet = DealCmdCheckSystemConfig();
+			break;
+
+		case CMD_MONI_SEND_PLUGIN_INFO:
+			iRet = DealCmdReportPluginInfo();
+			break;
+
+		case CMD_MONI_PREINSTALL_REPORT:
+			DealCmdPreInstallReport();
 			break;
 
 		default:

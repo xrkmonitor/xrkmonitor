@@ -107,9 +107,11 @@ int MtReport_Plus_Init(const char *pConfigFile, const char *pBuildVersion)
         return ERROR_LINE;
     }
 
+	char szCheckVer[16] = {0};
     memset(&stPluginInfo, 0, sizeof(stPluginInfo));
 	if((iRet=LoadConfig(pConfigFile,
         "XRK_PLUGIN_NAME", CFG_STRING, stPluginInfo.szPlusName, "", sizeof(stPluginInfo.szPlusName),
+		"XRK_PLUGIN_CONFIG_PLAT", CFG_STRING, szCheckVer, "", sizeof(szCheckVer)-1,
         "XRK_PLUGIN_ID", CFG_INT, &(stPluginInfo.iPluginId), 0,
         "XRK_PLUGIN_CONFIG_FILE_VER", CFG_STRING, stPluginInfo.szVersion, "", sizeof(stPluginInfo.szVersion),
 		"XRK_PLUGIN_CONFIG_ID", CFG_INT, &iCfgId, 0,
@@ -119,6 +121,11 @@ int MtReport_Plus_Init(const char *pConfigFile, const char *pBuildVersion)
 		(void*)NULL)) < 0)
 	{
 		fprintf(stderr, "loadconfig from:%s failed, msg:%s !\n", pConfigFile, strerror(errno));
+		return ERROR_LINE;
+	}
+
+	if(strcmp(szCheckVer, "cloud")) {
+		fprintf(stderr, "check config version failed, %s != cloud", szCheckVer);
 		return ERROR_LINE;
 	}
 

@@ -314,7 +314,7 @@ static int GetBindxrkmonitorUid()
 	Query qu(*stConfig.db);
 	char sBuf[128] = {0};
 	snprintf(sBuf, sizeof(sBuf), 
-		"select bind_xrkmonitor_uid from flogin_user where user_id=1 and login_type=1"); 
+		"select bind_xrkmonitor_uid from flogin_user where user_id=1 and login_type=1 and xrk_status=0"); 
 	int iBindXrkmonitorUid = 0;
 	if(qu.get_result(sBuf) && qu.fetch_row()) 
 		iBindXrkmonitorUid = qu.getval("bind_xrkmonitor_uid");

@@ -71,6 +71,11 @@ typedef struct
 	uint16_t wAttrSrvPort;
 	char szNewMasterSrvIp[16];
 	uint16_t wNewSrvPort;
+	int32_t iBindCloudUserId;
+	int32_t iReserved_1;
+	int32_t iReserved_2;
+	uint32_t dwReserved_1;
+	uint32_t dwReserved_2;
 }MonitorHelloFirstContentResp; // resp
 
 // cmd hello struct -------------------------------
@@ -141,6 +146,72 @@ typedef struct
 	uint32_t dwConfigSeq;
 }ContentCheckSystemCfgReq; // req
 
+// 一键部署进度上报, server 不回包
+typedef struct {
+    int32_t iPluginId;
+    int32_t iMachineId;
+    int32_t iDbId;
+    int32_t iStatus;
+	char sCheckStr[16];
+    int32_t iReserved_1;
+    int32_t iReserved_2;
+    uint32_t dwReserved_1;
+    uint32_t dwReserved_2;
+}CmdPreInstallReportContent;
+
+// ---------------- cmd send plugin info 
+typedef struct{
+    int iPluginId; // 插件 id
+    char szVersion[12]; // 配置文件中的插件版本
+    char szBuildVer[12]; // 插件编译时的版本信息 
+    int iLibVerNum; // 使用的开发库版本编号
+    uint32_t dwLastReportAttrTime; // 最后一次 attr 上报时间
+    uint32_t dwLastReportLogTime; // 最后一次 log 上报时间
+    uint32_t dwLastHelloTime; // 最后一次 hello 时间
+    uint32_t dwPluginStartTime; // 插件启动时间
+    uint8_t bPluginNameLen; // 插件名长度
+    char sPluginName[0];
+}TRepPluginInfoFirst; // 首次上报结构
+
+typedef struct{
+    int iPluginId; // 插件 id
+    uint32_t dwLastReportAttrTime; // 最后一次 attr 上报时间
+    uint32_t dwLastReportLogTime; // 最后一次 log 上报时间
+    uint32_t dwLastHelloTime; // 最后一次 hello 时间
+}TRepPluginInfo; // 非首次上报结构
+
+typedef struct
+{
+    uint8_t bPluginCount;
+    char plugins[0];
+}MonitorRepPluginInfoContent;
+
+typedef struct {
+    int32_t iPluginId;
+    uint8_t bCheckResult;
+}MonitorPluginCheckResult;
+
+typedef struct
+{
+    uint8_t bPluginCount;
+    MonitorPluginCheckResult sCheckResult[0];
+}MonitorRepPluginInfoContentResp;
+
+//
+// 与 server 交互的数据结构相关定义 s2c ---
+typedef struct {
+    int32_t iPluginId;
+    int32_t iMachineId;
+    int32_t iDbId;
+	char sCheckStr[16];
+    int32_t iReserved_1;
+    int32_t iReserved_2;
+    uint32_t dwReserved_1;
+    uint32_t dwReserved_2;
+	int iUrlLen;
+	char sLocalCfgUrl[0];
+}CmdS2cPreInstallContentReq;
+
 #pragma pack()
 
 
@@ -152,13 +223,20 @@ class CUdpSock: public UdpSocket, public CBasicPacket
 		int32_t SendResponsePacket(const char*pkg, int len);
 		void OnRawData(const char *buf, size_t len, struct sockaddr *sa, socklen_t sa_len);
 		void SendRealInfo();
+		void DealEvent();
 
 	private:
+		int DealCmdPreInstallReport();
+		void DealEventPreInstall(TEventPreInstallPlugin &ev);
+		int MakePreInstallNotifyPkg(TEventPreInstallPlugin &ev, std::ostringstream &sCfgUrl);
+
+		int GetBindxrkmonitorUid();
 		int InitSignature(TSignature *psig, void *pdata, const char *pKey, int bSigType);
 		int32_t CheckSignature();
 		int DealCmdHelloFirst();
 		int DealCmdHello();
 		int DealCommInfo();
+		int DealCmdReportPluginInfo();
 		int DealCmdCheckLogConfig();
 		int SetLogConfigCheckInfo(ContentCheckLogConfig *pctinfo);
 		int DealCmdCheckAppInfo();
