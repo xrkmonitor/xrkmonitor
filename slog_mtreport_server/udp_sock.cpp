@@ -1138,8 +1138,8 @@ int CUdpSock::DealCmdReportPluginInfo()
     MyQuery myqu(stConfig.qu, stConfig.db);
     Query & qu = myqu.GetQuery();
     std::ostringstream ss;
+	const char *ptmp = NULL;
     for(i=0; wLen > 0 && i < pctinfo->bPluginCount; i++, pInfo += 1+iItemLen, wLen -= 1+iItemLen) {
-        ss.str("");
         iItemLen = *pInfo;
         if(*pInfo == sizeof(*pstInfo)) {
             pstInfo = (TRepPluginInfo*)(pInfo+1);
@@ -1147,6 +1147,7 @@ int CUdpSock::DealCmdReportPluginInfo()
             pstInfo->dwLastReportAttrTime = ntohl(pstInfo->dwLastReportAttrTime);
             pstInfo->dwLastReportLogTime = ntohl(pstInfo->dwLastReportLogTime);
             pstInfo->dwLastHelloTime = ntohl(pstInfo->dwLastHelloTime);
+        	ss.str("");
             ss << "update mt_plugin_machine set last_hello_time=" << pstInfo->dwLastHelloTime << ", install_proc=0";
             if(pstInfo->dwLastReportAttrTime > 0)
                 ss << ", last_attr_time=" << pstInfo->dwLastReportAttrTime;
@@ -1155,6 +1156,11 @@ int CUdpSock::DealCmdReportPluginInfo()
             ss << " where machine_id=" << m_iRemoteMachineId;
             ss << " and open_plugin_id=" << pstInfo->iPluginId;
             qu.execute(ss.str().c_str());
+			if(qu.affected_rows() < 1) {
+				WARN_LOG("update failed, affected_rows < 1, plugin:%d", pstInfo->iPluginId);
+				mpPluginCheck.insert(std::pair<int,int>(pstInfo->iPluginId, 1));
+				continue;
+			}
             mpPluginCheck.insert(std::pair<int,int>(pstInfo->iPluginId, 0));
             DEBUG_LOG("report plugin info ok - plugin:%d", pstInfo->iPluginId);
         }else if(*pInfo > sizeof(*pstFirst))  {
@@ -1166,23 +1172,38 @@ int CUdpSock::DealCmdReportPluginInfo()
             pstFirst->dwPluginStartTime = ntohl(pstFirst->dwPluginStartTime);
             pstFirst->dwLastHelloTime = ntohl(pstFirst->dwLastHelloTime);
 
-			/*
-            //  合法性校验
-			    // 这里可以校验下插件部署名
-				if(CheckPluginName() < 0) {
-	            	mpPluginCheck.insert(std::pair<int,int>(pstFirst->iPluginId, 1));
+            //  合法性校验, 是否安装，部署名是否匹配
+			ss.str("");
+			ss << "select plugin_name from mt_plugin where open_plugin_id=" << pstFirst->iPluginId
+				<< " and xrk_status=0";
+			if(qu.get_result(ss.str().c_str()) && qu.num_rows() > 0) {
+				ptmp = qu.getstr("plugin_name");
+				if(pstFirst->bPluginNameLen < 1 || 
+					(ptmp && strncmp(ptmp, pstFirst->sPluginName, pstFirst->bPluginNameLen)))
+				{
+					pstFirst->sPluginName[pstFirst->bPluginNameLen-1] = '\0';
+					WARN_LOG("plugin:%d, name not match:%s, %s", pstFirst->iPluginId, ptmp, pstFirst->sPluginName);
+					qu.free_result();
+					mpPluginCheck.insert(std::pair<int,int>(pstFirst->iPluginId, 1));
 					continue;
 				}
-			*/
+			}
+			else {
+				WARN_LOG("not find plugin:%d", pstFirst->iPluginId);
+				qu.free_result();
+				mpPluginCheck.insert(std::pair<int,int>(pstFirst->iPluginId, 1));
+				continue;
+			}
 
+			ss.str("");
             ss << "select xrk_id from mt_plugin_machine where machine_id=" << m_iRemoteMachineId;
             ss << " and open_plugin_id=" << pstFirst->iPluginId << " and xrk_status=0 ";
             if(qu.get_result(ss.str().c_str()) && qu.num_rows() > 0) {
                 qu.fetch_row();
                 int id = qu.getval("xrk_id");
-                ss.str("");
                 qu.free_result();
 
+                ss.str("");
                 ss << "update mt_plugin_machine set install_proc=0,last_hello_time=" << pstFirst->dwLastHelloTime;
                 if(pstFirst->dwLastReportAttrTime > 0)
                     ss << ", last_attr_time=" << pstFirst->dwLastReportAttrTime;
@@ -1195,9 +1216,9 @@ int CUdpSock::DealCmdReportPluginInfo()
                 qu.execute(ss.str().c_str());
             }
             else {
-                ss.str("");
                 qu.free_result();
 
+                ss.str("");
                 ss << "insert into mt_plugin_machine set last_attr_time=" << pstFirst->dwLastReportAttrTime;
                 ss << ", last_log_time=" << pstFirst->dwLastReportLogTime;
                 ss << ", last_hello_time=" << pstFirst->dwLastHelloTime;
@@ -1205,6 +1226,7 @@ int CUdpSock::DealCmdReportPluginInfo()
                 ss << ", start_time=" << pstFirst->dwPluginStartTime;
                 ss << ", machine_id=" << m_iRemoteMachineId;
                 ss << ", open_plugin_id=" << pstFirst->iPluginId;
+				ss << ", local_cfg_url=\'server add\'";
                 ss << ", cfg_version=\'" << pstFirst->szVersion << "\'";
                 ss << ", build_version=\'" << pstFirst->szBuildVer << "\'";
                 qu.execute(ss.str().c_str());

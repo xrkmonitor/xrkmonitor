@@ -123,8 +123,7 @@ int MtReport_Plus_Init(const char *pConfigFile, const char *pBuildVersion)
 		fprintf(stderr, "loadconfig from:%s failed, msg:%s !\n", pConfigFile, strerror(errno));
 		return ERROR_LINE;
 	}
-
-	if(strcmp(szCheckVer, "cloud")) {
+	if(strcmp(szCheckVer, "open")) {
 		fprintf(stderr, "check config version failed, %s != cloud", szCheckVer);
 		return ERROR_LINE;
 	}
@@ -146,20 +145,17 @@ int MtReport_Plus_Init(const char *pConfigFile, const char *pBuildVersion)
 
     MTREPORT_SHM *pshm = g_mtReport.pMtShm;
 
-    // 是否已存在
     for(i=0; i < MAX_INNER_PLUS_COUNT; i++) {
         if(pshm->stPluginInfo[i].iPluginId == stPluginInfo.iPluginId) {
             memcpy(pshm->stPluginInfo+i, &stPluginInfo, sizeof(stPluginInfo));
             break;
         }
     }
-
     if(i >= MAX_INNER_PLUS_COUNT) {
         if(pshm->iPluginInfoCount >= MAX_INNER_PLUS_COUNT) {
             fprintf(stderr, "plugin count over limit:%d\n", MAX_INNER_PLUS_COUNT);
             return ERROR_LINE;
         }
-        // 获取 flag 如果失败，可能是有插件初始化时异常退出导致
         for(i=0; i < 20; i++) {
             if(VARMEM_CAS_GET(&(pshm->bAddPluginInfoFlag)))
                 break;

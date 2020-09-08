@@ -211,7 +211,6 @@ typedef struct {
 
 typedef struct
 {
-    uint32_t dwUserMasterId;
     uint8_t bPluginCount;
     MonitorPluginCheckResult sCheckResult[0];
 }MonitorRepPluginInfoContentResp;

@@ -2688,6 +2688,8 @@ static int AddPlugin(Query &qu, Json &js_plugin)
 	AddParameter(&ppara, "create_time", stConfig.dwCurTime, "DB_CAL");
 	AddParameter(&ppara, "update_time", uitodate(stConfig.dwCurTime), NULL);
 	AddParameter(&ppara, "open_plugin_id", (int)(js_plugin["plugin_id"]), "DB_CAL");
+	AddParameter(&ppara, "plugin_name", (const char*)(js_plugin["plus_name"]), NULL);
+	AddParameter(&ppara, "plugin_show_name", (const char*)(js_plugin["show_name"]), NULL);
 	strSql = "insert into mt_plugin";
 	JoinParameter_Insert(&strSql, qu.GetMysql(), ppara);
 
@@ -3043,7 +3045,7 @@ static int MakePluginConfFile_def(Json &plug_info, ostringstream &oAbsFile)
     FCGI_fprintf(fp, "###########################################################################\r\n");
     FCGI_fprintf(fp, "\r\n");
     FCGI_fprintf(fp, "\r\n");
-	FCGI_fprintf(fp, "#适用云版本(开源版请在您部署的开源版控制台生成) \r\n");
+	FCGI_fprintf(fp, "#用于版本check, 当前适用开源版\r\n");
 	FCGI_fprintf(fp, "XRK_PLUGIN_CONFIG_PLAT open\r\n");
     FCGI_fprintf(fp, "\r\n");
     FCGI_fprintf(fp, "#配置文件版本 \r\n");
@@ -3701,8 +3703,13 @@ static int DealUpdatePlugin(CGI *cgi)
 	if(strcmp((const char*)(js_plugin["plus_url"]), (const char*)(js_local["plus_url"]))) {
 		js_local["plus_url"] = (const char*)(js_plugin["plus_url"]);
 	}
-	if(!IsStrEqual((const char*)(js_plugin["show_name"]), (const char*)(js_local["plugin_show_name"]))) {
-		js_local["plugin_show_name"] = (const char*)(js_plugin["show_name"]);
+	if(!IsStrEqual((const char*)(js_plugin["plus_name"]), (const char*)(js_local["plus_name"]))) {
+		js_local["plus_name"] = (const char*)(js_plugin["plus_name"]);
+		AddParameter(&ppara, "plugin_name", (const char*)(js_plugin["plus_name"]), NULL);
+	}
+	if(!IsStrEqual((const char*)(js_plugin["show_name"]), (const char*)(js_local["show_name"]))) {
+		js_local["show_name"] = (const char*)(js_plugin["show_name"]);
+		AddParameter(&ppara, "plugin_show_name", (const char*)(js_plugin["show_name"]), NULL);
 	}
 	if(!IsStrEqual((const char*)(js_plugin["install_tp_file"]), (const char*)(js_local["install_tp_file"]))) {
 		js_local["install_tp_file"] = (const char*)(js_plugin["install_tp_file"]);

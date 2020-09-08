@@ -474,13 +474,14 @@ int DealRespRepPluginInfo(CBasicPacket &pkg)
     	presp = (MonitorRepPluginInfoContentResp*)pkg.m_pstCmdContent;
 	}
 
-    if(iBufLen < (int)MYSIZEOF(MonitorRepPluginInfoContentResp)) {
-        REQERR_LOG("check report plugin response data len failed %d < %d, encrypt:%d",
-            (int)MYSIZEOF(MonitorRepPluginInfoContentResp), iBufLen, stConfig.iEnableEncryptData);
+    if(iBufLen != (int)(presp->bPluginCount*sizeof(MonitorPluginCheckResult)+sizeof(MonitorRepPluginInfoContentResp))) {
+        REQERR_LOG("check report plugin response data len failed %d != %d, encrypt:%d",
+            iBufLen, (int)(presp->bPluginCount*sizeof(MonitorPluginCheckResult)+sizeof(MonitorRepPluginInfoContentResp)),
+			stConfig.iEnableEncryptData);
         return ERR_CHECK_DATA_FAILED;
     }    
 
-    MonitorPluginCheckResult *pRlt = (MonitorPluginCheckResult*)(sCmdContentBuf+sizeof(MonitorRepPluginInfoContentResp));
+    MonitorPluginCheckResult *pRlt = (MonitorPluginCheckResult*)((char*)presp+sizeof(MonitorRepPluginInfoContentResp));
     int iOk = 0, iFail = 0; 
     for(int i=0; i < presp->bPluginCount; i++) {
         if(pRlt->bCheckResult) {
