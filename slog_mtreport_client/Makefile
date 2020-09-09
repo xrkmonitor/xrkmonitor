@@ -14,6 +14,7 @@ DEP := $(SRC:.cpp=.d)
 
 $(TARGETS): ${OBJ} 
 	$(CC) -o $@ $^ $(COMM_LIB) -lrt
+	strip $(TARGETS)
 
 clean: 
 	rm -f *.o

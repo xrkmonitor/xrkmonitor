@@ -30,8 +30,8 @@
 
 ****/
 
-#ifndef _MTREPORT_20141117_H_
-#define _MTREPORT_20141117_H_ (1)
+#ifndef _MTREPORT_141117_H_
+#define _MTREPORT_141117_H_ (1)
 
 #include <inttypes.h>
 #include <stdlib.h>
@@ -49,7 +49,7 @@ extern "C"
 #endif
 
 // 共享内存默认 key
-#define MT_REPORT_DEF_SHM_KEY 201412275
+#define MT_REPORT_DEF_SHM_KEY 1412275
 
 // 单条日志内容的最大长度
 #define MTREPORT_LOG_MAX_LENGTH 1024 
@@ -67,7 +67,9 @@ extern "C"
 // 内置监控插件初始化函数, 成功返回码大于等于 0， 失败返回小于 0
 // pConfigFile - 插件配置文件，在控制台自动生成，请登录控制台下载
 // pBuildVersion - 插件编译时的版本信息
-int MtReport_Plus_Init(const char *pConfigFile, const char *pBuildVersion);
+// iPluginId - 插件id
+// pName - 插件部署名
+int MtReport_Plus_Init(const char *pConfigFile, int iPluginId, const char *pName, const char *pBuildVersion);
 
 // 内置插件定时调用, agent 用于确定是否存活 
 // 返回非 0 表示插件服务器端验证错误，此时需要结束运行，检查配置后重启插件

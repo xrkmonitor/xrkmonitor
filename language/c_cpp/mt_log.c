@@ -90,7 +90,7 @@ int MtReport_Plus_Hello(uint32_t dwTime)
     return 3;
 }
 
-int MtReport_Plus_Init(const char *pConfigFile, const char *pBuildVersion)
+int MtReport_Plus_Init(const char *pConfigFile, int iPluginId, const char *pName, const char *pBuildVersion)
 {
     TInnerPlusInfo stPluginInfo;
 	int iRet = 0, i = 0;
@@ -99,13 +99,14 @@ int MtReport_Plus_Init(const char *pConfigFile, const char *pBuildVersion)
 	char szTypeString[300] = {0};
 	int32_t iCfgId = 0;
     int32_t iShmKey = 0;
+	int32_t iReCheck = 0;
 
 	if(g_mtReport.cIsInit)
 		return 1;
-    if(!pBuildVersion || pBuildVersion[0] == '\0') {
-        fprintf(stderr, "invalid pBuildVersion\n");
-        return ERROR_LINE;
-    }
+	if(!iPluginId || !pName || !pBuildVersion || pBuildVersion[0] == '\0') {
+		fprintf(stderr, "invalid parameter\n");
+		return ERROR_LINE;
+	}
 
 	char szCheckVer[16] = {0};
     memset(&stPluginInfo, 0, sizeof(stPluginInfo));
@@ -118,6 +119,7 @@ int MtReport_Plus_Init(const char *pConfigFile, const char *pBuildVersion)
 		"XRK_CONFIG_SHM_KEY", CFG_INT, &iShmKey, MT_REPORT_DEF_SHM_KEY,
 		"XRK_LOCAL_LOG_TYPE", CFG_STRING, szTypeString, "", sizeof(szTypeString),
 		"XRK_LOCAL_LOG_FILE", CFG_STRING, szLocalLogFile, "", sizeof(szLocalLogFile),
+		"XRK_PLUGIN_RE_CHECK", CFG_INT, &iReCheck, 0,
 		(void*)NULL)) < 0)
 	{
 		fprintf(stderr, "loadconfig from:%s failed, msg:%s !\n", pConfigFile, strerror(errno));
@@ -125,6 +127,17 @@ int MtReport_Plus_Init(const char *pConfigFile, const char *pBuildVersion)
 	}
 	if(strcmp(szCheckVer, "open")) {
 		fprintf(stderr, "check config version failed, %s != cloud", szCheckVer);
+		return ERROR_LINE;
+	}
+
+	if(stPluginInfo.iPluginId != iPluginId || strcmp(stPluginInfo.szPlusName, pName)) {
+		fprintf(stderr, "check config failed, plugin id:%d(%d), name:%s(%s)\n",
+			stPluginInfo.iPluginId, iPluginId, stPluginInfo.szPlusName, pName);
+		return ERROR_LINE;
+	}
+
+	if(!IsVersionOk(stPluginInfo.szVersion, pBuildVersion)) {
+		fprintf(stderr, "check version failed, %s < %s\n", stPluginInfo.szVersion, pBuildVersion);
 		return ERROR_LINE;
 	}
 
@@ -147,7 +160,13 @@ int MtReport_Plus_Init(const char *pConfigFile, const char *pBuildVersion)
 
     for(i=0; i < MAX_INNER_PLUS_COUNT; i++) {
         if(pshm->stPluginInfo[i].iPluginId == stPluginInfo.iPluginId) {
-            memcpy(pshm->stPluginInfo+i, &stPluginInfo, sizeof(stPluginInfo));
+			if(pshm->stPluginInfo[i].bCheckRet && (!iReCheck
+				|| pshm->stPluginInfo[i].dwLastReportSelfInfoTime+300 >= stPluginInfo.dwPluginStartTime))
+			{
+				fprintf(stderr, "last 5 minutes check failed or not config recheck !\n");
+				return ERROR_LINE;
+			}
+			memcpy(pshm->stPluginInfo+i, &stPluginInfo, sizeof(stPluginInfo));
             break;
         }
     }
@@ -665,7 +684,7 @@ int MtReport_Log(int iLogType, const char *pszFmt, ...)
 			}
 		}
 		if(i < MTLOG_SHM_DEF_COUNT)
-		    break;
+			break;
 		usleep(1000);
 	}
 

@@ -30,8 +30,8 @@
 
 ****/
 
-#ifndef _MT_SHM_20141117_H_
-#define _MT_SHM_20141117_H_ (1) 
+#ifndef _MT_SHM_1141117_H_
+#define _MT_SHM_1141117_H_ (1) 
 
 #include <inttypes.h>
 #include <sys/ipc.h>

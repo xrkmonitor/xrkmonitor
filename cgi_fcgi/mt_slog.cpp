@@ -3060,6 +3060,9 @@ static int MakePluginConfFile_def(Json &plug_info, ostringstream &oAbsFile)
     FCGI_fprintf(fp, "#插件本地日志文件, 注意插件需要有写权限\r\n");
     FCGI_fprintf(fp, "XRK_LOCAL_LOG_FILE ./%s.log\r\n", (const char*)(plug_info["plus_name"]));
     FCGI_fprintf(fp, "\r\n");
+	FCGI_fprintf(fp, "#插件校验错误时，如果设为1, 校验失败5分钟后可重新校验\r\n");
+	FCGI_fprintf(fp, "XRK_PLUGIN_RE_CHECK 0\r\n");
+    FCGI_fprintf(fp, "\r\n");
 
 	Json::json_list_t & jslist_cfg = plug_info["cfgs"].GetArray();
 	Json::json_list_t::iterator it_cfg = jslist_cfg.begin();
@@ -3086,10 +3089,14 @@ static int MakePluginConfFile_def(Json &plug_info, ostringstream &oAbsFile)
 
 	FCGI_fprintf(fp, "#插件ID\r\n");
 	FCGI_fprintf(fp, "XRK_PLUGIN_ID %d\r\n", (int)(plug_info["plugin_id"]));
+    FCGI_fprintf(fp, "\r\n");
 	FCGI_fprintf(fp, "#插件部署名\r\n");
 	FCGI_fprintf(fp, "XRK_PLUGIN_NAME %s\r\n", (const char*)(plug_info["plus_name"]));
     FCGI_fprintf(fp, "\r\n");
-    FCGI_fclose(fp);
+	FCGI_fprintf(fp, "#插件可执行版本\r\n");
+	FCGI_fprintf(fp, "XRK_PLUGIN_HEADER_FILE_VER %s\r\n", (const char*)(plug_info["plus_version"]));
+	FCGI_fprintf(fp, "\r\n");
+	FCGI_fclose(fp);
     DEBUG_LOG("create config file:%s ok", oAbsFile.str().c_str());
     return 0;
 }

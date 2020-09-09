@@ -30,8 +30,8 @@
 
 ****/
 
-#ifndef _SV_VMEM_20141117_H_
-#define _SV_VMEM_20141117_H_ (1) 
+#ifndef _SV_VMEM_1141117_H_
+#define _SV_VMEM_1141117_H_ (1) 
 
 #include <inttypes.h>
 
