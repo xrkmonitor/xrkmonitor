@@ -15,6 +15,7 @@ function dmapAddPlugin(cgip, machid, plugid)
 {
 	var url = cgip + "mt_slog?action=ddap_install_plugin&mach=" + machid;
     url += "&plugin=" + plugid;
+	url += "&self_domain=" + window.document.domain;
 	var op = {"mask":true,"maxable":false,"height":420,"width":600, "close":dmapAddPlugin_reload}; 
 	$.pdialog.open(url, "dlg_ddap_install_plugin", "一键部署插件进度", op); 
 }

@@ -51,6 +51,9 @@ function ddmipAddStatusStepShow(step)
         case 26:
             $('#ddmip_result').html('<font color="red">部署失败：agent 启动插件失败, 可能是插件与系统不兼容导致');
             break;
+        case 27:
+            $('#ddmip_result').html('<font color="red">部署失败：agent 下载开源版配置文件失败');
+            break;
 
         default:
             $('#ddmip_result').html('<font color="red">部署失败，进度错误：' + step);
