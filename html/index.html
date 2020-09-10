@@ -28,12 +28,6 @@
         </style>
 		<script type="text/javascript"> 
 		function iframeCheckLogin() { 
-			// 转移到 open.xrkmonitor.cn 域名, 避免与主域 .xrkmonitor.com cookie 冲突
-			if(document.domain.indexOf('open.xrkmonitor.com') != -1) {
-				top.location = 'http://open.xrkmonitor.cn';
-				return;
-			}
-
 			var g_support_var_css = false;
 			try {
 				document.documentElement.className = "js";
@@ -48,20 +42,13 @@
 			}catch(e) {
 			}
 
-			var ifm = document.createElement('iframe');
-			ifm.setAttribute('id', 'iframeId');
-			ifm.setAttribute('name', 'main_iframe');
-			ifm.setAttribute('frameborder', '0');
-			ifm.setAttribute('scrolling', 'auto');
 			if(g_support_var_css)
-				ifm.setAttribute('src', '/cgi-bin/slog_flogin?action=show_main&login_show=var_css');
+				location = '/cgi-bin/slog_flogin?action=show_main&login_show=var_css';
 			else
-				ifm.setAttribute('src', '/cgi-bin/slog_flogin?action=show_main&login_show=old');
-			document.body.appendChild(ifm);
+				location = '/cgi-bin/slog_flogin?action=show_main&login_show=old';
     	}
+		iframeCheckLogin();
 		</script>
 	</head>
-	<body onload='iframeCheckLogin();' style='overflow:hidden'> 
-	</body>
 </html>
 
