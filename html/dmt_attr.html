@@ -179,7 +179,6 @@ function daModAttr()
 	url += "&attr_inner=" + da_sel_attr.inner;
 	url += "&attr_type_id=" + da_sel_attr.attr_type_id;
 	url += "&excep_attr_mask=" + da_sel_attr.excep_attr_mask;
-	url += "&str_attr_type=" + da_sel_attr.str_attr_type;
 
 	var op = $.parseJSON('{"mask":true,"maxable":false,"height":360,"width":520}'); 
 	$.pdialog.open(url, "da_dlg_mod_attr", "修改监控点", op); 
