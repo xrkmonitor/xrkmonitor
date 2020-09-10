@@ -21,21 +21,12 @@ $(document).ready(function(){
             uhtml += "<td>" + lt[i].cfg_version + "</td>";
             uhtml += "<td>" + lt[i].build_version + "</td>";
             uhtml += "<td>" + lt[i].start_time + "</td>";
-            if(lt[i].run_time > 0) 
-                uhtml += "<td>" + dmtGetHumanTime(lt[i].run_time) + "</td>";
-            else
-                uhtml += "<td><font color='red'>已停止</font></td>";
+            uhtml += "<td>" + lt[i].last_hello_time + "</td>";
             uhtml += "<td>" + lt[i].last_attr_time + "</td>";
             uhtml += "<td>" + lt[i].last_log_time + "</td>";
         }
         $('#dms_machine_plugin_<?cs var:config.machine_id ?>').html(uhtml);
     }
-
-    <?cs if:config.run_time > 0 ?>
-        $('#dms_mach_run_<?cs var:config.machine_id ?>').html(dmtGetHumanTime(<?cs var:config.run_time ?>));
-    <?cs else ?>
-        $('#dms_mach_run_<?cs var:config.machine_id ?>').html("<font color='red'>已停止</font></td>");
-    <?cs /if ?>
 });
 
 </script>
@@ -50,7 +41,7 @@ $(document).ready(function(){
                     <th align='left' valign='top'>机器ID</th>
                     <th align='left' valign='top'>机器名称</th>
                     <th align='left' valign='top'>机器IP</th>
-                    <th align='left' valign='top'>agent 已运行</th>
+                    <th align='left' valign='top'>agent 启动时间</th>
                     <th align='left' valign='top'>最近心跳上报时间</th>
                     <th align='left' valign='top'>最近监控点上报时间</th>
                     <th align='left' valign='top'>最近日志上报时间</th>
@@ -70,7 +61,7 @@ $(document).ready(function(){
 				    <td><?cs var:config.machine_id ?></td>
 				    <td><?cs var:config.machine_name ?></td>
 				    <td><?cs var:config.machine_ip ?></td>
-                    <td id='dms_mach_run_<?cs var:config.machine_id ?>'></td>
+				    <td><?cs var:config.start_time ?></td>
 				    <td><?cs var:config.last_hello ?></td>
 				    <td><?cs var:config.last_attr ?></td>
 				    <td><?cs var:config.last_log ?></td>
@@ -89,8 +80,8 @@ $(document).ready(function(){
                     <th align='left' valign='top'>插件部署名</th>
                     <th align='left' valign='top'>配置文件版本</th>
                     <th align='left' valign='top'>源码版本</th>
-                    <th align='left' valign='top'>最近启动时间</th>
-                    <th align='left' valign='top'>已运行</th>
+                    <th align='left' valign='top'>插件启动时间</th>
+                    <th align='left' valign='top'>最近心跳时间</th>
                     <th align='left' valign='top'>最近监控点上报</th>
                     <th align='left' valign='top'>最近日志上报</th>
                 </tr>

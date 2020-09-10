@@ -12,9 +12,12 @@ $(document).ready(function(){
             uhtml += "<td>" + lt[i].id + "</td>";
             uhtml += "<td>" + lt[i].show_name + "</td>";
             uhtml += "<td>" + lt[i].name + "</td>";
-            uhtml += "<td>" + lt[i].run_os + "</td>";
-            uhtml += "<td>" + lt[i].language + "</td>";
-            uhtml += "<td>" + lt[i].auth + "</td>";
+			if(lt[i].run_os == 'All_os')
+				uhtml += "<td>跨平台</td>";
+			else
+				uhtml += "<td>" + lt[i].run_os + "</td>";
+			uhtml += "<td>" + lt[i].language + "</td>";
+			uhtml += "<td>" + lt[i].auth + "</td>";
             uhtml += "<td>" + lt[i].last_version + "</td>";
 		    uhtml += "<td class='detail'><a href='" + lt[i].desc_url + "' target='_blank'>详情</a></td>";
             if(lt[i].installed == 1)
@@ -55,6 +58,7 @@ $(document).ready(function(){
                     <th align='left' >libc版本</th>
                     <th align='left' >libcpp版本</th>
                     <th align='left' >agent 已运行</th>
+                    <th align='left' >最近心跳时间</th>
                 </tr>
             </thead>
             <tbody>
@@ -67,6 +71,7 @@ $(document).ready(function(){
 				    <td><?cs var:config.libc_ver ?></td>
 				    <td><?cs var:config.libcpp_ver ?></td>
                     <td id='dmap_mach_run_<?cs var:config.machine_id ?>'></td>
+				    <td><?cs var:config.last_hello_time ?></td>
 			    </tr>
             </tbody>
         </table>

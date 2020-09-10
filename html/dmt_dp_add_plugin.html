@@ -23,6 +23,7 @@ $(document).ready(function(){
                 uhtml += "<td>" + dmtGetHumanTime(lt[i].run_time) + "</td>";
             else
                 uhtml += "<td><font color='red'>未部署或未启动</font></td>";
+            uhtml += "<td>" + lt[i].last_hello_time + "</td>";
             if(lt[i].plugin_ver == 'no') {
                 if(lt[i].run_time > 0 && ('<?cs var:config.plugin_run_os ?>' == 'All_os' 
                     || lt[i].run_os == '<?cs var:config.plugin_run_os ?>' 
@@ -95,6 +96,7 @@ $(document).ready(function(){
                     <th align='left' >libc版本</th>
                     <th align='left' >libcpp版本</th>
                     <th align='left' >agent 已运行</th>
+                    <th align='left' >最近心跳时间</th>
                     <th align='left' >部署</th>
                 </tr>
             </thead>
