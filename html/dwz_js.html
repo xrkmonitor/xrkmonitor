@@ -3,7 +3,7 @@
 <?cs /if ?>
 
 <?cs if:config.xrkmonitor_debug==1 ?>
-<script src="<?cs var:config.docpath?>resource/js/dmt.comm.js?v=750" type="text/javascript"></script>
+<script src="<?cs var:config.docpath?>resource/js/dmt.comm.js?v=850" type="text/javascript"></script>
 <script src="<?cs var:config.docpath?>resource/js/jquery.js"></script>
 <script src="<?cs var:config.docpath?>resource/js/jquery.cookie.js"></script>
 <script src="<?cs var:config.docpath?>resource/js/jquery.validate.js"></script>
@@ -17,7 +17,7 @@
 <script src="<?cs var:config.docpath?>resource/js/echarts.min.js"></script>
 <script src="<?cs var:config.docpath?>resource/js/china.js"></script>
 <?cs else ?>
-<script src="<?cs var:config.docpath?>resource/js/dmt.comm.min.js?v=111120708" type="text/javascript"></script>
+<script src="<?cs var:config.docpath?>resource/js/dmt.comm.min.js?v=111110708" type="text/javascript"></script>
 <script src="<?cs var:config.docpath?>resource/js/jquery.min.js?v=2020506"></script>
 <script src="<?cs var:config.docpath?>resource/js/jquery.other.min.js?v=2020506"></script>
 <script src="<?cs var:config.docpath?>resource/js/dwz.all.min.js?v=20200826"></script>
@@ -124,6 +124,22 @@ $(document).ready(function(){
 			}
 
 			djOnReadyOk();
+
+			$('#dc_btn_main_full').click(function() { 
+				var f = dmtToggleFullScreen(document.documentElement);
+				if(f == 'error')
+					alertMsg.info('暂不支持您的浏览器进入全屏<br> (建议使用 Chrome 或者 Firefox 浏览器)');
+				else if(f == 'yes') {
+					$('#dc_btn_main_full').html("<i class='icon-resize-small icon-2x'></i>退出全屏");   
+					navTab._closeOtherTab();
+					setTimeout(function() {navTab.reload(); }, 1000);
+				}
+				else {
+					$('#dc_btn_main_full').html("<i class='icon-resize-full icon-2x'></i>进入全屏");    
+					navTab._closeOtherTab();
+					setTimeout(function() {navTab.reload(); }, 1000);
+				}
+			});
 		}
 	});
 });

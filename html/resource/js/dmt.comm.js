@@ -111,6 +111,53 @@ function dmtGetCookie(name)
 	if(arr != null) return unescape(arr[2]); return null;
 }
 
+function dmtCheckFull() 
+{
+	var isFull = document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement;
+	if (isFull == null) 
+		return false;
+	return isFull;
+}
+
+function dmtToggleFullScreen(element) 
+{  
+	var full = '';
+	if(dmtCheckFull()) {
+		var exitMethod = document.exitFullscreen || //W3C
+            document.mozCancelFullScreen || //FireFox
+            document.webkitExitFullscreen || //Chrome等
+            document.webkitExitFullscreen; //IE11
+        if (exitMethod) {
+            exitMethod.call(document);
+        } else if (typeof window.ActiveXObject !== "undefined") { //for Internet Explorer
+            var wscript = new ActiveXObject("WScript.Shell");
+            if (wscript !== null) {
+                wscript.SendKeys("{F11}");
+            }
+        }
+		full = 'no';
+	}
+	else {
+		var requestMethod = element.requestFullScreen || //W3C
+			element.webkitRequestFullScreen || //FireFox
+			element.mozRequestFullScreen || //Chrome等
+			element.msRequestFullScreen; //IE11
+		full = 'error';
+		if (requestMethod) {
+			requestMethod.call(element);
+			full = 'yes';
+		} else if (typeof window.ActiveXObject !== "undefined") { //for Internet Explorer
+			var wscript = new ActiveXObject("WScript.Shell");
+			if (wscript !== null) {
+				wscript.SendKeys("{F11}");
+				full = 'yes';
+			}
+		}
+	}
+	return full;
+}  
+
+
 // 清除 cookie
 function dmtDelCookie(name)
 {
