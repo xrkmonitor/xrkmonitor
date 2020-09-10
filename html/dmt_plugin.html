@@ -111,8 +111,12 @@ function <?cs var:config.plugin_pre ?>_GetInstallPluginShowInfo(idx, plugin, loc
 		shtml += " onclick='return <?cs var:config.plugin_pre ?>SetSelplugin(" + idx + ")' >";
 
 	shtml += "<div class='pluginImg'><img src='";
-	if(plugin.pic != "" && plugin.pic != null) 
-		shtml += '<?cs var:config.xrkmonitor_url ?>'+plugin.pic;
+	if(plugin.pic != "" && plugin.pic != null) {
+		if(plugin.pic.indexOf("http://") != -1)
+			shtml += plugin.pic;
+		else
+			shtml += '<?cs var:config.xrkmonitor_url ?>'+plugin.pic;
+	}
 	else
 		shtml += '<?cs var:config.xrkmonitor_url ?>/monitor/download/plugin/plugin_def_pic.png';
 	shtml += "'></img>";
@@ -299,14 +303,6 @@ function <?cs var:config.plugin_pre ?>UpdatePlugin(idx)
             if(js.has_pb_info == 0) {
                 alertMsg.info("插件更新信息获取失败 !");
                 return;
-            }
-            js.plugin_id = <?cs var:config.plugin_pre ?>_sel_plugin.plugin_id;
-            js.dev_language = <?cs var:config.plugin_pre ?>_sel_plugin.dev_language;
-            js.dest_os = <?cs var:config.plugin_pre ?>_sel_plugin.dest_os;
-            if(typeof <?cs var:config.plugin_pre ?>_sel_plugin.pic != "undefined"
-                && <?cs var:config.plugin_pre ?>_sel_plugin.pic.pic != "")
-            {
-                js.plugin_pic = <?cs var:config.plugin_pre ?>_sel_plugin.pic;
             }
             <?cs var:config.plugin_pre ?>UpdatePluginPb(js);
         }
