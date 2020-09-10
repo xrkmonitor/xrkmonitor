@@ -259,6 +259,11 @@ static int DealMachineAddPlugin()
     else
         hdf_set_int_value(stConfig.cgi->hdf, "config.run_time", 0);
 
+	if(pMachinfo->dwLastHelloTime > 0)
+		hdf_set_value(stConfig.cgi->hdf, "config.last_hello_time", uitodate(pMachinfo->dwLastHelloTime));
+	else
+		hdf_set_value(stConfig.cgi->hdf, "config.last_hello_time", "无");
+
     std::ostringstream ss;
     ss << "select agent_os,os_arc,libc_ver,libcpp_ver from mt_machine where xrk_id=" << id;
 	Query & qu = *stConfig.qu;
@@ -357,6 +362,8 @@ static int DealMachineAddPlugin()
 
 static int DealShowMachineStatus()
 {
+	static const std::string s_strHaveNo("无");
+
 	int id = hdf_get_int_value(stConfig.cgi->hdf, "Query.id", 0);
 	if(id==0)
 	{
@@ -394,19 +401,31 @@ static int DealShowMachineStatus()
     hdf_set_value(stConfig.cgi->hdf, "config.machine_ip", ips.c_str());
     const char *pname = MtReport_GetFromVmem_Local(pMachinfo->iNameVmemIdx);
     hdf_set_value(stConfig.cgi->hdf, "config.machine_name", pname ? pname : "unknow");
-    hdf_set_value(stConfig.cgi->hdf, "config.last_attr", uitodate(pMachinfo->dwLastReportAttrTime));
 
-    hdf_set_value(stConfig.cgi->hdf, "config.last_log", uitodate(pMachinfo->dwLastReportLogTime));
+	if(pMachinfo->dwLastReportAttrTime != 0)
+		hdf_set_value(stConfig.cgi->hdf, "config.last_attr", uitodate(pMachinfo->dwLastReportAttrTime));
+	else
+		hdf_set_value(stConfig.cgi->hdf, "config.last_attr", s_strHaveNo.c_str());
+
+	if(pMachinfo->dwLastReportLogTime != 0)
+		hdf_set_value(stConfig.cgi->hdf, "config.last_log", uitodate(pMachinfo->dwLastReportLogTime));
+	else
+		hdf_set_value(stConfig.cgi->hdf, "config.last_log", s_strHaveNo.c_str());
+
 	DEBUG_LOG("machine time, attr:%u, log:%u, hello:%u", pMachinfo->dwLastReportAttrTime,
 		pMachinfo->dwLastReportLogTime, pMachinfo->dwLastHelloTime);
 
-    hdf_set_value(stConfig.cgi->hdf, "config.last_hello", uitodate(pMachinfo->dwLastHelloTime));
-    hdf_set_int_value(stConfig.cgi->hdf, "config.rep_status", GetMachineRepStatus(pMachinfo, stConfig));
-    if(pMachinfo->dwLastHelloTime+300 >= stConfig.dwCurTime && stConfig.dwCurTime > pMachinfo->dwLastHelloTime) 
-        hdf_set_int_value(stConfig.cgi->hdf, "config.run_time", stConfig.dwCurTime-pMachinfo->dwAgentStartTime);
-    else
-        hdf_set_int_value(stConfig.cgi->hdf, "config.run_time", 0);
+	if(pMachinfo->dwLastHelloTime != 0)
+		hdf_set_value(stConfig.cgi->hdf, "config.last_hello", uitodate(pMachinfo->dwLastHelloTime));
+	else
+		hdf_set_value(stConfig.cgi->hdf, "config.last_hello", s_strHaveNo.c_str());
 
+	if(pMachinfo->dwAgentStartTime != 0)
+		hdf_set_value(stConfig.cgi->hdf, "config.start_time", uitodate(pMachinfo->dwAgentStartTime));
+	else
+		hdf_set_value(stConfig.cgi->hdf, "config.start_time", s_strHaveNo.c_str());
+
+    hdf_set_int_value(stConfig.cgi->hdf, "config.rep_status", GetMachineRepStatus(pMachinfo, stConfig));
 	Query & qu = *stConfig.qu;
     std::ostringstream ss;
     Json js;
@@ -428,14 +447,30 @@ static int DealShowMachineStatus()
 			info["show_name"] = myqu.getstr("plugin_show_name");
 			myqu.free_result();
 
-            info["last_attr_time"] = uitodate(qu.getuval("last_attr_time"));
-            info["last_log_time"] = uitodate(qu.getuval("last_log_time"));
-            info["start_time"] = uitodate(qu.getuval("start_time"));
+			if(qu.getuval("last_attr_time") != 0)
+				info["last_attr_time"] = uitodate(qu.getuval("last_attr_time"));
+			else
+				info["last_attr_time"] = s_strHaveNo.c_str();
+
+			if(qu.getuval("last_log_time") != 0)
+				info["last_log_time"] = uitodate(qu.getuval("last_log_time"));
+			else
+				info["last_log_time"] = s_strHaveNo.c_str();
+
+			if(qu.getuval("start_time") != 0)
+				info["start_time"] = uitodate(qu.getuval("start_time"));
+			else
+				info["start_time"] = s_strHaveNo.c_str();
+
+			if(qu.getuval("last_hello_time") != 0)
+				info["last_hello_time"] = uitodate(qu.getuval("last_hello_time"));
+			else
+				info["last_hello_time"] = s_strHaveNo.c_str();
+
             if(qu.getuval("last_hello_time")+300 >= stConfig.dwCurTime && stConfig.dwCurTime > qu.getuval("last_hello_time")) 
                 info["run_time"] = stConfig.dwCurTime-qu.getuval("start_time");
             else
                 info["run_time"] = 0;
-            info["last_hello_time"] = uitodate(qu.getuval("last_hello_time"));
             info["lib_ver_num"] = uitodate(qu.getuval("lib_ver_num"));
             info["cfg_version"] = qu.getstr("cfg_version");
             info["build_version"] = qu.getstr("build_version");

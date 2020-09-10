@@ -2583,7 +2583,7 @@ static int AddPluginLogModule(Query &qu, Json & js_plugin)
 	FloginInfo *pUserInfo = stConfig.stUser.puser_info;
 	IM_SQL_PARA* ppara = NULL;
 
-	const char *pname = js_plugin["plus_name"];
+	const char *pname = js_plugin["show_name"];
 	if(InitParameter(&ppara) < 0) {
 		ERR_LOG("sql parameter init failed !");
 		return SLOG_ERROR_LINE;
@@ -2623,7 +2623,7 @@ static int AddPluginLogConfig(Query &qu, Json & js_plugin)
 	FloginInfo *pUserInfo = stConfig.stUser.puser_info;
 	const int32_t iLogType = SLOG_LEVEL_INFO
 		|SLOG_LEVEL_WARNING|SLOG_LEVEL_REQERROR|SLOG_LEVEL_ERROR|SLOG_LEVEL_FATAL;
-	const char *pname = js_plugin["plus_name"];
+	const char *pname = js_plugin["show_name"];
 
 	IM_SQL_PARA* ppara = NULL;
 	if(InitParameter(&ppara) < 0) {
@@ -2719,7 +2719,7 @@ static int AddPluginParentAttrTypes(Query &qu, Json &js_plugin)
 		return SLOG_ERROR_LINE;
 	}
 	AddParameter(&ppara, "parent_type", PLUGIN_PARENT_ATTR_TYPE, "DB_CAL");
-	AddParameter(&ppara, "xrk_name", (const char *)(js_plugin["plus_name"]), NULL);
+	AddParameter(&ppara, "xrk_name", (const char *)(js_plugin["show_name"]), NULL);
 	AddParameter(&ppara, "type_pos", "1.1.1", NULL);
 	AddParameter(&ppara, "attr_desc", (const char *)(js_plugin["plus_desc"]), NULL);
 	AddParameter(&ppara, "create_user", stConfig.stUser.puser, NULL);
@@ -2736,7 +2736,7 @@ static int AddPluginParentAttrTypes(Query &qu, Json &js_plugin)
 		ERR_LOG("execute sql:%s failed, msg:%s", strSql.c_str(), qu.GetError().c_str());
 		return SLOG_ERROR_LINE;
 	}
-	DEBUG_LOG("add plugin:%s root attr type:%d", (const char *)(js_plugin["plus_name"]), (int)qu.insert_id());
+	DEBUG_LOG("add plugin:%s root attr type:%d", (const char *)(js_plugin["show_name"]), (int)qu.insert_id());
 	js_plugin["plugin_root_attr_type_id"] = (int)(qu.insert_id());
 	return 0;
 }
@@ -3464,12 +3464,19 @@ static int DealDpAddPlugin()
 
         	mach["ip"] = ips;
         	mach["name"] = qu.getstr("xrk_name");
+
 			uint32_t dwLastHelloTime =  qu.getuval("last_hello_time");
+			if(dwLastHelloTime > 0)
+				mach["last_hello_time"] = uitodate(dwLastHelloTime);
+			else
+				mach["last_hello_time"] = "无";
+
 			uint32_t dwAgentStartTime = qu.getuval("start_time");
         	if(dwLastHelloTime+300 >= stConfig.dwCurTime && stConfig.dwCurTime > dwLastHelloTime) 
         	    mach["run_time"] = stConfig.dwCurTime-dwAgentStartTime;
         	else
         	    mach["run_time"] = 0;
+
         	mach["run_os"] = qu.getstr("agent_os");
         	mach["os_arc"] = qu.getstr("os_arc");
         	mach["libc_ver"] = qu.getstr("libc_ver");
