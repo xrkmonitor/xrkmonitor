@@ -2583,7 +2583,7 @@ static int AddPluginLogModule(Query &qu, Json & js_plugin)
 	FloginInfo *pUserInfo = stConfig.stUser.puser_info;
 	IM_SQL_PARA* ppara = NULL;
 
-	const char *pname = js_plugin["show_name"];
+	const char *pname = js_plugin["plus_name"];
 	if(InitParameter(&ppara) < 0) {
 		ERR_LOG("sql parameter init failed !");
 		return SLOG_ERROR_LINE;
@@ -2623,7 +2623,7 @@ static int AddPluginLogConfig(Query &qu, Json & js_plugin)
 	FloginInfo *pUserInfo = stConfig.stUser.puser_info;
 	const int32_t iLogType = SLOG_LEVEL_INFO
 		|SLOG_LEVEL_WARNING|SLOG_LEVEL_REQERROR|SLOG_LEVEL_ERROR|SLOG_LEVEL_FATAL;
-	const char *pname = js_plugin["show_name"];
+	const char *pname = js_plugin["plus_name"];
 
 	IM_SQL_PARA* ppara = NULL;
 	if(InitParameter(&ppara) < 0) {
