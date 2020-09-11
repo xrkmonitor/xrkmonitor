@@ -17,8 +17,9 @@
 #include <fcntl.h>
 #include <inttypes.h>
 
-#include "mt_report.h" 
-#include "sv_cfg.h" 
+#include <mt_report.h>
+#include <sv_cfg.h>
+#include <mt_log.h>
 
 void Help()
 {
@@ -128,10 +129,10 @@ int no_file_report(int argc, char *argv[])
 int file_report(int argc, char *argv[])
 {
 	int iRet = 0;
-	int iCfgId = 0, iAttrId = 0;
-	char szTypeString[128] = {0};
-	char szLocalLogFile[256] = {0};
-	int iLogType = 0, iShmKey = MT_REPORT_DEF_SHM_KEY;
+	int iAttrId = 0;
+	int iPluginId = 0;
+    char szPluginName[64] = {0};
+    char szPluginVer[16] = {0};
 	char *ptmp = NULL;
 	char *pself = strdup(argv[0]);
 	if((ptmp=strrchr(pself, '/')) != NULL) {
@@ -145,23 +146,25 @@ int file_report(int argc, char *argv[])
 		return ERROR_LINE;
 	}
 
-	// 读取基础配置项 - 并调用上报初始化接口
-	if((iRet=LoadConfig(argv[2],
-		"XRK_PLUGIN_CONFIG_ID", CFG_INT, &iCfgId, 0,
-		"XRK_LOCAL_LOG_TYPE", CFG_STRING, szTypeString, "", MYSIZEOF(szTypeString),
-		"XRK_LOCAL_LOG_FILE", CFG_STRING, szLocalLogFile, "", sizeof(szLocalLogFile),
-		"XRK_MTREPORT_SHM_KEY", CFG_INT, &iShmKey, MT_REPORT_DEF_SHM_KEY, (void*)NULL
-		)) < 0)
-	{
-		fprintf(stderr, "loadconfig from:%s failed, msg:%s !\n", argv[2], strerror(errno));
-		return ERROR_LINE;
-	}
-	iLogType = GetLogTypeByStr(szTypeString);
-	if((iRet=MtReport_Init(iCfgId, szLocalLogFile, iLogType, iShmKey)) < 0) {
-		fprintf(stderr, "MtReport_Init failed, config file:%s, config id:%u, local log file:%s, shmkey:%d, ret:%d\n", 
-			argv[2], iCfgId, szLocalLogFile, iShmKey, iRet);
-		return ERROR_LINE;
-	}
+    // 工具程序特殊逻辑，需要先从配置文件里获取基础信息
+    if((iRet=LoadConfig(argv[2],
+        "XRK_PLUGIN_ID", CFG_INT, &iPluginId, 0,
+        "XRK_PLUGIN_NAME", CFG_STRING, szPluginName, "", MYSIZEOF(szPluginName),
+        "XRK_PLUGIN_HEADER_FILE_VER", CFG_STRING, szPluginVer, "", MYSIZEOF(szPluginVer),
+        NULL)) < 0)
+    {
+        fprintf(stderr, "loadconfig from:%s failed, msg:%s !\n", argv[2], strerror(errno));
+        return ERROR_LINE;
+    }
+    if(iPluginId <= 0 || szPluginName[0] == '\0' || szPluginVer[0] == '\0') {
+        fprintf(stderr, "read config from file:%s failed, plugin (id, name, version) !\n", argv[2]);
+        return ERROR_LINE;
+    }
+    
+    iRet = MtReport_Plus_Init(argv[2], iPluginId, szPluginName, szPluginVer);
+    if(iRet < 0 || g_mtReport.pMtShm == NULL) {
+        return ERROR_LINE;
+    }      
 
 	if(argc == 7) {
 		if(!strcmp(argv[3], "attr")) {
