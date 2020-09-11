@@ -3702,8 +3702,8 @@ static int DealUpdatePlugin(CGI *cgi)
 	if((bool)(js_plugin["b_open_source"]) != (bool)(js_local["b_open_source"])) {
 		js_local["b_open_source"] = (bool)(js_plugin["b_open_source"]);
 	}
-	if(strcmp((const char*)(js_plugin["dest_os"]), (const char*)(js_local["dest_os"]))) {
-		js_local["dest_os"] = (const char*)(js_plugin["dest_os"]);
+	if(strcmp((const char*)(js_plugin["run_os"]), (const char*)(js_local["run_os"]))) {
+		js_local["run_os"] = (const char*)(js_plugin["run_os"]);
 	}
 	if((int)(js_plugin["set_method"]) != (int)(js_local["set_method"])) {
 		js_local["set_method"] = (int)(js_plugin["set_method"]);
@@ -3711,8 +3711,8 @@ static int DealUpdatePlugin(CGI *cgi)
 	if(strcmp((const char*)(js_plugin["dev_language"]), (const char*)(js_local["dev_language"]))) {
 		js_local["dev_language"] = (const char*)(js_plugin["dev_language"]);
 	}
-	if(strcmp((const char*)(js_plugin["plugin_pic"]), (const char*)(js_local["plugin_pic"]))) {
-		js_local["plugin_pic"] = (const char*)(js_plugin["plugin_pic"]);
+	if(!IsStrEqual((const char*)(js_plugin["pic_filename"]), (const char*)(js_local["pic_filename"]))) {
+		js_local["pic_filename"] = (const char*)(js_plugin["pic_filename"]);
 	}
 	if(strcmp((const char*)(js_plugin["plus_url"]), (const char*)(js_local["plus_url"]))) {
 		js_local["plus_url"] = (const char*)(js_plugin["plus_url"]);
