@@ -56,7 +56,7 @@ static int InitFastCgi_first(CGIConfig &myConf)
 	}
 
 	if(LoadConfig(myConf.szConfigFile,
-	   "NEED_DB", CFG_INT, &g_iNeedDb, 0,
+	   "NEED_DB", CFG_INT, &g_iNeedDb, 1,
 		NULL) < 0){
 		ERR_LOG("loadconfig failed, from file:%s", myConf.szConfigFile);
 		return SLOG_ERROR_LINE;
@@ -157,6 +157,60 @@ void SendAttrToServer(char *pContent, int iContentLen, bool bIsStrAttr)
 	}
 }
 
+bool HasInstallPlugin(int iOpenPluginId)
+{
+	Query &qu = *stConfig.qu;
+	std::ostringstream ss;
+	ss << "select plugin_id from mt_plugin where open_plugin_id=" << iOpenPluginId 
+		<< " and xrk_status=0";
+    if(qu.get_result(ss.str().c_str()) && qu.num_rows() > 0) {
+		qu.free_result();
+		return true;
+	}
+	REQERR_LOG("not find plugin :%d on local", iOpenPluginId);
+	return false;
+}
+
+void DealPluginReport(int iPluginId, const char *pv, MachineInfo *pcltMachine, bool bLog)
+{
+    Query &qu = *stConfig.qu;
+    std::ostringstream ss;
+    ss << "select xrk_id from mt_plugin_machine where machine_id=" << pcltMachine->id;
+    ss << " and open_plugin_id=" << iPluginId << " and xrk_status=0 ";
+    if(qu.get_result(ss.str().c_str()) && qu.num_rows() > 0) {
+        qu.fetch_row();
+        int id = qu.getval("xrk_id");
+        ss.str("");
+        qu.free_result();
+
+        ss << "update mt_plugin_machine set install_proc=0,last_hello_time=" << slog.m_stNow.tv_sec;
+        if(bLog)
+            ss << ", last_log_time=" << slog.m_stNow.tv_sec;
+        else
+            ss << ", last_attr_time=" << slog.m_stNow.tv_sec;
+        ss << ", cfg_version=\'" << pv << "\'";
+        ss << ", build_version=\'" << pv << "\'";
+        ss << ", start_time=" << slog.m_stNow.tv_sec << " where xrk_id=" << id;
+        qu.execute(ss.str().c_str());
+    }
+    else {
+        ss.str("");
+        qu.free_result();
+        ss << "insert into mt_plugin_machine set ";
+        if(bLog)
+            ss << "last_log_time=" << slog.m_stNow.tv_sec;
+        else
+            ss << "last_attr_time=" << slog.m_stNow.tv_sec;
+        ss << ", last_hello_time=" << slog.m_stNow.tv_sec;
+        ss << ", start_time=" << slog.m_stNow.tv_sec;
+        ss << ", machine_id=" << pcltMachine->id;
+        ss << ", open_plugin_id=" << iPluginId;
+        ss << ", cfg_version=\'" << pv << "\'";
+        ss << ", build_version=\'" << pv << "\'";
+        qu.execute(ss.str().c_str());
+    }
+}
+
 int DealReport(CGI *cgi)
 {
 	const char *pdata = hdf_get_value(cgi->hdf, "Query.data", NULL);
@@ -176,6 +230,36 @@ int DealReport(CGI *cgi)
 		WARN_LOG("parse data failed, msg:%s", e.ToString().c_str());
 		return SLOG_ERROR_LINE;
 	}
+
+	MachineInfo *pcltMachine = slog.GetMachineInfoByIp((char*)"127.0.0.1");
+	if(!pcltMachine) {
+		ERR_LOG("have no common report machine(127.0.0.1)");
+		return ERR_SERVER;
+	}
+
+	if(jsdata.HasValue("attr_plugins")) {
+		char *psave = NULL;
+		char *plugins = strdup((const char*)(jsdata["attr_plugins"]));
+		char *pmem = plugins, *pg = NULL, *pv = NULL;
+        if(pmem) {
+            do {
+                pg = strtok_r(plugins, "|", &psave);
+                if(NULL == pg )
+                    break;
+                DEBUG_LOG("get attr plugin:%s", pg);
+                pv = strchr(pg, '_');
+                if(pv) {
+                    *pv = '\0'; 
+                    pv++;
+					if(!HasInstallPlugin(atoi(pg)))
+						return SLOG_ERROR_LINE;
+                    DealPluginReport(atoi(pg), pv, pcltMachine, false);
+                }
+                plugins = NULL;
+            }while(true);
+    		free(pmem);
+        }
+    }
 
 	AttrInfoBin *pAttrInfo = NULL;
 	Json::json_list_t::iterator it;
@@ -269,6 +353,13 @@ int DealReport(CGI *cgi)
 	if(jsdata.HasValue("logs")) {
 		static char sAppLogBuf[MAX_APP_LOG_PKG_LENGTH];
 		LogInfo *pLogBuf = NULL; 
+
+		if(jsdata.HasValue("logs_plugin_id") && jsdata.HasValue("logs_plugin_ver")) {
+			if(!HasInstallPlugin((int)(jsdata["logs_plugin_id"])))
+				return SLOG_ERROR_LINE;
+        	DealPluginReport((int)(jsdata["logs_plugin_id"]), (const char*)(jsdata["logs_plugin_ver"]), pcltMachine, true);
+		}
+
 		Json::json_list_t & jslist = jsdata["logs"].GetArray();
 		int iUseBufLen = 0, iTmpLen = 0, iLogType = 0;
 		const char  *pstr = NULL, *plogtype = NULL;
@@ -410,8 +501,8 @@ int main(int argc, char **argv, char **envp)
 		}
 
 		DEBUG_LOG("get action :%s from :%s", pAction, stConfig.remote);
+		hdf_set_value(stConfig.cgi->hdf, "cgiout.other.cros", "Access-Control-Allow-Origin:*");
 		if(!strcmp(pAction, "http_report_data")) {
-			hdf_set_value(stConfig.cgi->hdf, "cgiout.other.cros", "Access-Control-Allow-Origin:*");
 			iRet = DealReport(stConfig.cgi);
 		}
 		else {
