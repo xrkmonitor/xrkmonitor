@@ -156,6 +156,13 @@ int MtReport_Attr_Add(int32_t attr, int32_t iValue)
 	AttrNode *pNode = NULL;
 	int j=0;
 
+    if(g_mtReport.iPluginIndex >= 0 && g_mtReport.iPluginIndex < MAX_INNER_PLUS_COUNT) {
+        TInnerPlusInfo *plugin = g_mtReport.pMtShm->stPluginInfo + g_mtReport.iPluginIndex;
+        if(plugin->iPluginId != 0) {
+            plugin->dwLastReportAttrTime = time(NULL);
+        }
+    }
+
 check_again:
 	if(bCheckCount > 10) {
 		MtReport_Attr_Spec(238, 1);
@@ -207,6 +214,13 @@ int MtReport_Attr_Set(int32_t attr, int32_t iValue)
 	stRecord.iAttrID = attr;
 	AttrNode *pNode = NULL;
 	int j=0;
+
+    if(g_mtReport.iPluginIndex >= 0 && g_mtReport.iPluginIndex < MAX_INNER_PLUS_COUNT) {
+        TInnerPlusInfo *plugin = g_mtReport.pMtShm->stPluginInfo + g_mtReport.iPluginIndex;
+        if(plugin->iPluginId != 0) {
+            plugin->dwLastReportAttrTime = time(NULL);
+        }
+    }
 
 check_again:
 	if(bCheckCount > 10) {
@@ -261,6 +275,13 @@ int MtReport_Str_Attr_Add(int32_t attr, const char *pstr, int32_t iValue)
 	StrAttrNode *pNode = NULL;
 	uint32_t dwShortKey = attr+GetShortKeyByStr(stRecord.szStrInfo);
 
+    if(g_mtReport.iPluginIndex >= 0 && g_mtReport.iPluginIndex < MAX_INNER_PLUS_COUNT) {
+        TInnerPlusInfo *plugin = g_mtReport.pMtShm->stPluginInfo + g_mtReport.iPluginIndex;
+        if(plugin->iPluginId != 0) {
+            plugin->dwLastReportAttrTime = time(NULL);
+        }
+    }
+
 check_again:
 	if(bCheckCount > 10) {
 		MtReport_Attr_Spec(238, 1);
@@ -302,6 +323,13 @@ int MtReport_Str_Attr_Set(int32_t attr, const char *pstr, int32_t iValue)
 	strncpy(stRecord.szStrInfo, pstr, sizeof(stRecord.szStrInfo)-1);
 	StrAttrNode *pNode = NULL;
 	uint32_t dwShortKey = attr+GetShortKeyByStr(stRecord.szStrInfo);
+
+    if(g_mtReport.iPluginIndex >= 0 && g_mtReport.iPluginIndex < MAX_INNER_PLUS_COUNT) {
+        TInnerPlusInfo *plugin = g_mtReport.pMtShm->stPluginInfo + g_mtReport.iPluginIndex;
+        if(plugin->iPluginId != 0) {
+            plugin->dwLastReportAttrTime = time(NULL);
+        }
+    }
 
 check_again:
 	if(bCheckCount > 10) {
