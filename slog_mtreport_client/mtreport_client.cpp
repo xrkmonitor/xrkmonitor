@@ -1402,6 +1402,39 @@ void ShowSLogConfig(SLogConfig &str)
 	printf("\n");
 }
 
+void ShowPlugin()
+{
+	printf("\n\n--------------  plugin info as followed : ------------------\n");
+    {
+	    MTREPORT_SHM *pstr = g_mtReport.pMtShm;
+        SHOW_FIELD_VALUE_UINT(bAddPluginInfoFlag);
+        SHOW_FIELD_VALUE_UINT(iPluginInfoCount);
+    }
+    {
+        TInnerPlusInfo *pstr = NULL;
+        for(int i=0; i < MAX_INNER_PLUS_COUNT; i++) {
+            if(g_mtReport.pMtShm->stPluginInfo[i].iPluginId == 0)
+                continue;
+            printf("plugin info:%d\n", i);
+            pstr = g_mtReport.pMtShm->stPluginInfo+i;
+            SHOW_FIELD_VALUE_CSTR(szPlusName);
+            SHOW_FIELD_VALUE_INT(iPluginId);
+            SHOW_FIELD_VALUE_CSTR(szVersion);
+            SHOW_FIELD_VALUE_CSTR(szBuildVer);
+            SHOW_FIELD_VALUE_INT(iLibVerNum);
+            SHOW_FIELD_VALUE_UINT_TIME(dwLastReportAttrTime);
+            SHOW_FIELD_VALUE_UINT_TIME(dwLastReportLogTime);
+            SHOW_FIELD_VALUE_UINT_TIME(dwLastHelloTime);
+            SHOW_FIELD_VALUE_UINT_TIME(dwPluginStartTime);
+            SHOW_FIELD_VALUE_UINT_TIME(dwLastReportSelfInfoTime);
+            SHOW_FIELD_VALUE_UINT_TIME(dwRep_LastReportLogTime);
+            SHOW_FIELD_VALUE_UINT_TIME(dwRep_LastReportAttrTime);
+            SHOW_FIELD_VALUE_UINT_TIME(dwRep_LastHelloTime);
+            SHOW_FIELD_VALUE_UINT(bCheckRet);
+        }
+    }
+}
+
 void ShowShm()
 {
 	if(stConfig.pReportShm == NULL) {
@@ -1478,6 +1511,9 @@ void ShowShm()
 	SHOW_FIELD_VALUE_INT(cIsAgentRun);
 	SHOW_FIELD_VALUE_INT(cIsVmemInit);
 	SHOW_FIELD_VALUE_INT(iBindCloudUserId);
+
+    // plugin info
+    ShowPlugin();
 }
 
 void ShowMTLogCust(MTLogCust & str)
@@ -1635,6 +1671,7 @@ void ShowInfo(int argc, char* argv[])
 	if(!strcmp(argv[2], "help")) {
 		printf("\t show shm\n");
 		printf("\t show global\n");
+		printf("\t show plugin\n");
 		printf("\t show attr [count]\n");
 		printf("\t show strattr [count]\n");
 	}
@@ -1661,6 +1698,10 @@ void ShowInfo(int argc, char* argv[])
 			ShowStrAttr(10);
 		return;
 	}
+
+	if(!strcmp(argv[2], "plugin")) {
+        ShowPlugin();
+    }
 }
 
 void deal_exist_sig(int sig) 
