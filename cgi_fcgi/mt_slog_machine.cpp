@@ -252,7 +252,7 @@ static int DealMachineAddPlugin()
     hdf_set_value(stConfig.cgi->hdf, "config.machine_name", pname ? pname : "unknow");
 
     int iCurAgentRunTime = 0;
-    if(pMachinfo->dwLastHelloTime+300 >= stConfig.dwCurTime && stConfig.dwCurTime > pMachinfo->dwLastHelloTime)  {
+    if(pMachinfo->dwLastHelloTime+300 >= stConfig.dwCurTime && stConfig.dwCurTime > pMachinfo->dwAgentStartTime)  {
         hdf_set_int_value(stConfig.cgi->hdf, "config.run_time", stConfig.dwCurTime-pMachinfo->dwAgentStartTime);
         iCurAgentRunTime = stConfig.dwCurTime-pMachinfo->dwAgentStartTime;
     }
