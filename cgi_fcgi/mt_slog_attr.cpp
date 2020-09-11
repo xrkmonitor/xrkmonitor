@@ -212,7 +212,6 @@ static int GetAttrList(Json &js, AttrSearchInfo *pinfo=NULL)
 		attr["user_add"] = qu.getstr("user_add");
 		attr["add_time"] = qu.getstr("create_time");
 		attr["excep_attr_mask"] = qu.getval("excep_attr_mask");
-		attr["inner"] = qu.getval("inner_attr");
 		js["list"].Add(attr);
 	}
 	js["count"] = i; 
