@@ -1,0 +1,111 @@
+#ifndef _SOCKETS_Json_H
+#define _SOCKETS_Json_H
+
+#include <list>
+#include <map>
+#include <iostream>
+#include <inttypes.h>
+#include <sys/types.h>
+#include <stdint.h>
+#include <stddef.h>
+
+class Exception
+{
+    public:
+        Exception(const std::string& description);
+        virtual ~Exception() {}
+
+        virtual const std::string ToString() const;
+        Exception(const Exception& ) {} // copy constructor
+        Exception& operator=(const Exception& ) { return *this; } // assignment operator
+
+    private:
+        std::string m_description;
+};
+
+class Json
+{
+public:
+	typedef std::list<Json> json_list_t;
+	typedef std::map<std::string, Json> json_map_t;
+
+	typedef enum {
+		TYPE_UNKNOWN = 1,
+		TYPE_INTEGER,
+		TYPE_REAL,
+		TYPE_STRING,
+		TYPE_BOOLEAN,
+		TYPE_ARRAY,
+		TYPE_OBJECT } json_type_t;
+
+public:
+	/** Default constructor */
+	Json(); //m_type(TYPE_UNKNOWN);
+
+	/** Basic type constructors */
+	Json(char value);
+	Json(short value);
+	Json(unsigned int value); //m_type(TYPE_INTEGER), m_i_value(value);
+	Json(double value); //m_type(TYPE_REAL), m_d_value(value);
+	Json(const char *value); //m_type(TYPE_STRING), m_str_value(value);
+	Json(const std::string& value); //m_type(TYPE_STRING), m_str_value(value);
+	Json(bool value); //m_type(TYPE_BOOLEAN), m_b_value(value);
+	Json(uint64_t value);
+	Json(int value);
+
+	/** Complex type constructor (array, object) */
+	Json(json_type_t t); //m_type(t);
+
+	virtual ~Json();
+
+	char Parse(const char *buffer, size_t& index);
+
+	json_type_t Type() const;
+
+	bool HasValue(const std::string& name) const;
+
+	operator char() const;
+	operator short() const;
+	operator double() const;
+	operator std::string() const;
+	operator const char*() const;
+	operator bool() const;
+	operator uint64_t() const;
+	operator int32_t() const;
+	operator uint32_t() const;
+
+	const Json& operator[](const char *name) const;
+	Json& operator[](const char *name);
+
+	const Json& operator[](const std::string& name) const;
+	Json& operator[](const std::string& name);
+
+	void Add(Json data);
+
+	const std::string& GetString() const;
+
+	const json_list_t& GetArray() const;
+	json_list_t& GetArray();
+
+	const json_map_t& GetObject() const;
+	json_map_t& GetObject();
+
+	std::string ToString(bool quote = true) const;
+
+	void encode(std::string& src) const;
+	void decode(std::string& src) const;
+	std::string encode(const std::string&) const;
+
+private:
+	virtual int Token(const char *buffer, size_t& index, std::string& ord);
+	json_type_t m_type;
+	uint64_t m_i_value; 
+	double m_d_value;
+	std::string m_str_value;
+	bool m_b_value;
+	json_list_t m_array;
+	json_map_t m_object;
+};
+
+#endif // _SOCKETS_Json_H
+
