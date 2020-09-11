@@ -1194,6 +1194,7 @@ int CUdpSock::DealCmdReportPluginInfo()
 				mpPluginCheck.insert(std::pair<int,int>(pstFirst->iPluginId, 1));
 				continue;
 			}
+			qu.free_result();
 
 			ss.str("");
             ss << "select xrk_id from mt_plugin_machine where machine_id=" << m_iRemoteMachineId;
