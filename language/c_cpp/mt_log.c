@@ -166,7 +166,16 @@ int MtReport_Plus_Init(const char *pConfigFile, int iPluginId, const char *pName
 				fprintf(stderr, "last 5 minutes check failed or not config recheck !\n");
 				return ERROR_LINE;
 			}
-			memcpy(pshm->stPluginInfo+i, &stPluginInfo, sizeof(stPluginInfo));
+
+			if(strcmp(stPluginInfo.szPlusName, pshm->stPluginInfo[i].szPlusName))
+				strcpy(pshm->stPluginInfo[i].szPlusName, stPluginInfo.szPlusName);
+			if(strcmp(stPluginInfo.szVersion, pshm->stPluginInfo[i].szVersion))
+				strcpy(pshm->stPluginInfo[i].szVersion, stPluginInfo.szVersion);
+			if(strcmp(stPluginInfo.szBuildVer, pshm->stPluginInfo[i].szBuildVer))
+				strcpy(pshm->stPluginInfo[i].szBuildVer, stPluginInfo.szBuildVer);
+			pshm->stPluginInfo[i].dwPluginStartTime = stPluginInfo.dwPluginStartTime;
+			if(pshm->stPluginInfo[i].iLibVerNum != stPluginInfo.iLibVerNum)
+				pshm->stPluginInfo[i].iLibVerNum = stPluginInfo.iLibVerNum;
             break;
         }
     }
