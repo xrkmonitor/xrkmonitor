@@ -3413,15 +3413,13 @@ static int DealDpAddPlugin()
     hdf_set_value(stConfig.cgi->hdf, "config.plugin_run_os", (const char*)(js_local["run_os"]));
     hdf_set_value(stConfig.cgi->hdf, "config.plugin_auth", (const char*)(js_local["plugin_auth"]));
     hdf_set_value(stConfig.cgi->hdf, "config.plugin_language", (const char*)(js_local["dev_language"]));
-	std::ostringstream ss;
-    ss << "http://" << stConfig.szXrkmonitorSiteAddr << "/plugin/" << (const char*)(js_local["plus_name"]) << ".html";
-    hdf_set_value(stConfig.cgi->hdf, "config.plugin_desc_url", ss.str().c_str());
+    hdf_set_value(stConfig.cgi->hdf, "config.plugin_desc_url", (const char*)(js_local["plus_url"]));
 
     std::map<int, std::string> mpMachPluginStatus;
     std::map<int, std::string>::iterator itMachStatus;
 
 	Query qu(*stConfig.db);
-    ss.str("");
+	std::ostringstream ss;
     ss << "select machine_id,build_version from mt_plugin_machine where xrk_status=0 and install_proc=0 and open_plugin_id=" << id;
     if(qu.get_result(ss.str().c_str()) && qu.num_rows() > 0) {
         for(int i=0; i < qu.num_rows() && qu.fetch_row(); i++) {

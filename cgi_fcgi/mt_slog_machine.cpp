@@ -344,10 +344,7 @@ static int DealMachineAddPlugin()
             jp["auth"] = (const char*)(plugin["plugin_auth"]);
             jp["last_version"] = (const char*)(plugin["plus_version"]);
 			jp["run_os"] = (const char*)(plugin["run_os"]);
-
-            ss.str("");
-            ss << "http://" << stConfig.szXrkmonitorSiteAddr << "/plugin/" << (const char*)(jp["name"]) << ".html";
-            jp["desc_url"] = ss.str();
+            jp["desc_url"] = (const char*)(plugin["plus_url"]);
             js["plugins"].Add(jp);
             iPluginCount++;
         }
