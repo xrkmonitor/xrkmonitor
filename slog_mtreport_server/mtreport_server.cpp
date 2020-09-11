@@ -188,11 +188,13 @@ void ReadRealInfoFromDb()
 			WARN_LOG("get other info length 0");
 			stConfig.psysConfig->stRealInfoShm.dwTotalAccTimes = 0;
 			stConfig.psysConfig->stRealInfoShm.dwTodayAccTimes = 0;
+			qu.free_result();
 			return;
 		}
 		if(!stInfo.ParseFromArray(pval, lengths[0]))
 		{
 			WARN_LOG("ParseFromArray failed-%p-%lu", pval, lengths[0]);
+			qu.free_result();
 			return;
 		}
 		stConfig.psysConfig->stRealInfoShm.dwTotalAccTimes = stInfo.total_access_times();
