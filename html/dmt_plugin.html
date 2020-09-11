@@ -24,16 +24,10 @@ function <?cs var:config.plugin_pre ?>OnDownSrc()
         return;
     }
 
-	if(typeof <?cs var:config.plugin_pre ?>_sel_plugin.local_plugin_index == 'undefined') {
-		alertMsg.warn("请先安装插件");
-		return;
-	}
-	var local = g_LocalOpenPluginList.list[<?cs var:config.plugin_pre ?>_sel_plugin.local_plugin_index];
-
     var requrl = "<?cs var:config.xrkmonitor_url ?>/monitor/download/plugin/public/";
 	requrl += <?cs var:config.plugin_pre ?>_sel_plugin.plugin_name+ "/";
 	var filename = <?cs var:config.plugin_pre ?>_sel_plugin.plugin_name+ "_";
-	filename += local.ver + ".zip";
+	filename += <?cs var:config.plugin_pre ?>_sel_plugin.ver + ".zip";
 	requrl += filename;
 	saveAs(requrl, filename);
 
