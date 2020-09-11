@@ -3142,6 +3142,7 @@ static int MakePluginConfFile_js(Json & plug_info, ostringstream &oAbsFile)
 	FCGI_fprintf(fp, "//该文件为字符云监控系统 js 插件部署配置文件, 在部署插件时需要该文件\r\n");
 	FCGI_fprintf(fp, "//如您修改了该文件, 插件升级重新部署时注意合并修改到新配置文件\r\n");
 	FCGI_fprintf(fp, "//\r\n");
+	FCGI_fprintf(fp, "//适用版本: 开源版\r\n");
 	FCGI_fprintf(fp, "//插件名: %s\r\n", (const char*)(plug_info["plus_name"]));
 	FCGI_fprintf(fp, "//插件ID: %u\r\n", (int)(plug_info["plugin_id"]));
 	FCGI_fprintf(fp, "//文件版本: %s\r\n", (const char*)(plug_info["plus_version"]));
@@ -3150,6 +3151,7 @@ static int MakePluginConfFile_js(Json & plug_info, ostringstream &oAbsFile)
 	FCGI_fprintf(fp, "\r\n");
 	FCGI_fprintf(fp, "\r\n");
 	FCGI_fprintf(fp, "var xrk_config_%s = { \r\n", (const char*)(plug_info["plus_name"]));
+	FCGI_fprintf(fp, "    plugin_id:%d, // 插件id\r\n", (int)(plug_info["plugin_id"]));
 	FCGI_fprintf(fp, "    report_url:\'http://%s%s/mt_slog_reportinfo\', // 上报地址\r\n", 
 		(const char*)(plug_info["self_domain"]), stConfig.szCgiPath);
 	FCGI_fprintf(fp, "    plugin_name:\'%s\', // 插件名\r\n", (const char*)(plug_info["plus_name"]));
