@@ -404,7 +404,7 @@ CREATE TABLE `mt_machine` (
   `last_log_time` int(12) unsigned DEFAULT '0',
   `last_hello_time` int(12) unsigned DEFAULT '0',
   `start_time` int(12) unsigned DEFAULT '0',
-  `cmp_time` int(12) unsigned DEFAULT '0',
+  `cmp_time` varchar(32) DEFAULT NULL,
   `agent_version` varchar(20) DEFAULT NULL,
   `agent_os` varchar(32) DEFAULT NULL,
   `libc_ver` varchar(64) DEFAULT NULL,
