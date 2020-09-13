@@ -3481,7 +3481,7 @@ static int DealDpAddPlugin()
 				mach["last_hello_time"] = "无";
 
 			uint32_t dwAgentStartTime = qu.getuval("start_time");
-        	if(dwAgentStartTime > 0 && dwLastHelloTime+300 >= stConfig.dwCurTime && stConfig.dwCurTime > dwLastHelloTime) 
+        	if(dwAgentStartTime > 0 && dwLastHelloTime+300 >= stConfig.dwCurTime && stConfig.dwCurTime > dwAgentStartTime) 
         	    mach["run_time"] = stConfig.dwCurTime-dwAgentStartTime;
         	else
         	    mach["run_time"] = 0;
