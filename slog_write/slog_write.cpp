@@ -76,7 +76,6 @@ typedef struct
 	CSLogServerWriteFile *pstLogFile[MAX_SLOG_SHM_FILE_PER_PROCESS];
 	int iLocalMachineId;
 	MachineInfo *pLocalMachineInfo;
-	std::set<int> stAppWrite;
 }CONFIG;
 
 CONFIG stConfig;
@@ -100,7 +99,7 @@ int Init(const char *pFile = NULL)
 		"SLOG_PROCESS_COUNT", CFG_INT, &slog.m_iProcessCount, 4,
 		"ADD_WRITE_APP_LOG_KEY", CFG_INT, &stConfig.iAddWriteAppLogShmKey, 20190203,
 		"LOG_SIZE_PER_TIME", CFG_INT, &stConfig.iLogSizeOutPerTime, 5,
-		"CHECK_WRITE_PROCESS_TIME", CFG_INT, &stConfig.iCheckWriteProcessTime, 60,
+		"CHECK_WRITE_PROCESS_TIME", CFG_INT, &stConfig.iCheckWriteProcessTime, 300,
 		"WRITE_RECORDS_PER_LOOP", CFG_INT, &stConfig.iWriteRecordsPerLoop, 200,
 		(void*)NULL)) < 0)
 	{   
@@ -108,10 +107,10 @@ int Init(const char *pFile = NULL)
 		return SLOG_ERROR_LINE;
 	} 
 
-	if(stConfig.iCheckWriteProcessTime < 30)
+	if(stConfig.iCheckWriteProcessTime < 300)
 	{
 		WARN_LOG("CHECK_WRITE_PROCESS_TIME too small, change from:%d to 10", stConfig.iCheckWriteProcessTime);
-		stConfig.iCheckWriteProcessTime = 30;
+		stConfig.iCheckWriteProcessTime = 300;
 	}
 
 	if(stConfig.szLocalIp[0] == '\0' || INADDR_NONE == inet_addr(stConfig.szLocalIp))
@@ -206,12 +205,6 @@ void TryDispatchAppWrite(int j, uint32_t tmTmp)
 	if(!IS_SET_BIT(stConfig.pAppShmInfoList->stInfo[j].dwAppLogFlag, APPLOG_FLAG_LOG_WRITED) 
 		|| tmTmp-(uint32_t)stConfig.iCheckWriteProcessTime < stConfig.pAppShmInfoList->stInfo[j].dwLastTryWriteLogTime) 
 	{
-		if(tmTmp-(uint32_t)stConfig.iCheckWriteProcessTime < stConfig.pAppShmInfoList->stInfo[j].dwLastTryWriteLogTime
-			&& stConfig.stAppWrite.find(stConfig.pAppShmInfoList->stInfo[j].iAppId) == stConfig.stAppWrite.end()) 
-		{
-			stConfig.stAppWrite.insert(stConfig.pAppShmInfoList->stInfo[j].iAppId);
-		}
-
 		if(!stConfig.pAppShmInfoList->stInfo[j].bReadLogStatInfo)
 		{
 			CSLogServerWriteFile logFile(stConfig.pAppShmInfoList->stInfo+j, stConfig.szLogPath, 0);
@@ -227,9 +220,6 @@ void TryDispatchAppWrite(int j, uint32_t tmTmp)
 		}
 		return;
 	}
-	stConfig.pAppShmInfoList->stInfo[j].dwLastTryWriteLogTime = tmTmp;
-	CLEAR_BIT(stConfig.pAppShmInfoList->stInfo[j].dwAppLogFlag, APPLOG_FLAG_LOG_WRITED);
-
 	// 寻找一个相对空闲的进程，派发给其写日志
 	int jj=0, kk=-1;
 	for(kk=-1, jj=0; jj < slog.m_iProcessCount-1; jj++) 
@@ -253,6 +243,9 @@ void TryDispatchAppWrite(int j, uint32_t tmTmp)
 			stConfig.pAddWriteAppLogShm[kk].iProcessId,
 			stConfig.pAppShmInfoList->stInfo[j].iAppId, tmTmp, stConfig.iCheckWriteProcessTime, 
 			stConfig.pAppShmInfoList->stInfo[j].dwLastTryWriteLogTime);
+
+		stConfig.pAppShmInfoList->stInfo[j].dwLastTryWriteLogTime = tmTmp;
+		CLEAR_BIT(stConfig.pAppShmInfoList->stInfo[j].dwAppLogFlag, APPLOG_FLAG_LOG_WRITED);
 	}
 	else {
 		WARN_LOG("dispach write log - for app:%d failed !",
@@ -391,7 +384,7 @@ int main(int argc, char *argv[])
 				}
 
 				// 主进程分发逻辑，如果子进程写日志占用太多时间，可能导致某个app分发到两个子进程
-				if(time(NULL) > tmTmp+stConfig.iCheckWriteProcessTime-20)
+				if(time(NULL) > tmTmp+stConfig.iCheckWriteProcessTime-10)
 				{
 					INFO_LOG("process:%d write log records use too much time-:%d", 
 						slog.m_iProcessId, (int)(time(NULL)-tmTmp+stConfig.iCheckWriteProcessTime-2));
