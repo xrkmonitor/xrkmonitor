@@ -223,6 +223,11 @@
 	}
 
 	$(document).ready(function(){
+		if(document.domain.indexOf('open.xrkmonitor.com') != -1) {
+			top.location = 'http://open.xrkmonitor.cn';
+			return;
+		}
+
 		<?cs if:config.isdaemon ?>
 			<?cs if:config.free_uname ?>
 			$('#btn_login').focus();
