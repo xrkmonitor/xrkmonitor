@@ -369,7 +369,7 @@ int CUdpSock::SetKeyToMachineTable()
 	std::string strSql;
 	strSql = "update mt_machine set";
 	JoinParameter_Set(&strSql, qu.GetMysql(), ppara);
-	strSql += " where id=";
+	strSql += " where xrk_id=";
 	strSql += itoa(m_iRemoteMachineId);
 	ReleaseParameter(&ppara);
 	if(!qu.execute(strSql)) {
