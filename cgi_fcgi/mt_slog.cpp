@@ -3413,7 +3413,16 @@ static int DealDpAddPlugin()
     hdf_set_value(stConfig.cgi->hdf, "config.plugin_run_os", (const char*)(js_local["run_os"]));
     hdf_set_value(stConfig.cgi->hdf, "config.plugin_auth", (const char*)(js_local["plugin_auth"]));
     hdf_set_value(stConfig.cgi->hdf, "config.plugin_language", (const char*)(js_local["dev_language"]));
-    hdf_set_value(stConfig.cgi->hdf, "config.plugin_desc_url", (const char*)(js_local["plus_url"]));
+
+	if((bool)(js_local["b_self_detail"])) {
+		std::ostringstream ss;
+		ss << stConfig.szXrkmonitorSiteAddr << "/plugin/" << (const char*)(js_local["plus_name"]) << ".html";
+    	hdf_set_value(stConfig.cgi->hdf, "config.plugin_desc_url", ss.str().c_str());
+	}
+	else if(js_local.HasValue("plus_url"))
+	    hdf_set_value(stConfig.cgi->hdf, "config.plugin_desc_url", (const char*)(js_local["plus_url"]));
+	else
+	    hdf_set_value(stConfig.cgi->hdf, "config.plugin_desc_url", stConfig.szXrkmonitorSiteAddr);
 
     std::map<int, std::string> mpMachPluginStatus;
     std::map<int, std::string>::iterator itMachStatus;
@@ -3727,6 +3736,9 @@ static int DealUpdatePlugin(CGI *cgi)
 	}
 	if(!IsStrEqual((const char*)(js_plugin["install_tp_file"]), (const char*)(js_local["install_tp_file"]))) {
 		js_local["install_tp_file"] = (const char*)(js_plugin["install_tp_file"]);
+	}
+	if((bool)(js_plugin["b_self_detail"]) != (bool)(js_local["b_self_detail"])) {
+		js_local["b_self_detail"] = (bool)(js_plugin["b_self_detail"]);
 	}
 
 	std::string strJs = js_local.ToString();

@@ -344,7 +344,15 @@ static int DealMachineAddPlugin()
             jp["auth"] = (const char*)(plugin["plugin_auth"]);
             jp["last_version"] = (const char*)(plugin["plus_version"]);
 			jp["run_os"] = (const char*)(plugin["run_os"]);
-            jp["desc_url"] = (const char*)(plugin["plus_url"]);
+			if((bool)(plugin["b_self_detail"])) {
+				ss.str("");
+				ss << stConfig.szXrkmonitorSiteAddr << "/plugin/" << (const char*)(plugin["plus_name"]) << ".html";
+            	jp["desc_url"] = ss.str();
+			}
+			else if(plugin.HasValue("plus_url"))
+            	jp["desc_url"] = (const char*)(plugin["plus_url"]);
+			else
+            	jp["desc_url"] = stConfig.szXrkmonitorSiteAddr;
             js["plugins"].Add(jp);
             iPluginCount++;
         }
