@@ -132,6 +132,7 @@ function failed_my_exit()
 	echo "在线安装字符云监控失败,错误码:$1, 您可以下载源码编译安装或者加入Q群(699014295)获得支持."
 	isunin=$(yn_continue "是否清理安装记录(y/n)?")
 	if [ "$isunin" == "yes" ]; then
+		cd ${install_sh_home}
 		./uninstall_xrkmonitor.sh
 	fi
 	exit $1
@@ -280,10 +281,10 @@ function auto_detect_apache_doc_root()
 		auto_detect_apache_cfg_path
 	fi
 
-	if [ -d "$APH_SERVER_CONFIG_PATH" ]; then
-		if [ -z "$sAphConfList" ]; then
-			sAphConfList=`find $APH_SERVER_CONFIG_PATH -name "*.conf"`
-		fi
+	sDocRoot=`$APACHE_CMD -t -D DUMP_RUN_CFG 2>/dev/null |grep "Main DocumentRoot"|awk '{print $3}'`
+	APACHE_DOCUMENT_ROOT=${sDocRoot//\"/}
+	if [ ! -d "$APACHE_DOCUMENT_ROOT" -a -d "$APH_SERVER_CONFIG_PATH" ]; then
+		sAphConfList=`find $APH_SERVER_CONFIG_PATH -name "*.conf"`
 		sDocRootList=`grep -v "[[:space:]]*#" $sAphConfList |grep DocumentRoot |awk -F ":" '{if(NR==1) print $2; else print ":"$2}'`
 		IFSBAK=$IFS
 		IFS=':'
@@ -296,9 +297,6 @@ function auto_detect_apache_doc_root()
 			fi
 		done
 		IFS=$IFSBAK
-	else
-		sDocRoot=`$APACHE_CMD -t -D DUMP_RUN_CFG 2>/dev/null |grep "Main DocumentRoot"|awk '{print $3}'`
-		APACHE_DOCUMENT_ROOT=${sDocRoot//\"/}
 	fi
 
 	if [ ! -d "$APACHE_DOCUMENT_ROOT" ]; then
@@ -603,7 +601,7 @@ fi
 echo "数据库 mtreport_db 重新初始化"
 XRK_MYSQL_CONTEXT="mysql -B -umtreport -pmtreport875 mtreport_db "
 echo "delete from flogin_history" | $XRK_MYSQL_CONTEXT > /dev/null 2>&1
-echo "delete from mt_machine" | $XRK_MYSQL_CONTEXT > /dev/null 2>&1
+echo "delete from mt_machine where ip1!=16777343" | $XRK_MYSQL_CONTEXT > /dev/null 2>&1
 echo "delete from test_key_list" | $XRK_MYSQL_CONTEXT > /dev/null 2>&1
 echo "delete from mt_table_upate_monitor" | $XRK_MYSQL_CONTEXT > /dev/null 2>&1
 echo "delete from mt_view_bmach" | $XRK_MYSQL_CONTEXT > /dev/null 2>&1
