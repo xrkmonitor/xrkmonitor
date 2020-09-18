@@ -4,64 +4,7 @@ var g_install_timeout = 30;
 var g_ddmip_ajax_ret = null;
 var g_ddmip_cur_step = 1;
 var g_start_install_time = $.now();
-
-function ddmipAddStatusStepShow(step)
-{
-    switch(step) {
-        case 2:
-            $('#ddip_install_process').append('<li>已分派任务</li>');
-            break;
-        case 3:
-            $('#ddip_install_process').append('<li>接入服务已接收任务</li>');
-            break;
-        case 4:
-            $('#ddip_install_process').append('<li>接入服务已下发任务到机器</li>');
-            break;
-        case 5:
-            $('#ddip_install_process').append('<li>agent 已向云服务查询到安装包下载地址</li>');
-            break;
-        case 6:
-            $('#ddip_install_process').append('<li>agent 已下载插件部署包</li>');
-            break;
-        case 7:
-            $('#ddip_install_process').append('<li>agent 已部署插件并启动</li>');
-            break;
-        case 8:
-            $('#ddip_install_process').append('<li>接入服务已收到插件消息，插件部署成功</li>');
-            break;
-
-        case 20:
-            $('#ddmip_result').html('<font color="red">部署失败：agent 获取插件部署包地址失败, 请检查机器是否安装 wget 工具');
-            break;
-        case 21:
-            $('#ddmip_result').html('<font color="red">部署失败：agent 获取插件部署包地址, 返回错误码');
-            break;
-        case 22:
-            $('#ddmip_result').html('<font color="red">部署失败：agent 获取插件部署包地址, 返回内容解析错误');
-            break;
-        case 23:
-            $('#ddmip_result').html('<font color="red">部署失败：agent 下载插件部署包失败');
-            break;
-        case 24:
-            $('#ddmip_result').html('<font color="red">部署失败：agent 解压缩部署包失败, 请检查机器是否安装 tar 工具');
-            break;
-        case 25:
-            $('#ddmip_result').html('<font color="red">部署失败：agent 创建部署目录失败, 请 agent 是否有目录创建权限');
-            break;
-        case 26:
-            $('#ddmip_result').html('<font color="red">部署失败：agent 启动插件失败, 可能是插件与系统不兼容导致');
-            break;
-        case 27:
-            $('#ddmip_result').html('<font color="red">部署失败：agent 下载开源版配置文件失败');
-            break;
-
-        default:
-            $('#ddmip_result').html('<font color="red">部署失败，进度错误：' + step);
-            clearInterval(g_addplugin_timerid);
-            g_addplugin_timerid = 0;
-            break;
-    }
-}
+var g_valid_status = [ <?cs var:config.valid_status ?> ];
 
 function ddmipShowNewStatusStep(js)
 {
@@ -69,10 +12,15 @@ function ddmipShowNewStatusStep(js)
     if(g_ddmip_cur_step == js.proc_status)
         return;
 
+    // 安装结束并成功
+    if(js.proc_status == 0)
+        js.proc_status = <?cs var:config.max_install_proc ?>;
+
     // 进度已变化，显示并重新开始计时
     while(js.proc_status <= <?cs var:config.max_install_proc ?> && g_ddmip_cur_step < js.proc_status) {
         g_ddmip_cur_step++;
-        ddmipAddStatusStepShow(g_ddmip_cur_step);
+        if(g_valid_status.indexOf(g_ddmip_cur_step) != -1)
+            dmtAddPluginStatusShow(g_ddmip_cur_step, 'ddip_install_process', 'ddmip_result');
     }
 
     if(js.proc_status < <?cs var:config.max_install_proc ?>) {
@@ -82,7 +30,7 @@ function ddmipShowNewStatusStep(js)
     else {
         // 部署出错
         if(js.proc_status > <?cs var:config.max_install_proc ?>)
-            ddmipAddStatusStepShow(js.proc_status);
+            dmtAddPluginStatusShow(js.proc_status, 'ddip_install_process', 'ddmip_result');
         else {
             var tw = ($.now() - g_start_install_time)/1000;
             $('#ddmip_result').html('<font color="blue">部署成功，总共耗时：' + dmtGetHumanTime(tw)); 
@@ -163,7 +111,10 @@ $(document).ready(function(){
 
 <div class="pageContent">
 	<div class="pageFormContent" layoutH='0'>
-        <div style='height:260px; width:250px; float:left;'>
+        <table>
+        <tr>
+        <td rowspan='2'>
+        <div style='height:260px;width:300px;'>
             <h3>部署进度</h3>
             <br />
             <ol id='ddip_install_process' style='list-style:decimal !important; margin-left:10px'></ol>
@@ -173,8 +124,10 @@ $(document).ready(function(){
             <br />
             <span id='ddmip_result'></span>
         </div>
+        </td>
 
-        <div style='height:90px;width:300px;float:right'>
+        <td> 
+        <div style='height:90px;width:250px; float:right'>
             <h3>待部署机器</h3>
             <br />
             <label style='width:60px'>机器名: </label><?cs var:config.machine_name ?>
@@ -184,8 +137,12 @@ $(document).ready(function(){
             <label style='width:60px'>机器ID: </label><?cs var:config.machine_id ?>
             <br />
         </div>
+        </td>
+        </tr>
 
-        <div style='height:200px;width:300px;float:right'>
+        <tr>
+        <td>
+        <div style='height:170px;width:250px;float:right'>
             <h3>待部署插件</h3>
             <br />
             <label style='width:80px'>插件显示名: </label><?cs var:config.plugin_show_name ?>
@@ -196,6 +153,19 @@ $(document).ready(function(){
             <br />
             <label style='width:80px'>插件ID: </label><?cs var:config.plugin_id ?>
         </div>
+        </td>
+        </tr>
+
+        <tr>
+        <td colspan='2'>
+        <div style='height:40px;width:500px; text-align:left' class='note-text'>
+            <h3>提示</h3>
+            1. 插件默认部署在 agent 目录中的 xrkmonitor_plugin 目录下，您可以迁移至其它目录 <br />
+            2. 一键部署都是以默认配置方式部署，您可以稍后在机器或者插件中修改配置后重新启动插件<br />
+        </div>
+        </td>
+        </tr>
+        </table>
 	</div>
 
 	<div class="formBar">
