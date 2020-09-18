@@ -53,7 +53,6 @@ CREATE TABLE `flogin_history` (
 
 LOCK TABLES `flogin_history` WRITE;
 /*!40000 ALTER TABLE `flogin_history` DISABLE KEYS */;
-INSERT INTO `flogin_history` VALUES (320,1,1599968804,'192.168.128.1','192.168.128.132','http://192.168.128.132/cgi-bin/slog_flogin?action=show_main&login_show=var_css','Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:79.0) Gecko/20100101 Firefox/79.0',0,1600573604);
 /*!40000 ALTER TABLE `flogin_history` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -99,7 +98,7 @@ CREATE TABLE `flogin_user` (
 
 LOCK TABLES `flogin_user` WRITE;
 /*!40000 ALTER TABLE `flogin_user` DISABLE KEYS */;
-INSERT INTO `flogin_user` VALUES (1,'sadmin','c5edac1b8c1d58bad90a246d8f08f53b',1,'2020-09-13 03:49:09','supperuser',1552345835,152,NULL,'0c96aa43ce31757758c40be976c20d34',1,1599968804,0,'192.168.128.1',1,1,0,'4033@qq.com',0,'c5edac1b8c1d58bad90a246d8f08f53b','192.168.128.132',0,'');
+INSERT INTO `flogin_user` VALUES (1,'sadmin','c5edac1b8c1d58bad90a246d8f08f53b',1,'2020-09-18 12:59:14','supperuser',1552345835,152,NULL,'0c96aa43ce31757758c40be976c20d34',1,1599968804,0,'192.168.128.1',1,1,0,'4033@qq.com',0,'c5edac1b8c1d58bad90a246d8f08f53b','192.168.128.132',0,'');
 /*!40000 ALTER TABLE `flogin_user` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
@@ -414,7 +413,7 @@ CREATE TABLE `mt_machine` (
   `rand_key` char(18) DEFAULT NULL,
   PRIMARY KEY (`xrk_id`),
   KEY `ip1` (`ip1`)
-) ENGINE=InnoDB AUTO_INCREMENT=128 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=129 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -423,7 +422,7 @@ CREATE TABLE `mt_machine` (
 
 LOCK TABLES `mt_machine` WRITE;
 /*!40000 ALTER TABLE `mt_machine` DISABLE KEYS */;
-INSERT INTO `mt_machine` VALUES (124,'comm_report',16777343,0,0,0,'sadmin','sadmin','2020-05-05 02:32:53','ç”¨äºŽæŽ¥æ”¶å…¬å…±ä¸ŠæŠ¥çš„è™šæ‹Ÿæœºå™¨',0,1,2,1,1,'2020-05-05 02:27:36',0,0,0,0,'0',NULL,NULL,NULL,NULL,NULL,NULL),(127,'192.168.128.132',2223024320,NULL,NULL,NULL,'sadmin','sadmin','2020-09-13 03:51:40','ç³»ç»Ÿå®‰è£…æ—¶è‡ªåŠ¨æ·»åŠ ',0,0,0,1,1,'2020-09-13 03:44:33',1599969089,1599969097,1599969099,1599968679,'Sep 13 2020 10:14:28','v1.0.0','openSUSE','GLIBC_2.22','GLIBCXX_3.4.23','x86_64',NULL);
+INSERT INTO `mt_machine` VALUES (124,'comm_report',16777343,0,0,0,'sadmin','sadmin','2020-05-05 02:32:53','ç”¨äºŽæŽ¥æ”¶å…¬å…±ä¸ŠæŠ¥çš„è™šæ‹Ÿæœºå™¨',0,1,2,1,1,'2020-05-05 02:27:36',0,0,0,0,'0',NULL,NULL,NULL,NULL,NULL,NULL),(128,'192.168.128.132',2223024320,NULL,NULL,NULL,'sadmin','sadmin','2020-09-18 13:01:09','ç³»ç»Ÿå®‰è£…æ—¶è‡ªåŠ¨æ·»åŠ ',0,0,0,1,1,'2020-09-18 12:59:11',1600434049,1600434058,1600434069,1600433954,'Sep 18 2020 18:15:07','v1.0.0','openSUSE','GLIBC_2.22','GLIBCXX_3.4.23','x86_64',NULL);
 /*!40000 ALTER TABLE `mt_machine` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
@@ -570,10 +569,10 @@ CREATE TABLE `mt_plugin_machine` (
   `xrk_status` int(11) DEFAULT '0',
   `install_proc` int(11) DEFAULT '0',
   `open_plugin_id` int(11) unsigned NOT NULL,
-  `local_cfg_url` varchar(1024) NOT NULL,
+  `local_cfg_url` varchar(1024) DEFAULT NULL,
   PRIMARY KEY (`xrk_id`),
-  UNIQUE KEY `m_p` (`machine_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=193 DEFAULT CHARSET=utf8;
+  UNIQUE KEY `m_p` (`machine_id`,`open_plugin_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=202 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -584,36 +583,6 @@ LOCK TABLES `mt_plugin_machine` WRITE;
 /*!40000 ALTER TABLE `mt_plugin_machine` DISABLE KEYS */;
 /*!40000 ALTER TABLE `mt_plugin_machine` ENABLE KEYS */;
 UNLOCK TABLES;
-/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
-/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
-/*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = utf8 */ ;
-/*!50003 SET character_set_results = utf8 */ ;
-/*!50003 SET collation_connection  = utf8_general_ci */ ;
-/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
-/*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
-DELIMITER ;;
-/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 trigger mt_plugin_machine_ins after insert on mt_plugin_machine for each row begin insert into mt_table_upate_monitor(u_table_name, r_primary_id) values('mt_plugin_machine', new.xrk_id); end */;;
-DELIMITER ;
-/*!50003 SET sql_mode              = @saved_sql_mode */ ;
-/*!50003 SET character_set_client  = @saved_cs_client */ ;
-/*!50003 SET character_set_results = @saved_cs_results */ ;
-/*!50003 SET collation_connection  = @saved_col_connection */ ;
-/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
-/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
-/*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = utf8 */ ;
-/*!50003 SET character_set_results = utf8 */ ;
-/*!50003 SET collation_connection  = utf8_general_ci */ ;
-/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
-/*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
-DELIMITER ;;
-/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 trigger mt_plugin_machine_up after update on mt_plugin_machine for each row begin insert into mt_table_upate_monitor(u_table_name, r_primary_id) values('mt_plugin_machine', old.xrk_id); end */;;
-DELIMITER ;
-/*!50003 SET sql_mode              = @saved_sql_mode */ ;
-/*!50003 SET character_set_client  = @saved_cs_client */ ;
-/*!50003 SET character_set_results = @saved_cs_results */ ;
-/*!50003 SET collation_connection  = @saved_col_connection */ ;
 
 --
 -- Table structure for table `mt_server`
@@ -698,7 +667,7 @@ CREATE TABLE `mt_table_upate_monitor` (
   `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `r_change_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   PRIMARY KEY (`r_change_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=40182 DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM AUTO_INCREMENT=40227 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -707,7 +676,7 @@ CREATE TABLE `mt_table_upate_monitor` (
 
 LOCK TABLES `mt_table_upate_monitor` WRITE;
 /*!40000 ALTER TABLE `mt_table_upate_monitor` DISABLE KEYS */;
-INSERT INTO `mt_table_upate_monitor` VALUES ('mt_server',3,0,'2020-09-13 03:44:33',40040),('mt_server',6,0,'2020-09-13 03:44:33',40041),('mt_server',4,0,'2020-09-13 03:44:33',40042),('mt_server',24,0,'2020-09-13 03:44:33',40043),('mt_server',23,0,'2020-09-13 03:44:33',40044),('mt_machine',127,0,'2020-09-13 03:44:33',40045),('mt_machine',127,0,'2020-09-13 03:44:39',40046),('mt_machine',127,0,'2020-09-13 03:44:39',40047),('mt_machine',127,0,'2020-09-13 03:44:44',40048),('mt_machine',127,0,'2020-09-13 03:44:49',40049),('mt_machine',127,0,'2020-09-13 03:44:54',40050),('mt_machine',127,0,'2020-09-13 03:44:59',40051),('mt_view_bmach',23,127,'2020-09-13 03:45:00',40052),('mt_view_bmach',22,127,'2020-09-13 03:45:00',40053),('mt_view_bmach',26,127,'2020-09-13 03:45:00',40054),('mt_machine',127,0,'2020-09-13 03:45:00',40055),('mt_machine',127,0,'2020-09-13 03:45:00',40056),('mt_machine',127,0,'2020-09-13 03:45:04',40057),('mt_machine',127,0,'2020-09-13 03:45:09',40058),('mt_machine',127,0,'2020-09-13 03:45:14',40059),('mt_machine',127,0,'2020-09-13 03:45:19',40060),('mt_machine',127,0,'2020-09-13 03:45:21',40061),('mt_machine',127,0,'2020-09-13 03:45:21',40062),('mt_machine',127,0,'2020-09-13 03:45:24',40063),('mt_machine',127,0,'2020-09-13 03:45:29',40064),('mt_machine',127,0,'2020-09-13 03:45:34',40065),('mt_machine',127,0,'2020-09-13 03:45:39',40066),('mt_machine',127,0,'2020-09-13 03:45:42',40067),('mt_machine',127,0,'2020-09-13 03:45:42',40068),('mt_machine',127,0,'2020-09-13 03:45:44',40069),('mt_machine',127,0,'2020-09-13 03:45:49',40070),('mt_machine',127,0,'2020-09-13 03:45:54',40071),('mt_machine',127,0,'2020-09-13 03:45:59',40072),('mt_machine',127,0,'2020-09-13 03:46:03',40073),('mt_machine',127,0,'2020-09-13 03:46:03',40074),('mt_machine',127,0,'2020-09-13 03:46:04',40075),('mt_machine',127,0,'2020-09-13 03:46:09',40076),('mt_machine',127,0,'2020-09-13 03:46:14',40077),('mt_machine',127,0,'2020-09-13 03:46:19',40078),('mt_machine',127,0,'2020-09-13 03:46:24',40079),('mt_machine',127,0,'2020-09-13 03:46:24',40080),('mt_machine',127,0,'2020-09-13 03:46:24',40081),('mt_machine',127,0,'2020-09-13 03:46:29',40082),('mt_machine',127,0,'2020-09-13 03:46:34',40083),('mt_machine',127,0,'2020-09-13 03:46:39',40084),('flogin_user',1,0,'2020-09-13 03:46:44',40085),('mt_machine',127,0,'2020-09-13 03:46:44',40086),('mt_machine',127,0,'2020-09-13 03:46:45',40087),('mt_machine',127,0,'2020-09-13 03:46:45',40088),('mt_machine',127,0,'2020-09-13 03:46:49',40089),('mt_machine',127,0,'2020-09-13 03:46:54',40090),('mt_machine',127,0,'2020-09-13 03:46:59',40091),('mt_machine',127,0,'2020-09-13 03:47:04',40092),('mt_machine',127,0,'2020-09-13 03:47:06',40093),('mt_machine',127,0,'2020-09-13 03:47:06',40094),('mt_machine',127,0,'2020-09-13 03:47:09',40095),('mt_machine',127,0,'2020-09-13 03:47:14',40096),('mt_machine',127,0,'2020-09-13 03:47:19',40097),('mt_machine',127,0,'2020-09-13 03:47:24',40098),('mt_machine',127,0,'2020-09-13 03:47:27',40099),('mt_machine',127,0,'2020-09-13 03:47:27',40100),('mt_machine',127,0,'2020-09-13 03:47:29',40101),('mt_machine',127,0,'2020-09-13 03:47:34',40102),('mt_machine',127,0,'2020-09-13 03:47:39',40103),('mt_machine',127,0,'2020-09-13 03:47:44',40104),('mt_machine',127,0,'2020-09-13 03:47:48',40105),('mt_machine',127,0,'2020-09-13 03:47:48',40106),('mt_machine',127,0,'2020-09-13 03:47:49',40107),('mt_machine',127,0,'2020-09-13 03:47:54',40108),('mt_machine',127,0,'2020-09-13 03:47:59',40109),('mt_machine',127,0,'2020-09-13 03:48:04',40110),('mt_machine',127,0,'2020-09-13 03:48:09',40111),('mt_machine',127,0,'2020-09-13 03:48:09',40112),('mt_machine',127,0,'2020-09-13 03:48:09',40113),('mt_machine',127,0,'2020-09-13 03:48:14',40114),('mt_machine',127,0,'2020-09-13 03:48:19',40115),('mt_machine',127,0,'2020-09-13 03:48:24',40116),('mt_machine',127,0,'2020-09-13 03:48:29',40117),('mt_machine',127,0,'2020-09-13 03:48:30',40118),('mt_machine',127,0,'2020-09-13 03:48:30',40119),('mt_machine',127,0,'2020-09-13 03:48:34',40120),('mt_machine',127,0,'2020-09-13 03:48:39',40121),('mt_machine',127,0,'2020-09-13 03:48:44',40122),('mt_machine',127,0,'2020-09-13 03:48:49',40123),('mt_machine',127,0,'2020-09-13 03:48:51',40124),('mt_machine',127,0,'2020-09-13 03:48:51',40125),('mt_machine',127,0,'2020-09-13 03:48:54',40126),('mt_machine',127,0,'2020-09-13 03:48:59',40127),('mt_machine',127,0,'2020-09-13 03:49:04',40128),('mt_machine',127,0,'2020-09-13 03:49:09',40129),('flogin_user',1,0,'2020-09-13 03:49:09',40130),('mt_machine',127,0,'2020-09-13 03:49:12',40131),('mt_machine',127,0,'2020-09-13 03:49:12',40132),('mt_machine',127,0,'2020-09-13 03:49:14',40133),('mt_machine',127,0,'2020-09-13 03:49:19',40134),('mt_machine',127,0,'2020-09-13 03:49:24',40135),('mt_machine',127,0,'2020-09-13 03:49:29',40136),('mt_machine',127,0,'2020-09-13 03:49:33',40137),('mt_machine',127,0,'2020-09-13 03:49:33',40138),('mt_machine',127,0,'2020-09-13 03:49:34',40139),('mt_machine',127,0,'2020-09-13 03:49:39',40140),('flogin_user',1,0,'2020-09-13 03:49:39',40141),('mt_machine',127,0,'2020-09-13 03:49:44',40142),('mt_machine',127,0,'2020-09-13 03:49:49',40143),('mt_machine',127,0,'2020-09-13 03:49:54',40144),('mt_machine',127,0,'2020-09-13 03:49:54',40145),('mt_machine',127,0,'2020-09-13 03:49:54',40146),('mt_machine',127,0,'2020-09-13 03:49:59',40147),('mt_machine',127,0,'2020-09-13 03:50:04',40148),('mt_machine',127,0,'2020-09-13 03:50:09',40149),('flogin_user',1,0,'2020-09-13 03:50:09',40150),('mt_machine',127,0,'2020-09-13 03:50:14',40151),('mt_machine',127,0,'2020-09-13 03:50:15',40152),('mt_machine',127,0,'2020-09-13 03:50:15',40153),('mt_machine',127,0,'2020-09-13 03:50:19',40154),('mt_machine',127,0,'2020-09-13 03:50:24',40155),('mt_machine',127,0,'2020-09-13 03:50:29',40156),('mt_machine',127,0,'2020-09-13 03:50:34',40157),('mt_machine',127,0,'2020-09-13 03:50:36',40158),('mt_machine',127,0,'2020-09-13 03:50:36',40159),('mt_machine',127,0,'2020-09-13 03:50:39',40160),('flogin_user',1,0,'2020-09-13 03:50:41',40161),('mt_machine',127,0,'2020-09-13 03:50:44',40162),('mt_machine',127,0,'2020-09-13 03:50:49',40163),('mt_machine',127,0,'2020-09-13 03:50:55',40164),('mt_machine',127,0,'2020-09-13 03:50:57',40165),('mt_machine',127,0,'2020-09-13 03:50:57',40166),('mt_machine',127,0,'2020-09-13 03:51:00',40167),('mt_machine',127,0,'2020-09-13 03:51:05',40168),('mt_machine',127,0,'2020-09-13 03:51:10',40169),('flogin_user',1,0,'2020-09-13 03:51:10',40170),('mt_machine',127,0,'2020-09-13 03:51:15',40171),('mt_machine',127,0,'2020-09-13 03:51:18',40172),('mt_machine',127,0,'2020-09-13 03:51:18',40173),('mt_machine',127,0,'2020-09-13 03:51:20',40174),('mt_machine',127,0,'2020-09-13 03:51:25',40175),('mt_machine',127,0,'2020-09-13 03:51:30',40176),('mt_machine',127,0,'2020-09-13 03:51:35',40177),('mt_machine',127,0,'2020-09-13 03:51:39',40178),('mt_machine',127,0,'2020-09-13 03:51:39',40179),('mt_machine',127,0,'2020-09-13 03:51:40',40180),('flogin_user',1,0,'2020-09-13 03:51:40',40181);
+INSERT INTO `mt_table_upate_monitor` VALUES ('mt_server',3,0,'2020-09-18 12:59:11',40182),('mt_server',6,0,'2020-09-18 12:59:11',40183),('mt_server',4,0,'2020-09-18 12:59:11',40184),('mt_server',24,0,'2020-09-18 12:59:11',40185),('mt_server',23,0,'2020-09-18 12:59:11',40186),('mt_machine',128,0,'2020-09-18 12:59:11',40187),('mt_machine',128,0,'2020-09-18 12:59:14',40188),('mt_machine',128,0,'2020-09-18 12:59:14',40189),('flogin_user',1,0,'2020-09-18 12:59:14',40190),('mt_machine',128,0,'2020-09-18 12:59:19',40191),('mt_machine',128,0,'2020-09-18 12:59:24',40192),('mt_machine',128,0,'2020-09-18 12:59:29',40193),('mt_machine',128,0,'2020-09-18 12:59:34',40194),('mt_machine',128,0,'2020-09-18 12:59:35',40195),('mt_machine',128,0,'2020-09-18 12:59:35',40196),('mt_machine',128,0,'2020-09-18 12:59:39',40197),('mt_machine',128,0,'2020-09-18 12:59:44',40198),('flogin_user',1,0,'2020-09-18 12:59:44',40199),('mt_machine',128,0,'2020-09-18 12:59:49',40200),('mt_machine',128,0,'2020-09-18 12:59:54',40201),('mt_machine',128,0,'2020-09-18 12:59:56',40202),('mt_machine',128,0,'2020-09-18 12:59:56',40203),('mt_machine',128,0,'2020-09-18 12:59:59',40204),('mt_machine',128,0,'2020-09-18 13:00:04',40205),('mt_machine',128,0,'2020-09-18 13:00:09',40206),('flogin_user',1,0,'2020-09-18 13:00:14',40207),('mt_machine',128,0,'2020-09-18 13:00:14',40208),('mt_machine',128,0,'2020-09-18 13:00:17',40209),('mt_machine',128,0,'2020-09-18 13:00:17',40210),('mt_machine',128,0,'2020-09-18 13:00:19',40211),('mt_machine',128,0,'2020-09-18 13:00:24',40212),('mt_machine',128,0,'2020-09-18 13:00:29',40213),('mt_machine',128,0,'2020-09-18 13:00:34',40214),('mt_machine',128,0,'2020-09-18 13:00:38',40215),('mt_machine',128,0,'2020-09-18 13:00:38',40216),('mt_machine',128,0,'2020-09-18 13:00:39',40217),('mt_machine',128,0,'2020-09-18 13:00:44',40218),('flogin_user',1,0,'2020-09-18 13:00:46',40219),('mt_machine',128,0,'2020-09-18 13:00:49',40220),('mt_machine',128,0,'2020-09-18 13:00:54',40221),('mt_machine',128,0,'2020-09-18 13:00:59',40222),('mt_machine',128,0,'2020-09-18 13:00:59',40223),('mt_machine',128,0,'2020-09-18 13:00:59',40224),('mt_machine',128,0,'2020-09-18 13:01:04',40225),('mt_machine',128,0,'2020-09-18 13:01:09',40226);
 /*!40000 ALTER TABLE `mt_table_upate_monitor` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -853,7 +822,6 @@ CREATE TABLE `mt_view_bmach` (
 
 LOCK TABLES `mt_view_bmach` WRITE;
 /*!40000 ALTER TABLE `mt_view_bmach` DISABLE KEYS */;
-INSERT INTO `mt_view_bmach` VALUES (23,127,0,1,'2020-09-13 03:45:00'),(22,127,0,1,'2020-09-13 03:45:00'),(26,127,0,1,'2020-09-13 03:45:00');
 /*!40000 ALTER TABLE `mt_view_bmach` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
@@ -1088,4 +1056,4 @@ DELIMITER ;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2020-09-13 11:51:41
+-- Dump completed on 2020-09-18 21:01:13
