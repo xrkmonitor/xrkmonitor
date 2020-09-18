@@ -42,7 +42,14 @@ $(document).ready(function(){
 <div class="pageContent statusMachine" layoutH='0'>
 	<div class="pageFormContent">
         <div>
-            <font class='note-text'>提示：插件一键部署需要机器上安装监控 agent，且agent 为启动状态。如果系统信息获取不正确或者一键部署失败，请检查机器是否支持 tar/strings 等命令。</font>
+            <font class='note-text'>提示：</font>
+            <br />
+            <ul>
+                <li class='note-text' style='margin-left:30px'>插件一键部署需要机器上安装监控 agent，且agent 为启动状态。</li>
+                <li class='note-text' style='margin-left:30px'>如果系统信息获取不正确或者一键部署失败，请检查机器上是否支持 wget/awk/grep/sed/tar/strings 等命令。</li>
+                <li class='note-text' style='margin-left:30px'>插件一键部署过程可能<font color='red'>重启相关服务</font>，如：apache/mysql 等，请熟悉过程后再在您的生产环境操作。</li>
+                <li class='note-text' style='margin-left:30px'>插件部署过程会在 agent 的 plugin_install_log 目录下生成部署日志，您可以通过该日志了解插件部署的相关流程细节。</li>
+            </ul>
         </div>
         <br />
  
@@ -75,11 +82,6 @@ $(document).ready(function(){
 			    </tr>
             </tbody>
         </table>
-
-        <br />
-        <div>
-            <font class='note-text'>提示：插件需要先在插件市场安装后才能在机器上部署，如有更新也需要先更新后才能在机器上更新版本。</font>
-        </div>
         <br />
 
         <h3>已部署/可部署插件</h3>
