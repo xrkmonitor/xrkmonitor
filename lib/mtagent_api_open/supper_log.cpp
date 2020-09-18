@@ -1145,8 +1145,11 @@ MtClientInfo * CSupperLog::GetMtClientInfo(int32_t iMachineId, uint32_t *piIsFin
 		pNode = (MtClientInfo*)HashTableSearchEx_NoList(
 			&m_stHashMtClient, &stKey, &stEmpty, iMachineId, piIsFind);
 	}
-	else
+	else {
 		pNode = (MtClientInfo*)HashTableSearch_NoList(&m_stHashMtClient, &stKey, iMachineId);
+		if(!IsMtClientValid(pNode))
+			return NULL;
+	}
 	return pNode;
 }
 
@@ -1154,6 +1157,9 @@ MtClientInfo * CSupperLog::GetMtClientInfo(int32_t iMachineId, int32_t index)
 {
 	MtClientInfo *pNode = (MtClientInfo*)NOLIST_HASH_INDEX_TO_NODE(&m_stHashMtClient, index);
 	if(pNode->iMachineId != iMachineId)
+		return NULL;
+
+	if(!IsMtClientValid(pNode))
 		return NULL;
 	return pNode;
 }

@@ -380,6 +380,32 @@ int CUdpSock::SetKeyToMachineTable()
 	return 0;
 }
 
+int CUdpSock::GetLocalPlugin(Json &js_plugin, int iPluginId)
+{
+    char sSqlBuf[128] = {0};
+    MyQuery myqu(stConfig.qu, stConfig.db);
+    Query & qu = myqu.GetQuery();
+
+    snprintf(sSqlBuf, sizeof(sSqlBuf),
+        "select pb_info from mt_plugin where open_plugin_id=%d", iPluginId);
+    qu.get_result(sSqlBuf);
+    if(qu.num_rows() <= 0 || qu.fetch_row() == NULL) {
+        WARN_LOG("not find plugin:%d", iPluginId);
+        qu.free_result();
+        return SLOG_ERROR_LINE;
+    }
+
+    const char *pinfo = qu.getstr("pb_info");
+    size_t iParseIdx = 0;
+    size_t iReadLen = strlen(pinfo);
+    js_plugin.Parse(pinfo, iParseIdx);
+    if(iParseIdx != iReadLen) {
+        WARN_LOG("parse json content, size:%u!=%u", (uint32_t)iParseIdx, (uint32_t)iReadLen);
+    }
+    qu.free_result();
+    return 0;
+}
+
 int CUdpSock::MakePreInstallNotifyPkg(TEventPreInstallPlugin &ev, std::ostringstream &sCfgUrl)
 {
     // head
@@ -387,11 +413,18 @@ int CUdpSock::MakePreInstallNotifyPkg(TEventPreInstallPlugin &ev, std::ostringst
     InitReqPkgHead(&stHead, CMD_MONI_S2C_PRE_INSTALL_NOTIFY, stConfig.dwPkgSeq++);
 
     // cmd content
-	char sBuf[1400];
+	char sBuf[1200] = {0};
 	CmdS2cPreInstallContentReq *req = (CmdS2cPreInstallContentReq*)sBuf;
     req->iPluginId = htonl(ev.iPluginId);
     req->iMachineId = htonl(ev.iMachineId);
     req->iDbId = htonl(ev.iDbId);
+
+	Json jsp;
+	if(GetLocalPlugin(jsp, ev.iPluginId) < 0)
+		return SLOG_ERROR_LINE;
+	strncpy(req->sDevLang, (const char*)(jsp["dev_language"]), sizeof(req->sDevLang)-1);
+	strncpy(req->sPluginName, (const char*)(jsp["plus_name"]), sizeof(req->sPluginName)-1);
+
 	if(m_pConfig->stSysCfg.sPreInstallCheckStr[0] != '\0')
 	    strncpy(req->sCheckStr, m_pConfig->stSysCfg.sPreInstallCheckStr, sizeof(req->sCheckStr)-1);
 	else
@@ -471,13 +504,17 @@ void CUdpSock::DealEvent()
     if(!SYNC_FLAG_CAS_GET(&(m_pConfig->stSysCfg.bEventModFlag)))
         return;
     TEventInfo stEvLocal;
+	stEvLocal.iEventType = 0;
     for(int i=0; i < MAX_EVENT_COUNT; i++) {
-        if(m_pConfig->stSysCfg.stEvent[i].iEventType == EVENT_PREINSTALL_PLUGIN
-            && m_pConfig->stSysCfg.stEvent[i].dwExpireTime >= slog.m_stNow.tv_sec)
+        if(m_pConfig->stSysCfg.stEvent[i].bEventStatus == EVENT_STATUS_INIT_SET
+            && m_pConfig->stSysCfg.stEvent[i].dwExpireTime >= slog.m_stNow.tv_sec) 
         {
-            memcpy(&stEvLocal, m_pConfig->stSysCfg.stEvent+i, sizeof(stEvLocal));
-            m_pConfig->stSysCfg.stEvent[i].iEventType = 0;
-            break;
+            if(m_pConfig->stSysCfg.stEvent[i].iEventType == EVENT_PREINSTALL_PLUGIN)
+            {
+                memcpy(&stEvLocal, m_pConfig->stSysCfg.stEvent+i, sizeof(stEvLocal));
+                m_pConfig->stSysCfg.stEvent[i].bEventStatus = EVENT_STATUS_FIN;
+                break;
+            }
         }
     }  
     SYNC_FLAG_CAS_FREE(m_pConfig->stSysCfg.bEventModFlag);
@@ -1036,7 +1073,6 @@ int CUdpSock::SetSystemConfigCheck(ContentCheckSystemCfgReq *pctinfo)
 		pResp->wCheckSysPerTimeSec = htons(stConfig.psysConfig->wCheckSysPerTimeSec);
 		pResp->bAttrSendPerTimeSec = stConfig.psysConfig->bAttrSendPerTimeSec;
 		pResp->bLogSendPerTimeSec = stConfig.psysConfig->bLogSendPerTimeSec;
-		pResp->bReportCpuUseSec = stConfig.psysConfig->bReportCpuUseSec;
 		INFO_LOG("system config change old seq:%u new seq:%u", 
 			ntohl(pctinfo->dwConfigSeq), stConfig.psysConfig->dwConfigSeq);
 	}
@@ -1300,6 +1336,7 @@ int CUdpSock::DealCmdPreInstallReport()
     pctinfo->iMachineId = ntohl(pctinfo->iMachineId);
     pctinfo->iDbId = ntohl(pctinfo->iDbId);
     pctinfo->iStatus = ntohl(pctinfo->iStatus);
+	pctinfo->sDevLang[sizeof(pctinfo->sDevLang)-1] = '\0';
     if(m_pConfig->stSysCfg.sPreInstallCheckStr[0] != '\0'
         && !IsStrEqual(pctinfo->sCheckStr, m_pConfig->stSysCfg.sPreInstallCheckStr)) {
         REQERR_LOG("check preinstall string failed !");
@@ -1319,10 +1356,14 @@ int CUdpSock::DealCmdPreInstallReport()
 	MyQuery myqu(stConfig.qu, stConfig.db);
 	Query & qu = myqu.GetQuery();
 
-    // install_proc < 上报的进度, 才更新避免包错乱时进度回退
     std::ostringstream ss;
-    ss << "update mt_plugin_machine set install_proc=" << pctinfo->iStatus 
-        << " where xrk_id=" << pctinfo->iDbId << " and xrk_status=0 and install_proc < " << pctinfo->iStatus;
+    if(IsStrEqual(pctinfo->sDevLang, "javascript") && pctinfo->iStatus == EV_PREINSTALL_CLIENT_INSTALL_PLUGIN_OK) {
+        ss << "update mt_plugin_machine set install_proc=0 where xrk_id=" << pctinfo->iDbId << " and xrk_status=0"; 
+    }
+    else {
+        ss << "update mt_plugin_machine set install_proc=" << pctinfo->iStatus 
+            << " where xrk_id=" << pctinfo->iDbId << " and xrk_status=0 and install_proc < " << pctinfo->iStatus;
+    }
     qu.execute(ss.str().c_str());
     return 0;
 }

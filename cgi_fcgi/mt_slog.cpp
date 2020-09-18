@@ -3226,10 +3226,7 @@ static int DealRefreshPreInstallStatus()
     else {
         qu.fetch_row();
         js["ret"] = 0;
-        if(qu.getval("install_proc") == 0)
-            js["proc_status"] = EV_PREINSTALL_SERVER_RECV_PLUGIN_MSG;
-        else
-            js["proc_status"] = qu.getval("install_proc");
+        js["proc_status"] = qu.getval("install_proc");
     }
 
     qu.free_result();
@@ -3331,7 +3328,15 @@ static int DealPreInstallPlugin(std::string &strCsTemplateFile)
     hdf_set_value(stConfig.cgi->hdf, "config.machine_ip", ips.c_str());
     const char *ptmp = MtReport_GetFromVmem_Local(pMachinfo->iNameVmemIdx);
     hdf_set_value(stConfig.cgi->hdf, "config.machine_name", ptmp ? ptmp : "unknow");
-    hdf_set_int_value(stConfig.cgi->hdf, "config.max_install_proc", MAX_INSTALL_PLUGIN_PROC);;
+
+	if(IsStrEqual((const char*)(js_local["dev_language"]), "javascript")) {
+		hdf_set_value(stConfig.cgi->hdf, "config.valid_status", "2,3,4,5,6,9");
+		hdf_set_int_value(stConfig.cgi->hdf, "config.max_install_proc", EV_PREINSTALL_CLIENT_INSTALL_PLUGIN_OK);;
+	}
+	else {
+		hdf_set_value(stConfig.cgi->hdf, "config.valid_status", "2,3,4,5,6,7,8");
+		hdf_set_int_value(stConfig.cgi->hdf, "config.max_install_proc", EV_PREINSTALL_SERVER_RECV_PLUGIN_MSG);;
+	}
 
 	if(pself_domain == NULL)
 		pself_domain = hdf_get_value(stConfig.cgi->hdf, "CGI.ServerAddress", "");

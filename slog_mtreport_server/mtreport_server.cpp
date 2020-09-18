@@ -292,6 +292,44 @@ void TryUpdateRealinfo()
 		iBinaryDataLen, iSqlLen, stInfo.total_access_times(), stInfo.today_access_times());
 }
 
+void ClearOldMtClientInfo()
+{
+    static uint32_t s_dwLastClearTime = 0;
+    if(s_dwLastClearTime+6*3600 >= slog.m_stNow.tv_sec)
+        return;
+    s_dwLastClearTime = slog.m_stNow.tv_sec;
+
+    int idx = stConfig.psysConfig->iMtClientListIndexStart;
+    uint16_t wClientCount = 0;
+    MtClientInfo *pInfo = NULL, *pPrev = NULL, *pNext = NULL;
+    for(int i=0; i < stConfig.psysConfig->wCurClientCount && idx >= 0; ++i) {
+        pInfo = slog.GetMtClientInfo(idx);
+        if(slog.IsMtClientValid(pInfo)) {
+            idx = pInfo->iNextIndex;
+            wClientCount++;
+        }
+        else {
+            if(pInfo->iPreIndex >= 0)
+                pPrev = slog.GetMtClientInfo(pInfo->iPreIndex);
+            else if(pPrev)
+                pPrev = NULL;
+            if(pInfo->iNextIndex >= 0)
+                pNext = slog.GetMtClientInfo(pInfo->iNextIndex);
+            else
+                pNext = NULL;
+            ILINK_DELETE_NODE(stConfig.psysConfig, iMtClientListIndexStart, iMtClientListIndexEnd, pInfo,
+                pPrev, pNext, iPreIndex, iNextIndex);
+            INFO_LOG("clear mtclient machine id:%d, remote:%s:%d",
+                pInfo->iMachineId, ipv4_addr_str(pInfo->dwAddress), pInfo->wBasePort);
+            pInfo->iMachineId = 0;
+        }
+    }
+    if(stConfig.psysConfig->wCurClientCount != wClientCount) {
+        INFO_LOG("client count changed from:%d to %d", stConfig.psysConfig->wCurClientCount, wClientCount);
+		stConfig.psysConfig->wCurClientCount = wClientCount;
+    }
+}
+
 int main(int argc, char *argv[])
 {
 	int iRet = 0;
@@ -340,6 +378,7 @@ int main(int argc, char *argv[])
 		stSock.DealEvent();
 		h.Select(1, slog.m_iRand%SEC_USEC);
 		TryUpdateRealinfo();
+		ClearOldMtClientInfo();
 	}
 	INFO_LOG("slog_mtreport_server exit !");
 	return 0;

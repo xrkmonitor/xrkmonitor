@@ -232,6 +232,7 @@ typedef struct {
     int32_t iDbId;
     int32_t iStatus;
     char sCheckStr[16];
+	char sDevLang[12];
     int32_t iReserved_1;
     int32_t iReserved_2;
     uint32_t dwReserved_1;
@@ -245,6 +246,8 @@ typedef struct {
     int32_t iMachineId;
     int32_t iDbId;
     char sCheckStr[16];
+	char sDevLang[12];
+	char sPluginName[32];
     int32_t iReserved_1;
     int32_t iReserved_2;
     uint32_t dwReserved_1;
@@ -313,6 +316,7 @@ enum {
     EV_PREINSTALL_CLIENT_GET_DOWN_URL = 5,
     EV_PREINSTALL_CLIENT_GET_PACKET = 6,
     EV_PREINSTALL_CLIENT_START_PLUGIN = 7,
+	EV_PREINSTALL_CLIENT_INSTALL_PLUGIN_OK = 9,
 
     EV_PREINSTALL_ERR_GET_URL = 20, 
     EV_PREINSTALL_ERR_GET_URL_RET = 21, 
@@ -350,6 +354,11 @@ uint32_t MakeAttrPkg(struct sockaddr_in & app_server, char *pContent, int iConte
 int MakeRepPluginInfoToServer();
 int DealPreInstallNotify(CBasicPacket &pkg);
 int DealRespRepPluginInfo(CBasicPacket &pkg);
+
+void TryOpenPluginInstallLogFile(CmdS2cPreInstallContentReq *plug);
+
+const std::string g_strDevLangShell("linux shell");
+const std::string g_strDevLangJs("javascript");
 
 #endif
 

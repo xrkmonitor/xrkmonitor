@@ -11,8 +11,8 @@ MTLIB_INCLUDE_PATH = /usr/include
 MTLIB_LIB_PATH = /usr/lib64
 
 # 监控系统公共库是否使用动态链接方式
-USE_DLL_COMM_LIB = yes
-#USE_DLL_COMM_LIB = no
+#USE_DLL_COMM_LIB = yes
+USE_DLL_COMM_LIB = no
 
 # 编译库 - gcc/g++ 编译通用选项
 # - debug 模式编译库代码选项
@@ -24,7 +24,7 @@ CXXFLAGS_LIB = -O2 -fPIC -fexceptions -Wno-ctor-dtor-privacy
 
 # 编译程序 - gcc/g++ 编译通用选项
 # - debug 模式编译程序选项 
-#CXXFLAGS = -std=gnu++98 -g -Wall -Wno-ctor-dtor-privacy -Wsign-compare -Wno-init-self -Wno-misleading-indentation -lrt -Wl,-rpath=/home/mtreport/xrkmonitor_lib
+CXXFLAGS = -std=gnu++98 -g -Wall -Wno-ctor-dtor-privacy -Wsign-compare -Wno-init-self -Wno-misleading-indentation -lrt -Wl,-rpath=/home/mtreport/xrkmonitor_lib
 # - release 模式编译程序选项
-CXXFLAGS = -std=gnu++98 -O2 -Wall -Wsign-compare -Wno-ctor-dtor-privacy -Wno-init-self -Wno-misleading-indentation -lrt -Wl,-rpath=/hme/mtreport/xrkmonitor_lib
+#CXXFLAGS = -std=gnu++98 -O2 -Wall -Wsign-compare -Wno-ctor-dtor-privacy -Wno-init-self -Wno-misleading-indentation -lrt -Wl,-rpath=/hme/mtreport/xrkmonitor_lib
 

@@ -52,6 +52,7 @@
 #include <sys/ipc.h>      
 #include <fcntl.h>
 #include <sys/wait.h>
+#include <sstream>
 #include "aes.h"
 #include "mt_shm.h"
 #include "mt_report.h"
@@ -76,6 +77,8 @@ int OnEventTimer(TimerNode *pNodeShm, unsigned uiDataLen, char *pData);
 int get_cmd_result(const char *cmd, std::string &strResult)
 {
     static char s_buf[4096] = {0}; 
+
+	strResult = "";
     FILE *fp = popen(cmd, "r");
     if(!fp) {
         ERROR_LOG("popen failed, cmd:%s, msg:%s", cmd, strerror(errno));
@@ -94,10 +97,6 @@ int get_cmd_result(const char *cmd, std::string &strResult)
         if(pos != std::string::npos)
             strResult.replace(pos, 2, ""); 
         DEBUG_LOG("cmd:%s, get result:%s", cmd, s_buf);
-    }    
-    else {
-        strResult = "";
-        ERROR_LOG("fgets failed, cmd:%s, msg:%s", cmd, strerror(errno));
     }    
     pclose(fp);
     return 0;
@@ -130,6 +129,10 @@ void OnMtreportPkg(struct MtSocket *psock, char * sBuf, int iLen, time_t uiTime)
 	switch(pkg.m_dwReqCmd) {
         case CMD_MONI_S2C_PRE_INSTALL_NOTIFY:
             iRet = DealPreInstallNotify(pkg);
+			if(stConfig.fpPluginInstallLogFile) {
+				fclose(stConfig.fpPluginInstallLogFile);
+				stConfig.fpPluginInstallLogFile = NULL;
+			}
             return;
 
 		default:
@@ -311,6 +314,20 @@ bool LogFreqCheck()
 	return true;
 }
 
+void TryOpenPluginInstallLogFile(CmdS2cPreInstallContentReq *plug)
+{
+    std::ostringstream ss;
+    ss << stConfig.szCurPath << "/plugin_install_log/" << plug->sPluginName << "_install.log";
+    if(stConfig.fpPluginInstallLogFile) {
+        fclose(stConfig.fpPluginInstallLogFile);
+        stConfig.fpPluginInstallLogFile = NULL;
+    }
+	stConfig.fpPluginInstallLogFile = fopen(ss.str().c_str(), "a+");
+	if(NULL == stConfig.fpPluginInstallLogFile) {
+		ERROR_LOG("open plugin log file : %s failed, msg:%s", ss.str().c_str(), strerror(errno));
+	}
+}
+
 static void TryReOpenLocalLogFile()
 {
 	static uint32_t s_dwLastReOpenTime = 0;
@@ -369,7 +386,7 @@ static int Init()
 		"SERVER_PORT", CFG_INT, &stConfig.iSrvPort, 27000,
 		"LOG_FREQ_LIMIT_PER_SEC", CFG_INT, &stConfig.iLogLimitPerSec, 5,
 		"AGENT_ACCESS_KEY", CFG_STRING, stConfig.szUserKey, "", MYSIZEOF(stConfig.szUserKey), 
-		"PLUS_PATH", CFG_STRING, stConfig.szPlusPath, "./xrkmonitor_plus", MYSIZEOF(stConfig.szPlusPath),
+		"PLUS_PATH", CFG_STRING, stConfig.szPlusPath, "./xrkmonitor_plugin", MYSIZEOF(stConfig.szPlusPath),
 		"MTREPORT_SHM_KEY", CFG_INT, &iCfgShmKey, MT_REPORT_DEF_SHM_KEY,
 		"AGENT_CLIENT_IP", CFG_STRING, stConfig.szLocalIP, "", MYSIZEOF(stConfig.szLocalIP),
 		"CUST_ATTR_SRV_IP", CFG_STRING, stConfig.szCustAttrSrvIp, "", MYSIZEOF(stConfig.szCustAttrSrvIp),
@@ -1454,6 +1471,8 @@ void ShowShm()
 	SHOW_FIELD_VALUE_UINT_TIME(dwClientProcessStartTime);
 	SHOW_FIELD_VALUE_INT(iAttrSrvMtClientIndex);
 	SHOW_FIELD_VALUE_INT(iAppLogSrvMtClientIndex);
+	SHOW_FIELD_VALUE_UINT_IP(dwConnCfgServerIp);
+	SHOW_FIELD_VALUE_UINT(wConnCfgServerPort);
 
 	// systen config
 	printf("\n");

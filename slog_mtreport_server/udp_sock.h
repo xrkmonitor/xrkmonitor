@@ -153,6 +153,7 @@ typedef struct {
     int32_t iDbId;
     int32_t iStatus;
 	char sCheckStr[16];
+	char sDevLang[12];
     int32_t iReserved_1;
     int32_t iReserved_2;
     uint32_t dwReserved_1;
@@ -204,6 +205,8 @@ typedef struct {
     int32_t iMachineId;
     int32_t iDbId;
 	char sCheckStr[16];
+	char sDevLang[12];
+	char sPluginName[32];
     int32_t iReserved_1;
     int32_t iReserved_2;
     uint32_t dwReserved_1;
@@ -226,6 +229,7 @@ class CUdpSock: public UdpSocket, public CBasicPacket
 		void DealEvent();
 
 	private:
+		int GetLocalPlugin(Json &js_plugin, int iPluginId);
 		int DealCmdPreInstallReport();
 		void DealEventPreInstall(TEventPreInstallPlugin &ev);
 		int MakePreInstallNotifyPkg(TEventPreInstallPlugin &ev, std::ostringstream &sCfgUrl);

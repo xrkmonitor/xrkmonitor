@@ -33,6 +33,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #include <netdb.h>
 #include <sys/socket.h>
 #include <unistd.h>
@@ -71,6 +74,7 @@ uint32_t MakePreInstallReportPkg(CmdS2cPreInstallContentReq *pct, int status)
     stInfo.iMachineId = htonl(pct->iMachineId);
     stInfo.iDbId = htonl(pct->iDbId);
     strncpy(stInfo.sCheckStr, pct->sCheckStr, sizeof(stInfo.sCheckStr));
+	strncpy(stInfo.sDevLang, pct->sDevLang, sizeof(stInfo.sDevLang));
     stInfo.iStatus = htonl(status);
 	pkg.InitCmdContent((void*)&stInfo, (uint16_t)MYSIZEOF(stInfo));
 
@@ -108,6 +112,7 @@ void SendPreInstallStatusToServer(CmdS2cPreInstallContentReq *pct, int status)
 	stConfig.pPkg = stConfig.sSessBuf+MYSIZEOF(PKGSESSION);
 	stConfig.iPkgLen = PKG_BUFF_LENGTH;
 
+    PLUGIN_INST_LOG("report install status:%d to server:%s:%d", status, stConfig.szSrvIp_master, stConfig.iSrvPort);
     if(MakePreInstallReportPkg(pct, status) > 0) {
         struct sockaddr_in addr_server;
         addr_server.sin_family = PF_INET;
@@ -774,6 +779,9 @@ int DealResponseHelloFirst(CBasicPacket &pkg)
 		stConfig.pReportShm->iMtClientIndex,  stConfig.pReportShm->iMachineId, stConfig.iEnableEncryptData,
 		stConfig.pReportShm->iBindCloudUserId);
 
+	stConfig.pReportShm->dwConnCfgServerIp = inet_addr(stConfig.szSrvIp_master);
+	stConfig.pReportShm->wConnCfgServerPort = stConfig.iSrvPort;
+
 	TConfigItemList list;
 	TConfigItem *pitem = NULL;
 	if(presp->szNewMasterSrvIp[0] != '\0' && strcmp(presp->szNewMasterSrvIp, stConfig.szSrvIp_master))
@@ -824,6 +832,9 @@ static int DownloadPluginPacket(CmdS2cPreInstallContentReq *pct, Json &jsret)
     else 
         sInstallPath << stConfig.szPlusPath << "/" << (const char*)(jsret["plugin_name"]);
 
+    std::ostringstream sInstallLogFile;
+    sInstallLogFile << stConfig.szCurPath << "/plugin_install_log/" << (const char*)(jsret["plugin_name"]) << "_install.log ";
+
     // 创建部署目录
     std::ostringstream ss;
     ss << "mkdir -p " << sInstallPath.str() << "; echo $?";
@@ -831,14 +842,14 @@ static int DownloadPluginPacket(CmdS2cPreInstallContentReq *pct, Json &jsret)
     if(get_cmd_result(ss.str().c_str(), strResult) == 0 && strResult.length() > 0) {
         if(strResult != "0") {
             SendPreInstallStatusToServer(pct, EV_PREINSTALL_ERR_MKDIR);
-            WARN_LOG("preinstall plugin:%d, mkdir:%s failed, msg:%s",
-                pct->iPluginId, sInstallPath.str().c_str(), strerror(errno));
+            PLUGIN_INST_LOG("mkdir failed, cmd:%s, result:%s, msg:%s", ss.str().c_str(), strResult.c_str(), strerror(errno));
             return 1;
         }
+        PLUGIN_INST_LOG("create plugin install dir, execute cmd:%s, result:%s", ss.str().c_str(), strResult.c_str());
     }
     else {
         SendPreInstallStatusToServer(pct, EV_PREINSTALL_ERR_MKDIR);
-        WARN_LOG("preinstall plugin:%d, execute:%s failed, msg:%s", pct->iPluginId, ss.str().c_str(), strerror(errno));
+        PLUGIN_INST_LOG("execute cmd:%s failed, msg:%s", ss.str().c_str(), strerror(errno));
         return 2;
     }
 
@@ -848,9 +859,10 @@ static int DownloadPluginPacket(CmdS2cPreInstallContentReq *pct, Json &jsret)
 
     // 使用 wget 执行下载
     std::ostringstream ss_down;
-    ss_down << "cd " << sInstallPath.str() << "; wget -o plugin_download.log -T 30 -O " << ss_local_name.str();
+    ss_down << "cd " << sInstallPath.str() << "; wget -a " << sInstallLogFile.str() << " -T 30 -O " << ss_local_name.str();
     ss_down << " http://" << stConfig.szCloudUrl << "/" << (const char*)(jsret["download_uri"]) << "; echo 0"; 
     get_cmd_result(ss_down.str().c_str(), strResult);
+    PLUGIN_INST_LOG("download packet, execute cmd:%s, result:%s", ss_down.str().c_str(), strResult.c_str());
 
     // 检查插件压缩包是否存在
     ss.str("");
@@ -859,7 +871,7 @@ static int DownloadPluginPacket(CmdS2cPreInstallContentReq *pct, Json &jsret)
     get_cmd_result(ss.str().c_str(), strResult);
     if(strResult != "0") {
         SendPreInstallStatusToServer(pct, EV_PREINSTALL_ERR_DOWNLOAD_PACK);
-        WARN_LOG("preinstall plugin:%d, download failed, cmd:%s", pct->iPluginId, ss_down.str().c_str());
+        PLUGIN_INST_LOG("download packet check failed, cmd:%s, result:%s", ss.str().c_str(), strResult.c_str());
         return 3;
     }
     jsret["local_tar_name"] = ss_local_name.str();
@@ -869,10 +881,15 @@ static int DownloadPluginPacket(CmdS2cPreInstallContentReq *pct, Json &jsret)
 	ss.str("");
     ss_down.str("");
 	ss_local_name.str("");
-	ss_local_name << "xrk_" << (const char*)(jsret["plugin_name"]) << ".conf";
-    ss_down << "cd " << sInstallPath.str() << "; wget -o open_plugin_download.log -T 30 -O " << ss_local_name.str();
+
+	if(!strcmp(pct->sDevLang, "javascript"))
+		ss_local_name << (const char*)(jsret["plugin_name"]) << "_conf.js";
+	else
+		ss_local_name << "xrk_" << (const char*)(jsret["plugin_name"]) << ".conf";
+    ss_down << "cd " << sInstallPath.str() << "; wget -a " << sInstallLogFile.str() << " -T 30 -O " << ss_local_name.str();
     ss_down << " " << pct->sLocalCfgUrl << "; echo 0"; 
     get_cmd_result(ss_down.str().c_str(), strResult);
+    PLUGIN_INST_LOG("download config, execute cmd:%s, result:%s", ss_down.str().c_str(), strResult.c_str());
 
     // 检查插件开源版配置文件是否存在
     ss.str("");
@@ -881,11 +898,11 @@ static int DownloadPluginPacket(CmdS2cPreInstallContentReq *pct, Json &jsret)
     get_cmd_result(ss.str().c_str(), strResult);
     if(strResult != "0") {
         SendPreInstallStatusToServer(pct, EV_PREINSTALL_ERR_DOWNLOAD_OPEN_CFG);
-        WARN_LOG("preinstall plugin:%d, download open config file failed, cmd:%s", pct->iPluginId, ss_down.str().c_str());
+        PLUGIN_INST_LOG("download config check failed, cmd:%s, result:%s", ss.str().c_str(), strResult.c_str());
         return 4;
     }
 
-    INFO_LOG("preinstall plugin:%d, get packet ok, local path:%s", pct->iPluginId, sInstallPath.str().c_str());
+    PLUGIN_INST_LOG("download plugin packet check ok, cmd:%s, result:%s", ss.str().c_str(), strResult.c_str());
     return 0;
 }
 
@@ -893,37 +910,58 @@ static int InstallPluginPacket(CmdS2cPreInstallContentReq *pct, Json &jsret)
 {
     // 解压压缩包，并检查是否存在部署脚本、配置文件、可执行文件
     std::ostringstream ss;
-    ss << "cd " << (const char*)(jsret["local_plugin_path"]) << "; tar -zxf " 
-        << (const char*)(jsret["local_tar_name"]) << "; [ -s start.sh -a -s xrk_" 
-        << (const char*)(jsret["plugin_name"]) << " -a -s add_crontab.sh -a -s xrk_"
-        << (const char*)(jsret["plugin_name"]) << ".conf ] && echo 0 || echo 1";
+    ss << "cd " << (const char*)(jsret["local_plugin_path"]) << "; tar -zxf "
+        << (const char*)(jsret["local_tar_name"]) << "; [ -x start.sh -a  -x stop.sh "
+        << " -a -x restart.sh -a -x auto_install.sh -a -x auto_uninstall.sh ";
+    if(!strncmp(pct->sDevLang, g_strDevLangShell.c_str(), g_strDevLangShell.size())) 
+        ss << " -a -x xrk_" << (const char*)(jsret["plugin_name"]) << ".sh "
+            << " -a -x add_crontab.sh -a -x remove_crontab.sh " 
+            << " -a -s xrk_" << (const char*)(jsret["plugin_name"]) << ".conf ] && echo 0 || echo 1";
+    else if(!strncmp(pct->sDevLang, g_strDevLangJs.c_str(), g_strDevLangJs.size()))
+        ss << " -a -s dmt_xrkmonitor.js "
+            << " -a -s " << (const char*)(jsret["plugin_name"]) << ".js "
+            << " -a -s " << (const char*)(jsret["plugin_name"]) << "_conf.js ] && echo 0 || echo 1";
+    else  
+        ss << " -a -x xrk_" << (const char*)(jsret["plugin_name"]) 
+            << " -a -x add_crontab.sh -a -x remove_crontab.sh "
+            << " -a -s xrk_" << (const char*)(jsret["plugin_name"]) << ".conf ] && echo 0 || echo 1";
+
     std::string strResult;
     get_cmd_result(ss.str().c_str(), strResult);
     if(strResult != "0") {
-        WARN_LOG("preinstall plugin:%d failed, cmd:%s", pct->iPluginId, ss.str().c_str());
+        PLUGIN_INST_LOG("unpacket check failed, cmd:%s, result:%s", ss.str().c_str(), strResult.c_str());
         SendPreInstallStatusToServer(pct, EV_PREINSTALL_ERR_UNPACK);
         return 1;
     }
+    PLUGIN_INST_LOG("unpacket check ok, cmd:%s, result:%s", ss.str().c_str(), strResult.c_str());
 
     ss.str("");
-    ss << "cd " << (const char*)(jsret["local_plugin_path"]) << "; ./start.sh agent_check; echo $? ";
+    ss << "export install_log_file=" 
+        << stConfig.szCurPath << "/plugin_install_log/" << (const char*)(jsret["plugin_name"]) << "_install.log; "
+        << "cd " << (const char*)(jsret["local_plugin_path"]) << "; ./auto_install.sh; ";
     get_cmd_result(ss.str().c_str(), strResult);
-    if(strResult != "0") {
-        WARN_LOG("preinstall plugin:%d, start failed, cmd:%s", pct->iPluginId, ss.str().c_str());
+    if(strResult.find("failed") != std::string::npos) {
+        PLUGIN_INST_LOG("install plugin failed, cmd:%s, result:%s", ss.str().c_str(), strResult.c_str());
         SendPreInstallStatusToServer(pct, EV_PREINSTALL_ERR_START_PLUGIN);
         return 2;
     }
-    DEBUG_LOG("preinstall plugin:%d, start ok", pct->iPluginId);
+    PLUGIN_INST_LOG("install plugin ok, cmd:%s, result:%s", ss.str().c_str(), strResult.c_str());
 
     // 添加 crontab 监控
     ss.str("");
-    ss << "cd " << (const char*)(jsret["local_plugin_path"]) << "; ./add_crontab.sh;";
+    ss << "cd " << (const char*)(jsret["local_plugin_path"]) << "; "
+        << " [ -x add_crontab.sh ] && ./add_crontab.sh || echo \'no\'; ";
     get_cmd_result(ss.str().c_str(), strResult);
     if(strResult.find("failed") != std::string::npos) {
-        WARN_LOG("preinstall plugin:%d, add_crontab failed, result:%s, cmd:%s", 
-			pct->iPluginId, strResult.c_str(), ss.str().c_str());
+        PLUGIN_INST_LOG("add crontab failed, cmd:%s, result:%s", ss.str().c_str(), strResult.c_str());
     }
-    SendPreInstallStatusToServer(pct, EV_PREINSTALL_CLIENT_START_PLUGIN);
+	else {
+        PLUGIN_INST_LOG("add crontab cmd:%s, result:%s", ss.str().c_str(), strResult.c_str());
+	}
+    if(!strncmp(pct->sDevLang, g_strDevLangJs.c_str(), g_strDevLangJs.size()))
+        SendPreInstallStatusToServer(pct, EV_PREINSTALL_CLIENT_INSTALL_PLUGIN_OK);
+    else
+        SendPreInstallStatusToServer(pct, EV_PREINSTALL_CLIENT_START_PLUGIN);
     return 0;
 }
 
@@ -955,39 +993,62 @@ int DealPreInstallNotify(CBasicPacket &pkg)
     pct->iPluginId = ntohl(pct->iPluginId);
     pct->iMachineId = ntohl(pct->iMachineId);
     pct->iDbId = ntohl(pct->iDbId);
+    pct->sCheckStr[sizeof(pct->sCheckStr)-1] = '\0';
+    pct->sDevLang[sizeof(pct->sDevLang)-1] = '\0';
+    pct->sPluginName[sizeof(pct->sPluginName)-1] = '\0';
 	pct->iUrlLen = ntohl(pct->iUrlLen);
-	DEBUG_LOG("get preinstall notify msg, plugin:%d, machine:%d, db:%d, checkstr:%s", 
-		pct->iPluginId, pct->iMachineId, pct->iDbId, pct->sCheckStr);
+
+	std::ostringstream sInstallLogFile;
+	sInstallLogFile << stConfig.szCurPath << "/plugin_install_log";
+	struct stat sb;
+	if(stat(sInstallLogFile.str().c_str(), &sb) < 0 || !S_ISDIR(sb.st_mode)) {
+		std::ostringstream oscmd;
+		oscmd << "rm -fr " << sInstallLogFile.str() << " > /dev/null 2>&1; mkdir -p " << sInstallLogFile.str();
+		system(oscmd.str().c_str());
+		INFO_LOG("create plugin log dir:%s", sInstallLogFile.str().c_str());
+		usleep(10);
+	}
+	sInstallLogFile << "/" << pct->sPluginName << "_install.log ";
+    PLUGIN_INST_LOG("try install plugin:%d, name:%s, check str:%s, machine id:%d, language:%s",
+        pct->iPluginId, pct->sPluginName, pct->sCheckStr, pct->iMachineId, pct->sDevLang);
 
     // 上报一下进度
     SendPreInstallStatusToServer(pct, EV_PREINSTALL_TO_CLIENT_OK);
 
     std::ostringstream ss;
-    ss << "resp=`wget -t 1 -q -O - --dns-timeout=2 --connect-timeout=2 --read-timeout=5 \"http://" 
-        << stConfig.szCloudUrl << "/" << "cgi-bin/mt_slog_open?action=open_preinstall_plugin";
+	ss << "resp=`wget -t 3 -O - --dns-timeout=3 --connect-timeout=3 --read-timeout=5 -a " << sInstallLogFile.str() 
+		<< " \"http://" << stConfig.szCloudUrl << "/" << "cgi-bin/mt_slog_open?action=open_preinstall_plugin";
+    if(pct->sCheckStr[0] != '\0')
+        ss << "&checkstr=" << pct->sCheckStr;
     ss << "&os=" << stConfig.szOs << "&os_arc=" << stConfig.szOsArc << "&agent_ver=" << g_strVersion
         << "&libc_ver=" << stConfig.szLibcVer << "&libcpp_ver=" << stConfig.szLibcppVer
         << "&plugin=" << pct->iPluginId << "&user=" << stConfig.pReportShm->iBindCloudUserId << "\"`; echo $resp";
 
     std::string strResult;
     if(get_cmd_result(ss.str().c_str(), strResult) == 0 && strResult.length() > 0) {
+        PLUGIN_INST_LOG("get packet url - execute cmd:%s, result:%s", ss.str().c_str(), strResult.c_str());
         Json jsrsp;
         try{
             size_t iParseIdx = 0;
             jsrsp.Parse(strResult.c_str(), iParseIdx);
             if(iParseIdx != strResult.size()) {
-                REQERR_LOG("preinstall plugin:%d, parse json:%s failed, %lu != %lu", 
-                    pct->iPluginId, strResult.c_str(), iParseIdx, strResult.size());
+                PLUGIN_INST_LOG("parse json:%s failed, %lu != %lu", strResult.c_str(), iParseIdx, strResult.size());
                 SendPreInstallStatusToServer(pct, EV_PREINSTALL_ERR_GET_URL_PARSE_RET);
             }
             else if((int)(jsrsp["ret"]) != 0) {
-                REQERR_LOG("preinstall plugin:%d, get url failed, ret:%s", pct->iPluginId, strResult.c_str());
+                PLUGIN_INST_LOG("get url failed, result:%s", strResult.c_str());
                 SendPreInstallStatusToServer(pct, EV_PREINSTALL_ERR_GET_URL_RET);
             }
-        }catch(Exception e) {
-            SendPreInstallStatusToServer(pct, EV_PREINSTALL_ERR_GET_URL_PARSE_RET);
-            REQERR_LOG("preinstall plugin:%d, js:%s, json exception:%s", 
-                pct->iPluginId, strResult.c_str(), e.ToString().c_str());
+			else if(strcmp(pct->sPluginName, (const char*)(jsrsp["plugin_name"]))) {
+				PLUGIN_INST_LOG("check plugin failed, %s != %s", pct->sPluginName, (const char*)(jsrsp["plugin_name"]));
+				SendPreInstallStatusToServer(pct, EV_PREINSTALL_ERR_GET_URL_RET);
+				chdir(stConfig.szCurPath);
+				return 0;
+			}
+		}catch(Exception e) {
+			SendPreInstallStatusToServer(pct, EV_PREINSTALL_ERR_GET_URL_PARSE_RET);
+            PLUGIN_INST_LOG("parse json:%s, exception:%s", strResult.c_str(), e.ToString().c_str());
+			chdir(stConfig.szCurPath);
             return 0;
         };
 
@@ -1002,7 +1063,7 @@ int DealPreInstallNotify(CBasicPacket &pkg)
         }
     }
     else {
-        REQERR_LOG("get preinstall packet url failed, plugin:%d, cmd:%s", pct->iPluginId, ss.str().c_str());
+        PLUGIN_INST_LOG("execute cmd:%s, failed", ss.str().c_str());
         SendPreInstallStatusToServer(pct, EV_PREINSTALL_ERR_GET_URL);
     }
 	return 0;

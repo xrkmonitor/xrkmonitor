@@ -312,7 +312,9 @@ int Init(const char *pFile = NULL)
 	int32_t iRet = 0, iLogToStd = 0, iLogWriteSpeed = 100, iSysDaemon = 0;
 	int32_t  iConfigId = 0, iVmemShmKey = 0, iLoginShmKey = 0;
 	if((iRet=LoadConfig(pConfFile,
-		"PLUGIN_INSTALL_CHECKSTR", CFG_STRING, stConfig.szPluginCheckStr, "2342@#@!dcheck", MYSIZEOF(stConfig.szPluginCheckStr),
+		// 插件一键部署校验码，如需设置，请注意使用字母数字组合，某些特殊字符会导致参数解析错误
+		"PLUGIN_INSTALL_CHECKSTR", CFG_STRING, stConfig.szPluginCheckStr, "", MYSIZEOF(stConfig.szPluginCheckStr),
+
 		"MYSQL_SERVER", CFG_STRING, stConfig.szDbHost, "127.0.0.1", MYSIZEOF(stConfig.szDbHost),
 		"MYSQL_USER", CFG_STRING, stConfig.szUserName, "mtreport", MYSIZEOF(stConfig.szUserName),
 		"MYSQL_PASS", CFG_STRING, stConfig.szPass, "mtreport875", MYSIZEOF(stConfig.szPass),
@@ -2193,6 +2195,7 @@ int32_t ReadTablePluginMachineInfo(Database &db, uint32_t up_id=0)
             ERR_LOG("get bEventModFlag failed !");
         for(i=0; i < MAX_EVENT_COUNT; i++) {
             if(stConfig.pShmConfig->stSysCfg.stEvent[i].iEventType == 0
+				|| stConfig.pShmConfig->stSysCfg.stEvent[i].bEventStatus == EVENT_STATUS_FIN
                 || stConfig.pShmConfig->stSysCfg.stEvent[i].dwExpireTime < slog.m_stNow.tv_sec) {
                 break;
             }
@@ -2209,6 +2212,7 @@ int32_t ReadTablePluginMachineInfo(Database &db, uint32_t up_id=0)
         stConfig.pShmConfig->stSysCfg.stEvent[i].ev.stPreInstall.iPluginId = qu.getval("open_plugin_id");
         stConfig.pShmConfig->stSysCfg.stEvent[i].ev.stPreInstall.iMachineId = iMachineId;
         stConfig.pShmConfig->stSysCfg.stEvent[i].ev.stPreInstall.iDbId = up_id;
+        stConfig.pShmConfig->stSysCfg.stEvent[i].bEventStatus = EVENT_STATUS_INIT_SET;
 
 		const char *ptmp = qu.getstr("local_cfg_url");
 		if(!ptmp ||ptmp[0] == '\0'){
@@ -2503,6 +2507,14 @@ void InitSysConfig()
 	sys.dwConfigSeq = rand();
 	if(sys.dwConfigSeq == 0)
 		sys.dwConfigSeq = 1;
+	sys.wHelloRetryTimes = 3;
+	sys.wHelloPerTimeSec = 5;
+	sys.wCheckLogPerTimeSec = 20;
+	sys.wCheckAppPerTimeSec = 22;
+	sys.wCheckServerPerTimeSec = 24;
+	sys.wCheckSysPerTimeSec = 26;
+	sys.bAttrSendPerTimeSec = 5;
+	sys.bLogSendPerTimeSec = 3;
 }
 
 bool CheckDbConnect(uint32_t dwCurTime)

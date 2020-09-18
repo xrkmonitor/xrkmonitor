@@ -691,7 +691,6 @@ typedef struct
 
 #define MAX_SERVICE_PER_MACHINE 50
 
-
 // 监控系统全局配置项 -- 用于下发， 同 client 中的 mt_slog.h MtSystemConfig
 typedef struct
 {
@@ -726,7 +725,8 @@ enum {
     EV_PREINSTALL_CLIENT_GET_PACKET = 6, // client 上报, 已下载插件部署包
     EV_PREINSTALL_CLIENT_START_PLUGIN = 7, // client 上报, 已部署并启动插件
     EV_PREINSTALL_SERVER_RECV_PLUGIN_MSG = 8, // client 上报, slog_mtreport_server 收到插件心跳
-    EV_PREINSTALL_STATUS_MAX = 8,
+	EV_PREINSTALL_CLIENT_INSTALL_PLUGIN_OK = 9, // 插件安装成功, 等待访问才有数据上报
+	EV_PREINSTALL_STATUS_MAX = 9,
 
     EV_PREINSTALL_ERR_MIN = 20,
     EV_PREINSTALL_ERR_GET_URL = 20, // 获取下载地址失败
@@ -751,17 +751,25 @@ typedef struct _TEventPreInstallPlugin {
     }
 }TEventPreInstallPlugin;
 
+enum {
+    EVENT_STATUS_INIT_SET = 1,
+    EVENT_STATUS_FIN = 2
+};
+
 typedef struct _TEventInfo
 {
     int iEventType; // 为 0 表示无事件
     uint32_t dwExpireTime; // 事件过期时间，过期后即可回收
+    uint8_t bEventStatus; // 事件状态 
     union {
         TEventPreInstallPlugin stPreInstall;
-        char sEvBuf[256];
+        char sEvBuf[238];
     }ev;
+	char sReserved[17];
     void Show() {
         SHOW_FIELD_VALUE_INT(iEventType);
         SHOW_FIELD_VALUE_UINT_TIME(dwExpireTime);
+		SHOW_FIELD_VALUE_UINT(bEventStatus);
         if(iEventType == EVENT_PREINSTALL_PLUGIN)
             ev.stPreInstall.Show();
     }
@@ -777,18 +785,18 @@ typedef struct _TEventInfo
 typedef struct 
 {
     // --- MtSystemConfigClient - start
-    uint16_t wKeyTimeOutSec; // - del - 与客户端交互 key 的有效时间
+    uint16_t wReserved;
     uint16_t wHelloRetryTimes; // hello 包重试次数
     uint16_t wHelloPerTimeSec; // hello 发送间隔
     uint16_t wCheckLogPerTimeSec; // 日志配置 check 时间
     uint16_t wCheckAppPerTimeSec; // app 配置 check 时间
     uint16_t wCheckServerPerTimeSec; // server 配置 check 时间
     uint16_t wCheckSysPerTimeSec; // system config 配置 check 时间
-    uint8_t bAppLogProcessCount; // - del - app log 服务开启的进程数目
+    uint8_t bReserved; 
     uint32_t dwConfigSeq;
     uint8_t bAttrSendPerTimeSec; // attr 上报时间间隔
     uint8_t bLogSendPerTimeSec; // log 上报时间间隔
-    uint8_t bReportCpuUseSec; // cpu 使用率多久上报一次
+    uint8_t bReserved_1;
     // --- MtSystemConfigClient - end
 
 	// mysql -- 配置服务器配置信息
@@ -881,7 +889,6 @@ typedef struct
 		SHOW_FIELD_VALUE_UINT(dwConfigSeq);
 		SHOW_FIELD_VALUE_UINT(bAttrSendPerTimeSec);
 		SHOW_FIELD_VALUE_UINT(bLogSendPerTimeSec);
-		SHOW_FIELD_VALUE_UINT(bReportCpuUseSec);
 
 		SHOW_FIELD_VALUE_CSTR(szAgentAccessKey);
 		SHOW_FIELD_VALUE_INT(iEmailVmemIndex);
@@ -1826,6 +1833,17 @@ class CSupperLog: public StdLog, public IError
 		}
 
 		// 在 slog_mtreport_server 上的请求终端信息 
+		// 在 mtreport_server 上的请求终端信息 
+		bool IsMtClientValid(MtClientInfo* pInfo) {
+			if(!m_pShmConfig)
+				return false;
+			if(pInfo->iMachineId == 0
+				|| pInfo->dwLastHelloTime + 3*m_pShmConfig->stSysCfg.wHelloRetryTimes
+					*m_pShmConfig->stSysCfg.wHelloPerTimeSec <= m_stNow.tv_sec)
+				return false;
+			return true; 
+		}
+
 		MtClientInfo* GetMtClientInfo(int32_t iMachineId, uint32_t *piIsFind);
 		MtClientInfo* GetMtClientInfo(int32_t iMachineId, int32_t index);
 		MtClientInfo* GetMtClientInfo(int32_t index) {

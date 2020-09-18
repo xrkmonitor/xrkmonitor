@@ -127,6 +127,8 @@ bool LogFreqCheck();
 
 #define DEBUG_LOG(fmt, ...) do { if(LogFreqCheck() && (2&stConfig.iLocalLogType) && stConfig.fpLogFile != NULL) fprintf(stConfig.fpLogFile, "[%s] debug: (%s:%s:%d) "fmt"\n", stConfig.szTimeCur, __FILE__, __FUNCTION__, __LINE__, ##__VA_ARGS__); fflush(stConfig.fpLogFile); } while(0)                        
 
+#define PLUGIN_INST_LOG(fmt, ...) do { TryOpenPluginInstallLogFile(pct); if(stConfig.fpPluginInstallLogFile != NULL) { fprintf(stConfig.fpPluginInstallLogFile, "[%s] (%s:%s:%d) "fmt"\n", stConfig.szTimeCur, __FILE__, __FUNCTION__, __LINE__, ##__VA_ARGS__); fclose(stConfig.fpPluginInstallLogFile); stConfig.fpPluginInstallLogFile = NULL; } } while(0) 
+
 #define MTREPORT_CONFIG "./slog_mtreport_client.conf"
 #define MTREPORT_CLIENT_CONFIG_ID 57 // monitor 系统中 mtreport_client 的log配置id
 #define MAX_APP_LOG_PKG_LENGTH 1200  // 这个不能太大，整个udp 包长度超过 mtu(1500) 时有些系统发包会失败
@@ -269,6 +271,8 @@ typedef struct
 	// 重启进程更新全部配置标记
 	uint32_t dwRestartFlag;
 	bool bCheckHelloStart;
+
+	FILE *fpPluginInstallLogFile;
 }CONFIG;
 
 

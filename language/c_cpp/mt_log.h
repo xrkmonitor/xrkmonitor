@@ -297,7 +297,9 @@ typedef struct
     TInnerPlusInfo stPluginInfo[MAX_INNER_PLUS_COUNT];
 
 	int32_t iBindCloudUserId;
-	char cReserved[124];
+	uint32_t dwConnCfgServerIp; // 连接的远程服务器IP
+	uint16_t wConnCfgServerPort; // 连接的远程服务器 port
+	char cReserved[118];
 }MTREPORT_SHM;
 
 #pragma pack()
