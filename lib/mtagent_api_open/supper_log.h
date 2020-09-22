@@ -1835,8 +1835,9 @@ class CSupperLog: public StdLog, public IError
 		// 在 slog_mtreport_server 上的请求终端信息 
 		// 在 mtreport_server 上的请求终端信息 
 		bool IsMtClientValid(MtClientInfo* pInfo) {
-			if(!m_pShmConfig)
+			if(!m_pShmConfig || !pInfo)
 				return false;
+
 			if(pInfo->iMachineId == 0
 				|| pInfo->dwLastHelloTime + 3*m_pShmConfig->stSysCfg.wHelloRetryTimes
 					*m_pShmConfig->stSysCfg.wHelloPerTimeSec <= m_stNow.tv_sec)
