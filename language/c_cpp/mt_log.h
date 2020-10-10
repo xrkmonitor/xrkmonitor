@@ -204,7 +204,8 @@ typedef struct _TInnerPlusInfo {
     uint32_t dwLastHelloTime; // 存活校验
     uint32_t dwRep_LastHelloTime;
     uint8_t bCheckRet; // 服务端验证结果, 0 OK, 1 失败
-    char sReserved[11];
+	uint32_t dwCfgFileLastModTime; // 配置文件最后修改时间, 用于上报插件配置
+    char sReserved[7];
 }TInnerPlusInfo;
 
 // agent client or api 共享内存结构

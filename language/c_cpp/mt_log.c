@@ -37,6 +37,8 @@
 #include <arpa/inet.h>
 #include <stdio.h>
 #include <sys/time.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <errno.h>
 
 #include "mt_report.h"
@@ -156,6 +158,10 @@ int MtReport_Plus_Init(const char *pConfigFile, int iPluginId, const char *pName
     stPluginInfo.dwPluginStartTime = time(NULL);
     stPluginInfo.iLibVerNum = XRKMONITOR_LIB_VER_NUM;
 
+    struct stat cfg_fstat;
+    stat(pConfigFile, &cfg_fstat);
+    stPluginInfo.dwCfgFileLastModTime = cfg_fstat.st_mtim.tv_sec;
+
     MTREPORT_SHM *pshm = g_mtReport.pMtShm;
 
     for(i=0; i < MAX_INNER_PLUS_COUNT; i++) {
@@ -176,6 +182,8 @@ int MtReport_Plus_Init(const char *pConfigFile, int iPluginId, const char *pName
 			pshm->stPluginInfo[i].dwPluginStartTime = stPluginInfo.dwPluginStartTime;
 			if(pshm->stPluginInfo[i].iLibVerNum != stPluginInfo.iLibVerNum)
 				pshm->stPluginInfo[i].iLibVerNum = stPluginInfo.iLibVerNum;
+			if(pshm->stPluginInfo[i].dwCfgFileLastModTime != stPluginInfo.dwCfgFileLastModTime)
+				pshm->stPluginInfo[i].dwCfgFileLastModTime = stPluginInfo.dwCfgFileLastModTime;
             break;
         }
     }

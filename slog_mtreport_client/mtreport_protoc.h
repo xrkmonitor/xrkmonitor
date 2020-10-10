@@ -197,6 +197,7 @@ typedef struct{
     uint32_t dwLastReportAttrTime; // 最后一次 attr 上报时间
     uint32_t dwLastReportLogTime; // 最后一次 log 上报时间
     uint32_t dwLastHelloTime; // 最后一次 hello 时间
+    uint32_t dwConfigFileTime; // 配置文件最后修改时间
 }TRepPluginInfo; // 非首次上报结构
 
 typedef struct
@@ -240,6 +241,18 @@ typedef struct {
     uint32_t dwReserved_1;
     uint32_t dwReserved_2;
 }CmdPreInstallReportContent;
+
+typedef struct {
+    int iPluginId;
+    int iConfigLen;
+    char strCfgs[0];
+}CmdSendPluginConfigContent;
+
+typedef struct {
+    int iPluginId;
+    uint32_t dwLastModConfigTime;
+}CmdSendPluginConfigContentResp;
+
 
 //
 // 与 server 交互的数据结构相关定义 s2c ---
@@ -330,6 +343,10 @@ typedef struct {
 	uint32_t dwConfigSrvIP;
 }TCmdSendPluginSess;
 
+typedef struct {
+	int iPluginId;
+}TCmdReportPluginCfgSess;
+
 // (pkg) 注意 session 最长不超过 TIMER_NODE_SESS_DATA_LEN(目前为：48) 个字节
 #define SESS_FLAG_WAIT_RESPONSE 1 // 数据包已发送，等待响应
 #define SESS_FLAG_RESPONSED 2 // 收到响应数据包
@@ -358,6 +375,7 @@ typedef struct {
 		TCmdSendAppLogSess applog;
 		TCmdSendAttrSess attr;
 		TCmdSendPluginSess plugin;
+		TCmdReportPluginCfgSess plugin_cfg;
 	}stCmdSessData;
 }PKGSESSION;
 
@@ -411,6 +429,8 @@ int DealMachineOprPlugin(CBasicPacket &pkg);
 void TryOpenPluginInstallLogFile(CmdS2cPreInstallContentReq *plug);
 void TryOpenPluginInstallLogFile(CmdS2cMachOprPluginReq *plug);
 
+int DealModMachinePluginCfg(CBasicPacket &pkg);
+uint32_t MakePluginConfigReportPkg(TInnerPlusInfo *plugin);
 const std::string g_strDevLangShell("linux shell");
 const std::string g_strDevLangJs("javascript");
 

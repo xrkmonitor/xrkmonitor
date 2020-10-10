@@ -1390,7 +1390,7 @@ int CUdpSock::SetHelloTimeToMachineTable()
 
 int CUdpSock::DealCmdReportPluginInfo()
 {
-    std::map<int, uint8_t> mpPluginCheck;
+    std::list<MonitorPluginCheckResult> stPluginCheck;
 
     if(m_wCmdContentLen <= MYSIZEOF(MonitorRepPluginInfoContent)) {
         REQERR_LOG("invalid cmd content %u != %u", m_wCmdContentLen, MYSIZEOF(MonitorRepPluginInfoContent));
@@ -1413,15 +1413,35 @@ int CUdpSock::DealCmdReportPluginInfo()
     MyQuery myqu(stConfig.qu, stConfig.db);
     Query & qu = myqu.GetQuery();
     std::ostringstream ss;
+    MonitorPluginCheckResult stCheck;
 	const char *ptmp = NULL;
     for(i=0; wLen > 0 && i < pctinfo->bPluginCount; i++, pInfo += 1+iItemLen, wLen -= 1+iItemLen) {
         iItemLen = *pInfo;
+        memset(&stCheck, 0, sizeof(stCheck));
         if(*pInfo == sizeof(*pstInfo)) {
             pstInfo = (TRepPluginInfo*)(pInfo+1);
             pstInfo->iPluginId = ntohl(pstInfo->iPluginId);
             pstInfo->dwLastReportAttrTime = ntohl(pstInfo->dwLastReportAttrTime);
             pstInfo->dwLastReportLogTime = ntohl(pstInfo->dwLastReportLogTime);
             pstInfo->dwLastHelloTime = ntohl(pstInfo->dwLastHelloTime);
+            if(pstInfo->dwLastHelloTime == 0)
+                pstInfo->dwLastHelloTime = slog.m_stNow.tv_sec;
+            pstInfo->dwConfigFileTime = ntohl(pstInfo->dwConfigFileTime);
+
+			stCheck.iPluginId = pstInfo->iPluginId;
+
+			ss.str("");
+            ss << "select cfg_file_time from mt_plugin_machine where machine_id=" << m_iRemoteMachineId;
+            ss << " and open_plugin_id=" << pstInfo->iPluginId << " and xrk_status=0 ";
+			qu.get_result(ss.str());
+			qu.fetch_row();
+            if(pstInfo->dwConfigFileTime != qu.getuval("cfg_file_time")) {
+				DEBUG_LOG("plugin:%d, config need report:%u != %u", 
+					stCheck.iPluginId, pstInfo->dwConfigFileTime, qu.getuval("cfg_file_time"));
+				stCheck.bNeedReportCfg = 1;
+			}
+			qu.free_result();
+
         	ss.str("");
             ss << "update mt_plugin_machine set last_hello_time=" << pstInfo->dwLastHelloTime << ", install_proc=0";
             if(pstInfo->dwLastReportAttrTime > 0)
@@ -1433,10 +1453,12 @@ int CUdpSock::DealCmdReportPluginInfo()
             qu.execute(ss.str().c_str());
 			if(qu.affected_rows() < 1) {
 				WARN_LOG("update failed, affected_rows < 1, plugin:%d", pstInfo->iPluginId);
-				mpPluginCheck.insert(std::pair<int,int>(pstInfo->iPluginId, 1));
+				stCheck.bCheckResult = 1;
+				stPluginCheck.push_back(stCheck);
 				continue;
 			}
-            mpPluginCheck.insert(std::pair<int,int>(pstInfo->iPluginId, 0));
+            stCheck.bCheckResult = 0;
+            stPluginCheck.push_back(stCheck);
             DEBUG_LOG("report plugin info ok - plugin:%d", pstInfo->iPluginId);
         }else if(*pInfo > sizeof(*pstFirst))  {
             pstFirst = (TRepPluginInfoFirst*)(pInfo+1);
@@ -1446,37 +1468,47 @@ int CUdpSock::DealCmdReportPluginInfo()
             pstFirst->dwLastReportLogTime = ntohl(pstFirst->dwLastReportLogTime);
             pstFirst->dwPluginStartTime = ntohl(pstFirst->dwPluginStartTime);
             pstFirst->dwLastHelloTime = ntohl(pstFirst->dwLastHelloTime);
+            if(pstFirst->dwLastHelloTime == 0)
+                pstFirst->dwLastHelloTime = slog.m_stNow.tv_sec;
+
+            pstFirst->dwConfigFileTime = ntohl(pstFirst->dwConfigFileTime);
+            stCheck.iPluginId = pstFirst->iPluginId;
 
             //  合法性校验, 是否安装，部署名是否匹配
 			ss.str("");
 			ss << "select plugin_name from mt_plugin where open_plugin_id=" << pstFirst->iPluginId
 				<< " and xrk_status=0";
 			if(qu.get_result(ss.str().c_str()) && qu.num_rows() > 0) {
+				qu.fetch_row();
 				ptmp = qu.getstr("plugin_name");
 				if(pstFirst->bPluginNameLen < 1 || 
 					(ptmp && strncmp(ptmp, pstFirst->sPluginName, pstFirst->bPluginNameLen)))
 				{
 					pstFirst->sPluginName[pstFirst->bPluginNameLen-1] = '\0';
-					WARN_LOG("plugin:%d, name not match:%s, %s", pstFirst->iPluginId, ptmp, pstFirst->sPluginName);
+					WARN_LOG("plugin:%d, name not match:%s, %s", pstFirst->iPluginId, ptmp, pstFirst->sPluginName); 
+					stCheck.bCheckResult = 1; 
+					stPluginCheck.push_back(stCheck); 
 					qu.free_result();
-					mpPluginCheck.insert(std::pair<int,int>(pstFirst->iPluginId, 1));
 					continue;
 				}
 			}
 			else {
 				WARN_LOG("not find plugin:%d", pstFirst->iPluginId);
+				stCheck.bCheckResult = 1; 
+				stPluginCheck.push_back(stCheck);
 				qu.free_result();
-				mpPluginCheck.insert(std::pair<int,int>(pstFirst->iPluginId, 1));
 				continue;
 			}
 			qu.free_result();
 
 			ss.str("");
-            ss << "select xrk_id from mt_plugin_machine where machine_id=" << m_iRemoteMachineId;
+            ss << "select xrk_id,cfg_file_time from mt_plugin_machine where machine_id=" << m_iRemoteMachineId;
             ss << " and open_plugin_id=" << pstFirst->iPluginId << " and xrk_status=0 ";
             if(qu.get_result(ss.str().c_str()) && qu.num_rows() > 0) {
                 qu.fetch_row();
                 int id = qu.getval("xrk_id");
+                if(pstFirst->dwConfigFileTime != qu.getuval("cfg_file_time"))
+                    stCheck.bNeedReportCfg = 1;
                 qu.free_result();
 
                 ss.str("");
@@ -1506,9 +1538,11 @@ int CUdpSock::DealCmdReportPluginInfo()
                 ss << ", cfg_version=\'" << pstFirst->szVersion << "\'";
                 ss << ", build_version=\'" << pstFirst->szBuildVer << "\'";
                 qu.execute(ss.str().c_str());
+                stCheck.bNeedReportCfg = 1;
             }
             DEBUG_LOG("first report plugin info ok - plugin:%d", pstFirst->iPluginId);
-            mpPluginCheck.insert(std::pair<int,int>(pstFirst->iPluginId, 0));
+            stCheck.bCheckResult = 0;
+            stPluginCheck.push_back(stCheck);
         }
         else {
             REQERR_LOG("invalid report plugin info, len:%d", *pInfo);
@@ -1524,17 +1558,20 @@ int CUdpSock::DealCmdReportPluginInfo()
     char sRspBuf[512] = {0};
     MonitorRepPluginInfoContentResp *pstResp = (MonitorRepPluginInfoContentResp*)sRspBuf;
     MonitorPluginCheckResult *pRlt = (MonitorPluginCheckResult*)(sRspBuf+sizeof(MonitorRepPluginInfoContentResp));
-    pstResp->bPluginCount=(int)(mpPluginCheck.size());
-    std::map<int, uint8_t>::iterator it = mpPluginCheck.begin();
-    int iOk = 0, iFail = 0;
-    for(; it != mpPluginCheck.end(); it++) {
-        pRlt->iPluginId = htonl(it->first);
-        pRlt->bCheckResult = it->second;
+	pstResp->bPluginCount=(int)(stPluginCheck.size());
+    std::list<MonitorPluginCheckResult>::iterator it = stPluginCheck.begin();
+    int iOk = 0, iFail = 0, iNeedCfg = 0;
+	for(; it != stPluginCheck.end(); it++) {
+        pRlt->iPluginId = htonl(it->iPluginId);
+        pRlt->bCheckResult = it->bCheckResult;
+        pRlt->bNeedReportCfg = it->bNeedReportCfg;
         pRlt++;
-        if(it->second)
+        if(it->bCheckResult)
             iFail++;
         else
             iOk++;
+        if(it->bNeedReportCfg)
+            iNeedCfg++;
     }
     wLen = sizeof(MonitorRepPluginInfoContentResp)+sizeof(MonitorPluginCheckResult)*pstResp->bPluginCount;
 
@@ -1557,6 +1594,171 @@ int CUdpSock::DealCmdReportPluginInfo()
         pctinfo->bPluginCount, iOk, iFail, wLen);
     AckToReq(NO_ERROR);
     return NO_ERROR;
+}
+
+int CUdpSock::DealCmdReportPluginCfg()
+{
+    static std::string s_plugCfgStr("xrkmonitor_cfgs:");
+	if(m_wCmdContentLen <= MYSIZEOF(CmdSendPluginConfigContent)) {
+		REQERR_LOG("invalid cmd content %u != %u", m_wCmdContentLen, MYSIZEOF(CmdSendPluginConfigContent));
+		return ERR_INVALID_CMD_CONTENT;
+	}
+
+	int iRet = 0;
+	if((iRet=DealCommInfo()) != NO_ERROR)
+		return iRet;
+
+	CmdSendPluginConfigContent *pctinfo = (CmdSendPluginConfigContent*)m_pstCmdContent;
+    pctinfo->iPluginId = ntohl(pctinfo->iPluginId);
+    pctinfo->iConfigLen = ntohl(pctinfo->iConfigLen);
+
+    if(m_wCmdContentLen != pctinfo->iConfigLen) {
+        REQERR_LOG("check length failed, %d != %d", m_wCmdContentLen, pctinfo->iConfigLen);
+        return ERR_INVALID_PACKET;
+    }
+
+    // strCfgs 格式：xrkmonitor_cfgs:最后修改时间;CFG_ITEM CFG_ITEM_VAL;CFG_ITEM CFG_ITEM_VAL;CFG_ITEM CFG_ITEM_VAL;...
+    int iCfgLen = pctinfo->iConfigLen - (int)sizeof(CmdSendPluginConfigContent);
+    pctinfo->strCfgs[iCfgLen-1] = '\0';
+    if(strncmp(pctinfo->strCfgs, s_plugCfgStr.c_str(), s_plugCfgStr.size())) {
+        REQERR_LOG("check plugin config failed, start string:%s not match", s_plugCfgStr.c_str());
+        return ERR_INVALID_PACKET;
+    }
+	DEBUG_LOG("report plugin config info, plugin:%d, cfgs:%s", pctinfo->iPluginId, pctinfo->strCfgs);
+
+    // 提取插件配置最后修改时间
+    uint32_t dwLastModTime = 0;
+    char *ptmp = pctinfo->strCfgs+s_plugCfgStr.size();
+    char *ptmp_e = strchr(pctinfo->strCfgs, ';');
+    if(ptmp_e != NULL) {
+        *ptmp_e = '\0';
+        dwLastModTime = strtoul(ptmp, NULL, 10);
+        ptmp = ptmp_e+1;
+    }
+    else {
+        dwLastModTime = strtoul(ptmp, NULL, 10);
+        *ptmp = '\0';
+    }
+    std::ostringstream ss;
+
+    // 提取全部可修改的配置项
+    char *pitem_name = NULL, *pitem_val = NULL;
+    for(int i=0; *ptmp != '\0' && i >= 0;) {
+        if(i == 0) {
+            // 提取配置项宏名
+            ptmp_e = strchr(ptmp, ' ');
+            pitem_name = ptmp;
+            if(ptmp_e != NULL) {
+                *ptmp_e = '\0';
+                ptmp = ptmp_e+1;
+            }
+            else {
+                *ptmp = '\0';
+            }
+            i = 1;
+        }
+        else {
+            // 提取配置项值
+            ptmp_e = strchr(ptmp, ';');
+            pitem_val = ptmp;
+            if(ptmp_e != NULL) {
+                *ptmp_e = '\0';
+                ptmp = ptmp_e+1;
+                i = 0;
+            }
+            else 
+                i = -1;
+            if(ss.str().size() > 0)
+                ss << ";" << pitem_name << " " << pitem_val;
+            else
+                ss << pitem_name << " " << pitem_val;
+        }
+    }
+
+	MyQuery myqu(stConfig.qu, stConfig.db);
+	Query & qu = myqu.GetQuery();
+
+    IM_SQL_PARA* ppara = NULL;
+    InitParameter(&ppara);
+    AddParameter(&ppara, "cfg_file_time", dwLastModTime, "DB_CAL");
+    AddParameter(&ppara, "xrk_cfgs_list", ss.str().c_str(), NULL);
+    std::string strSql;
+    strSql = "update mt_plugin_machine set";
+    JoinParameter_Set(&strSql, qu.GetMysql(), ppara);
+    strSql += " where open_plugin_id=";
+    strSql += itoa(pctinfo->iPluginId);
+    strSql += " and xrk_status=0";
+    strSql += " and machine_id=";
+    strSql += itoa(m_iRemoteMachineId);
+    ReleaseParameter(&ppara);
+    if(!qu.execute(strSql))
+    {
+        ERR_LOG("execute sql:%s failed, msg:%s", strSql.c_str(), qu.GetError().c_str());
+        return SLOG_ERROR_LINE;
+    }
+
+	// 成功响应
+    char sRspBuf[64] = {0};
+	CmdSendPluginConfigContentResp *pstResp = (CmdSendPluginConfigContentResp*)sRspBuf;
+    pstResp->iPluginId = ntohl(pctinfo->iPluginId);
+    pstResp->dwLastModConfigTime = ntohl(dwLastModTime);
+
+    uint16_t wLen = sizeof(*pstResp);
+	if(m_pMtClient->bEnableEncryptData) {
+		static char sContentBuf[1024+256];
+		int iSigBufLen = ((wLen>>4)+1)<<4;
+		if(iSigBufLen > (int)sizeof(sContentBuf)) {
+			ERR_LOG("need more space %d > %d", iSigBufLen, (int)sizeof(sContentBuf));
+			return ERR_SERVER;
+		}
+		aes_cipher_data((const uint8_t*)pstResp,
+			wLen, (uint8_t*)sContentBuf, (const uint8_t*)m_pMtClient->sRandKey, AES_128);
+		InitCmdContent(sContentBuf, iSigBufLen);
+	}
+	else {
+		InitCmdContent(pstResp, wLen);
+	}
+
+	AckToReq(NO_ERROR); 
+	return NO_ERROR;
+}
+
+int CUdpSock::DealCmdModMachPluginCfgResp()
+{
+	if(m_wCmdContentLen != MYSIZEOF(CmdS2cModMachPluginCfgResp)) {
+		REQERR_LOG("invalid cmd content %u != %u", m_wCmdContentLen, MYSIZEOF(CmdS2cModMachPluginCfgResp));
+		return ERR_INVALID_CMD_CONTENT;
+	}
+
+	int iRet = 0;
+	if((iRet=DealCommInfo()) != NO_ERROR)
+		return iRet;
+
+	CmdS2cModMachPluginCfgResp *pctinfo = (CmdS2cModMachPluginCfgResp*)m_pstCmdContent;
+    pctinfo->iPluginId = ntohl(pctinfo->iPluginId);
+    pctinfo->iMachineId = ntohl(pctinfo->iMachineId);
+    pctinfo->dwDownCfgTime = ntohl(pctinfo->dwDownCfgTime);
+
+	MyQuery myqu(stConfig.qu, stConfig.db);
+	Query & qu = myqu.GetQuery();
+
+    // session 校验，校验通过后才能操作数据库
+    TMachOprPluginSess *psess_data = (TMachOprPluginSess*)GetSessData();
+    if(!psess_data || psess_data->iPluginId != pctinfo->iPluginId
+        || psess_data->iMachineId != pctinfo->iMachineId) 
+    {
+        REQERR_LOG("udp session check failed:%p, plugin:%d, machine:%d", 
+            psess_data, pctinfo->iPluginId, pctinfo->iMachineId);
+        return ERR_INVALID_PACKET;
+    }
+
+    std::ostringstream ss;
+    ss << "update mt_plugin_machine set opr_proc=" << EV_MOP_OPR_SUCCESS
+        << " where xrk_id=" << psess_data->iDbId << " and opr_start_time=" 
+        << pctinfo->dwDownCfgTime << " and xrk_status=0"; 
+    qu.execute(ss.str().c_str());
+    DEBUG_LOG("modify plugin config ok, plugin:%d, machine:%d", pctinfo->iPluginId, pctinfo->iMachineId);
+    return 0;
 }
 
 int CUdpSock::DealCmdMachOprPluginResp()
@@ -1721,6 +1923,14 @@ void CUdpSock::OnRawData(const char *buf, size_t len, struct sockaddr *sa, sockl
         case CMD_MONI_S2C_MACH_ORP_PLUGIN_ENABLE:
         case CMD_MONI_S2C_MACH_ORP_PLUGIN_DISABLE:
             DealCmdMachOprPluginResp();
+            break;
+
+        case CMD_SEND_PLUGIN_CONFIG:
+            iRet = DealCmdReportPluginCfg();
+            break;
+
+        case CMD_MONI_S2C_MACH_ORP_PLUGIN_MOD_CFG:
+            DealCmdModMachPluginCfgResp();
             break;
 
 		default:

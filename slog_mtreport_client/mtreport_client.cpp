@@ -158,6 +158,17 @@ void OnMtreportPkg(struct MtSocket *psock, char * sBuf, int iLen, time_t uiTime)
                 SendErrorRespToReq(pkg, iRet, psock);
             return;
 
+        case CMD_MONI_S2C_MACH_ORP_PLUGIN_MOD_CFG:
+            iRet = DealModMachinePluginCfg(pkg);
+            if(stConfig.fpPluginInstallLogFile) {
+                fclose(stConfig.fpPluginInstallLogFile);
+                stConfig.fpPluginInstallLogFile = NULL;
+            }
+            // 服务器端使用可靠udp，需要回复
+            if(iRet != 0 && pkg.m_pstReqHead->qwSessionId != 0)
+                SendErrorRespToReq(pkg, iRet, psock);
+            return;
+
         case CMD_MONI_S2C_MACH_ORP_PLUGIN_REMOVE:
         case CMD_MONI_S2C_MACH_ORP_PLUGIN_ENABLE:
         case CMD_MONI_S2C_MACH_ORP_PLUGIN_DISABLE:
@@ -300,6 +311,47 @@ void OnMtreportPkg(struct MtSocket *psock, char * sBuf, int iLen, time_t uiTime)
 	if(iRet != 0)
 		REQERR_LOG("deal response packet failed, cmd:%u, ret:%d, msg:%s", pkg.m_dwReqCmd, iRet, pkg.GetErrMsg(iRet));
 }
+
+void SendPluginConfig(TInnerPlusInfo *plugin)
+{
+	stConfig.pPkgSess = (PKGSESSION*)stConfig.sSessBuf;
+	stConfig.pPkg = stConfig.sSessBuf+MYSIZEOF(PKGSESSION);
+	stConfig.iPkgLen = PKG_BUFF_LENGTH;
+
+    INFO_LOG("report plugin:%s(%d) config to server:%s:%d", 
+        plugin->szPlusName, plugin->iPluginId, stConfig.szSrvIp_master, stConfig.iSrvPort);
+    uint32_t dwKey = 0;
+    if((dwKey=MakePluginConfigReportPkg(plugin)) > 0) {
+        struct sockaddr_in addr_server;
+        addr_server.sin_family = PF_INET;
+        addr_server.sin_port = htons(stConfig.iSrvPort);
+        addr_server.sin_addr.s_addr = inet_addr(stConfig.szSrvIp_master);
+        int iRet = SendPacket(stConfig.iConfigSocketIndex, &addr_server, stConfig.pPkg, stConfig.iPkgLen);
+        if(iRet != stConfig.iPkgLen) {
+		    ERROR_LOG("SendPacket(report plugin config) failed, pkglen:%d, ret:%d", stConfig.iPkgLen, iRet);
+        }
+        else {
+            stConfig.pPkgSess->iSockIndex = stConfig.iConfigSocketIndex;
+            stConfig.pPkgSess->dwSendTimeSec = stConfig.stTimeCur.tv_sec;
+            stConfig.pPkgSess->dwSendTimeUsec = stConfig.stTimeCur.tv_usec;
+            stConfig.pPkgSess->bSessStatus = SESS_FLAG_WAIT_RESPONSE;
+            stConfig.pPkgSess->stCmdSessData.plugin_cfg.iPluginId = plugin->iPluginId;
+            int iTime = GetMaxResponseTime(stConfig.pPkgSess->iSockIndex)+1000;
+            iRet = AddTimer(dwKey, iTime, OnPkgExpire,
+                stConfig.pPkgSess, MYSIZEOF(PKGSESSION), stConfig.iPkgLen, stConfig.pPkg);
+            if(iRet < 0) {
+                ERROR_LOG("AddTimer(report plugin config) failed ! pkglen:%d, key:%u, ret:%d", stConfig.iPkgLen, dwKey, iRet);
+                return ;
+            }
+            DEBUG_LOG("report plugin config to %s:%d, plugin id:%d, name:%s", 
+                stConfig.szSrvIp_master, stConfig.iSrvPort, plugin->iPluginId, plugin->szPlusName);
+        }
+    }
+    else {
+        ERROR_LOG("MakePluginConfigReportPkg failed !");
+    }
+}
+
 
 int TimerHashCmpFun(const void *pKey, const void *pNode)
 {
@@ -1510,6 +1562,7 @@ void ShowPlugin()
             SHOW_FIELD_VALUE_UINT_TIME(dwRep_LastReportAttrTime);
             SHOW_FIELD_VALUE_UINT_TIME(dwRep_LastHelloTime);
             SHOW_FIELD_VALUE_UINT(bCheckRet);
+            SHOW_FIELD_VALUE_UINT(dwCfgFileLastModTime);
         }
     }
 }

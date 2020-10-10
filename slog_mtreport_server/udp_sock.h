@@ -166,6 +166,7 @@ typedef struct{
     char szVersion[12]; // 配置文件中的插件版本
     char szBuildVer[12]; // 插件编译时的版本信息 
     int iLibVerNum; // 使用的开发库版本编号
+    uint32_t dwConfigFileTime; // 配置文件最后修改时间, 插件重启后可上报最新配置
     uint32_t dwLastReportAttrTime; // 最后一次 attr 上报时间
     uint32_t dwLastReportLogTime; // 最后一次 log 上报时间
     uint32_t dwLastHelloTime; // 最后一次 hello 时间
@@ -179,6 +180,7 @@ typedef struct{
     uint32_t dwLastReportAttrTime; // 最后一次 attr 上报时间
     uint32_t dwLastReportLogTime; // 最后一次 log 上报时间
     uint32_t dwLastHelloTime; // 最后一次 hello 时间
+    uint32_t dwConfigFileTime; // 配置文件最后修改时间, 插件重启后可上报最新配置
 }TRepPluginInfo; // 非首次上报结构
 
 typedef struct
@@ -190,6 +192,7 @@ typedef struct
 typedef struct {
     int32_t iPluginId;
     uint8_t bCheckResult;
+    uint8_t bNeedReportCfg; // 是否需要上报配置, 0 不需要， 1 需要
 }MonitorPluginCheckResult;
 
 typedef struct
@@ -197,6 +200,18 @@ typedef struct
     uint8_t bPluginCount;
     MonitorPluginCheckResult sCheckResult[0];
 }MonitorRepPluginInfoContentResp;
+
+typedef struct {
+    int iPluginId;
+    int iConfigLen;
+    char strCfgs[0];
+}CmdSendPluginConfigContent;
+
+typedef struct {
+    int iPluginId;
+    uint32_t dwLastModConfigTime;
+}CmdSendPluginConfigContentResp;
+
 
 //
 // 与 server 交互的数据结构相关定义 s2c ---

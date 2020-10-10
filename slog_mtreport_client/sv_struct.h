@@ -65,6 +65,7 @@
 #define CMD_CGI_SEND_LOG 217 
 #define CMD_MONI_SEND_PLUGIN_INFO 218 // client send plugin info 
 #define CMD_MONI_PREINSTALL_REPORT 219 // client send 一键部署进度 
+#define CMD_SEND_PLUGIN_CONFIG 220
 
 // monitor system s2c cmd: 701-999
 #define CMD_MONI_S2C_LOG_CONFIG_NOTIFY 701 

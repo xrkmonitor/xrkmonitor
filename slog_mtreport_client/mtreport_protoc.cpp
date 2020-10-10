@@ -60,6 +60,102 @@ int IsHelloValid()
 	return (stConfig.pReportShm->dwLastHelloOkTime+2*60 > stConfig.dwCurTime);
 }
 
+// str: xrkmonitor_cfgs:time;cfg_item cfg_val;cfg_item cfg_val;...
+static uint32_t GetModTimeFromReportStr(const std::string str)
+{
+    const char *pst = NULL, *pend = NULL;
+    pst = strchr(str.c_str(), ':');
+    pend = strchr(str.c_str(), ';');
+    if(pst && pend && pend > pst) {
+        std::string stm(pst, (size_t)(pend-pst));
+        return strtoul(stm.c_str(), NULL, 10);
+    }
+    return 0;
+}
+
+static int ReadPluginCfg(TInnerPlusInfo *plugin, CmdSendPluginConfigContent *pcfg, int iBufLen)
+{
+    std::ostringstream tmp;
+    std::ostringstream sPluginCfg;
+    if(stConfig.szPlusPath[0] != '/') 
+        sPluginCfg << stConfig.szCurPath << "/" << stConfig.szPlusPath << "/" << plugin->szPlusName;
+    else 
+        sPluginCfg << stConfig.szPlusPath << "/" << plugin->szPlusName;
+    tmp << "cd " << sPluginCfg.str() << "; ./report_cfg.sh";
+
+    std::string strResult;
+    get_cmd_result(tmp.str().c_str(), strResult);
+
+    if(strResult.find("xrkmonitor_cfgs:") != std::string::npos) {
+        // 时间戳更新
+		uint32_t dwTm = GetModTimeFromReportStr(strResult);
+		if(dwTm != 0)
+	        plugin->dwCfgFileLastModTime = dwTm;
+        if((int)(strResult.size()+sizeof(CmdSendPluginConfigContent)) < iBufLen) {
+            strcpy(pcfg->strCfgs, strResult.c_str());
+            return (int)(strResult.size()+sizeof(CmdSendPluginConfigContent)+1);
+        }
+        else {
+            strncpy(pcfg->strCfgs, strResult.c_str(), iBufLen-1);
+            pcfg->strCfgs[iBufLen-sizeof(CmdSendPluginConfigContent)-1] = '\0';
+            ERROR_LOG("need more space %lu < %d, plugin:%s(%d)", strResult.size(), iBufLen, plugin->szPlusName, plugin->iPluginId);
+            return iBufLen;
+        }
+    }
+    else {
+        WARN_LOG("get plugin:%s(%d) config failed, cmd:%s, result:%s",
+            plugin->szPlusName, plugin->iPluginId, tmp.str().c_str(), strResult.c_str());
+    }
+    return -1;
+}
+
+uint32_t MakePluginConfigReportPkg(TInnerPlusInfo *plugin)
+{
+	CBasicPacket pkg;
+
+	// head
+	ReqPkgHead stHead;
+	pkg.InitReqPkgHead(&stHead, CMD_SEND_PLUGIN_CONFIG);
+
+	// cmd content
+    static char s_plugCfgBuf[4096] = {0};
+	CmdSendPluginConfigContent *pstInfo = (CmdSendPluginConfigContent*)s_plugCfgBuf;
+    int iContentLen = ReadPluginCfg(plugin, pstInfo, sizeof(s_plugCfgBuf));
+    if(iContentLen < 0)
+        return 0;
+
+    pstInfo->iPluginId = ntohl(plugin->iPluginId);
+    pstInfo->iConfigLen = ntohl(iContentLen);
+	pkg.InitCmdContent((void*)pstInfo, (uint16_t)iContentLen);
+
+	// 签名
+	char sSig[MAX_SIGNATURE_LEN+MYSIZEOF(TSignature)]={0};
+	TSignature *psig = (TSignature*)sSig;
+	if(stConfig.iEnableEncryptData) {
+		MonitorCommSig stSigInfo;
+		stSigInfo.dwSeq = htonl(pkg.m_dwReqSeq);
+		stSigInfo.dwCmd = htonl(pkg.m_dwReqCmd);
+		if(InitSignature(psig, &stSigInfo, stConfig.pReportShm->sRandKey, MT_SIGNATURE_TYPE_COMMON) < 0)
+			return 0;
+	}
+	pkg.InitSignature(psig);
+
+	// tlv
+	char sTlvBuf[128];
+	TPkgBody *pbody = (TPkgBody*)sTlvBuf;
+	TlvMoniCommInfo stTlvInfo;
+	stTlvInfo.iMtClientIndex = htonl(stConfig.pReportShm->iMtClientIndex);
+	stTlvInfo.iMachineId = htonl(stConfig.pReportShm->iMachineId);
+	stTlvInfo.dwReserved_1 = htonl(stConfig.dwLocalIp);
+
+	int iTlvBodyLen = MYSIZEOF(TPkgBody);
+	iTlvBodyLen += SetWTlv(
+		pbody->stTlv, TLV_MONI_COMM_INFO, MYSIZEOF(stTlvInfo), (const char*)&stTlvInfo);
+	pbody->bTlvNum = 1;
+	pkg.InitPkgBody(pbody, iTlvBodyLen);
+	return pkg.MakeReqPkg(stConfig.pPkg, &stConfig.iPkgLen);
+}
+
 uint32_t MakePreInstallReportPkg(CmdS2cPreInstallContentReq *pct, int status)
 {
 	CBasicPacket pkg;
@@ -382,10 +478,14 @@ int MakeRepPluginInfoToServer()
 
     // 启动后首次调用, 全部重新上报下
     if(s_iLastSendPluginIdx < 0) { 
+		int iPlugCount = 0;
         for(int i=0; i < MAX_INNER_PLUS_COUNT; i++)  {
-            if(stConfig.pReportShm->stPluginInfo[i].iPluginId != 0)
+            if(stConfig.pReportShm->stPluginInfo[i].iPluginId != 0) {
                 stConfig.pReportShm->stPluginInfo[i].dwLastReportSelfInfoTime = 0; 
-        }    
+				iPlugCount++;
+			}
+        } 
+		stConfig.pReportShm->iPluginInfoCount = iPlugCount;
         s_iLastSendPluginIdx = 0; 
     }    
 
@@ -429,6 +529,8 @@ int MakeRepPluginInfoToServer()
                 stPlugin.dwLastReportAttrTime = htonl(stConfig.pReportShm->stPluginInfo[i].dwLastReportAttrTime);
                 stPlugin.dwLastReportLogTime = htonl(stConfig.pReportShm->stPluginInfo[i].dwLastReportLogTime);
                 stPlugin.dwLastHelloTime = htonl(stConfig.pReportShm->stPluginInfo[i].dwLastHelloTime);
+                stPlugin.dwConfigFileTime = htonl(stConfig.pReportShm->stPluginInfo[i].dwCfgFileLastModTime);
+
                 *((uint8_t*)pbuf) = (uint8_t)sizeof(stPlugin);
                 pbuf += sizeof(uint8_t);
                 memcpy(pbuf, &stPlugin, sizeof(stPlugin));
@@ -447,7 +549,7 @@ int MakeRepPluginInfoToServer()
                 stPluginFirst.dwPluginStartTime = htonl(stConfig.pReportShm->stPluginInfo[i].dwPluginStartTime);
                 stPluginFirst.dwLastHelloTime = htonl(stConfig.pReportShm->stPluginInfo[i].dwLastHelloTime);
                 stPluginFirst.bPluginNameLen = strlen(stConfig.pReportShm->stPluginInfo[i].szPlusName)+1;
-                //stPluginFirst.dwConfigFileTime = htonl(stConfig.pReportShm->stPluginInfo[i].dwCfgFileLastModTime);
+                stPluginFirst.dwConfigFileTime = htonl(stConfig.pReportShm->stPluginInfo[i].dwCfgFileLastModTime);
                 *((uint8_t*)pbuf) = (uint8_t)sizeof(stPluginFirst)+stPluginFirst.bPluginNameLen;
                 pbuf += sizeof(uint8_t);
                 memcpy(pbuf, &stPluginFirst, sizeof(stPluginFirst));
@@ -469,9 +571,9 @@ int MakeRepPluginInfoToServer()
             stConfig.pReportShm->stPluginInfo[i].dwLastReportSelfInfoTime = stConfig.dwCurTime;
             stInfo.bPluginCount++;
        }
-        i++;
-        if(i >= MAX_INNER_PLUS_COUNT)
-            i = 0;
+       i++;
+       if(i >= MAX_INNER_PLUS_COUNT)
+           i = 0;
     }
     s_iLastSendPluginIdx = i;
     if(stInfo.bPluginCount <= 0)
@@ -538,25 +640,36 @@ int DealRespRepPluginInfo(CBasicPacket &pkg)
     }    
 
     MonitorPluginCheckResult *pRlt = (MonitorPluginCheckResult*)((char*)presp+sizeof(MonitorRepPluginInfoContentResp));
-    int iOk = 0, iFail = 0; 
-    for(int i=0; i < presp->bPluginCount; i++) {
-        if(pRlt->bCheckResult) {
-            iFail++;
-            pRlt->iPluginId = ntohl(pRlt->iPluginId);
-            for(int j=0; j < MAX_INNER_PLUS_COUNT; j++) {
-                if(pRlt->iPluginId == stConfig.pReportShm->stPluginInfo[j].iPluginId) {
-                    stConfig.pReportShm->stPluginInfo[j].bCheckRet = 1;
-                    INFO_LOG("report plugin id:%d, name:%s check failed",
-                        pRlt->iPluginId, stConfig.pReportShm->stPluginInfo[j].szPlusName);
-                    break;
-                }
-            }
+    int iOk = 0, iFail = 0, iNeedCfg = 0;
+    for(int i=0,j=0; i < presp->bPluginCount; i++, pRlt++) {
+        pRlt->iPluginId = ntohl(pRlt->iPluginId);
+        for(j=0; j < MAX_INNER_PLUS_COUNT; j++) {
+            if(pRlt->iPluginId == stConfig.pReportShm->stPluginInfo[j].iPluginId) 
+                break;
         }
-        else
+        if(j >= MAX_INNER_PLUS_COUNT) {
+            REQERR_LOG("not find plugin:%d", pRlt->iPluginId);
+            continue;
+        }
+
+        if(pRlt->bCheckResult) {
+            stConfig.pReportShm->stPluginInfo[j].bCheckRet = 1; 
+            INFO_LOG("report plugin id:%d, name:%s check failed", 
+                pRlt->iPluginId, stConfig.pReportShm->stPluginInfo[j].szPlusName);
+            iFail++;
+        }
+        else {
+            stConfig.pReportShm->stPluginInfo[j].bCheckRet = 0; 
             iOk++;
-        pRlt++;
+        }
+
+        if(pRlt->bNeedReportCfg) {
+            SendPluginConfig(stConfig.pReportShm->stPluginInfo+j);
+            iNeedCfg++;
+        }
     }
-    DEBUG_LOG("report plugin info response, count:%d, ok:%d, fail:%d", presp->bPluginCount, iOk, iFail);
+	DEBUG_LOG("report plugin info response, count:%d, ok:%d, fail:%d, need cfg:%d",
+        presp->bPluginCount, iOk, iFail, iNeedCfg);
     return 0;
 }
 
@@ -1013,6 +1126,149 @@ static int InstallPluginPacket(CmdS2cPreInstallContentReq *pct, Json &jsret)
         SendPreInstallStatusToServer(pct, EV_PREINSTALL_CLIENT_INSTALL_PLUGIN_OK);
     else
         SendPreInstallStatusToServer(pct, EV_PREINSTALL_CLIENT_START_PLUGIN);
+    return 0;
+}
+
+// s2c modify machine plugin config 
+int DealModMachinePluginCfg(CBasicPacket &pkg)
+{
+    if(pkg.m_pstReqHead->qwSessionId != 0)
+        stConfig.qwServerPacketSessId = ntohll(pkg.m_pstReqHead->qwSessionId);
+
+	int iBufLen = 0;
+    CmdS2cModMachPluginCfgReq *pct = NULL;
+	if(stConfig.iEnableEncryptData) {
+		static char sCmdContentBuf[4096+256] = {0};
+		size_t iDecSigLen = 0;
+		aes_decipher_data((const uint8_t*)pkg.m_pstCmdContent, pkg.m_wCmdContentLen,
+			(uint8_t*)sCmdContentBuf, &iDecSigLen, (const uint8_t*)stConfig.pReportShm->sRandKey, AES_128);
+		pct = (CmdS2cModMachPluginCfgReq*)sCmdContentBuf;
+		iBufLen = (int)iDecSigLen;
+	}
+	else {
+		pct = (CmdS2cModMachPluginCfgReq*)pkg.m_pstCmdContent;
+		iBufLen = pkg.m_wCmdContentLen;
+	}
+
+    if((int)(pkg.m_wCmdContentLen) <= MYSIZEOF(CmdS2cModMachPluginCfgReq)) {
+        REQERR_LOG("modify plugin config, check content failed, %d <= %d",
+            (int)(pkg.m_wCmdContentLen), MYSIZEOF(CmdS2cModMachPluginCfgReq));
+        return ERR_INVALID_PACKET_LEN;
+    }
+
+    pct->dwDownCfgTime = ntohl(pct->dwDownCfgTime);
+    pct->iPluginId = ntohl(pct->iPluginId);
+    pct->iMachineId = ntohl(pct->iMachineId);
+    pct->iConfigLen = ntohl(pct->iConfigLen);
+    if((int)(pct->iConfigLen+sizeof(CmdS2cModMachPluginCfgReq)) != iBufLen){
+        REQERR_LOG("modify plugin config,  check content length failed, %lu != %d", 
+            pct->iConfigLen+sizeof(CmdS2cModMachPluginCfgReq)+1, iBufLen);
+        return ERR_INVALID_PACKET_LEN;
+    }
+    pct->strCfgs[pct->iConfigLen-1] = '\0';
+
+    int iPluginIdx = -1;
+    for(int j=0; j < MAX_INNER_PLUS_COUNT; j++) {
+        if(pct->iPluginId == stConfig.pReportShm->stPluginInfo[j].iPluginId) {
+            iPluginIdx = j;
+            break;
+        }
+    }
+    if(iPluginIdx < 0) {
+        REQERR_LOG("modify plugin config, not find plugin plugin:%d", pct->iPluginId);
+        return ERR_INVALID_PACKET;
+    }
+
+    // 找到插件配置文件
+    std::ostringstream sPath;
+    if(stConfig.szPlusPath[0] != '/') 
+        sPath << stConfig.szCurPath << "/" << stConfig.szPlusPath << "/" 
+            << stConfig.pReportShm->stPluginInfo[iPluginIdx].szPlusName;
+    else 
+        sPath << stConfig.szPlusPath << "/" << stConfig.pReportShm->stPluginInfo[iPluginIdx].szPlusName;
+
+    std::ostringstream sPluginCfgFile;
+    sPluginCfgFile << sPath.str() << "/xrk_" << stConfig.pReportShm->stPluginInfo[iPluginIdx].szPlusName << ".conf"; 
+    if(!IsFileExist(sPluginCfgFile.str().c_str())) {
+        REQERR_LOG("modify plugin config, not find config file:%s", sPluginCfgFile.str().c_str());
+        return ERR_INVALID_PACKET;
+    }
+
+    // pct->strCfgs: CFG_ITEM CFG_ITEM_VAL;CFG_ITEM CFG_ITEM_VAL;
+	TConfigItemList list;
+	TConfigItem *pitem = NULL;
+    char *pitem_name = NULL, *pitem_val = NULL, *ptmp_e = NULL;
+    char *ptmp = pct->strCfgs;
+
+    // 提取要修改的配置项
+    for(int i=0; *ptmp != '\0' && i >= 0;) 
+    {
+        if(i == 0) {
+            // 提取配置项宏名
+            ptmp_e = strchr(ptmp, ' ');
+            pitem_name = ptmp;
+            if(ptmp_e != NULL) {
+                *ptmp_e = '\0';
+                ptmp = ptmp_e+1;
+            }
+            else {
+                *ptmp = '\0';
+            }
+            i = 1;
+        }
+        else {
+            // 提取配置项值
+            ptmp_e = strchr(ptmp, ';');
+            pitem_val = ptmp;
+            if(ptmp_e != NULL) {
+                *ptmp_e = '\0';
+                ptmp = ptmp_e+1;
+                i = 0;
+            }
+            else
+                i = -1;
+
+		    pitem = new TConfigItem;
+            pitem->strConfigName = pitem_name;
+            pitem->strConfigValue = pitem_val;
+		    list.push_back(pitem);
+        }
+    }
+
+    bool bUpCfg = false;
+    if(list.size() > 0) {
+        UpdateConfigFile(sPluginCfgFile.str().c_str(), list);
+        INFO_LOG("modify plugin config, update config item count:%d, config file:%s, restart:%d",
+            (int)(list.size()), sPluginCfgFile.str().c_str(), pct->bRestartPlugin);
+		ReleaseConfigList(list);
+        bUpCfg = true;
+    }
+    else {
+        WARN_LOG("modify plugin config, plugin:%d, cfgs:%s, not find config item", pct->iPluginId, pct->strCfgs);
+    }
+
+    CmdS2cModMachPluginCfgResp resp;
+    resp.iPluginId = htonl(pct->iPluginId);
+    resp.iMachineId = htonl(pct->iMachineId);
+    resp.dwDownCfgTime = htonl(pct->dwDownCfgTime);
+    SendServerRespPkg((char*)&resp, (int)sizeof(resp), pkg);
+
+    // 立即重启插件
+    if(pct->bRestartPlugin) {
+        std::ostringstream sRestart;
+        sRestart << "cd " << sPath.str() << "; ./restart.sh";
+        std::string strResult;
+        get_cmd_result(sRestart.str().c_str(), strResult);
+        if(strResult.find("failed") != std::string::npos)
+            WARN_LOG("restart plugin, execute cmd:%s failed", sRestart.str().c_str());
+        else
+            DEBUG_LOG("restart plugin, execute cmd:%s ok", sRestart.str().c_str());
+    }
+
+    if(bUpCfg) {
+        // 上报下本机最新的插件配置
+        SendPluginConfig(stConfig.pReportShm->stPluginInfo+iPluginIdx);
+    }
     return 0;
 }
 

@@ -282,12 +282,14 @@ typedef struct
 #define GET_DIFF_TIME_MS(sec, usec) ((uint32_t)stConfig.stTimeCur.tv_sec > sec ? ((stConfig.stTimeCur.tv_sec-sec-1)*1000+(stConfig.stTimeCur.tv_usec+1000000-usec)/1000) : ((stConfig.stTimeCur.tv_sec-sec)*1000+(stConfig.stTimeCur.tv_usec-usec)/1000))
 
 typedef struct {
+	std::string strComment;
 	std::string strConfigName;
 	std::string strConfigValue;
 }TConfigItem;
 typedef std::list<TConfigItem*> TConfigItemList;
 
 void SendServerRespPkg(char *pRespContent, int iRespContentLen, CBasicPacket &pkg);
+void SendPluginConfig(TInnerPlusInfo *plugin);
 void UpdateConfigFile(const char *pfile, TConfigItemList & list);
 void ReleaseConfigList(TConfigItemList & list);
 int get_cmd_result(const char *cmd, std::string &strResult);

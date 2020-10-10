@@ -93,6 +93,7 @@ static const char *s_JsonRequest [] = {
 	"down_plugin_conf",
     "refresh_preinstall_plugin_status",
     "refresh_mach_opr_plugin_status",
+    "ddap_save_mod_plugin_cfg",
 	NULL
 };
 
@@ -3071,6 +3072,7 @@ static int MakePluginConfFile_def(Json &plug_info, ostringstream &oAbsFile)
 
 	Json::json_list_t & jslist_cfg = plug_info["cfgs"].GetArray();
 	Json::json_list_t::iterator it_cfg = jslist_cfg.begin();
+    std::ostringstream ss_cfg;
 	for(; it_cfg != jslist_cfg.end(); it_cfg++) {
 		Json &cfg = *it_cfg;
         if(!(bool)(cfg["enable_modify"]))
@@ -3078,6 +3080,16 @@ static int MakePluginConfFile_def(Json &plug_info, ostringstream &oAbsFile)
         FCGI_fprintf(fp, "#%s\r\n", (const char*)(cfg["item_desc"]));
         FCGI_fprintf(fp, "%s %s\r\n",
             (const char*)(cfg["item_name"]), (const char*)(cfg["item_value"]));
+        FCGI_fprintf(fp, "\r\n");
+        if(ss_cfg.str().size() > 0)
+            ss_cfg << "," << (const char*)(cfg["item_name"]);
+        else
+            ss_cfg << (const char*)(cfg["item_name"]);
+    }
+
+    if(ss_cfg.str().size() > 0) {
+        FCGI_fprintf(fp, "#控制台可配置的配置项\r\n");
+        FCGI_fprintf(fp, "XRK_ENABLE_MOD_CFGS %s,xrk_end\r\n", ss_cfg.str().c_str());
         FCGI_fprintf(fp, "\r\n");
     }
 
@@ -3165,6 +3177,7 @@ static int MakePluginConfFile_js(Json & plug_info, ostringstream &oAbsFile)
 	FCGI_fprintf(fp, "    logconfig_type:\'%s\', // 插件日志记录类型\r\n", GetLogTypeStr((int)(plug_info["log_config_id"])));
 
 	// 配置
+    std::ostringstream ss_cfg;
 	Json::json_list_t & jslist_cfg = plug_info["cfgs"].GetArray();
 	Json::json_list_t::iterator it_cfg = jslist_cfg.begin();
 	for(; it_cfg != jslist_cfg.end(); it_cfg++) {
@@ -3173,11 +3186,20 @@ static int MakePluginConfFile_js(Json & plug_info, ostringstream &oAbsFile)
 			FCGI_fprintf(fp, "    %s: \'%s\', // [不可修改] %s\r\n", 
 				(const char*)(cfg["item_name"]), (const char*)(cfg["item_value"]),
 				(const char*)(cfg["item_desc"]));
-		else
+		else {
 			FCGI_fprintf(fp, "    %s: \'%s\', // %s\r\n", 
 				(const char*)(cfg["item_name"]), (const char*)(cfg["item_value"]),
 				(const char*)(cfg["item_desc"]));
+            if(ss_cfg.str().size() > 0)
+                ss_cfg << "," << (const char*)(cfg["item_name"]);
+            else
+                ss_cfg << (const char*)(cfg["item_name"]);
+		}
 	}
+
+    if(ss_cfg.str().size() > 0) {
+        FCGI_fprintf(fp, "    xrk_enable_mod_cfgs: \'%s\', // [控制台可修改的配置项] \r\n", ss_cfg.str().c_str());
+    }
 
 	// 监控点
 	Json::json_list_t & jslist_attr = plug_info["attrs"].GetArray();
@@ -4332,6 +4354,108 @@ static int DealOprMachinePlugin(std::string &strCsTemplateFile)
     return 0;
 }
 
+int DealSaveOprMachinePlugin()
+{
+    int iPluginId = hdf_get_int_value(stConfig.cgi->hdf, "Query.plugin", 0);
+    const char *pmachs = hdf_get_value(stConfig.cgi->hdf, "Query.machines", 0);
+
+    std::list<int> ltMachines;
+    std::istringstream ssMachines(pmachs);
+    int iMachineId = 0, iMachCount = 0;
+    while(ssMachines >> iMachineId) {
+        MachineInfo *pMachineInfo = slog.GetMachineInfo(iMachineId, NULL);
+        if(!pMachineInfo) {
+            REQERR_LOG("not find machine:%d", iMachineId);
+            hdf_set_value(stConfig.cgi->hdf, "err.msg", CGI_REQERR);
+            return SLOG_ERROR_LINE;
+        }
+        ltMachines.push_back(iMachineId);
+        iMachCount++;
+    }
+    if(iMachCount <= 0) {
+        REQERR_LOG("have no machines for modify plugin:%d", iPluginId);
+        hdf_set_value(stConfig.cgi->hdf, "err.msg", CGI_REQERR);
+        return SLOG_ERROR_LINE;
+    }
+
+	Json plug_info;
+	if(GetLocalPlugin(plug_info, iPluginId) < 0) {
+		REQERR_LOG("get plugin:%d info failed", iPluginId);
+		return SLOG_ERROR_LINE;
+	}
+
+    const char *pval = NULL, *pchk = NULL;
+    int iModCfgItemCount = 0;
+    std::ostringstream ss;
+	Json::json_list_t & jslist_cfg = plug_info["cfgs"].GetArray();
+	Json::json_list_t::iterator it_cfg = jslist_cfg.begin();
+	for(int i=0; it_cfg != jslist_cfg.end(); it_cfg++,i++) {
+		Json &cfg = *it_cfg;
+		if((bool)(cfg["enable_modify"])) {
+			const char *pcfgname = (const char*)(cfg["item_name"]);
+            pchk = hdf_get_valuef(stConfig.cgi->hdf, "Query.chk_%s", pcfgname);
+            pval = hdf_get_valuef(stConfig.cgi->hdf, "Query.%s", pcfgname);
+            if(pval && strlen(pval) > 0 && IsStrEqual(pchk, "on")) {
+                if(ss.str().size() > 0)
+                    ss << ";" << pcfgname << " " << pval;
+                else
+                    ss << pcfgname << " " << pval;
+                iModCfgItemCount++;
+            }
+            else {
+                DEBUG_LOG("skip config item:%s, pval:%p, pchk:%p", pcfgname, pval, pchk);
+            }
+        }
+    }
+    if(iModCfgItemCount > 0) {
+        MyQuery myqu(stConfig.qu, stConfig.db);
+        Query & qu = myqu.GetQuery();
+        std::ostringstream sql;
+
+        if(!qu.execute("START TRANSACTION")) {
+            WARN_LOG("START TRANSACTION failed");
+            hdf_set_value(stConfig.cgi->hdf, "err.msg", CGI_ERR_SERVER);
+            return SLOG_ERROR_LINE;
+        }
+
+        int iRestartPlugin = 0;
+        pchk = hdf_get_value(stConfig.cgi->hdf, "Query.chk_ddmmpc_restart_plugin", NULL);
+        if(IsStrEqual(pchk, "on"))
+            iRestartPlugin = 1;
+
+        std::list<int>::iterator it_list = ltMachines.begin();
+        for(; it_list != ltMachines.end(); it_list++) {
+            sql.str("");
+            sql << "update mt_plugin_machine set opr_start_time=" << slog.m_stNow.tv_sec 
+                << ", down_opr_cmd=1" << ", opr_proc=1, down_cfgs_restart=" << iRestartPlugin
+                << ", down_cfgs_list=\'" << ss.str() << "\'" << " where machine_id=" << (int)(*it_list) 
+                << " and open_plugin_id=" << iPluginId << " and xrk_status=0";
+            qu.execute(sql.str());
+            if(qu.affected_rows() != 1) {
+                WARN_LOG("execute sql:%s failed", sql.str().c_str());
+                hdf_set_value(stConfig.cgi->hdf, "err.msg", CGI_ERR_SERVER);
+                qu.execute("ROLLBACK");
+                return SLOG_ERROR_LINE;
+            }
+        }
+        qu.execute("COMMIT");
+    }
+    else {
+        REQERR_LOG("have no config item to update, plugin:%d, machine:%d", iPluginId, iMachineId);
+        hdf_set_value(stConfig.cgi->hdf, "err.msg", "插件配置项提取失败");
+        return SLOG_ERROR_LINE;
+    }
+
+	Json js;
+	js["statusCode"] = 200;
+	js["callbackType"] = "closeCurrent";
+	js["msgid"] = "modSuccess";
+
+    std::string str = js.ToString();
+    my_cgi_output(str.c_str(), stConfig);
+    DEBUG_LOG("result:%s", str.c_str());
+    return 0;
+}
 
 int main(int argc, char **argv, char **envp)
 {
@@ -4510,6 +4634,8 @@ int main(int argc, char **argv, char **envp)
             iRet = DealOprMachinePlugin(strCsTemplateFile);
 		else if(!strcmp(pAction, "refresh_mach_opr_plugin_status")) 
             iRet = DealRefreshOprMachinePlugin(strCsTemplateFile);
+		else if(!strcmp(pAction, "ddap_save_mod_plugin_cfg")) 
+            iRet = DealSaveOprMachinePlugin();
 	
 		else {
 			ERR_LOG("unknow action:%s", pAction);

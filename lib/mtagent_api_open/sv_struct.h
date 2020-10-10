@@ -165,6 +165,7 @@
 #define CMD_CGI_SEND_LOG 217 
 #define CMD_MONI_SEND_PLUGIN_INFO 218 // client send plugin info 
 #define CMD_MONI_PREINSTALL_REPORT 219 // client send 一键部署进度 
+#define CMD_SEND_PLUGIN_CONFIG 220
 
 // monitor system cmd: 400 - 500 用于 pc 告警客户端
 #define CMD_MONI_PC_DETECT_SERVER 400

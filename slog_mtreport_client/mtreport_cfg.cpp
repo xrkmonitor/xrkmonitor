@@ -39,6 +39,7 @@
 #include <stdarg.h>
 #include <stdint.h>
 #include <sv_cfg.h>
+#include <sstream>
 
 #include "sv_errno.h"
 #include "mtreport_client.h"
@@ -74,6 +75,11 @@ void UpdateConfigFile(const char *pfile, TConfigItemList & list)
 			list_cfg.push_back(pitem_tmp);
 		}
 	}
+
+    std::ostringstream ssTmp;
+    ssTmp << "cp " << pfile << " " << pfile << "_bk"; 
+    system(ssTmp.str().c_str());
+    DEBUG_LOG("backup file:%s", ssTmp.str().c_str());
 	
 	FILE *pstFile = NULL;
 	if ((pstFile = fopen(pfile, "w+")) == NULL)
@@ -86,11 +92,16 @@ void UpdateConfigFile(const char *pfile, TConfigItemList & list)
 	for(; it_cfg != list_cfg.end(); it_cfg++)
 	{
 		pitem_cfg = *it_cfg;
-		std::string::reverse_iterator rit = pitem_cfg->strConfigValue.rbegin();
-		if(*rit == '\n')
-			fprintf(pstFile, "%s %s", pitem_cfg->strConfigName.c_str(), pitem_cfg->strConfigValue.c_str());
-		else
-			fprintf(pstFile, "%s %s\n", pitem_cfg->strConfigName.c_str(), pitem_cfg->strConfigValue.c_str());
+        if(pitem_cfg->strComment.size() > 0) {
+            fprintf(pstFile, "%s", pitem_cfg->strComment.c_str());
+        }
+        else {
+            std::string::reverse_iterator rit = pitem_cfg->strConfigValue.rbegin();
+            if(*rit == '\n')
+                fprintf(pstFile, "%s %s", pitem_cfg->strConfigName.c_str(), pitem_cfg->strConfigValue.c_str());
+            else
+                fprintf(pstFile, "%s %s\r\n", pitem_cfg->strConfigName.c_str(), pitem_cfg->strConfigValue.c_str());
+        }
 	}
 	fclose(pstFile);
 	ReleaseConfigList(list_cfg);
@@ -127,10 +138,11 @@ static char * get_val(char* desc, char* src)
 
 static int GetParamVal(char *sLine, char *sParam, char *sVal)
 {
+	if (sLine[0] == '#')
+		return 1;
 
 	get_val(sParam, sLine);
 	strcpy(sVal, sLine);
-	
 	if (sParam[0] == '#')
 		return 1;
 		
@@ -154,13 +166,17 @@ int GetConfigItemList(const char *pfile, TConfigItemList & list)
 		if (feof(pstFile))
 			break; 
 		
+		TConfigItem *pitem = new TConfigItem;
 		if (GetParamVal(sLine, sParam, sVal) == 0)
 		{
-			TConfigItem *pitem = new TConfigItem;
 			pitem->strConfigName = sParam;
 			pitem->strConfigValue = sVal;
 			list.push_back(pitem);
 		}
+        else {
+            pitem->strComment = sLine;
+            list.push_back(pitem);
+        }
 	}
 	fclose(pstFile);
 	return 0;
