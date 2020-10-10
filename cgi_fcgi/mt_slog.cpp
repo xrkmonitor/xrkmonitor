@@ -3934,6 +3934,9 @@ enum {
 static int DealOprMachPlugins(std::string &strCsTemplateFile)
 {
     stConfig.iResponseType = RESPONSE_TYPE_HTML;
+	if(IsDaemonDenyOp(stConfig))
+		return 0;
+
 	const char *pp = hdf_get_value(stConfig.cgi->hdf, "Query.plugins", NULL);
     int iMachine = hdf_get_int_value(stConfig.cgi->hdf, "Query.machine", 0);
     int iOprType = hdf_get_int_value(stConfig.cgi->hdf, "Query.opr_type", 0);
@@ -4150,6 +4153,9 @@ static int DealRefreshOprMachinePlugin(std::string &strCsTemplateFile)
 static int DealOprMachinePlugin(std::string &strCsTemplateFile)
 {
     stConfig.iResponseType = RESPONSE_TYPE_HTML;
+	if(IsDaemonDenyOp(stConfig))
+		return 0;
+
 	const char *pm = hdf_get_value(stConfig.cgi->hdf, "Query.machines", NULL);
     int iPluginId = hdf_get_int_value(stConfig.cgi->hdf, "Query.plugin", 0);
     int iOprType = hdf_get_int_value(stConfig.cgi->hdf, "Query.opr_type", 0);
@@ -4356,6 +4362,9 @@ static int DealOprMachinePlugin(std::string &strCsTemplateFile)
 
 int DealSaveOprMachinePlugin()
 {
+	if(IsDaemonDenyOp(stConfig))
+		return 0;
+
     int iPluginId = hdf_get_int_value(stConfig.cgi->hdf, "Query.plugin", 0);
     const char *pmachs = hdf_get_value(stConfig.cgi->hdf, "Query.machines", 0);
 
