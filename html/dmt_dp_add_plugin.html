@@ -1,12 +1,68 @@
-<script src="<?cs var:config.docpath?>resource/js/dmt.addplugin.js?v=110"></script>
+<script src="<?cs var:config.docpath?>resource/js/dmt.addplugin.js?v=44"></script>
 <script language="javascript" type="text/javascript">
 
+// dmt_dlg_machine_opr_plugin.html, dmt.addplugin.js 页面中有引用请勿改名
+var g_ddap_machlist = <?cs var:config.machine_list ?>;
+
+function ddapMultiOpr(optype)
+{
+	var sel_config = "";
+    var count = 0;
+	$("#ddap_add_plugin_on_<?cs var:config.plugin_id ?>").find("input:checked").filter("[name='dp_opr_plugins']").each(function(i){
+		var val = $(this).val();
+		sel_config += (i==0 ? val : ","+val);
+        count++;
+	});
+
+	if(sel_config == "")
+	{
+		alertMsg.info("请选择agent正常部署且当前为运行状态的机器");
+	    return false;
+	}
+
+    if(count > <?cs var:config.max_opr_multi_machines ?>)
+    {
+        alertMsg.info("批量操作每次不能超过 <?cs var:config.max_opr_multi_machines ?> 台机器");
+        return false;
+    }
+
+    var tip = '';
+    switch(optype) {
+        case 1:
+            break;
+        case 2:
+            tip = '确定要从机器：' + sel_config + ' 中移除插件 <?cs var:config.plugin_name ?> 吗？';
+            break;
+        case 3:
+            tip = '确定要在机器：' + sel_config + ' 中启用插件 <?cs var:config.plugin_name ?> 吗？';
+            break;
+        case 4:
+            tip = '确定要在机器：' + sel_config + ' 中禁用插件 <?cs var:config.plugin_name ?> 吗？';
+            break;
+        default:
+            dmtJsBugReport('dmt_dp_add_plugin.html', 'ddapMultiOpr', 'unknow operate type:' + optype);
+	        return false;
+    }
+
+    if(tip != '') {
+	    alertMsg.confirm(tip, {
+	    	okCall: function(){
+                ddapMachOprPlugin('<?cs var:config.cgipath?>', sel_config, <?cs var:config.plugin_id ?>, optype);
+	    	}
+	    });
+    }
+    else {
+        ddapMachOprPlugin('<?cs var:config.cgipath?>', sel_config, <?cs var:config.plugin_id ?>, optype);
+    }
+	return false;
+}
+
 $(document).ready(function(){
-    var machlist = $.parseJSON('<?cs var:config.machine_list ?>');
-    if(machlist.count > 0) {
-        var uhtml = '';
-        var lt = machlist.list;
+    if(g_ddap_machlist.count > 0) {
+        var uhtml_on = '', uhtml_off = '';
+        var lt = g_ddap_machlist.list;
         for(var i=0; i < lt.length; ++i) {
+            var uhtml = '';
             uhtml += "<tr>";
             uhtml += "<td>" + lt[i].id + "</td>";
             uhtml += "<td>" + lt[i].name + "</td>";
@@ -23,25 +79,39 @@ $(document).ready(function(){
                 uhtml += "<td>" + dmtGetHumanTime(lt[i].run_time) + "</td>";
             else
                 uhtml += "<td><font color='red'>未部署或未启动</font></td>";
-            uhtml += "<td>" + lt[i].last_hello_time + "</td>";
+
             if(lt[i].plugin_ver == 'no') {
+                uhtml_off += uhtml;
+                uhtml_off += "<td>" + lt[i].last_hello_time + "</td>";
                 if(lt[i].run_time > 0 && ('<?cs var:config.plugin_run_os ?>' == 'All_os' 
                     || lt[i].run_os == '<?cs var:config.plugin_run_os ?>' 
                     || lt[i].run_os_type == '<?cs var:config.plugin_run_os ?>'))
                 {
-                    uhtml += "<td class='detail'><a href='#' onclick='return dmapAddPlugin(\"<?cs var:config.cgipath ?>\", ";
-                    uhtml += lt[i].id + ", <?cs var:config.plugin_id ?>);'>一键部署</a></td>";
+                    uhtml_off += "<td class='detail'><a href='#' onclick='return dmapAddPlugin(\"<?cs var:config.cgipath ?>\", ";
+                    uhtml_off += lt[i].id + ", <?cs var:config.plugin_id ?>);'>一键部署</a></td>";
                 }
                 else
-                    uhtml += "<td></td>";
+                    uhtml_off += "<td>不满足部署条件</td>";
+                uhtml_off += "</tr>";
             }
-            else
-                uhtml += "<td>已部署：" + lt[i].plugin_ver + "</td>";
+            else {
+                uhtml_on += uhtml;
+                if(lt[i].plugin_disable)
+                    uhtml_on += "<td><font color='red'>已禁用</font></td>";
+                else
+                    uhtml_on += "<td>已启用</td>";
+                uhtml_on += "<td>" + lt[i].plugin_ver + "</td>";
+                if(lt[i].run_time > 0)
+                    uhtml_on += "<td><input name='dp_opr_plugins' type='checkbox' value='" + lt[i].id + "'></td>";
+                else
+                    uhtml_on += "<td></td>";
+                uhtml_on += "</tr>";
+            }
         }
-        $('#ddap_add_plugin_<?cs var:config.plugin_id ?>').html(uhtml);
+        $('#ddap_add_plugin_on_<?cs var:config.plugin_id ?>').html(uhtml_on);
+        $('#ddap_add_plugin_off_<?cs var:config.plugin_id ?>').html(uhtml_off);
     }
 });
-
 </script>
 
 <div class="pageContent statusMachine" layoutH='0'>
@@ -93,7 +163,37 @@ $(document).ready(function(){
         </table>
 
         <br />
-        <h3>机器列表</h3>
+        <div class='searchBar' style='margin-bottom:2px; height:32px;'>
+            <h3 style='float:left'>已部署机器列表</h3>
+			<table style='float:right'><tr align='right'>
+                <td style='width:120px'><button class="buttonActive" onclick='return ddapMultiOpr(1);'><i class='icon-minus icon-large '></i>批量修改配置</button></td>
+                <td style='width:120px'><button class="buttonActive" onclick='return ddapMultiOpr(2);'><i class='icon-minus icon-large '></i>批量移除</button></td>
+                <td style='width:120px'><button class="buttonActive" onclick='return ddapMultiOpr(3);'><i class='icon-ok icon-large '></i>批量启用</button></td>
+                <td style='width:120px'><button class="buttonActive" onclick='return ddapMultiOpr(4);'><i class='icon-remove icon-large '></i>批量禁用</button></td>
+            </tr></table>
+        </div>
+        <table class='list' width='100%'>
+            <thead>
+                <tr>
+                    <th align='left' >机器ID</th>
+                    <th align='left' >机器名称</th>
+                    <th align='left' >机器IP</th>
+                    <th align='left' >系统平台</th>
+                    <th align='left' >体系结构</th>
+                    <th align='left' >libc版本</th>
+                    <th align='left' >libcpp版本</th>
+                    <th align='left' >监控agent 已运行</th>
+                    <th align='left' >插件状态</th>
+                    <th align='left' >已部署版本</th>
+                    <th align='left' ><input type="checkbox" group="dp_opr_plugins" class="checkboxCtrl"></th>
+                </tr>
+            </thead>
+            <tbody id='ddap_add_plugin_on_<?cs var:config.plugin_id ?>'>
+            </tbody>
+	    </table>
+
+        <br />
+        <h3>未部署机器列表</h3>
         <table class='list' width='100%'>
             <thead>
                 <tr>
@@ -109,7 +209,7 @@ $(document).ready(function(){
                     <th align='left' >部署</th>
                 </tr>
             </thead>
-            <tbody id='ddap_add_plugin_<?cs var:config.plugin_id ?>'>
+            <tbody id='ddap_add_plugin_off_<?cs var:config.plugin_id ?>'>
             </tbody>
 	    </table>
 	</div>
