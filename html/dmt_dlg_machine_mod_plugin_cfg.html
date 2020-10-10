@@ -1,0 +1,66 @@
+<script language="javascript" type="text/javascript">
+
+function ddmmpcSelCheckBox()
+{
+	$("#ddmmpc_tbody").find("input[type='checkbox']").each(function(){
+        if($('#ddmmpcSelAll').is(':checked'))
+            $(this).prop("checked", true);
+        else
+            $(this).prop("checked", false);
+	});
+}
+
+</script>
+
+<div class="pageContent"> 
+    <form method="post" action="<?cs var:config.cgipath?>mt_slog?action=ddap_save_mod_plugin_cfg&navTabId=dp_add_plugin" class="pageForm" onsubmit="return validateCallback(this, dialogAjaxDone);">
+	<div class="pageFormContent" layoutH='0'>
+        <input type='hidden' name='plugin' value='<?cs var:config.plugin_id ?>' />
+        <input type='hidden' name='machines' value='<?cs var:config.machines_id ?>' />
+        <div>
+            <font class='note-text'>提示：</font>
+            <br />
+            <ul>
+                <?cs if:config.cur_cfg_time ?>
+                <li class='note-text' style='margin-left:30px'>已加载机器:<?cs var:config.machine_name ?> 的当前插件配置，配置最后修改时间为：<?cs var:config.cur_cfg_time ?></li>
+                <?cs else ?>
+                <li class='note-text' style='color:red;margin-left:30px'>未加载机器的当前配置，基于默认配置修改，请谨慎操作</li>
+                <?cs /if ?>
+                <li class='note-text' style='margin-left:30px'>请勾选要修改的配置项，未勾选的配置项不受影响</li>
+            </ul>
+        </div>
+        <br />
+
+        <table class='list' width='100%'>
+        <thead>
+            <tr>
+                <th>配置说明</th>
+                <th>配置值</th>
+                <th align='left' ><input id='ddmmpcSelAll' type="checkbox" onclick='ddmmpcSelCheckBox();'></th>
+            </tr>
+        </thead>
+        <tbody id='ddmmpc_tbody'>
+            <?cs each:cfg=plug_cfg.list ?>
+                <tr>
+                    <td><?cs var:cfg.desc ?></td>
+                    <td><input size='36' name='<?cs var:cfg.name ?>' value='<?cs var:cfg.value ?>' type='text' /></td>
+                    <td><input type='checkbox' name='chk_<?cs var:cfg.name ?>' /></td>
+                </tr>
+            <?cs /each ?>
+        </tbody>
+        </table>
+	</div>
+
+	<div class="formBar">
+        <div style='float:left'>
+            <input type='checkbox' name='chk_ddmmpc_restart_plugin' checked>修改成功后重启插件以使配置立即生效</input>
+        </div>
+		<ul style='list-style:none'>
+			<li><button type="submit" class="buttonActive">保存</button></li>
+			<li><button type="button" class="buttonActive close">关闭</button></li>
+		</ul>
+	</div>
+    </form>
+</div>
+
+
