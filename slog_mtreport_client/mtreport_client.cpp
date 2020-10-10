@@ -112,6 +112,27 @@ void OnSocketError(struct MtReportSocket *pstSock, time_t uiTime)
 		ERROR_LOG("socket error, msg:%s", strerror(errno));
 }
 
+void SendErrorRespToReq(CBasicPacket &pkg, int iRet, struct MtSocket *psock)
+{
+    static char s_buf[1024];
+
+    // 不可对响应包回复
+    if(ntohl(pkg.m_pstReqHead->dwRespMagicNum) == MAGIC_RESPONSE_NUM)
+        return;
+
+    int iBufLen = (int)(sizeof(s_buf));
+    if(pkg.MakeRespPkg(iRet, s_buf, &iBufLen) > 0 && iBufLen > 0) {
+        SendPacket(psock, s_buf, iBufLen);
+        INFO_LOG("send error response to server:%s:%d, error:%d, session id:%lu",
+            inet_ntoa(psock->last_recv_remote.sin_addr), ntohs(psock->last_recv_remote.sin_port), iRet,
+            ntohll(pkg.m_pstReqHead->qwSessionId));
+    }
+    else {
+        ERROR_LOG("send error response to server:%s:%d failed, error code:%d",
+           inet_ntoa(psock->last_recv_remote.sin_addr), ntohs(psock->last_recv_remote.sin_port), iRet);
+    }
+}
+
 void OnMtreportPkg(struct MtSocket *psock, char * sBuf, int iLen, time_t uiTime)
 {
 	DEBUG_LOG("get packet from - %s:%d lengh:%d",
@@ -133,6 +154,21 @@ void OnMtreportPkg(struct MtSocket *psock, char * sBuf, int iLen, time_t uiTime)
 				fclose(stConfig.fpPluginInstallLogFile);
 				stConfig.fpPluginInstallLogFile = NULL;
 			}
+            if(iRet != 0 && pkg.m_pstReqHead->qwSessionId != 0)
+                SendErrorRespToReq(pkg, iRet, psock);
+            return;
+
+        case CMD_MONI_S2C_MACH_ORP_PLUGIN_REMOVE:
+        case CMD_MONI_S2C_MACH_ORP_PLUGIN_ENABLE:
+        case CMD_MONI_S2C_MACH_ORP_PLUGIN_DISABLE:
+            iRet = DealMachineOprPlugin(pkg);
+            if(stConfig.fpPluginInstallLogFile) {
+                fclose(stConfig.fpPluginInstallLogFile);
+                stConfig.fpPluginInstallLogFile = NULL;
+            }
+            // 服务器端使用可靠udp，需要回复
+            if(iRet != 0 && pkg.m_pstReqHead->qwSessionId != 0)
+                SendErrorRespToReq(pkg, iRet, psock);
             return;
 
 		default:
@@ -326,6 +362,12 @@ void TryOpenPluginInstallLogFile(CmdS2cPreInstallContentReq *plug)
 	if(NULL == stConfig.fpPluginInstallLogFile) {
 		ERROR_LOG("open plugin log file : %s failed, msg:%s", ss.str().c_str(), strerror(errno));
 	}
+}
+void TryOpenPluginInstallLogFile(CmdS2cMachOprPluginReq *plug)
+{
+    static CmdS2cPreInstallContentReq s_p;
+    strncpy(s_p.sPluginName, plug->sPluginName, sizeof(s_p.sPluginName));
+    TryOpenPluginInstallLogFile(&s_p);
 }
 
 static void TryReOpenLocalLogFile()
@@ -657,6 +699,26 @@ void ReadStrAttr()
 		ERROR_LOG("read str attr node hash may bug -- link node(%d>=%d)", 
 			j, MTATTR_HASH_NODE*STATIC_HASH_ROW_MAX);
 	}
+}
+
+void SendServerRespPkg(char *pRespContent, int iRespContentLen, CBasicPacket &pkg)
+{
+    stConfig.pPkgSess = (PKGSESSION*)stConfig.sSessBuf;
+	stConfig.pPkg = stConfig.sSessBuf+MYSIZEOF(PKGSESSION);
+	stConfig.iPkgLen = PKG_BUFF_LENGTH;
+
+    INFO_LOG("send packet to server:%s:%d, cmd:%u, seq:%u, session:%lu",
+        stConfig.szSrvIp_master, stConfig.iSrvPort, pkg.m_dwReqCmd, pkg.m_dwReqSeq, stConfig.qwServerPacketSessId);
+    if(MakeServerRespPkg(pRespContent, iRespContentLen, pkg) > 0) {
+        struct sockaddr_in addr_server;
+        addr_server.sin_family = PF_INET;
+        addr_server.sin_port = htons(stConfig.iSrvPort);
+        addr_server.sin_addr.s_addr = inet_addr(stConfig.szSrvIp_master);
+        int iRet = SendPacket(stConfig.iConfigSocketIndex, &addr_server, stConfig.pPkg, stConfig.iPkgLen);
+        if(iRet != stConfig.iPkgLen) {
+		    ERROR_LOG("SendPacket(report preinstall status) failed, pkglen:%d, ret:%d", stConfig.iPkgLen, iRet);
+        }
+    }
 }
 
 void ReadAttr()

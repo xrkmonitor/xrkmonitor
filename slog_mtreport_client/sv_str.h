@@ -35,6 +35,7 @@
 
 #include <inttypes.h>
 
+    int IsFileExist(const char *file);
 	int file_lockw(const char *pfile);
 	int file_lock(const char *pfile);
 	int file_lockw_fd(int fd);

@@ -81,6 +81,7 @@ int InitSocket(OnTimeout_f onTimeout, OnError_f onError);
 int AddSocket(int isock, struct sockaddr_in *paddr, OnPkg_f onPkg, OnLoop_f onLoop);
 int CheckSocket(time_t tmcur, uint32_t usSelect);
 int SendPacket(int iSockIdx, struct sockaddr_in *pDestAddr, const char *pdata, int iDataLen);
+int SendPacket(struct MtSocket *psock, const char *pdata, int iDataLen);
 uint32_t GetSocketAddress(int iSockIdx);
 void SetSocketAddress(int iSockIdx, uint32_t dwNetAddress, uint16_t wPort=0);
 void InitSocketComm(int iSock);

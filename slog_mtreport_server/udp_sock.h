@@ -215,8 +215,67 @@ typedef struct {
 	char sLocalCfgUrl[0];
 }CmdS2cPreInstallContentReq;
 
+typedef struct {
+    int32_t iPluginId;
+    int32_t iMachineId;
+    int32_t iDbId;
+    char sPluginName[32];
+    int32_t iReserved_1;
+    int32_t iReserved_2;
+    uint32_t dwReserved_1;
+    uint32_t dwReserved_2;
+}CmdS2cMachOprPluginReq;
+
+typedef struct {
+    uint32_t dwDownCfgTime;
+    int32_t iPluginId;
+    int32_t iMachineId;
+    uint8_t bRestartPlugin;
+    int iConfigLen;
+    char strCfgs[0];
+}CmdS2cModMachPluginCfgReq;
+
+typedef struct {
+    uint32_t dwDownCfgTime;
+    int32_t iPluginId;
+    int32_t iMachineId;
+}CmdS2cModMachPluginCfgResp;
+
+// 操作插件结果
+enum {
+    MACH_OPR_PLUGIN_SUCCESS = 0,
+    MACH_OPR_PLUGIN_REMOVE_FAILED = 1,
+    MACH_OPR_PLUGIN_PLUGIN_DIR_FAILED = 2,
+    MACH_OPR_PLUGIN_ENABLE_FAILED = 3,
+    MACH_OPR_PLUGIN_DISABLE_FAILED = 4,
+    MACH_OPR_PLUGIN_UNKNOW_OPR_CMD = 5,
+    MACH_OPR_PLUGIN_NOT_FIND = 6,
+    MACH_OPR_PLUGIN_RET_MAX = 6,
+};
+
+typedef struct {
+    int32_t iPluginId;
+    int32_t iMachineId;
+    int32_t iDbId;
+    char bOprResult;
+    int32_t iReserved_1;
+    int32_t iReserved_2;
+    uint32_t dwReserved_1;
+    uint32_t dwReserved_2;
+}CmdS2cMachOprPluginResp; 
+
 #pragma pack()
 
+class CUdpSock;
+typedef struct _MachOprPluginSess
+{
+    int32_t iPluginId;
+    int32_t iMachineId;
+    int32_t iDbId;
+    int iEventType;
+    CUdpSock *psock;
+}TMachOprPluginSess;
+typedef TMachOprPluginSess TPreInstallPluginSess;
 
 class CUdpSock: public UdpSocket, public CBasicPacket 
 {
@@ -227,12 +286,21 @@ class CUdpSock: public UdpSocket, public CBasicPacket
 		void OnRawData(const char *buf, size_t len, struct sockaddr *sa, socklen_t sa_len);
 		void SendRealInfo();
 		void DealEvent();
+        void OnMachOprPluginExpire(TMachOprPluginSess *psess_data);
+        void OnPreInstallPluginExpire(TPreInstallPluginSess *psess_data);
 
 	private:
 		int GetLocalPlugin(Json &js_plugin, int iPluginId);
 		int DealCmdPreInstallReport();
+
+        void DealEventMachOprPlugin(TEventInfo &event);
+        int MakeMachOprPluginNotifyPkg(TEventInfo &event, uint64_t & qwSessionId);
+        int DealCmdMachOprPluginResp();
+        int DealCmdModMachPluginCfgResp();
+        int DealCmdReportPluginCfg();
+
 		void DealEventPreInstall(TEventPreInstallPlugin &ev);
-		int MakePreInstallNotifyPkg(TEventPreInstallPlugin &ev, std::ostringstream &sCfgUrl);
+		int MakePreInstallNotifyPkg(TEventPreInstallPlugin &ev, std::ostringstream &sCfgUrl,uint64_t &sessid);
 
 		int GetBindxrkmonitorUid();
 		int InitSignature(TSignature *psig, void *pdata, const char *pKey, int bSigType);

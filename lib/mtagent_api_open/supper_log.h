@@ -712,7 +712,13 @@ typedef struct
 enum {
     // 一键部署插件事件 - slog_mtreport_server 处理, slog_config 生成
     EVENT_PREINSTALL_PLUGIN = 1,
-    EVENT_PREINSTALL_PLUGIN_EXPIRE_SEC = 30
+    EVENT_PREINSTALL_PLUGIN_EXPIRE_SEC = 30,
+			    
+	EVENT_MULTI_MACH_PLUGIN_CFG_MOD = 2,
+	EVENT_MULTI_MACH_PLUGIN_REMOVE = 3,
+	EVENT_MULTI_MACH_PLUGIN_ENABLE = 4,
+	EVENT_MULTI_MACH_PLUGIN_DISABLE = 5,
+	EVENT_MULTI_MACH_PLUGIN_OPR_EXPIRE_SEC = 30,
 };
 
 // 事件 EVENT_PREINSTALL_PLUGIN 处理的进度标记
@@ -737,8 +743,34 @@ enum {
     EV_PREINSTALL_ERR_MKDIR = 25, // 创建部署目录失败，请检查agent 是否有权限
     EV_PREINSTALL_ERR_START_PLUGIN = 26, // 启动插件失败，可能是不兼容导致
 	EV_PREINSTALL_ERR_DOWNLOAD_OPEN_CFG = 27, // 开源版配置文件下载失败
-    EV_PREINSTALL_ERR_MAX = 27,
+    EV_PREINSTALL_ERR_NOT_FIND = 27, // 未找到插件
+    EV_PREINSTALL_ERR_DOWNLOAD_CFG = 28, // 配置文件下发失败
+    EV_PREINSTALL_ERR_RESPONSE_TIMEOUT  = 29, // 响应超时
+    EV_PREINSTALL_ERR_MAX = 29,
 };
+
+// 机器变更插件信息
+enum {
+	EV_MOP_OPR_START = 1, // 开始 
+	EV_MOP_OPR_DB_RECV = 2, // db 接收
+	EV_MOP_OPR_DOWNLOAD = 3, // agent 已下发
+	EV_MOP_OPR_FAILED = 4, // agent 处理失败
+	EV_MOP_OPR_SUCCESS = 5, // agent 处理成功
+	EV_MOP_OPR_RESPONSE_TIMEOUT = 6, // agent 响应超时 
+};
+
+typedef struct _TEventMachinePluginOpr {
+    int32_t iPluginId;
+    int32_t iMachineId;
+    int32_t iDbId;
+    uint32_t dwUserMasterId;
+    void Show() {
+        SHOW_FIELD_VALUE_INT(iPluginId);
+        SHOW_FIELD_VALUE_INT(iMachineId);
+        SHOW_FIELD_VALUE_INT(iDbId);
+        SHOW_FIELD_VALUE_UINT(dwUserMasterId);
+    }
+}TEventMachinePluginOpr;
 
 typedef struct _TEventPreInstallPlugin {
     int32_t iPluginId;
@@ -763,6 +795,7 @@ typedef struct _TEventInfo
     uint8_t bEventStatus; // 事件状态 
     union {
         TEventPreInstallPlugin stPreInstall;
+		TEventMachinePluginOpr stMachPlugOpr;
         char sEvBuf[238];
     }ev;
 	char sReserved[17];
@@ -772,9 +805,14 @@ typedef struct _TEventInfo
 		SHOW_FIELD_VALUE_UINT(bEventStatus);
         if(iEventType == EVENT_PREINSTALL_PLUGIN)
             ev.stPreInstall.Show();
-    }
-    _TEventInfo() {
-        iEventType = 0;
+		else if(iEventType == EVENT_MULTI_MACH_PLUGIN_REMOVE
+				|| iEventType == EVENT_MULTI_MACH_PLUGIN_CFG_MOD
+				|| iEventType == EVENT_MULTI_MACH_PLUGIN_ENABLE
+				|| iEventType == EVENT_MULTI_MACH_PLUGIN_DISABLE)
+			ev.stMachPlugOpr.Show();
+	}
+	_TEventInfo() {
+		iEventType = 0;
 		dwExpireTime = 0;
     }
 }TEventInfo;

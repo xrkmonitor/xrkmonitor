@@ -406,11 +406,12 @@ int CUdpSock::GetLocalPlugin(Json &js_plugin, int iPluginId)
     return 0;
 }
 
-int CUdpSock::MakePreInstallNotifyPkg(TEventPreInstallPlugin &ev, std::ostringstream &sCfgUrl)
+int CUdpSock::MakePreInstallNotifyPkg(TEventPreInstallPlugin &ev, std::ostringstream &sCfgUrl, uint64_t & qwSessionId)
 {
     // head
     ReqPkgHead stHead;
     InitReqPkgHead(&stHead, CMD_MONI_S2C_PRE_INSTALL_NOTIFY, stConfig.dwPkgSeq++);
+    stHead.qwSessionId = htonll(qwSessionId);
 
     // cmd content
 	char sBuf[1200] = {0};
@@ -456,6 +457,40 @@ int CUdpSock::MakePreInstallNotifyPkg(TEventPreInstallPlugin &ev, std::ostringst
     return MakeReqPkg(NULL, NULL);
 }
 
+void CUdpSock::OnMachOprPluginExpire(TMachOprPluginSess *psess_data)
+{
+    std::ostringstream ss;
+    ss << "update mt_plugin_machine set opr_proc=" << EV_MOP_OPR_RESPONSE_TIMEOUT;
+    ss << " where xrk_id=" << psess_data->iDbId;
+    MyQuery myqu(stConfig.qu, stConfig.db);
+    Query & qu = myqu.GetQuery();
+    qu.execute(ss.str());
+}
+
+void OnMachOprPluginExpire(UdpSessionInfo *psess)
+{
+    TMachOprPluginSess *psess_data = (TMachOprPluginSess*)(psess->GetSessBuf());
+    CUdpSock *psock = (CUdpSock*)psess_data->psock;
+    psock->OnMachOprPluginExpire(psess_data);
+}
+
+void CUdpSock::OnPreInstallPluginExpire(TPreInstallPluginSess *psess_data)
+{
+    std::ostringstream ss;
+    ss << "update mt_plugin_machine set install_proc=" << EV_PREINSTALL_ERR_RESPONSE_TIMEOUT;
+    ss << " where xrk_id=" << psess_data->iDbId;
+    MyQuery myqu(stConfig.qu, stConfig.db);
+    Query & qu = myqu.GetQuery();
+    qu.execute(ss.str());
+}
+
+void OnPreInstallPluginExpire(UdpSessionInfo *psess)
+{
+    TPreInstallPluginSess *psess_data = (TPreInstallPluginSess*)(psess->GetSessBuf());
+    CUdpSock *psock = (CUdpSock*)psess_data->psock;
+    psock->OnPreInstallPluginExpire(psess_data);
+}
+
 void CUdpSock::DealEventPreInstall(TEventPreInstallPlugin &ev) 
 {
     m_pMtClient = slog.GetMtClientInfo(ev.iMachineId, (uint32_t*)NULL);
@@ -485,9 +520,22 @@ void CUdpSock::DealEventPreInstall(TEventPreInstallPlugin &ev)
 	ss << qu.getstr("local_cfg_url");
     qu.free_result();
 
-    m_iCommLen = MakePreInstallNotifyPkg(ev, ss);
+    uint64_t qwSessionId = TIME_SEC_TO_USEC(slog.m_stNow.tv_sec)+slog.m_stNow.tv_usec;
+    m_iCommLen = MakePreInstallNotifyPkg(ev, ss, qwSessionId);
     if(m_iCommLen > 0) {
-        SendToBuf(m_pMtClient->dwAddress, m_pMtClient->wBasePort, m_sCommBuf, m_iCommLen, 0);
+        UdpSessionInfo *psess = new UdpSessionInfo(qwSessionId);
+        TPreInstallPluginSess *psess_data = (TPreInstallPluginSess*)(psess->GetSessBuf());
+        psess_data->iEventType = EVENT_PREINSTALL_PLUGIN;
+        psess_data->iPluginId = ev.iPluginId;
+        psess_data->iMachineId = ev.iMachineId;
+        psess_data->iDbId = ev.iDbId;
+        psess_data->psock = this;
+
+        psess->SetUdpPack(m_sCommBuf, m_iCommLen);
+        psess->SetRemote(m_pMtClient->dwAddress, m_pMtClient->wBasePort);
+        psess->SetTimeoutMs(5*1000);
+        psess->SetSessExpireCallBack(::OnPreInstallPluginExpire);
+        SendToBuf(psess, slog.m_stNow);
         INFO_LOG("send preinstall plugin event to client :%s:%d pkg len:%d, local cfg url:%s",
             ipv4_addr_str(m_pMtClient->dwAddress), m_pMtClient->wBasePort, m_iCommLen, ss.str().c_str());
 
@@ -496,6 +544,174 @@ void CUdpSock::DealEventPreInstall(TEventPreInstallPlugin &ev)
         ss << "update mt_plugin_machine set install_proc=" << EV_PREINSTALL_TO_CLIENT_START;
         ss << " where xrk_id=" << ev.iDbId << " and xrk_status=0";
         qu.execute(ss.str().c_str());
+    }
+}
+
+int CUdpSock::MakeMachOprPluginNotifyPkg(TEventInfo &event, uint64_t & qwSessionId)
+{
+    TEventMachinePluginOpr & ev = event.ev.stMachPlugOpr;
+
+	// head
+	ReqPkgHead stHead;
+    if(EVENT_MULTI_MACH_PLUGIN_REMOVE == event.iEventType)
+    	InitReqPkgHead(&stHead, CMD_MONI_S2C_MACH_ORP_PLUGIN_REMOVE, stConfig.dwPkgSeq++);
+    else if(EVENT_MULTI_MACH_PLUGIN_ENABLE == event.iEventType)
+    	InitReqPkgHead(&stHead, CMD_MONI_S2C_MACH_ORP_PLUGIN_ENABLE, stConfig.dwPkgSeq++);
+    else if(EVENT_MULTI_MACH_PLUGIN_DISABLE == event.iEventType)
+    	InitReqPkgHead(&stHead, CMD_MONI_S2C_MACH_ORP_PLUGIN_DISABLE, stConfig.dwPkgSeq++);
+    else if(EVENT_MULTI_MACH_PLUGIN_CFG_MOD == event.iEventType)
+    	InitReqPkgHead(&stHead, CMD_MONI_S2C_MACH_ORP_PLUGIN_MOD_CFG, stConfig.dwPkgSeq++);
+    else {
+        ERR_LOG("unknow event type:%d", event.iEventType);
+        return SLOG_ERROR_LINE;
+    }
+    stHead.qwSessionId = htonll(qwSessionId);
+
+    // cmd content
+    int iContentLen = 0;
+    static char s_packBuf[4096];
+    char *pContent = (char*)s_packBuf;
+    if(EVENT_MULTI_MACH_PLUGIN_CFG_MOD == event.iEventType) {
+        CmdS2cModMachPluginCfgReq *preq = (CmdS2cModMachPluginCfgReq*)s_packBuf;
+        preq->iPluginId = htonl(ev.iPluginId);
+        preq->iMachineId = htonl(ev.iMachineId);
+
+        MyQuery myqu(stConfig.qu, stConfig.db);
+        Query & qu = myqu.GetQuery();
+        std::ostringstream ss;
+        ss << "select opr_start_time,down_cfgs_list,down_cfgs_restart from mt_plugin_machine where xrk_id=" << ev.iDbId;
+        qu.get_result(ss.str().c_str());
+        qu.fetch_row();
+
+        if(qu.getuval("opr_start_time")+30 < slog.m_stNow.tv_sec) {
+            WARN_LOG("download plugin config timeout, machine:%d, plugin:%d", ev.iMachineId, ev.iPluginId);
+            qu.free_result();
+            return SLOG_ERROR_LINE;
+        }
+
+        const char *pstrCfgs = qu.getstr("down_cfgs_list");
+        if(sizeof(CmdS2cModMachPluginCfgReq)+strlen(pstrCfgs)+1 > sizeof(s_packBuf)) {
+            WARN_LOG("need more space %lu > %lu, machine:%d, plugin:%d", 
+                sizeof(CmdS2cModMachPluginCfgReq)+strlen(pstrCfgs)+1, sizeof(s_packBuf), ev.iMachineId, ev.iPluginId);
+            qu.free_result();
+            return SLOG_ERROR_LINE;
+        }
+
+        preq->dwDownCfgTime = ntohl(qu.getuval("opr_start_time"));
+        preq->iConfigLen = ntohl(strlen(pstrCfgs)+1);
+        preq->bRestartPlugin = qu.getval("down_cfgs_restart");
+
+        // 包含字符串结尾 '\0'
+        memcpy(preq->strCfgs, pstrCfgs, strlen(pstrCfgs)+1);
+        iContentLen = (int)(sizeof(CmdS2cModMachPluginCfgReq)+strlen(preq->strCfgs)+1);
+        qu.free_result();
+    }
+    else {
+        CmdS2cMachOprPluginReq *preq = (CmdS2cMachOprPluginReq*)s_packBuf;
+        memset(preq, 0, sizeof(*preq));
+
+        preq->iPluginId = htonl(ev.iPluginId);
+        preq->iMachineId = htonl(ev.iMachineId);
+        preq->iDbId = htonl(ev.iDbId);
+
+		MyQuery myqu(stConfig.qu, stConfig.db);
+		Query & qu = myqu.GetQuery();
+		std::ostringstream ss;
+		ss << "select plugin_name from mt_plugin where open_plugin_id=" << ev.iPluginId;
+		if(qu.get_result(ss.str().c_str()) && qu.num_rows() > 0) {
+			qu.fetch_row();
+			strncpy(preq->sPluginName, qu.getstr("plugin_name"), sizeof(preq->sPluginName)); 
+			qu.free_result();
+		}
+		else {
+            ERR_LOG("get plugin:%d name failed!", ev.iPluginId);
+            return SLOG_ERROR_LINE;
+        }
+        iContentLen = (int)sizeof(*preq);
+    }
+
+	if(m_pMtClient->bEnableEncryptData) {
+		static char sContentBuf[4096+256];
+		int iSigBufLen = ((iContentLen>>4)+1)<<4;
+		if(iSigBufLen > (int)sizeof(sContentBuf)) {
+			ERR_LOG("need more space %d > %d", iSigBufLen, (int)sizeof(sContentBuf));
+			return ERR_SERVER;
+		}
+		aes_cipher_data((const uint8_t*)pContent, iContentLen,
+			(uint8_t*)sContentBuf, (const uint8_t*)m_pMtClient->sRandKey, AES_128);
+		InitCmdContent(sContentBuf, iSigBufLen);
+	}
+	else {
+	    InitCmdContent(pContent, iContentLen);
+	}
+
+	// 使用内部缓存组包
+	return MakeReqPkg(NULL, NULL); 
+}
+
+void CUdpSock::DealEventMachOprPlugin(TEventInfo &event)
+{
+    TEventMachinePluginOpr &ev = event.ev.stMachPlugOpr;
+    m_pMtClient = slog.GetMtClientInfo(ev.iMachineId, (uint32_t*)NULL);
+    if(!m_pMtClient) {
+        ERR_LOG("not find machine client, machine:%d", ev.iMachineId);
+        return;
+    }
+
+    MyQuery myqu(stConfig.qu, stConfig.db);
+    Query & qu = myqu.GetQuery();
+
+    // 检查下任务数据是否正确
+    std::ostringstream ss;
+    ss << "select opr_proc,xrk_status from mt_plugin_machine where xrk_id=" << ev.iDbId; 
+    if(!qu.get_result(ss.str().c_str()) || qu.num_rows() <= 0 || !qu.fetch_row()) {
+        WARN_LOG("check machine opr plugin failed, machine:%d, plugin:%d, user:%u",
+            ev.iMachineId, ev.iPluginId, ev.dwUserMasterId);
+        qu.free_result();
+        return;
+    }
+    if(qu.getval("opr_proc") != EV_MOP_OPR_DB_RECV)
+    {
+        WARN_LOG("check machine opr plugin process failed, proc:%d != %d, machine:%d, plugin:%d, event:%d",
+            qu.getval("opr_proc"), EV_MOP_OPR_START, ev.iMachineId, ev.iPluginId, event.iEventType);
+        qu.free_result();
+        return;
+    }
+    qu.free_result();
+
+    uint64_t qwSessionId = TIME_SEC_TO_USEC(slog.m_stNow.tv_sec)+slog.m_stNow.tv_usec;
+    m_iCommLen = MakeMachOprPluginNotifyPkg(event, qwSessionId);
+    if(m_iCommLen > 0) {
+        UdpSessionInfo *psess = new UdpSessionInfo(qwSessionId);
+        TMachOprPluginSess *psess_data = (TMachOprPluginSess*)(psess->GetSessBuf());
+        psess_data->iEventType = event.iEventType;
+        psess_data->iPluginId = ev.iPluginId;
+        psess_data->iMachineId = ev.iMachineId;
+        psess_data->iDbId = ev.iDbId;
+        psess_data->psock = this;
+
+        psess->SetUdpPack(m_sCommBuf, m_iCommLen);
+        psess->SetRemote(m_pMtClient->dwAddress, m_pMtClient->wBasePort);
+        psess->SetTimeoutMs(5*1000);
+        psess->SetSessExpireCallBack(::OnMachOprPluginExpire);
+        SendToBuf(psess, slog.m_stNow);
+        INFO_LOG("send machine opr plugin:%d event to client :%s:%d pkg len:%d, user:%u, sess:%lu", ev.iPluginId,
+            ipv4_addr_str(m_pMtClient->dwAddress), m_pMtClient->wBasePort, m_iCommLen, ev.dwUserMasterId, qwSessionId);
+
+        // 更新安装进度到 db 
+        ss.str("");
+        ss << "update mt_plugin_machine set opr_proc=" << EV_MOP_OPR_DOWNLOAD;
+        ss << " where xrk_id=" << ev.iDbId << " and xrk_status=0";
+        qu.execute(ss.str().c_str());
+    }
+    else {
+        // 更新安装进度到 db 
+        ss.str("");
+        ss << "update mt_plugin_machine set opr_proc=" << EV_MOP_OPR_FAILED;
+        ss << " where xrk_id=" << ev.iDbId << " and xrk_status=0";
+        qu.execute(ss.str().c_str());
+        WARN_LOG("deal machine opr plugin:%d, event to client :%s:%d failed, pkglen:%d, event:%d", ev.iPluginId,
+            ipv4_addr_str(m_pMtClient->dwAddress), m_pMtClient->wBasePort, m_iCommLen, event.iEventType);
     }
 }
 
@@ -509,7 +725,11 @@ void CUdpSock::DealEvent()
         if(m_pConfig->stSysCfg.stEvent[i].bEventStatus == EVENT_STATUS_INIT_SET
             && m_pConfig->stSysCfg.stEvent[i].dwExpireTime >= slog.m_stNow.tv_sec) 
         {
-            if(m_pConfig->stSysCfg.stEvent[i].iEventType == EVENT_PREINSTALL_PLUGIN)
+            if(m_pConfig->stSysCfg.stEvent[i].iEventType == EVENT_PREINSTALL_PLUGIN
+                || m_pConfig->stSysCfg.stEvent[i].iEventType == EVENT_MULTI_MACH_PLUGIN_CFG_MOD
+                || m_pConfig->stSysCfg.stEvent[i].iEventType == EVENT_MULTI_MACH_PLUGIN_REMOVE 
+                || m_pConfig->stSysCfg.stEvent[i].iEventType == EVENT_MULTI_MACH_PLUGIN_ENABLE 
+                || m_pConfig->stSysCfg.stEvent[i].iEventType == EVENT_MULTI_MACH_PLUGIN_DISABLE)
             {
                 memcpy(&stEvLocal, m_pConfig->stSysCfg.stEvent+i, sizeof(stEvLocal));
                 m_pConfig->stSysCfg.stEvent[i].bEventStatus = EVENT_STATUS_FIN;
@@ -518,10 +738,24 @@ void CUdpSock::DealEvent()
         }
     }  
     SYNC_FLAG_CAS_FREE(m_pConfig->stSysCfg.bEventModFlag);
-   
+
+    if(!stEvLocal.iEventType)
+        return;
+
+    Init();
+ 
     if(stEvLocal.iEventType == EVENT_PREINSTALL_PLUGIN)  {
-        Init();
         DealEventPreInstall(stEvLocal.ev.stPreInstall);
+    }
+    else if(EVENT_MULTI_MACH_PLUGIN_REMOVE == stEvLocal.iEventType
+        || EVENT_MULTI_MACH_PLUGIN_CFG_MOD == stEvLocal.iEventType
+        || EVENT_MULTI_MACH_PLUGIN_ENABLE == stEvLocal.iEventType
+        || EVENT_MULTI_MACH_PLUGIN_DISABLE== stEvLocal.iEventType)
+    {
+        DealEventMachOprPlugin(stEvLocal);
+    }
+    else {
+        WARN_LOG("unsupport event :%d", stEvLocal.iEventType);
     }
 }
 
@@ -646,6 +880,11 @@ int CUdpSock::DealCommInfo()
 	int iRet = 0;
 	if((iRet=CheckSignature()) != NO_ERROR)
 		return iRet;
+
+    if(m_pstReqHead->qwSessionId != 0) {
+        uint64_t sessid = ntohll(m_pstReqHead->qwSessionId);
+        OnRecvUdpSess(sessid);
+    }
 	return NO_ERROR;
 }
 
@@ -1320,6 +1559,65 @@ int CUdpSock::DealCmdReportPluginInfo()
     return NO_ERROR;
 }
 
+int CUdpSock::DealCmdMachOprPluginResp()
+{
+	if(m_wCmdContentLen != MYSIZEOF(CmdS2cMachOprPluginResp)) {
+		REQERR_LOG("invalid cmd content %u != %u", m_wCmdContentLen, MYSIZEOF(CmdS2cMachOprPluginResp));
+		return ERR_INVALID_CMD_CONTENT;
+	}
+
+	int iRet = 0;
+	if((iRet=DealCommInfo()) != NO_ERROR)
+		return iRet;
+
+	CmdS2cMachOprPluginResp *pctinfo = (CmdS2cMachOprPluginResp*)m_pstCmdContent;
+    pctinfo->iPluginId = ntohl(pctinfo->iPluginId);
+    pctinfo->iMachineId = ntohl(pctinfo->iMachineId);
+    pctinfo->iDbId = ntohl(pctinfo->iDbId);
+	DEBUG_LOG("machine:%d opr plugin:%d, result:%d", pctinfo->iMachineId, pctinfo->iPluginId, pctinfo->bOprResult);
+    if(pctinfo->bOprResult > MACH_OPR_PLUGIN_RET_MAX)
+    {
+        REQERR_LOG("machine:%d opr plugin:%d, unknow result:%d",
+            pctinfo->iMachineId, pctinfo->iPluginId, pctinfo->bOprResult);
+        return ERR_INVALID_PACKET;
+    }
+
+	MyQuery myqu(stConfig.qu, stConfig.db);
+	Query & qu = myqu.GetQuery();
+
+    // session 校验，校验通过后才能操作数据库
+    TMachOprPluginSess *psess_data = (TMachOprPluginSess*)GetSessData();
+    if(!psess_data || psess_data->iPluginId != pctinfo->iPluginId ||
+        psess_data->iMachineId != pctinfo->iMachineId || psess_data->iDbId != pctinfo->iDbId)
+    {
+        REQERR_LOG("udp session check failed:%p, plugin:%d, machine:%d, dbid:%d", psess_data,
+            pctinfo->iPluginId, pctinfo->iMachineId, pctinfo->iDbId);
+        return ERR_INVALID_PACKET;
+    }
+
+    std::ostringstream ss;
+    if(pctinfo->bOprResult != MACH_OPR_PLUGIN_SUCCESS) {
+        if(pctinfo->bOprResult == MACH_OPR_PLUGIN_NOT_FIND)
+            ss << "update mt_plugin_machine set opr_proc=" << EV_MOP_OPR_FAILED << ",xrk_status=1";
+        else
+            ss << "update mt_plugin_machine set opr_proc=" << EV_MOP_OPR_FAILED;
+        WARN_LOG("machine opr plugin failed, plugin:%d, machine:%d, opr event:%d, result:%d",
+            pctinfo->iPluginId, pctinfo->iMachineId, psess_data->iEventType, pctinfo->bOprResult);
+    }
+    else  {
+        ss << "update mt_plugin_machine set opr_proc=" << EV_MOP_OPR_SUCCESS;
+        if(psess_data->iEventType == EVENT_MULTI_MACH_PLUGIN_REMOVE)
+            ss << ",xrk_status=1";
+        else if(psess_data->iEventType == EVENT_MULTI_MACH_PLUGIN_ENABLE)
+            ss << ",last_hello_time=" << slog.m_stNow.tv_sec;
+        else if(psess_data->iEventType == EVENT_MULTI_MACH_PLUGIN_DISABLE)
+            ss << ",last_hello_time=0";
+    }
+    ss << " where xrk_id=" << pctinfo->iDbId << " and xrk_status=0"; 
+    qu.execute(ss.str().c_str());
+    return 0;
+}
+
 int CUdpSock::DealCmdPreInstallReport()
 {
 	if(m_wCmdContentLen != MYSIZEOF(CmdPreInstallReportContent)) {
@@ -1418,6 +1716,12 @@ void CUdpSock::OnRawData(const char *buf, size_t len, struct sockaddr *sa, sockl
 		case CMD_MONI_PREINSTALL_REPORT:
 			DealCmdPreInstallReport();
 			break;
+
+        case CMD_MONI_S2C_MACH_ORP_PLUGIN_REMOVE:
+        case CMD_MONI_S2C_MACH_ORP_PLUGIN_ENABLE:
+        case CMD_MONI_S2C_MACH_ORP_PLUGIN_DISABLE:
+            DealCmdMachOprPluginResp();
+            break;
 
 		default:
 			REQERR_LOG("unknow cmd:%u", m_dwReqCmd);

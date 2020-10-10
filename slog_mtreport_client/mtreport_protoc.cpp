@@ -68,6 +68,11 @@ uint32_t MakePreInstallReportPkg(CmdS2cPreInstallContentReq *pct, int status)
 	ReqPkgHead stHead;
 	pkg.InitReqPkgHead(&stHead, CMD_MONI_PREINSTALL_REPORT);
 
+    if(stConfig.qwServerPacketSessId != 0) {
+        stHead.qwSessionId = htonll(stConfig.qwServerPacketSessId);
+        stConfig.qwServerPacketSessId = 0;
+    }
+
 	// cmd content
 	CmdPreInstallReportContent stInfo;
     stInfo.iPluginId = htonl(pct->iPluginId);
@@ -77,6 +82,51 @@ uint32_t MakePreInstallReportPkg(CmdS2cPreInstallContentReq *pct, int status)
 	strncpy(stInfo.sDevLang, pct->sDevLang, sizeof(stInfo.sDevLang));
     stInfo.iStatus = htonl(status);
 	pkg.InitCmdContent((void*)&stInfo, (uint16_t)MYSIZEOF(stInfo));
+
+	// 签名
+	char sSig[MAX_SIGNATURE_LEN+MYSIZEOF(TSignature)]={0};
+	TSignature *psig = (TSignature*)sSig;
+	if(stConfig.iEnableEncryptData) {
+		MonitorCommSig stSigInfo;
+		stSigInfo.dwSeq = htonl(pkg.m_dwReqSeq);
+		stSigInfo.dwCmd = htonl(pkg.m_dwReqCmd);
+		if(InitSignature(psig, &stSigInfo, stConfig.pReportShm->sRandKey, MT_SIGNATURE_TYPE_COMMON) < 0)
+			return 0;
+	}
+	pkg.InitSignature(psig);
+
+	// tlv
+	char sTlvBuf[128];
+	TPkgBody *pbody = (TPkgBody*)sTlvBuf;
+	TlvMoniCommInfo stTlvInfo;
+	stTlvInfo.iMtClientIndex = htonl(stConfig.pReportShm->iMtClientIndex);
+	stTlvInfo.iMachineId = htonl(stConfig.pReportShm->iMachineId);
+	stTlvInfo.dwReserved_1 = htonl(stConfig.dwLocalIp);
+
+	int iTlvBodyLen = MYSIZEOF(TPkgBody);
+	iTlvBodyLen += SetWTlv(
+		pbody->stTlv, TLV_MONI_COMM_INFO, MYSIZEOF(stTlvInfo), (const char*)&stTlvInfo);
+	pbody->bTlvNum = 1;
+	pkg.InitPkgBody(pbody, iTlvBodyLen);
+	return pkg.MakeReqPkg(stConfig.pPkg, &stConfig.iPkgLen);
+}
+
+uint32_t MakeServerRespPkg(char *pRespContent, int iRespContentLen, CBasicPacket &req_pkg)
+{
+	CBasicPacket pkg;
+
+	// head
+	ReqPkgHead stHead;
+	pkg.InitReqPkgHead(&stHead, req_pkg.m_dwReqCmd);
+
+    // 可靠 udp session id 一旦使用后需置为 0
+    if(stConfig.qwServerPacketSessId != 0) {
+        stHead.qwSessionId = htonll(stConfig.qwServerPacketSessId);
+        stConfig.qwServerPacketSessId = 0;
+    }
+
+	// cmd content
+	pkg.InitCmdContent((void*)pRespContent, (uint16_t)iRespContentLen);
 
 	// 签名
 	char sSig[MAX_SIGNATURE_LEN+MYSIZEOF(TSignature)]={0};
@@ -397,6 +447,7 @@ int MakeRepPluginInfoToServer()
                 stPluginFirst.dwPluginStartTime = htonl(stConfig.pReportShm->stPluginInfo[i].dwPluginStartTime);
                 stPluginFirst.dwLastHelloTime = htonl(stConfig.pReportShm->stPluginInfo[i].dwLastHelloTime);
                 stPluginFirst.bPluginNameLen = strlen(stConfig.pReportShm->stPluginInfo[i].szPlusName)+1;
+                //stPluginFirst.dwConfigFileTime = htonl(stConfig.pReportShm->stPluginInfo[i].dwCfgFileLastModTime);
                 *((uint8_t*)pbuf) = (uint8_t)sizeof(stPluginFirst)+stPluginFirst.bPluginNameLen;
                 pbuf += sizeof(uint8_t);
                 memcpy(pbuf, &stPluginFirst, sizeof(stPluginFirst));
@@ -965,6 +1016,159 @@ static int InstallPluginPacket(CmdS2cPreInstallContentReq *pct, Json &jsret)
     return 0;
 }
 
+// s2c machine opr plugin notify msg
+int DealMachineOprPlugin(CBasicPacket &pkg)
+{
+	CmdS2cMachOprPluginReq *pct = NULL;
+	int iBufLen = 0;
+
+	if(stConfig.iEnableEncryptData) {
+		static char sCmdContentBuf[4096+256] = {0};
+		size_t iDecSigLen = 0;
+		aes_decipher_data((const uint8_t*)pkg.m_pstCmdContent, pkg.m_wCmdContentLen,
+			(uint8_t*)sCmdContentBuf, &iDecSigLen, (const uint8_t*)stConfig.pReportShm->sRandKey, AES_128);
+		pct = (CmdS2cMachOprPluginReq*)sCmdContentBuf;
+		iBufLen = (int)iDecSigLen;
+	}
+	else {
+		pct = (CmdS2cMachOprPluginReq*)pkg.m_pstCmdContent;
+		iBufLen = pkg.m_wCmdContentLen;
+	}
+
+    if(iBufLen != MYSIZEOF(CmdS2cMachOprPluginReq)) {
+        REQERR_LOG("check content failed, %d != %d", iBufLen, MYSIZEOF(CmdS2cMachOprPluginReq));
+        return ERR_INVALID_PACKET_LEN;
+    }
+
+    if(pkg.m_pstReqHead->qwSessionId != 0)
+        stConfig.qwServerPacketSessId = ntohll(pkg.m_pstReqHead->qwSessionId);
+
+    pct->iPluginId = ntohl(pct->iPluginId);
+    pct->iMachineId = ntohl(pct->iMachineId);
+    pct->iDbId = ntohl(pct->iDbId);
+    pct->sPluginName[sizeof(pct->sPluginName)-1] = '\0';
+
+    // 看下本地是否存在插件
+    std::ostringstream sInstallPath;
+    if(stConfig.szPlusPath[0] != '/') 
+        sInstallPath << stConfig.szCurPath << "/" << stConfig.szPlusPath << "/" << pct->sPluginName;
+    else 
+        sInstallPath << stConfig.szPlusPath << "/" << pct->sPluginName;
+    std::ostringstream sPluginInstallFile;
+    sPluginInstallFile << sInstallPath.str() << "/auto_install.sh";
+    if(!IsFileExist(sPluginInstallFile.str().c_str())) {
+        REQERR_LOG("not find plugin file:%s, plugin:%s(%d)", sPluginInstallFile.str().c_str(), pct->sPluginName, pct->iPluginId);
+
+        CmdS2cMachOprPluginResp resp;
+        resp.iPluginId = ntohl(pct->iPluginId);
+        resp.iMachineId = ntohl(pct->iMachineId);
+        resp.iDbId = ntohl(pct->iDbId);
+        resp.bOprResult = MACH_OPR_PLUGIN_NOT_FIND;
+        SendServerRespPkg((char*)&resp, (int)sizeof(resp), pkg);
+        return 0;
+    }
+
+    // 相关变更写入插件日志中
+    std::ostringstream sInstallLogFile;
+    sInstallLogFile << stConfig.szCurPath << "/plugin_install_log";
+    struct stat sb;
+    if(stat(sInstallLogFile.str().c_str(), &sb) < 0 || !S_ISDIR(sb.st_mode)) {
+        std::ostringstream oscmd;
+        oscmd << "rm -fr " << sInstallLogFile.str() << " > /dev/null 2>&1; mkdir -p " << sInstallLogFile.str();
+        system(oscmd.str().c_str());
+        INFO_LOG("create plugin log dir:%s", sInstallLogFile.str().c_str());
+        usleep(10);
+    }
+
+    PLUGIN_INST_LOG("try modify plugin:%d, name:%s, machine id:%d, opr cmd:%u",
+        pct->iPluginId, pct->sPluginName,  pct->iMachineId, pkg.m_dwReqCmd);
+
+    CmdS2cMachOprPluginResp resp;
+    resp.iPluginId = ntohl(pct->iPluginId);
+    resp.iMachineId = ntohl(pct->iMachineId);
+    resp.iDbId = ntohl(pct->iDbId);
+    resp.bOprResult = MACH_OPR_PLUGIN_SUCCESS;
+
+    std::ostringstream ss;
+    std::string strResult;
+    switch(pkg.m_dwReqCmd) 
+    {
+        // 移除插件
+        case CMD_MONI_S2C_MACH_ORP_PLUGIN_REMOVE: 
+            {
+                ss << "cd " << sInstallPath.str() << "; ./auto_uninstall.sh; ";
+                get_cmd_result(ss.str().c_str(), strResult);
+                if(strResult.find("failed") != std::string::npos) {
+                    resp.bOprResult = MACH_OPR_PLUGIN_REMOVE_FAILED;
+                    PLUGIN_INST_LOG("remove plugin:%s(%d) failed, result:%s", pct->sPluginName, pct->iPluginId, strResult.c_str());
+                }
+                else {
+                    PLUGIN_INST_LOG("remove plugin:%s(%d), execute:%s ok", pct->sPluginName, pct->iPluginId, ss.str().c_str());
+
+                    // 删除整个插件目录
+                    ss.str("");
+                    ss << "cd " << sInstallPath.str() << "; cd ..; rm -fr " << pct->sPluginName << " > /dev/null 2>&1;";
+                    get_cmd_result(ss.str().c_str(), strResult);
+                    PLUGIN_INST_LOG("[ change ] remove plugin:%s(%d) dir:%s cmd:%s",
+                        pct->sPluginName, pct->iPluginId, sInstallPath.str().c_str(), ss.str().c_str());
+
+					for(int i=0; i < MAX_INNER_PLUS_COUNT; i++)  {
+						if(stConfig.pReportShm->stPluginInfo[i].iPluginId == pct->iPluginId) {
+							stConfig.pReportShm->stPluginInfo[i].iPluginId = 0;
+							stConfig.pReportShm->iPluginInfoCount--;
+							break;
+						}
+					}
+                }
+            }
+            break;
+
+        // 启用插件
+        case CMD_MONI_S2C_MACH_ORP_PLUGIN_ENABLE:
+            {
+                ss << "cd " << sInstallPath.str() << "; ./start.sh; ";
+                get_cmd_result(ss.str().c_str(), strResult);
+                if(strResult.find("failed") != std::string::npos) {
+                    resp.bOprResult = MACH_OPR_PLUGIN_ENABLE_FAILED;
+                    PLUGIN_INST_LOG("start plugin:%s(%d) failed, result:%s", pct->sPluginName, pct->iPluginId, strResult.c_str());
+                }
+                else {
+                    PLUGIN_INST_LOG("start plugin:%s(%d), execute:%s ok", pct->sPluginName, pct->iPluginId, ss.str().c_str());
+                }
+            }
+            break;
+
+        // 禁用插件
+        case CMD_MONI_S2C_MACH_ORP_PLUGIN_DISABLE:
+            {
+                ss << "cd " << sInstallPath.str() << "; ./stop.sh; ";
+                get_cmd_result(ss.str().c_str(), strResult);
+                if(strResult.find("failed") != std::string::npos) {
+                    resp.bOprResult = MACH_OPR_PLUGIN_DISABLE_FAILED;
+                    PLUGIN_INST_LOG("stop plugin:%s(%d) failed, result:%s", pct->sPluginName, pct->iPluginId, strResult.c_str());
+                }
+                else {
+                    PLUGIN_INST_LOG("stop plugin:%s(%d), execute:%s ok", pct->sPluginName, pct->iPluginId, ss.str().c_str());
+					for(int i=0; i < MAX_INNER_PLUS_COUNT; i++)  {
+						if(stConfig.pReportShm->stPluginInfo[i].iPluginId == pct->iPluginId) {
+							stConfig.pReportShm->stPluginInfo[i].iPluginId = 0;
+							stConfig.pReportShm->iPluginInfoCount--;
+							break;
+						}
+					}
+                }
+            }
+            break;
+
+        default:
+            REQERR_LOG("unknow cmd:%u", pkg.m_dwReqCmd);
+            resp.bOprResult = MACH_OPR_PLUGIN_UNKNOW_OPR_CMD;
+            return ERR_UNKNOW_CMD;
+    }
+    SendServerRespPkg((char*)&resp, (int)sizeof(resp), pkg);
+	return 0;
+}
+
 // s2c install plugin notify msg
 int DealPreInstallNotify(CBasicPacket &pkg)
 {
@@ -1012,6 +1216,9 @@ int DealPreInstallNotify(CBasicPacket &pkg)
     PLUGIN_INST_LOG("try install plugin:%d, name:%s, check str:%s, machine id:%d, language:%s",
         pct->iPluginId, pct->sPluginName, pct->sCheckStr, pct->iMachineId, pct->sDevLang);
 
+    if(pkg.m_pstReqHead->qwSessionId != 0)
+        stConfig.qwServerPacketSessId = ntohll(pkg.m_pstReqHead->qwSessionId);
+ 
     // 上报一下进度
     SendPreInstallStatusToServer(pct, EV_PREINSTALL_TO_CLIENT_OK);
 

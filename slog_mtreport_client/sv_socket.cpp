@@ -197,6 +197,20 @@ void SetSocketAddress(int iSockIdx, uint32_t dwNetAddress, uint16_t wPort)
 		g_socket.socks[iSockIdx].remote.sin_port = htons(wPort);
 }
 
+int SendPacket(struct MtSocket *psock, const char *pdata, int iDataLen)
+{
+	if(psock->isock <= 0)
+		return -2;
+
+    socklen_t socklen = sizeof(struct sockaddr_in);
+	int ret = sendto(psock->isock,
+		pdata, iDataLen, 0, (struct sockaddr *)&(psock->remote), socklen);
+	if(ret != iDataLen && g_socket.onError)
+		g_socket.onError(&g_socket, time(NULL));
+	psock->iSendPacks++;
+	return ret;
+}
+
 int SendPacket(int iSockIdx, struct sockaddr_in *pDestAddr, const char *pdata, int iDataLen)
 {
 	if(iSockIdx < 0 || iSockIdx >= MT_SOCKET_DEF_COUNT_MAX || !pdata || iDataLen <= 0)

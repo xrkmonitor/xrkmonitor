@@ -57,6 +57,16 @@
 
 #define bool int
 
+int IsFileExist(const char *file)
+{
+    FILE *fp = fopen(file, "r");
+    if(fp != NULL) {
+        fclose(fp);
+        return 1;
+    }
+    return 0;
+}
+
 int file_lockw(const char *pfile)
 {
 	int oldmask = 0;

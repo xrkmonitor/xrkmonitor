@@ -34,10 +34,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "sockets-config.h"
 #include "Socket.h"
+#include "UdpSession.h"
 
 #ifdef SOCKETS_NAMESPACE
 namespace SOCKETS_NAMESPACE {
 #endif
+
+class UdpSessionInfo;
 
 /** Socket implementation for UDP.
 	\ingroup basic */
@@ -194,6 +197,28 @@ public:
 	/** Also read timestamp information from incoming message */
 	void SetTimestamp(bool = true);
 
+    // 使用 map 实现可靠 udp, add by rockdeng
+    void SendToBuf(UdpSessionInfo *psess, struct timeval &now);
+    void OnRecvUdpSess(uint64_t &id);
+    void CheckUdpSess(struct timeval &now, int iMaxCount=100);
+    char * GetSessData() { if(m_b_has_sess_data) return m_sess_data; return NULL; }
+
+private:
+    bool _CheckUdpSess(uint64_t &qwTimeNow);
+    UdpSessionInfo * FindSessByTimerId(uint64_t &id) {
+        std::map<uint64_t, UdpSessionInfo *>::iterator it = s_timer.find(id);
+        if(it != s_timer.end())
+            return it->second;
+        return NULL;
+    }
+    UdpSessionInfo * FindSessBySessId(uint64_t &id) {
+        std::map<uint64_t, UdpSessionInfo *>::iterator it = s_sess.find(id);
+        if(it != s_sess.end())
+            return it->second;
+        return NULL;
+    }
+    bool AddUdpSessToTimer(UdpSessionInfo *psess, struct timeval &now);
+
 protected:
 	UdpSocket(const UdpSocket& s) : Socket(s) {}
 	void OnRead();
@@ -213,6 +238,12 @@ private:
 	int m_last_size_written;
 	int m_retries;
 	bool m_b_read_ts;
+
+    // by rockdeng - 可靠 udp
+    std::map<uint64_t, UdpSessionInfo *> s_sess;
+    std::map<uint64_t, UdpSessionInfo *> s_timer;
+    bool m_b_has_sess_data;
+    char m_sess_data[UDP_SESSION_BUF_LEN];
 };
 
 

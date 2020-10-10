@@ -47,6 +47,8 @@
 #include <cgi_head.h>
 #include <cgi_comm.h>
 
+const int PLUGIN_MAX_OPR_MULTI_PLUGINS = 10;
+
 CSupperLog slog;
 CGIConfig stConfig;
 
@@ -278,11 +280,15 @@ static int DealMachineAddPlugin()
 
     std::map<int, int> stAlreadyInstall;
     ss.str("");
-    ss << "select xrk_id,open_plugin_id from mt_plugin_machine where install_proc=0 and machine_id=" 
+    ss << "select last_hello_time,xrk_id,open_plugin_id from mt_plugin_machine where install_proc=0 and machine_id=" 
         << pMachinfo->id << " and xrk_status=0";
     if(qu.get_result(ss.str().c_str()) && qu.num_rows() > 0) {
 	    for(int i=0; i < qu.num_rows() && qu.fetch_row() != NULL; i++) {
-            stAlreadyInstall.insert(std::pair<int, int>(qu.getval("open_plugin_id"), qu.getval("xrk_id")));
+            // disable or not
+            if(qu.getuval("last_hello_time") == 0)
+                stAlreadyInstall.insert(std::pair<int, int>(qu.getval("open_plugin_id"), 1));
+            else
+                stAlreadyInstall.insert(std::pair<int, int>(qu.getval("open_plugin_id"), 0));
         }
     }
     qu.free_result();
@@ -291,7 +297,6 @@ static int DealMachineAddPlugin()
     const char *ptmp = NULL;
     const char *pm_os = hdf_get_value(stConfig.cgi->hdf, "config.run_os", NULL);
     int iPluginCount = 0;
-
 	ss.str("");
 	ss << " select * from mt_plugin where xrk_status=0";
 	if(!qu.get_result(ss.str().c_str()) || qu.num_rows() <= 0) {
@@ -314,8 +319,11 @@ static int DealMachineAddPlugin()
 			}
 
 			Json jp;
-            if(stAlreadyInstall.find((int)(plugin["plugin_id"])) != stAlreadyInstall.end())
+			std::map<int, int>::iterator it_p = stAlreadyInstall.find((int)(plugin["plugin_id"]));
+            if(it_p != stAlreadyInstall.end()) {
                 jp["installed"] = 1;
+				jp["plugin_disable"] = it_p->second;
+			}
             else {
                 // agent 未部署或未运行，不能一键部署插件
                 if(iCurAgentRunTime <= 0)
@@ -357,10 +365,12 @@ static int DealMachineAddPlugin()
             iPluginCount++;
         }
     }
+    qu.free_result();
     js["count"] = iPluginCount;
 
     std::string str(js.ToString());
     hdf_set_value(stConfig.cgi->hdf, "config.machine_plugins", str.c_str());
+    hdf_set_int_value(stConfig.cgi->hdf, "config.max_opr_multi_plugins", PLUGIN_MAX_OPR_MULTI_PLUGINS);
 	DEBUG_LOG("machine:%d, add plugin", id);
     return 0;
 }

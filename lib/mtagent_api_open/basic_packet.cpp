@@ -262,7 +262,7 @@ int32_t CBasicPacket::CheckBasicPacketPb(const char *pPkg, size_t iPkgLen, struc
 	if(m_bRetCode != NO_ERROR)
 	{
 		REQERR_LOG("response failed, ret:%d msg:%s", m_bRetCode, m_pbHead.str_errmsg().c_str());
-		return NO_ERROR;
+		return m_bRetCode;
 	}
 
 	if(m_iPbHeadLen+m_iPbBodyLen+10 != (int)len)
@@ -372,6 +372,7 @@ int32_t CBasicPacket::CheckBasicPacket(const char *pPkg, size_t iPkgLen, struct 
 		}
 		else
 			WARN_LOG( "return failed ret:%d have no error msg !", m_bRetCode);
+		return m_bRetCode;
 	}
 	return NO_ERROR;
 }

@@ -179,6 +179,10 @@
 #define CMD_MONI_S2C_LOG_CONFIG_NOTIFY 701 
 #define CMD_MONI_S2C_APP_CONFIG_NOTIFY 702 
 #define CMD_MONI_S2C_PRE_INSTALL_NOTIFY 703 
+#define CMD_MONI_S2C_MACH_ORP_PLUGIN_REMOVE 704 
+#define CMD_MONI_S2C_MACH_ORP_PLUGIN_ENABLE 705
+#define CMD_MONI_S2C_MACH_ORP_PLUGIN_DISABLE 706
+#define CMD_MONI_S2C_MACH_ORP_PLUGIN_MOD_CFG 707
 
 // monitor system s2c cmd: 1000-1100 用于 pc 告警客户端
 #define CMD_MONI_PC_S2C_WARN_INFO 1000
@@ -249,7 +253,8 @@ typedef struct
 	uint16_t wVersion;
 	uint32_t dwRespMagicNum;
 	char sEchoBuf[32];
-	char sReserved[16];
+	uint64_t qwSessionId;
+	char sReserved[8];
 }ReqPkgHead;
 
 typedef struct

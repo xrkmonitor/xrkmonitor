@@ -38,6 +38,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <errno.h>
 #endif
 
+#include <sstream>
 #include "ISocketHandler.h"
 #include "UdpSocket.h"
 #include "Utility.h"
@@ -49,11 +50,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // include this to see strange sights
 //#include <linux/in6.h>
 
+#include <sstream>
 
 #ifdef SOCKETS_NAMESPACE
 namespace SOCKETS_NAMESPACE {
 #endif
 
+#define TIME_SEC_TO_USEC(sec) (sec*1000000ULL)
 
 UdpSocket::UdpSocket(ISocketHandler& h, int ibufsz, bool ipv6, int retries) : Socket(h)
 , m_ibuf(new char[ibufsz])
@@ -175,7 +178,7 @@ int UdpSocket::Bind(SocketAddress& ad, int range)
 		}
 		if (n == -1)
 		{
-			Handler().LogError(this, "bind", Errno, StrError(Errno), LOG_LEVEL_FATAL);
+			Handler().LogError(this, "bind", Errno, StrError(Errno), LOG_LEVEL_WARNING);
 			SetCloseAndDelete();
 #ifdef ENABLE_EXCEPTIONS
 			throw Exception("bind() failed for UdpSocket, port:range: " + Utility::l2string(ad.GetPort()) + ":" + Utility::l2string(range));
@@ -244,7 +247,7 @@ bool UdpSocket::Open(SocketAddress& ad)
 		SetNonblocking(true);
 		if (connect(GetSocket(), ad, ad) == -1)
 		{
-			Handler().LogError(this, "connect", Errno, StrError(Errno), LOG_LEVEL_FATAL);
+			Handler().LogError(this, "connect", Errno, StrError(Errno), LOG_LEVEL_WARNING);
 			SetCloseAndDelete();
 			return false;
 		}
@@ -287,6 +290,108 @@ void UdpSocket::CreateConnection()
 	}
 }
 
+/** 处理 udp 响应超时重发 **/
+void UdpSocket::CheckUdpSess(struct timeval &now, int iMaxCount) 
+{
+    uint64_t qwTimeNow = TIME_SEC_TO_USEC(now.tv_sec)+now.tv_usec;
+    for(int i=0; i < iMaxCount; i++) {
+        if(!_CheckUdpSess(qwTimeNow))
+            break;
+    }
+}
+
+/** 处理响应超时重发 **/
+bool UdpSocket::_CheckUdpSess(uint64_t &qwTimeNow)
+{
+    std::map<uint64_t, UdpSessionInfo *>::iterator it_first = s_timer.begin();
+    if(it_first == s_timer.end() || qwTimeNow < it_first->first)
+        return false;
+
+    // 响应已超时了，重发下数据包
+    UdpSessionInfo *psess = it_first->second;
+    const std::string &pack = psess->GetPacket();
+    SendToBuf(psess->GetRemoteAddr(), pack.c_str(), (int)(pack.size()), 0);
+    s_timer.erase(it_first);
+
+	std::ostringstream ss;
+	ss << " udp response timeout resend packet, udp sessionid:" << psess->GetSessId();
+	ss << ", remote:" << psess->GetRemoteAddr().Convert(true);
+	Handler().LogError(this, ss.str().c_str(), Errno, StrError(Errno), LOG_LEVEL_WARNING);
+    
+    psess->AddRetry();
+
+    // 重新添加进定时器
+    if(psess->Retry()) {
+		struct timeval now;
+		gettimeofday(&now, 0);
+        AddUdpSessToTimer(psess, now);
+    }
+    else {
+        // 从 session 中移除
+        s_sess.erase(psess->GetSessId());
+        if(psess->GetSessExpireCallBack() != NULL) {
+            TfunSessExpireCallback pfun = psess->GetSessExpireCallBack();
+            pfun(psess);
+        }
+        delete psess;
+    }
+    return true;
+}
+
+/** 收到响应包 **/
+void UdpSocket::OnRecvUdpSess(uint64_t &id)
+{
+    std::map<uint64_t, UdpSessionInfo *>::iterator it_sess = s_sess.find(id);
+    if(it_sess == s_sess.end()) {
+        return;
+    }
+    s_sess.erase(it_sess);
+    UdpSessionInfo *psess = it_sess->second;
+
+    std::map<uint64_t, UdpSessionInfo *>::iterator it_timer = s_timer.find(psess->GetTimerId());
+    if(it_timer == s_timer.end()) {
+        return;
+    }
+    s_timer.erase(it_timer);
+    m_b_has_sess_data = true;
+    memcpy(m_sess_data, psess->GetSessBuf(), UDP_SESSION_BUF_LEN);
+    delete psess;
+}
+
+bool UdpSocket::AddUdpSessToTimer(UdpSessionInfo *psess, struct timeval &now)
+{
+    // timer ID 使用超时时间
+    uint64_t qwTimerId = TIME_SEC_TO_USEC(now.tv_sec)+now.tv_usec
+        + psess->GetTimeoutMs()*1000;
+    if(FindSessByTimerId(qwTimerId)) {
+        // 尝试下其它 id
+        int i = 0;
+        for(; i < 100; i++) {
+            qwTimerId++;
+            if(!FindSessByTimerId(qwTimerId))
+                break;
+        }
+        if(i >= 100) {
+            return false;
+        }
+    }
+    psess->SetTimerId(qwTimerId);
+    s_timer.insert(std::pair<uint64_t, UdpSessionInfo *>(qwTimerId, psess));
+    return true;
+}
+
+/** add by rockdeng */
+void UdpSocket::SendToBuf(UdpSessionInfo *psess, struct timeval &now)
+{
+    const std::string &pack = psess->GetPacket();
+    SendToBuf(psess->GetRemoteAddr(), pack.c_str(), (int)(pack.size()), 0);
+    if(FindSessBySessId(psess->GetSessId())) {
+    }
+    else if(AddUdpSessToTimer(psess, now)) {
+        // 添加到 udp session 和 timer, 实现可靠 udp 协议
+        s_sess.insert(std::pair<uint64_t, UdpSessionInfo *>(psess->GetSessId(), psess));
+    }
+}
 
 /** send to specified address */
 void UdpSocket::SendToBuf(const std::string& h, port_t p, const char *data, int len, int flags)
@@ -465,6 +570,9 @@ int UdpSocket::ReadTS(char *ioBuf, int inBufSize, struct sockaddr *from, socklen
 
 void UdpSocket::OnRead()
 {
+    // add by rockdeng -- udp sessdata flag
+    m_b_has_sess_data = false;
+
 #ifdef ENABLE_IPV6
 #ifdef IPPROTO_IPV6
 	if (IsIpv6())

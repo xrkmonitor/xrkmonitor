@@ -183,6 +183,7 @@ typedef struct{
     char szVersion[12]; // 配置文件中的插件版本
     char szBuildVer[12]; // 插件编译时的版本信息 
     int iLibVerNum; // 使用的开发库版本编号
+    uint32_t dwConfigFileTime; // 配置文件最后修改时间
     uint32_t dwLastReportAttrTime; // 最后一次 attr 上报时间
     uint32_t dwLastReportLogTime; // 最后一次 log 上报时间
     uint32_t dwLastHelloTime; // 最后一次 hello 时间
@@ -207,6 +208,7 @@ typedef struct
 typedef struct {
     int32_t iPluginId;
     uint8_t bCheckResult;
+    uint8_t bNeedReportCfg;
 }MonitorPluginCheckResult;
 
 typedef struct
@@ -255,6 +257,55 @@ typedef struct {
     int iUrlLen;
     char sLocalCfgUrl[0];
 }CmdS2cPreInstallContentReq;
+
+// 修改插件配置、启用、禁用插件等
+typedef struct {
+    int32_t iPluginId;
+    int32_t iMachineId;
+    int32_t iDbId;
+    char sPluginName[32];
+    int32_t iReserved_1;
+    int32_t iReserved_2;
+    uint32_t dwReserved_1;
+    uint32_t dwReserved_2;
+}CmdS2cMachOprPluginReq;
+
+typedef struct {
+    uint32_t dwDownCfgTime;
+    int32_t iPluginId;
+    int32_t iMachineId;
+    uint8_t bRestartPlugin;
+    int iConfigLen;
+    char strCfgs[0];
+}CmdS2cModMachPluginCfgReq;
+
+typedef struct {
+    uint32_t dwDownCfgTime;
+    int32_t iPluginId;
+    int32_t iMachineId;
+}CmdS2cModMachPluginCfgResp;
+
+// 操作插件结果
+enum {
+    MACH_OPR_PLUGIN_SUCCESS = 0,
+    MACH_OPR_PLUGIN_REMOVE_FAILED = 1,
+    MACH_OPR_PLUGIN_PLUGIN_DIR_FAILED = 2,
+    MACH_OPR_PLUGIN_ENABLE_FAILED = 3,
+    MACH_OPR_PLUGIN_DISABLE_FAILED = 4,
+    MACH_OPR_PLUGIN_UNKNOW_OPR_CMD = 5,
+    MACH_OPR_PLUGIN_NOT_FIND = 6,
+};
+
+typedef struct {
+    int32_t iPluginId;
+    int32_t iMachineId;
+    int32_t iDbId;
+    char bOprResult;
+    int32_t iReserved_1;
+    int32_t iReserved_2;
+    uint32_t dwReserved_1;
+    uint32_t dwReserved_2;
+}CmdS2cMachOprPluginResp;
 
 #pragma pack()
 
@@ -353,9 +404,12 @@ uint32_t MakeAttrPkg(struct sockaddr_in & app_server, char *pContent, int iConte
 
 int MakeRepPluginInfoToServer();
 int DealPreInstallNotify(CBasicPacket &pkg);
+uint32_t MakeServerRespPkg(char *pRespContent, int iRespContentLen, CBasicPacket &req_pkg);
 int DealRespRepPluginInfo(CBasicPacket &pkg);
+int DealMachineOprPlugin(CBasicPacket &pkg);
 
 void TryOpenPluginInstallLogFile(CmdS2cPreInstallContentReq *plug);
+void TryOpenPluginInstallLogFile(CmdS2cMachOprPluginReq *plug);
 
 const std::string g_strDevLangShell("linux shell");
 const std::string g_strDevLangJs("javascript");

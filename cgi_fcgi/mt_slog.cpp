@@ -54,6 +54,10 @@
 #include <cgi_attr.h>
 #include <iostream>
 
+// 机器插件操作每次能操作的最大机器数
+const int PLUGIN_MAX_OPR_MULTI_MACHINES = 20;
+const int PLUGIN_MAX_OPR_MULTI_PLUGINS = 10;
+
 CSupperLog slog;
 CGIConfig stConfig;
 CSLogSearch logsearch;
@@ -88,6 +92,7 @@ static const char *s_JsonRequest [] = {
 	"update_open_plugin",
 	"down_plugin_conf",
     "refresh_preinstall_plugin_status",
+    "refresh_mach_opr_plugin_status",
 	NULL
 };
 
@@ -3397,6 +3402,12 @@ static int DealPreInstallPlugin(std::string &strCsTemplateFile)
     return 0;
 }
 
+class TMachinePluginStatus {
+    public:
+    bool bDisabled;
+    std::string strBuildVer;
+};
+
 static int DealDpAddPlugin()
 {
 	int id = hdf_get_int_value(stConfig.cgi->hdf, "Query.id", 0);
@@ -3429,15 +3440,19 @@ static int DealDpAddPlugin()
 	else
 	    hdf_set_value(stConfig.cgi->hdf, "config.plugin_desc_url", stConfig.szXrkmonitorSiteAddr);
 
-    std::map<int, std::string> mpMachPluginStatus;
-    std::map<int, std::string>::iterator itMachStatus;
+    std::map<int, TMachinePluginStatus> mpMachPluginStatus;
+    std::map<int, TMachinePluginStatus>::iterator itMachStatus;
 
 	Query qu(*stConfig.db);
 	std::ostringstream ss;
-    ss << "select machine_id,build_version from mt_plugin_machine where xrk_status=0 and install_proc=0 and open_plugin_id=" << id;
+    ss << "select last_hello_time,machine_id,build_version from mt_plugin_machine where "
+		<< " xrk_status=0 and install_proc=0 and open_plugin_id=" << id;
     if(qu.get_result(ss.str().c_str()) && qu.num_rows() > 0) {
         for(int i=0; i < qu.num_rows() && qu.fetch_row(); i++) {
-            mpMachPluginStatus.insert(std::pair<int, std::string>(qu.getval("machine_id"), qu.getstr("build_version")));
+            TMachinePluginStatus stInfo;
+            stInfo.bDisabled = (qu.getuval("last_hello_time") == 0 ? true : false);
+            stInfo.strBuildVer = qu.getstr("build_version");
+            mpMachPluginStatus.insert(std::make_pair<int, TMachinePluginStatus>(qu.getval("machine_id"), stInfo));
         }
     }
     qu.free_result();
@@ -3451,10 +3466,12 @@ static int DealDpAddPlugin()
         	Json mach;
         	mach["id"] = qu.getval("xrk_id");
         	itMachStatus = mpMachPluginStatus.find((int)(mach["id"]));
-        	if(itMachStatus != mpMachPluginStatus.end())
-        	    mach["plugin_ver"] = itMachStatus->second;
-        	else
-        	    mach["plugin_ver"] = "no";
+            if(itMachStatus != mpMachPluginStatus.end()) {
+                mach["plugin_ver"] = itMachStatus->second.strBuildVer;
+                mach["plugin_disable"] = (int)(itMachStatus->second.bDisabled);
+            }
+            else 
+                mach["plugin_ver"] = "no";
 
         	std::string ips;
         	if(qu.getuval("ip1") != 0) {
@@ -3507,6 +3524,7 @@ static int DealDpAddPlugin()
     js["count"] = iCount;
     std::string str(js.ToString());
     hdf_set_value(stConfig.cgi->hdf, "config.machine_list", str.c_str());
+    hdf_set_int_value(stConfig.cgi->hdf, "config.max_opr_multi_machines", PLUGIN_MAX_OPR_MULTI_MACHINES);
     DEBUG_LOG("try setup plugin :%d, machine count:%d", id, iCount);
     return 0;
 }
@@ -3861,6 +3879,460 @@ static int DealInstallPlugin(CGI *cgi)
 	return 0;
 }
 
+// 机器插件变更状态
+enum {
+    // 机器未安装插件
+    MOP_RET_NOT_INSTALL_PLUGIN = 1,  
+    // 最近5分钟内有未完成的修改操作
+    MOP_RET_HAS_WAIT_OPR = 2,
+    // 修改操作等待完成
+    MOP_RET_WAIT_COMPLETE = 3,
+    // 修改失败，服务器错误 
+    MOP_RET_SERVER_FAILED = 4,
+    // 未找到操作任务
+    MOP_RET_NOT_FIND_OPR = 5,
+    // 操作超时(30s 没有完成)
+    MOP_RET_OPR_TIMEOUT = 6,
+    // agent 未启动
+    MOP_RET_AGENT_NOT_START = 7,
+    // 在机器上未找到插件
+    MOP_RET_NOT_FIND_PLUGIN = 8,
+    // 已接收
+    MOP_RET_OPR_DB_RECV = 12,
+    // 已下发
+    MOP_RET_OPR_DOWNLOAD = 13,
+    // 操作失败
+    MOP_RET_OPR_FAILED = 14,
+    // 操作成功
+    MOP_RET_OPR_SUCCESS = 15,
+    // agent 响应超时
+    MOP_RET_OPR_AGENT_TIMEOUT = 16,
+};
+
+static int DealOprMachPlugins(std::string &strCsTemplateFile)
+{
+    stConfig.iResponseType = RESPONSE_TYPE_HTML;
+	const char *pp = hdf_get_value(stConfig.cgi->hdf, "Query.plugins", NULL);
+    int iMachine = hdf_get_int_value(stConfig.cgi->hdf, "Query.machine", 0);
+    int iOprType = hdf_get_int_value(stConfig.cgi->hdf, "Query.opr_type", 0);
+	if(!pp || !iMachine || iOprType <= 0 || iOprType > 4)
+	{
+		REQERR_LOG("invalid parameter pp:%p, iMachine:%d, iOprType:%d", pp, iMachine, iOprType);
+		hdf_set_value(stConfig.cgi->hdf, "err.msg", CGI_REQERR);
+		return SLOG_ERROR_LINE;
+	}
+    
+    // 机器校验
+    MachineInfo *pmach = slog.GetMachineInfo(iMachine, NULL);
+    if(!pmach) {
+		REQERR_LOG("not find machine:%d", iMachine);
+        hdf_set_value(stConfig.cgi->hdf, "err.msg", CGI_REQERR);
+        return SLOG_ERROR_LINE;
+    }
+    hdf_set_int_value(stConfig.cgi->hdf, "config.opr_type", iOprType);
+    hdf_set_int_value(stConfig.cgi->hdf, "config.machine_id", iMachine);
+
+    Json js;
+    std::string strPlugin;
+    std::istringstream iss(pp);
+    int iAryPlugins[PLUGIN_MAX_OPR_MULTI_PLUGINS+1], i = 0;
+    for(i=0; i < PLUGIN_MAX_OPR_MULTI_PLUGINS+1 && getline(iss, strPlugin, ','); ) {
+        if(strPlugin.size() > 0) {
+            iAryPlugins[i] = atoi(strPlugin.c_str());
+            i++;
+        }
+    }
+    int iPlugCount = i;
+    if(iPlugCount <= 0 || iPlugCount > PLUGIN_MAX_OPR_MULTI_PLUGINS) {
+        REQERR_LOG("plugin count invalid:%d", iPlugCount);
+        hdf_set_value(stConfig.cgi->hdf, "err.msg", CGI_REQERR);
+        return SLOG_ERROR_LINE;
+    }
+
+	MyQuery myqu(stConfig.qu, stConfig.db);
+	Query & qu = myqu.GetQuery();
+    std::ostringstream ss;
+
+    DEBUG_LOG("multi plugin machine - pp:%s, machine:%d, oprtype:%d", pp, iMachine, iOprType);
+    int iWaitCount = 0;
+    for(i=0; i < iPlugCount; ++i) {
+        Json jr;
+
+        if(pmach->dwAgentStartTime <= 0 || pmach->dwLastHelloTime+300 < stConfig.dwCurTime)
+        {
+            jr["ret"] = MOP_RET_AGENT_NOT_START;
+            jr["plugin"] = iAryPlugins[i];
+            js["list"].Add(jr);
+            continue;
+        }
+
+        ss.str("");
+        ss << "select last_hello_time,opr_start_time,down_opr_cmd,opr_proc from mt_plugin_machine where machine_id=" 
+            << iMachine <<  " and open_plugin_id=" << iAryPlugins[i] << " and install_proc=0 and xrk_status=0";
+
+        // 最近5分钟是否有执行修改操作，如有则不允许再发起
+        if(qu.get_result(ss.str().c_str()) &&  qu.num_rows() > 0) {
+            qu.fetch_row();
+            uint32_t dwStart = qu.getuval("opr_start_time");
+            int iProc = qu.getval("opr_proc");
+            if(iProc != 0 
+                && iProc != EV_MOP_OPR_FAILED
+                && iProc != EV_MOP_OPR_SUCCESS
+                && iProc != EV_MOP_OPR_RESPONSE_TIMEOUT
+                && dwStart+300 >= stConfig.dwCurTime) 
+            {
+                hdf_set_value(stConfig.cgi->hdf, "config.last_opr_time", uitodate(dwStart));
+                DEBUG_LOG("has last opr, start time:%s(%u), cur:%u", uitodate(dwStart), dwStart, stConfig.dwCurTime);
+                jr["ret"] = MOP_RET_HAS_WAIT_OPR;
+                jr["plugin"] = iAryPlugins[i];
+                js["list"].Add(jr);
+                qu.free_result();
+                continue;
+            }
+
+            if(iOprType == 4 && qu.getval("last_hello_time") == 0) {
+                // 已是禁用状态
+                qu.free_result();
+                jr["ret"] = MOP_RET_OPR_SUCCESS;
+            }
+            else {
+                qu.free_result();
+                ss.str("");
+                ss << "update mt_plugin_machine set opr_start_time=" << stConfig.dwCurTime << ", opr_proc=1, down_opr_cmd="
+                    << iOprType << " where machine_id=" << iMachine <<  " and open_plugin_id=" << iAryPlugins[i];
+                if(qu.execute(ss.str())) {
+                    jr["ret"] = MOP_RET_WAIT_COMPLETE;
+                    iWaitCount++;
+                }
+                else
+                    jr["ret"] = MOP_RET_SERVER_FAILED;
+            }
+
+            jr["plugin"] = iAryPlugins[i];
+            js["list"].Add(jr);
+        }
+        else {
+            jr["ret"] = MOP_RET_NOT_INSTALL_PLUGIN;
+            jr["plugin"] = iAryPlugins[i];
+            js["list"].Add(jr);
+            REQERR_LOG("machine:%d not install plugin:%d", iMachine, iAryPlugins[i]);
+            qu.free_result();
+        }
+    }
+    js["wait_count"] = iWaitCount;
+    js["count"] = iPlugCount;
+
+    std::string str(js.ToString());
+    hdf_set_int_value(stConfig.cgi->hdf, "config.wait_status", MOP_RET_WAIT_COMPLETE);
+    hdf_set_value(stConfig.cgi->hdf, "config.pp_status", str.c_str());
+    DEBUG_LOG("machine plugin opr deal result:%s", str.c_str());
+    strCsTemplateFile = "dmt_dlg_mach_opr_plugins.html";
+    return 0;
+}
+
+static int DealRefreshOprMachinePlugin(std::string &strCsTemplateFile)
+{
+	const char *pm = hdf_get_value(stConfig.cgi->hdf, "Query.machines", NULL);
+    const char *pp = hdf_get_value(stConfig.cgi->hdf, "Query.plugins", NULL);
+    int iMultiPlugin = hdf_get_int_value(stConfig.cgi->hdf, "Query.multi_plugins", 0);
+    int iOprType = hdf_get_int_value(stConfig.cgi->hdf, "Query.opr_type", 0);
+	if(!pm || !pp || iOprType <= 0 || iOprType > 4)
+	{
+		REQERR_LOG("invalid parameter pm:%p, pp:%p, iOprType:%d", pm, pp, iOprType);
+		hdf_set_value(stConfig.cgi->hdf, "err.msg", CGI_REQERR);
+		return SLOG_ERROR_LINE;
+	}
+
+    // 插件提取
+    std::string strPlug;
+    std::istringstream iss_plug(pp);
+    int iAryPlugins[PLUGIN_MAX_OPR_MULTI_PLUGINS+1], i = 0;
+    for(i=0; i < PLUGIN_MAX_OPR_MULTI_PLUGINS+1 && getline(iss_plug, strPlug, ','); ) {
+        if(strPlug.size() > 0) {
+            iAryPlugins[i] = atoi(strPlug.c_str());
+            i++;
+        }
+    }
+    int iPluginCount = i;
+
+    // 机器提取
+    std::string strMach;
+    std::istringstream iss(pm);
+    int iAryMachines[PLUGIN_MAX_OPR_MULTI_MACHINES+1];
+    for(i=0; i < PLUGIN_MAX_OPR_MULTI_MACHINES+1 && getline(iss, strMach, ','); ) {
+        if(strMach.size() > 0) {
+            iAryMachines[i] = atoi(strMach.c_str());
+            i++;
+        }
+    }
+    int iMachCount = i;
+
+    // 查询状态
+    Json js;
+	MyQuery myqu(stConfig.qu, stConfig.db);
+	Query & qu = myqu.GetQuery();
+    std::ostringstream ss;
+    int iWaitCount = 0;
+    for(i=0; i < iMachCount; ++i) {
+        for(int j=0; j < iPluginCount; ++j) {
+            Json jr;
+            ss.str("");
+            ss << "select opr_start_time,opr_proc,xrk_status from mt_plugin_machine where machine_id=" 
+                << iAryMachines[i] <<  " and open_plugin_id=" << iAryPlugins[j] << " and install_proc=0 "
+                << " and down_opr_cmd=" << iOprType;
+            if(qu.get_result(ss.str().c_str()) &&  qu.num_rows() > 0) {
+                qu.fetch_row();
+                uint32_t dwStart = qu.getuval("opr_start_time");
+                // iProc 进度
+                int iProc = qu.getval("opr_proc");
+                if(iOprType != 2 && qu.getval("xrk_status") == 1)
+                    jr["ret_proc"] = MOP_RET_NOT_FIND_PLUGIN;
+                else if(dwStart+30 < stConfig.dwCurTime)
+                    jr["ret_proc"] = MOP_RET_OPR_TIMEOUT;
+                else {
+                    if(iProc == EV_MOP_OPR_START)
+                        jr["ret_proc"] = MOP_RET_WAIT_COMPLETE;
+                    else
+                        jr["ret_proc"] = 10+iProc;
+                    iWaitCount++;
+                }
+                if(iMultiPlugin)
+                    jr["obj_id"] = iAryPlugins[j];
+                else
+                    jr["obj_id"] = iAryMachines[i];
+            }
+            else {
+                jr["ret_proc"] = MOP_RET_NOT_FIND_OPR;
+                if(iMultiPlugin)
+                    jr["obj_id"] = iAryPlugins[j];
+                else
+                    jr["obj_id"] = iAryMachines[i];
+                REQERR_LOG("machine:%d not find opr, plugin:%d", iAryMachines[i], iAryPlugins[j]);
+            }
+            js["list"].Add(jr);
+            qu.free_result();
+        }
+    }
+    js["ret"] = 0;
+    if(iMultiPlugin)
+        js["count"] = iPluginCount;
+    else
+        js["count"] = iMachCount;
+    js["wait_count"] = iWaitCount;
+
+	std::string str(js.ToString());
+    DEBUG_LOG("refresh machine opr plugin process status:%s", str.c_str());
+    return my_cgi_output(str.c_str(), stConfig);
+}
+
+static int DealOprMachinePlugin(std::string &strCsTemplateFile)
+{
+    stConfig.iResponseType = RESPONSE_TYPE_HTML;
+	const char *pm = hdf_get_value(stConfig.cgi->hdf, "Query.machines", NULL);
+    int iPluginId = hdf_get_int_value(stConfig.cgi->hdf, "Query.plugin", 0);
+    int iOprType = hdf_get_int_value(stConfig.cgi->hdf, "Query.opr_type", 0);
+	if(!pm || !iPluginId || iOprType <= 0 || iOprType > 4)
+	{
+		REQERR_LOG("invalid parameter pm:%p, iPluginId:%d, iOprType:%d", pm, iPluginId, iOprType);
+		hdf_set_value(stConfig.cgi->hdf, "err.msg", CGI_REQERR);
+		return SLOG_ERROR_LINE;
+	}
+    
+    hdf_set_int_value(stConfig.cgi->hdf, "config.opr_type", iOprType);
+    hdf_set_int_value(stConfig.cgi->hdf, "config.plugin_id", iPluginId);
+
+    // 机器校验和提取
+    Json js;
+    std::string strMach;
+    std::istringstream iss(pm);
+    int iAryMachines[PLUGIN_MAX_OPR_MULTI_MACHINES+1], i = 0;
+    MachineInfo *pMachsInfo[PLUGIN_MAX_OPR_MULTI_MACHINES+1];
+
+    std::ostringstream ssMachines;
+    for(i=0; i < PLUGIN_MAX_OPR_MULTI_MACHINES+1 && getline(iss, strMach, ','); ) {
+        if(strMach.size() > 0) {
+            iAryMachines[i] = atoi(strMach.c_str());
+            pMachsInfo[i] = slog.GetMachineInfo(iAryMachines[i], NULL);
+            if(!pMachsInfo[i]) {
+                REQERR_LOG("not find machine:%d", iAryMachines[i]);
+                hdf_set_value(stConfig.cgi->hdf, "err.msg", CGI_REQERR);
+                return SLOG_ERROR_LINE;
+            }
+            if(ssMachines.str().size() > 0)
+                ssMachines << " " << iAryMachines[i];
+            else
+                ssMachines << iAryMachines[i];
+            i++;
+        }
+    }
+    int iMachCount = i;
+    if(iMachCount <= 0 || iMachCount > PLUGIN_MAX_OPR_MULTI_MACHINES) {
+        REQERR_LOG("machine count invalid:%d", iMachCount);
+        hdf_set_value(stConfig.cgi->hdf, "err.msg", CGI_REQERR);
+        return SLOG_ERROR_LINE;
+    }
+
+	MyQuery myqu(stConfig.qu, stConfig.db);
+	Query & qu = myqu.GetQuery();
+    std::ostringstream ss;
+
+    DEBUG_LOG("multi plugin machine - pm:%s, plugin:%d, oprtype:%d", pm, iPluginId, iOprType);
+
+    // 修改插件配置
+    if(iOprType == 1) {
+		Json plug_info;
+		if(GetLocalPlugin(plug_info, iPluginId) < 0) {
+            REQERR_LOG("get plugin:%d info failed", iPluginId);
+            return SLOG_ERROR_LINE;
+        }
+
+        hdf_set_value(stConfig.cgi->hdf, "config.machines_id", ssMachines.str().c_str());
+        hdf_set_int_value(stConfig.cgi->hdf, "config.machine_count", iMachCount);
+
+        // 修改1台机器的配置，可以加载当前配置，基于当前配置修改
+        bool bLoadCurCfg = false;
+        char hdf_pex[32] = {0};
+        if(iMachCount == 1) {
+            ss.str("");
+            ss << "select cfg_file_time,xrk_cfgs_list from mt_plugin_machine where machine_id="
+                << iAryMachines[0] << " and open_plugin_id=" << iPluginId << " and xrk_status=0";
+            if(qu.get_result(ss.str().c_str()) &&  qu.num_rows() > 0) {
+                qu.fetch_row();
+                const char *pstrCfgsCur = qu.getstr("xrk_cfgs_list");
+                const char *pst = NULL, *ped = NULL;
+                if(strlen(pstrCfgsCur) > 0) {
+                    hdf_set_value(stConfig.cgi->hdf, "config.cur_cfg_time", uitodate(qu.getuval("cfg_file_time")));
+                    hdf_set_value(stConfig.cgi->hdf, "config.machine_name", 
+                        MtReport_GetFromVmem_Local(pMachsInfo[0]->iNameVmemIdx));
+                    DEBUG_LOG("get plugin:%d, last mod time:%u, config str:%s", 
+                        iPluginId, qu.getuval("cfg_file_time"), pstrCfgsCur);
+
+					Json::json_list_t & jslist_cfg = plug_info["cfgs"].GetArray();
+					Json::json_list_t::iterator it_cfg = jslist_cfg.begin();
+					for(int j=0; it_cfg != jslist_cfg.end(); it_cfg++) {
+						Json &cfg = *it_cfg;
+						if((bool)(cfg["enable_modify"])) {
+                            sprintf(hdf_pex, "plug_cfg.list.%d", ++j);
+							const char *pcfgname = (const char*)(cfg["item_name"]);
+                            hdf_set_valuef(stConfig.cgi->hdf, "%s.name=%s", hdf_pex, pcfgname);
+                            hdf_set_valuef(stConfig.cgi->hdf, "%s.desc=%s", hdf_pex, (const char*)(cfg["item_desc"]));
+                            pst = strstr(pstrCfgsCur, pcfgname);
+                            if(pst != NULL) {
+                                pst += strlen(pcfgname)+1; // 1 - 空格
+                                ped = strchr(pst, ';');
+                                if(!ped)
+                                    ped = pst + strlen(pst);
+                            }
+
+                            if(pst) {
+                                std::string strval(pst, ped-pst);
+                                hdf_set_valuef(stConfig.cgi->hdf, "%s.value=%s", hdf_pex, strval.c_str());
+                                DEBUG_LOG("get plugin:%d config item:%s val:%s", iPluginId, pcfgname, strval.c_str());
+                            }
+                            else
+                                hdf_set_valuef(stConfig.cgi->hdf, "%s.value=%s", hdf_pex, (const char*)(cfg["item_value"]));
+                        }
+                    }
+                    bLoadCurCfg = true;
+                }
+                qu.free_result();
+            }
+        }
+
+        if(!bLoadCurCfg || iMachCount > 1) {
+			Json::json_list_t & jslist_cfg = plug_info["cfgs"].GetArray();
+			Json::json_list_t::iterator it_cfg = jslist_cfg.begin();
+			for(int j=0; it_cfg != jslist_cfg.end(); it_cfg++) {
+				Json &cfg = *it_cfg;
+				if((bool)(cfg["enable_modify"])) {
+					sprintf(hdf_pex, "plug_cfg.list.%d", ++j);
+                    hdf_set_valuef(stConfig.cgi->hdf, "%s.name=%s", hdf_pex, (const char*)(cfg["item_name"]));
+                    hdf_set_valuef(stConfig.cgi->hdf, "%s.value=%s", hdf_pex, (const char*)(cfg["item_value"]));
+                    hdf_set_valuef(stConfig.cgi->hdf, "%s.desc=%s", hdf_pex, (const char*)(cfg["item_desc"]));
+                }
+            }
+        }
+        strCsTemplateFile = "dmt_dlg_machine_mod_plugin_cfg.html";
+        return 0;
+    }
+
+    int iWaitCount = 0;
+    for(i=0; i < iMachCount; ++i) {
+        Json jr;
+
+        if(pMachsInfo[i]->dwAgentStartTime <= 0 || pMachsInfo[i]->dwLastHelloTime+300 < stConfig.dwCurTime)
+        {
+            jr["ret"] = MOP_RET_AGENT_NOT_START;
+            jr["machine"] = iAryMachines[i];
+            js["list"].Add(jr);
+            continue;
+        }
+
+        ss.str("");
+        ss << "select last_hello_time,opr_start_time,down_opr_cmd,opr_proc from mt_plugin_machine where machine_id=" 
+            << iAryMachines[i] <<  " and open_plugin_id=" << iPluginId << " and install_proc=0 and xrk_status=0";
+
+        // 最近5分钟是否有执行修改操作，如有则不允许再发起
+        if(qu.get_result(ss.str().c_str()) &&  qu.num_rows() > 0) {
+            qu.fetch_row();
+            uint32_t dwStart = qu.getuval("opr_start_time");
+            int iProc = qu.getval("opr_proc");
+            if(iProc != 0 
+                && iProc != EV_MOP_OPR_FAILED
+                && iProc != EV_MOP_OPR_SUCCESS
+                && iProc != EV_MOP_OPR_RESPONSE_TIMEOUT
+                && dwStart+300 >= stConfig.dwCurTime) 
+            {
+                hdf_set_value(stConfig.cgi->hdf, "config.last_opr_time", uitodate(dwStart));
+                DEBUG_LOG("has last opr, start time:%s(%u), cur:%u", uitodate(dwStart), dwStart, stConfig.dwCurTime);
+                jr["ret"] = MOP_RET_HAS_WAIT_OPR;
+                jr["machine"] = iAryMachines[i];
+                js["list"].Add(jr);
+                qu.free_result();
+                continue;
+            }
+
+            if(iOprType == 4 && qu.getval("last_hello_time") == 0) {
+                // 已是禁用状态
+                qu.free_result();
+                jr["ret"] = MOP_RET_OPR_SUCCESS;
+            }
+            else {
+                qu.free_result();
+                ss.str("");
+                ss << "update mt_plugin_machine set opr_start_time=" << stConfig.dwCurTime << ", opr_proc=1, down_opr_cmd="
+                    << iOprType << " where machine_id=" << iAryMachines[i] <<  " and open_plugin_id=" << iPluginId;
+                if(qu.execute(ss.str())) {
+                    jr["ret"] = MOP_RET_WAIT_COMPLETE;
+                    iWaitCount++;
+                }
+                else
+                    jr["ret"] = MOP_RET_SERVER_FAILED;
+            }
+
+            jr["machine"] = iAryMachines[i];
+            js["list"].Add(jr);
+        }
+        else {
+            jr["ret"] = MOP_RET_NOT_INSTALL_PLUGIN;
+            jr["machine"] = iAryMachines[i];
+            js["list"].Add(jr);
+            REQERR_LOG("machine:%d not install plugin:%d", iAryMachines[i], iPluginId);
+            qu.free_result();
+        }
+    }
+    js["count"] = iMachCount;
+    js["wait_count"] = iWaitCount;
+
+    std::string str(js.ToString());
+    hdf_set_int_value(stConfig.cgi->hdf, "config.wait_status", MOP_RET_WAIT_COMPLETE);
+    hdf_set_value(stConfig.cgi->hdf, "config.pm_status", str.c_str());
+    DEBUG_LOG("machine plugin opr deal result:%s", str.c_str());
+    strCsTemplateFile = "dmt_dlg_machine_opr_plugin.html";
+    return 0;
+}
+
+
 int main(int argc, char **argv, char **envp)
 {
 	int32_t iRet = 0;
@@ -4026,13 +4498,18 @@ int main(int argc, char **argv, char **envp)
 			iRet = DealUpdatePlugin(stConfig.cgi);
 		else if(!strcmp(pAction, "down_plugin_conf"))
 			iRet = DealDownloadPluginConf(stConfig.cgi);
-
 		else if(!strcmp(pAction, "dp_add_plugin")) 
             iRet = DealDpAddPlugin();
 		else if(!strcmp(pAction, "ddap_install_plugin")) 
             iRet = DealPreInstallPlugin(strCsTemplateFile);
 		else if(!strcmp(pAction, "refresh_preinstall_plugin_status")) 
             iRet = DealRefreshPreInstallStatus();
+		else if(!strcmp(pAction, "dmap_multi_opr_plugin")) 
+            iRet = DealOprMachPlugins(strCsTemplateFile);
+		else if(!strcmp(pAction, "ddap_multi_opr_plugin")) 
+            iRet = DealOprMachinePlugin(strCsTemplateFile);
+		else if(!strcmp(pAction, "refresh_mach_opr_plugin_status")) 
+            iRet = DealRefreshOprMachinePlugin(strCsTemplateFile);
 	
 		else {
 			ERR_LOG("unknow action:%s", pAction);

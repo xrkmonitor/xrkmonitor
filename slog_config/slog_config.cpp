@@ -2158,8 +2158,7 @@ int32_t ReadTablePluginMachineInfo(Database &db, uint32_t up_id=0)
 {
 	char sSql[512];
 	if(up_id != 0)
-		snprintf(sSql, sizeof(sSql), "select local_cfg_url,machine_id,open_plugin_id "
-            " from mt_plugin_machine where xrk_id=%u and xrk_status=0 and install_proc=%d", up_id, EV_PREINSTALL_START);
+		snprintf(sSql, sizeof(sSql), "select * from mt_plugin_machine where xrk_id=%u", up_id);
 	else {
         WARN_LOG("mt_plugin_machine try read all !");
         return 0;
@@ -2171,13 +2170,15 @@ int32_t ReadTablePluginMachineInfo(Database &db, uint32_t up_id=0)
 		return SLOG_ERROR_LINE;
 	}
 
-    int32_t iMachineId = 0, i = 0;
+    int32_t iMachineId = 0, i = 0, iPluginId = 0, iStatus = 0;
     MtClientInfo *pclient = NULL;
 
 	Query qutmp(db);
 	while(qu.fetch_row() && qu.num_rows() > 0)
     {
         iMachineId = qu.getval("machine_id");
+        iPluginId = qu.getval("open_plugin_id");
+        iStatus = qu.getval("xrk_status");
 
         // pclient 用于将任务发放到 agent 登录的服务器上
         pclient = slog.GetMtClientInfo(iMachineId, (uint32_t *)NULL);
@@ -2205,25 +2206,75 @@ int32_t ReadTablePluginMachineInfo(Database &db, uint32_t up_id=0)
             SYNC_FLAG_CAS_FREE(stConfig.pShmConfig->stSysCfg.bEventModFlag);
             continue;
         }
-
         SYNC_FLAG_CAS_FREE(stConfig.pShmConfig->stSysCfg.bEventModFlag);
-        stConfig.pShmConfig->stSysCfg.stEvent[i].iEventType = EVENT_PREINSTALL_PLUGIN;
-        stConfig.pShmConfig->stSysCfg.stEvent[i].dwExpireTime = EVENT_PREINSTALL_PLUGIN_EXPIRE_SEC+slog.m_stNow.tv_sec;
-        stConfig.pShmConfig->stSysCfg.stEvent[i].ev.stPreInstall.iPluginId = qu.getval("open_plugin_id");
-        stConfig.pShmConfig->stSysCfg.stEvent[i].ev.stPreInstall.iMachineId = iMachineId;
-        stConfig.pShmConfig->stSysCfg.stEvent[i].ev.stPreInstall.iDbId = up_id;
-        stConfig.pShmConfig->stSysCfg.stEvent[i].bEventStatus = EVENT_STATUS_INIT_SET;
 
-		const char *ptmp = qu.getstr("local_cfg_url");
-		if(!ptmp ||ptmp[0] == '\0'){
-			WARN_LOG("invalid local config url, plugin:%d, machine:%d", qu.getval("open_plugin_id"), iMachineId);
-			stConfig.pShmConfig->stSysCfg.stEvent[i].iEventType = 0;
-			continue;
+		// 处理特定事件
+        if(iStatus == 0 && qu.getval("install_proc") == EV_PREINSTALL_START) {
+            // 一键部署事件
+        	stConfig.pShmConfig->stSysCfg.stEvent[i].iEventType = EVENT_PREINSTALL_PLUGIN;
+        	stConfig.pShmConfig->stSysCfg.stEvent[i].dwExpireTime = EVENT_PREINSTALL_PLUGIN_EXPIRE_SEC+slog.m_stNow.tv_sec;
+        	stConfig.pShmConfig->stSysCfg.stEvent[i].ev.stPreInstall.iPluginId = iPluginId;
+        	stConfig.pShmConfig->stSysCfg.stEvent[i].ev.stPreInstall.iMachineId = iMachineId;
+        	stConfig.pShmConfig->stSysCfg.stEvent[i].ev.stPreInstall.iDbId = up_id;
+        	stConfig.pShmConfig->stSysCfg.stEvent[i].bEventStatus = EVENT_STATUS_INIT_SET;
+
+			const char *ptmp = qu.getstr("local_cfg_url");
+			if(!ptmp ||ptmp[0] == '\0'){
+				WARN_LOG("invalid local config url, plugin:%d, machine:%d", qu.getval("open_plugin_id"), iMachineId);
+				stConfig.pShmConfig->stSysCfg.stEvent[i].iEventType = 0;
+				continue;
+			}
+        	snprintf(sSql, sizeof(sSql), 
+        	    "update mt_plugin_machine set install_proc=%d where xrk_id=%u", EV_PREINSTALL_DB_RECV, up_id);
+        	DEBUG_LOG("get preinstall plugin message, plugin:%d, event:%d, machine:%d", qu.getval("open_plugin_id"), i, iMachineId);
+        	qutmp.execute(sSql);
 		}
-        snprintf(sSql, sizeof(sSql), 
-            "update mt_plugin_machine set install_proc=%d where xrk_id=%u", EV_PREINSTALL_DB_RECV, up_id);
-        DEBUG_LOG("get preinstall plugin message, plugin:%d, event:%d, machine:%d", qu.getval("open_plugin_id"), i, iMachineId);
-        qutmp.execute(sSql);
+		else if(qu.getval("install_proc") == 0 && qu.getval("opr_proc") == 1) {
+            // 配置修改/插件移除、启用、禁用等事件
+            int iOprCmd = qu.getval("down_opr_cmd");
+            uint32_t dwOprStartTime = qu.getuval("opr_start_time");
+            if(dwOprStartTime+30 < slog.m_stNow.tv_sec) {
+                WARN_LOG("machine:%d, plugin:%d, opr:%d timeout", iMachineId, iPluginId, qu.getval("down_opr_cmd")); 
+                continue;
+            }
+
+            // 通用字段设置
+            stConfig.pShmConfig->stSysCfg.stEvent[i].iEventType = 0;
+            stConfig.pShmConfig->stSysCfg.stEvent[i].dwExpireTime = 
+                EVENT_MULTI_MACH_PLUGIN_OPR_EXPIRE_SEC+slog.m_stNow.tv_sec;
+            stConfig.pShmConfig->stSysCfg.stEvent[i].bEventStatus = EVENT_STATUS_INIT_SET; 
+            stConfig.pShmConfig->stSysCfg.stEvent[i].ev.stMachPlugOpr.iPluginId = iPluginId;
+            stConfig.pShmConfig->stSysCfg.stEvent[i].ev.stMachPlugOpr.iMachineId = iMachineId;
+            stConfig.pShmConfig->stSysCfg.stEvent[i].ev.stMachPlugOpr.iDbId = up_id;
+
+            // 在 dmt_dp_add_plugin.html 页面定义操作命令号
+            switch(iOprCmd) {
+                // 批量修改插件配置
+                case 1:
+                    stConfig.pShmConfig->stSysCfg.stEvent[i].iEventType = EVENT_MULTI_MACH_PLUGIN_CFG_MOD;
+                    break;
+                // 批量移除插件
+                case 2:
+                    stConfig.pShmConfig->stSysCfg.stEvent[i].iEventType = EVENT_MULTI_MACH_PLUGIN_REMOVE;
+                   break;
+                // 批量启用插件
+                case 3:
+                    stConfig.pShmConfig->stSysCfg.stEvent[i].iEventType = EVENT_MULTI_MACH_PLUGIN_ENABLE;
+                    break;
+                // 批量禁用插件
+                case 4:
+                    stConfig.pShmConfig->stSysCfg.stEvent[i].iEventType = EVENT_MULTI_MACH_PLUGIN_DISABLE;
+                    break;
+                default:
+                    WARN_LOG("unknow opr:%d, machine:%d, plugin:%d", qu.getval("down_opr_cmd"), iMachineId, iPluginId);
+                    break;
+            }
+            if(iOprCmd >= 1 && iOprCmd <= 4) {
+                snprintf(sSql, sizeof(sSql), "update mt_plugin_machine set opr_proc=%d where xrk_id=%u", 
+                    EV_MOP_OPR_DB_RECV, up_id);
+                qutmp.execute(sSql);
+            }
+		}
     }
 	qu.free_result();
     return 0;

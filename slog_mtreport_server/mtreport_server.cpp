@@ -375,6 +375,7 @@ int main(int argc, char *argv[])
 		stConfig.dwCurrentTime = slog.m_stNow.tv_sec;
 		if((iRet=GetDatabaseServer()) < 0)
 			break;
+		stSock.CheckUdpSess(slog.m_stNow);
 		stSock.DealEvent();
 		h.Select(1, slog.m_iRand%SEC_USEC);
 		TryUpdateRealinfo();

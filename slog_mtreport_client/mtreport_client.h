@@ -272,6 +272,8 @@ typedef struct
 	uint32_t dwRestartFlag;
 	bool bCheckHelloStart;
 
+    uint64_t qwServerPacketSessId; // 来自服务器端的可靠udp 包 session id 
+
 	FILE *fpPluginInstallLogFile;
 }CONFIG;
 
@@ -285,6 +287,7 @@ typedef struct {
 }TConfigItem;
 typedef std::list<TConfigItem*> TConfigItemList;
 
+void SendServerRespPkg(char *pRespContent, int iRespContentLen, CBasicPacket &pkg);
 void UpdateConfigFile(const char *pfile, TConfigItemList & list);
 void ReleaseConfigList(TConfigItemList & list);
 int get_cmd_result(const char *cmd, std::string &strResult);

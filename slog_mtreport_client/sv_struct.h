@@ -70,6 +70,10 @@
 #define CMD_MONI_S2C_LOG_CONFIG_NOTIFY 701 
 #define CMD_MONI_S2C_APP_CONFIG_NOTIFY 702 
 #define CMD_MONI_S2C_PRE_INSTALL_NOTIFY 703 
+#define CMD_MONI_S2C_MACH_ORP_PLUGIN_REMOVE 704 
+#define CMD_MONI_S2C_MACH_ORP_PLUGIN_ENABLE 705
+#define CMD_MONI_S2C_MACH_ORP_PLUGIN_DISABLE 706
+#define CMD_MONI_S2C_MACH_ORP_PLUGIN_MOD_CFG 707
 // ------------- cmd define end --------------------
 
 // ------------------------------ tlv define start -------------------
@@ -104,6 +108,7 @@ typedef struct
 	char szReserved[16];
 }MonitorCommSig; // monitor 通用签名结构
 
+#define MAGIC_RESPONSE_NUM 1117250
 #define REQ_PKG_HEAD_VERSION 1
 typedef struct
 {
@@ -116,7 +121,8 @@ typedef struct
 	uint16_t wVersion;
 	uint32_t dwRespMagicNum;
 	char sEchoBuf[32];
-	char sReserved[16];
+	uint64_t qwSessionId;
+	char sReserved[8];
 }ReqPkgHead;
 
 typedef struct
