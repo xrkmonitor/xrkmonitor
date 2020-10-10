@@ -1,33 +1,100 @@
-<script src="<?cs var:config.docpath?>resource/js/dmt.addplugin.js?v=110"></script>
+<script src="<?cs var:config.docpath?>resource/js/dmt.addplugin.js?v=35"></script>
 <script language="javascript" type="text/javascript">
+
+function dmapMultiOpr(optype)
+{
+	var sel_plugin = "";
+    var count = 0;
+	$("#dmap_machine_plugin_on_<?cs var:config.machine_id ?>").find("input:checked").filter("[name='opr_plugins']").each(function(i){
+		var val = $(this).val();
+		sel_plugin += (i==0 ? val : ","+val);
+        count++;
+	});
+
+	if(sel_plugin == "")
+	{
+		alertMsg.info("请选择机器已部署插件");
+	    return false;
+	}
+
+    if(count > <?cs var:config.max_opr_multi_plugins ?>)
+    {
+        alertMsg.info("批量操作每次不能超过 <?cs var:config.max_opr_multi_plugins ?> 个插件");
+        return false;
+    }
+ 
+    var tip = '';
+    switch(optype) {
+        case 2:
+            tip = '确定要移除插件: '+ sel_plugin + ' 吗？';
+            break;
+        case 3:
+            tip = '确定要启用插件: '+ sel_plugin + ' 吗？';
+            break;
+        case 4:
+            tip = '确定要禁用插件: '+ sel_plugin + ' 吗？';
+            break;
+        default:
+            dmtJsBugReport('dmt_machine_add_plugin.html', 'dmapMultiOpr', 'unknow operate type:' + optype);
+	        return false;
+    }
+
+    if(tip != '') {
+	    alertMsg.confirm(tip, {
+	    	okCall: function(){
+                dmapMachOprPlugin('<?cs var:config.cgipath?>', <?cs var:config.machine_id ?>, sel_plugin, optype);
+	    	}
+	    });
+    }
+    else {
+        dmapMachOprPlugin('<?cs var:config.cgipath?>', <?cs var:config.machine_id ?>, sel_plugin, optype);
+    }
+	return false;
+}
 
 
 $(document).ready(function(){
     var machine_plugins = $.parseJSON('<?cs var:config.machine_plugins ?>');
     if(machine_plugins.count > 0) {
-        var uhtml = '';
+        var uhtml_on = '', uhtml_off = '';
         var lt = machine_plugins.plugins;
         for(var i=0; i < lt.length; ++i) {
+            var uhtml = '';
             uhtml += "<tr>";
             uhtml += "<td>" + lt[i].id + "</td>";
             uhtml += "<td>" + lt[i].show_name + "</td>";
             uhtml += "<td>" + lt[i].name + "</td>";
-			if(lt[i].run_os == 'All_os')
-				uhtml += "<td>跨平台</td>";
-			else
-				uhtml += "<td>" + lt[i].run_os + "</td>";
-			uhtml += "<td>" + lt[i].language + "</td>";
-			uhtml += "<td>" + lt[i].auth + "</td>";
+            if(lt[i].run_os == 'All_os')
+                uhtml += "<td>跨平台</td>";
+            else
+                uhtml += "<td>" + lt[i].run_os + "</td>";
+            uhtml += "<td>" + lt[i].language + "</td>";
+            uhtml += "<td>" + lt[i].auth + "</td>";
             uhtml += "<td>" + lt[i].last_version + "</td>";
-		    uhtml += "<td class='detail'><a href='" + lt[i].desc_url + "' target='_blank'>详情</a></td>";
-            if(lt[i].installed == 1)
-                uhtml += "<td>已部署</td>";
+
+            if(lt[i].installed == 1) {
+                uhtml_on += uhtml;
+                if(lt[i].plugin_disable)
+                    uhtml_on += "<td><font color='red'>已禁用</font></td>";
+                else
+                    uhtml_on += "<td>已启用</td>";
+		        uhtml_on += "<td class='detail' pid='" + lt[i].id + "'>";
+                uhtml_on += "  <a href='#' onclick='return dmapModMachPlugin(\"<?cs var:config.cgi_path ?>\", ";
+                uhtml_on += " <?cs var:config.machine_id ?>, " + lt[i].id + ");'>修改配置</a>";
+                uhtml_on += "</td>";
+                uhtml_on += "<td><input name='opr_plugins' type='checkbox' value='" + lt[i].id + "'></td>";;
+                uhtml_on += "</tr>";
+            }
             else {
-                uhtml += "<td class='detail'><a href='#' onclick='return dmapAddPlugin(\"<?cs var:config.cgipath ?>\", ";
-                uhtml += "<?cs var:config.machine_id ?>, "+ lt[i].id + ");'>一键部署</a></td>";
+                uhtml_off += uhtml;
+    		    uhtml_off += "<td class='detail'><a href='" + lt[i].desc_url + "' target='_blank'>详情</a></td>";
+                uhtml_off += "<td class='detail'><a href='#' onclick='return dmapAddPlugin(\"<?cs var:config.cgipath ?>\", ";
+                uhtml_off += "<?cs var:config.machine_id ?>, "+ lt[i].id + ");'>一键部署</a></td>";
+                uhtml_off += "</tr>";
             }
         }
-        $('#dmap_machine_plugin_<?cs var:config.machine_id ?>').html(uhtml);
+        $('#dmap_machine_plugin_on_<?cs var:config.machine_id ?>').html(uhtml_on);
+        $('#dmap_machine_plugin_off_<?cs var:config.machine_id ?>').html(uhtml_off);
     }
 
     <?cs if:config.run_time > 0 ?>
@@ -82,9 +149,37 @@ $(document).ready(function(){
 			    </tr>
             </tbody>
         </table>
-        <br />
 
-        <h3>已部署/可部署插件</h3>
+        <br />
+        <div class='searchBar' style='margin-bottom:2px; height:32px;'>
+            <h3 style='float:left'>已部署插件</h3>
+			<table style='float:right'><tr align='right'>
+                <td style='width:120px'><button class="buttonActive" onclick='return dmapMultiOpr(2);'><i class='icon-minus icon-large '></i>批量移除</button></td>
+                <td style='width:120px'><button class="buttonActive" onclick='return dmapMultiOpr(3);'><i class='icon-ok icon-large '></i>批量启用</button></td>
+                <td style='width:120px'><button class="buttonActive" onclick='return dmapMultiOpr(4);'><i class='icon-remove icon-large '></i>批量禁用</button></td>
+            </tr></table>
+        </div>
+        <table class='list' width='100%'>
+            <thead>
+                <tr>
+                    <th align='left' >插件ID</th>
+                    <th align='left' >插件显示名</th>
+                    <th align='left' >插件部署名</th>
+                    <th align='left' >运行平台</th>
+                    <th align='left' >开发语言</th>
+                    <th align='left' >插件作者</th>
+                    <th align='left' >当前版本</th>
+                    <th align='left' >插件状态</th>
+                    <th align='left' >操作</th>
+                    <th align='left' ><input type="checkbox" group="opr_plugins" class="checkboxCtrl"></th>
+                </tr>
+            </thead>
+            <tbody id='dmap_machine_plugin_on_<?cs var:config.machine_id ?>'>
+            </tbody>
+	    </table>
+
+        <br />
+        <h3>可部署插件</h3>
         <table class='list' width='100%'>
             <thead>
                 <tr>
@@ -99,9 +194,10 @@ $(document).ready(function(){
                     <th align='left' >部署</th>
                 </tr>
             </thead>
-            <tbody id='dmap_machine_plugin_<?cs var:config.machine_id ?>'>
+            <tbody id='dmap_machine_plugin_off_<?cs var:config.machine_id ?>'>
             </tbody>
 	    </table>
+	
 	</div>
 </div>
 

@@ -1,0 +1,164 @@
+<script language="javascript" type="text/javascript">
+
+var g_ddmop_opr_status = <?cs var:config.pp_status ?>;
+var g_ddmop_ajax_ret = null;
+var g_opr_timeout = 30;
+var g_start_opr_time = $.now();
+
+function ddmopShowNewStatusStep(js)
+{
+    var iChangeProc = 0;
+    for(var i=0; i < js.count; i++)
+    {
+        for(var j=0; j < g_ddmop_opr_status.count; j++) {
+            if(js.list[i].obj_id == g_ddmop_opr_status.list[j].plugin) {
+                if(js.list[i].ret_proc != g_ddmop_opr_status.list[j].ret) {
+                    iChangeProc++;
+                    var uhtml = '';
+                    uhtml += '<td>插件 ' + js.list[i].obj_id;
+                    uhtml += '&nbsp; 操作状态：';
+                    uhtml += dmapGetOprText(js.list[i].ret_proc);
+                    uhtml += '</td>';
+                    $('#ddmop_plug_' + js.list[i].obj_id).html(uhtml);
+                    g_ddmop_opr_status.list[j].ret = js.list[i].ret_proc;
+                    break;
+                }
+            }
+        }
+    }
+
+    if(js.wait_count <= 0) {
+        clearInterval(g_dmop_timerid);
+        g_dmop_timerid = 0;
+        $('#ddmop_result').html('操作已结束.');
+    }
+    else if(iChangeProc > 0) {
+        g_opr_timeout = 30;
+    }
+}
+
+function ddmopPlugOprTimeout()
+{
+    g_opr_timeout--;
+    $('#ddmop_timeout').text(''+g_opr_timeout);
+    if(g_opr_timeout <= 0)
+    {
+        clearInterval(g_dmop_timerid);
+        g_dmop_timerid = 0;
+        $('#ddmop_result').html('<font color="red">操作进度30秒未有变化，请稍后查看</font><br>');
+    }
+    else {
+        // 防止多次请求
+        if(g_ddmop_ajax_ret == null || g_ddmop_ajax_ret == 1) {
+	        var para = new Object();
+            para.action = 'refresh_mach_opr_plugin_status';
+            var plugins = '';
+            for(var i=0,j=0; i < g_ddmop_opr_status.count; i++) {
+                if(g_ddmop_opr_status.list[i].ret == 3
+                    || g_ddmop_opr_status.list[i].ret == 12
+                    || g_ddmop_opr_status.list[i].ret == 13)
+                {
+                    if(j != 0)
+                        plugins += ',';
+                    plugins += g_ddmop_opr_status.list[i].plugin;
+                    j++;
+                }
+            }
+            para.plugins = plugins;
+            para.multi_plugins = 1;
+            para.machines = <?cs var:config.machine_id ?>;
+            para.opr_type = <?cs var:config.opr_type ?>;
+            var requrl = '<?cs var:config.cgipath?>mt_slog';
+            $.ajax({ type: 'GET',
+                url: requrl,
+                data: para,
+                global: false,
+		        dataType: 'json', 
+                success: function(js) {
+                    g_ddmop_ajax_ret = 1;
+                    if(dmtFirstDealAjaxResponse(js))
+                        return;
+                    if(js.ret != 0) {
+                        clearInterval(g_dmop_timerid);
+                        g_dmop_timerid = 0;
+                        $('#ddmop_result').html('<font color="red">ajax 请求返回错误:' + js.msg + '！</font>');
+                    }
+                    else {
+                        ddmopShowNewStatusStep(js);
+                    }
+                },
+                error: function() {
+                    clearInterval(g_dmop_timerid);
+                    g_dmop_timerid = 0;
+                    $('#ddmop_result').html('<font color="red">ajax 请求失败！</font>');
+                }
+            });
+        }
+    }
+}
+
+$(document).ready(function(){
+    // g_dmop_timerid define in dmt.addplugin.js
+    if(g_dmop_timerid != 0) {
+        clearInterval(g_dmop_timerid);
+        g_dmop_timerid = 0;
+    }
+
+    if(g_ddmop_opr_status.count > 0) {
+        var uhtml = '';
+        var lt = g_ddmop_opr_status.list;
+        for(var i=0; i < lt.length; ++i) {
+            uhtml += '<tr id="ddmop_plug_' + lt[i].plugin + '">';
+            uhtml += '<td> 插件 ' + lt[i].plugin;
+            uhtml += '&nbsp; 操作状态：';
+            uhtml += dmapGetOprText(lt[i].ret);
+            uhtml += '</td></tr>';
+        }
+        $('#ddmop_opr_plugins_result').html(uhtml);
+    }
+
+    if(g_ddmop_opr_status.wait_count <= 0) {
+        $('#ddmop_result').html('操作已结束.');
+    }
+    else {
+        g_dmop_timerid = setInterval(ddmopPlugOprTimeout, 1000);
+    }
+});
+
+</script>
+
+<div class="pageContent">
+	<div class="pageFormContent" layoutH='0'>
+        <table>
+        <thead>
+        <tr>
+            <th style='width:560px; text-align:left'>
+            <div> 
+                <?cs if:config.opr_type == 2 ?>
+                <font style='font-weight:bold;'>批量移除插件操作情况：</font>
+                <?cs elif:config.opr_type == 3 ?>
+                <font style='font-weight:bold;'>批量启用插件操作情况：</font>
+                <?cs else ?>
+                <font style='font-weight:bold;'>批量禁用插件操作情况：</font>
+                <?cs /if ?>
+                <span id='ddmop_result'>操作中请稍等：<span id='ddmop_timeout'>30</span> ...</span>
+                <br />
+                <br />
+            </div>
+            </th>
+        </tr>
+        </thead>
+
+        <tbody id='ddmop_opr_plugins_result'>
+        </tbody>
+        </table>
+	</div>
+
+	<div class="formBar">
+		<ul style='list-style:none'>
+			<li><button type="button" class="buttonActive close">关闭</button></li>
+		</ul>
+	</div>
+</div>
+
+
