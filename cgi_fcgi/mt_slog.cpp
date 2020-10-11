@@ -3336,22 +3336,16 @@ static int DealPreInstallPlugin(std::string &strCsTemplateFile)
     std::string ips;
     if(pMachinfo->ip1 != 0) {
         ips += ipv4_addr_str(pMachinfo->ip1);
-        ips += " | ";
     }
-    if(pMachinfo->ip2 != 0) {
+	else if(pMachinfo->ip2 != 0) {
         ips += ipv4_addr_str(pMachinfo->ip2);
-        ips += " | ";
     }
-    if(pMachinfo->ip3 != 0) {
+	else if(pMachinfo->ip3 != 0) {
         ips += ipv4_addr_str(pMachinfo->ip3);
-        ips += " | ";
     }
-    if(pMachinfo->ip4 != 0) {
+	else if(pMachinfo->ip4 != 0) {
         ips += ipv4_addr_str(pMachinfo->ip4);
-        ips += " | ";
     }
-    if(ips.length() > 3)
-        ips.erase(ips.length()-3, 3);
     hdf_set_value(stConfig.cgi->hdf, "config.machine_ip", ips.c_str());
     const char *ptmp = MtReport_GetFromVmem_Local(pMachinfo->iNameVmemIdx);
     hdf_set_value(stConfig.cgi->hdf, "config.machine_name", ptmp ? ptmp : "unknow");
