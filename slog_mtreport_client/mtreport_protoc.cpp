@@ -1335,10 +1335,6 @@ int DealMachineOprPlugin(CBasicPacket &pkg)
         INFO_LOG("create plugin log dir:%s", sInstallLogFile.str().c_str());
         usleep(10);
     }
-
-    PLUGIN_INST_LOG("try modify plugin:%d, name:%s, machine id:%d, opr cmd:%u",
-        pct->iPluginId, pct->sPluginName,  pct->iMachineId, pkg.m_dwReqCmd);
-
     CmdS2cMachOprPluginResp resp;
     resp.iPluginId = ntohl(pct->iPluginId);
     resp.iMachineId = ntohl(pct->iMachineId);
@@ -1352,7 +1348,11 @@ int DealMachineOprPlugin(CBasicPacket &pkg)
         // 移除插件
         case CMD_MONI_S2C_MACH_ORP_PLUGIN_REMOVE: 
             {
-                ss << "cd " << sInstallPath.str() << "; ./auto_uninstall.sh; ";
+				PLUGIN_INST_LOG("try modify plugin:%d, name:%s, machine id:%d, opr cmd:%u(uninstall)",
+					pct->iPluginId, pct->sPluginName,  pct->iMachineId, pkg.m_dwReqCmd);
+
+				ss << "export install_log_file=" << stConfig.szCurPath << "/plugin_install_log/" << pct->sPluginName
+					<< "_install.log; cd " << sInstallPath.str() << "; ./auto_uninstall.sh; ";
                 get_cmd_result(ss.str().c_str(), strResult);
                 if(strResult.find("failed") != std::string::npos) {
                     resp.bOprResult = MACH_OPR_PLUGIN_REMOVE_FAILED;
@@ -1382,6 +1382,9 @@ int DealMachineOprPlugin(CBasicPacket &pkg)
         // 启用插件
         case CMD_MONI_S2C_MACH_ORP_PLUGIN_ENABLE:
             {
+				PLUGIN_INST_LOG("try modify plugin:%d, name:%s, machine id:%d, opr cmd:%u(enable)",
+					pct->iPluginId, pct->sPluginName,  pct->iMachineId, pkg.m_dwReqCmd);
+
                 ss << "cd " << sInstallPath.str() << "; ./start.sh; ";
                 get_cmd_result(ss.str().c_str(), strResult);
                 if(strResult.find("failed") != std::string::npos) {
@@ -1397,6 +1400,9 @@ int DealMachineOprPlugin(CBasicPacket &pkg)
         // 禁用插件
         case CMD_MONI_S2C_MACH_ORP_PLUGIN_DISABLE:
             {
+				PLUGIN_INST_LOG("try modify plugin:%d, name:%s, machine id:%d, opr cmd:%u(disable)",
+					pct->iPluginId, pct->sPluginName,  pct->iMachineId, pkg.m_dwReqCmd);
+
                 ss << "cd " << sInstallPath.str() << "; ./stop.sh; ";
                 get_cmd_result(ss.str().c_str(), strResult);
                 if(strResult.find("failed") != std::string::npos) {
@@ -1417,6 +1423,8 @@ int DealMachineOprPlugin(CBasicPacket &pkg)
             break;
 
         default:
+			PLUGIN_INST_LOG("try modify plugin:%d, name:%s, machine id:%d, opr cmd:%u(unknow)",
+				pct->iPluginId, pct->sPluginName,  pct->iMachineId, pkg.m_dwReqCmd);
             REQERR_LOG("unknow cmd:%u", pkg.m_dwReqCmd);
             resp.bOprResult = MACH_OPR_PLUGIN_UNKNOW_OPR_CMD;
             return ERR_UNKNOW_CMD;

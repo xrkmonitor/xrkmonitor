@@ -479,7 +479,7 @@ static int Init()
 		"SERVER_MASTER", CFG_STRING, stConfig.szSrvIp_master, "192.168.128.128", MYSIZEOF(stConfig.szSrvIp_master),
 		"SERVER_PORT", CFG_INT, &stConfig.iSrvPort, 27000,
 		"LOG_FREQ_LIMIT_PER_SEC", CFG_INT, &stConfig.iLogLimitPerSec, 5,
-		"AGENT_ACCESS_KEY", CFG_STRING, stConfig.szUserKey, "", MYSIZEOF(stConfig.szUserKey), 
+		"AGENT_ACCESS_KEY", CFG_STRING, stConfig.szUserKey, "232k8s8d8f20@#@%@#$@skdfj2351%^", MYSIZEOF(stConfig.szUserKey), 
 		"PLUS_PATH", CFG_STRING, stConfig.szPlusPath, "./xrkmonitor_plugin", MYSIZEOF(stConfig.szPlusPath),
 		"MTREPORT_SHM_KEY", CFG_INT, &iCfgShmKey, MT_REPORT_DEF_SHM_KEY,
 		"AGENT_CLIENT_IP", CFG_STRING, stConfig.szLocalIP, "", MYSIZEOF(stConfig.szLocalIP),

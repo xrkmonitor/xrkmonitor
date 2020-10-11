@@ -1858,11 +1858,14 @@ int CUdpSock::DealCmdPreInstallReport()
 
     std::ostringstream ss;
     if(IsStrEqual(pctinfo->sDevLang, "javascript") && pctinfo->iStatus == EV_PREINSTALL_CLIENT_INSTALL_PLUGIN_OK) {
-        ss << "update mt_plugin_machine set install_proc=0 where xrk_id=" << pctinfo->iDbId << " and xrk_status=0"; 
+        ss << "update mt_plugin_machine set install_proc=0,start_time=" << slog.m_stNow.tv_sec
+			<< ",last_hello_time=" << slog.m_stNow.tv_sec << " where xrk_id=" << pctinfo->iDbId << " and xrk_status=0"; 
     }
     else {
-        ss << "update mt_plugin_machine set install_proc=" << pctinfo->iStatus 
-            << " where xrk_id=" << pctinfo->iDbId << " and xrk_status=0 and install_proc < " << pctinfo->iStatus;
+        ss << "update mt_plugin_machine set install_proc=" << pctinfo->iStatus;
+		if(pctinfo->iStatus == EV_PREINSTALL_CLIENT_INSTALL_PLUGIN_OK)
+            ss << ", start_time=" << slog.m_stNow.tv_sec << ", last_hello_time=" << slog.m_stNow.tv_sec;
+        ss << " where xrk_id=" << pctinfo->iDbId << " and xrk_status=0 and install_proc < " << pctinfo->iStatus;
     }
     qu.execute(ss.str().c_str());
     return 0;
