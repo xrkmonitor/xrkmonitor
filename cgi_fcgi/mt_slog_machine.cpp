@@ -338,7 +338,7 @@ static int DealMachineAddPlugin()
                 std::string strBigOsType;
                 GetOsType(pm_os, strBigOsType);
                 ptmp = plugin["run_os"];
-                if(!IsStrEqual(pm_os, ptmp) && !IsStrEqual(ptmp, strBigOsType.c_str())) {
+                if(!IsStrEqual(ptmp, "All_os") && !IsStrEqual(pm_os, ptmp) && !IsStrEqual(ptmp, strBigOsType.c_str())) {
                     DEBUG_LOG("os not macth, mach:%s(%s), plugin:%s", pm_os, strBigOsType.c_str(), ptmp);
                     continue;
                 }
