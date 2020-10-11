@@ -3934,8 +3934,10 @@ enum {
 static int DealOprMachPlugins(std::string &strCsTemplateFile)
 {
     stConfig.iResponseType = RESPONSE_TYPE_HTML;
-	if(IsDaemonDenyOp(stConfig))
+	if(IsDaemonDenyOp(stConfig, false)) {
+    	strCsTemplateFile = "dmt_dlg_pop_daemon_tip_msg.html";
 		return 0;
+	}
 
 	const char *pp = hdf_get_value(stConfig.cgi->hdf, "Query.plugins", NULL);
     int iMachine = hdf_get_int_value(stConfig.cgi->hdf, "Query.machine", 0);
@@ -4153,8 +4155,10 @@ static int DealRefreshOprMachinePlugin(std::string &strCsTemplateFile)
 static int DealOprMachinePlugin(std::string &strCsTemplateFile)
 {
     stConfig.iResponseType = RESPONSE_TYPE_HTML;
-	if(IsDaemonDenyOp(stConfig))
+	if(IsDaemonDenyOp(stConfig, false)) {
+    	strCsTemplateFile = "dmt_dlg_pop_daemon_tip_msg.html";
 		return 0;
+	}
 
 	const char *pm = hdf_get_value(stConfig.cgi->hdf, "Query.machines", NULL);
     int iPluginId = hdf_get_int_value(stConfig.cgi->hdf, "Query.plugin", 0);
