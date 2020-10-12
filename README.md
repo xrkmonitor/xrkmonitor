@@ -61,7 +61,7 @@
    启动容器后进入容器拷贝下数据库文件: cp /var/lib/mysql_bk /var/lib/mysql -r    
    进入：/home/mtreport/ 目录执行下：./start_docker.sh 即可   
 
-agent 部署说明：  
+**agent 部署说明：**    
 容器中 /home/mtreport/slog_mtreport_client.tar.gz 为 agent 部署文件，可以将其拷贝到需要部署的机器上    
 SERVER_MASTER 配置改为宿主机的IP地址， 如果需要在宿主机上部署 agent，需要指定：AGENT_CLIENT_IP 不能与   
 容器启动时传递的xrk_host_ip 相同(xrk_host_ip 已被docker 容器使用了)，IP 可以不存在，主要用于机器识别。  
