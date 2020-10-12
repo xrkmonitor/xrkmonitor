@@ -1,5 +1,7 @@
 #!/bin/bash
 
+[ "$USER" == "" ] && USER=root
+
 # 如果未指定运行账号，则以当前账号启动 memcached
 if [ $# -eq 1 ];then
 	username=$1
