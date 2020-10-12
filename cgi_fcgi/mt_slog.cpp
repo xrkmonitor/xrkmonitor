@@ -62,7 +62,7 @@ CSupperLog slog;
 CGIConfig stConfig;
 CSLogSearch logsearch;
 int32_t g_iNeedDb = 0;
-int32_t g_iLogOutPort = 80;
+int32_t g_iLogOutPort = 0;
 char g_sLogPath[256] = {0};
 SLogServer* g_pHttpTestServer = NULL;
 #define CHECK_RESULT_NOT_FIND_APP_LOG 777
@@ -2434,8 +2434,8 @@ static int InitFastCgi_first(CGIConfig &myConf)
 
 	if(LoadConfig(myConf.szConfigFile,
 	   "NEED_DB", CFG_INT, &g_iNeedDb, 1,
-	   "SLOG_LOG_OUT_PORT", &g_iLogOutPort, 80,
 	   "SLOG_SERVER_FILE_PATH", CFG_STRING, g_sLogPath, DEF_SLOG_LOG_FILE_PATH, sizeof(g_sLogPath),
+	   "SLOG_LOG_OUT_PORT", CFG_INT, &g_iLogOutPort, 80,
 		NULL) < 0){
 		ERR_LOG("loadconfig failed, from file:%s", myConf.szConfigFile);
 		return SLOG_ERROR_LINE;
