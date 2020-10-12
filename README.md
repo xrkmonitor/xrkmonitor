@@ -69,7 +69,7 @@ SERVER_MASTER 配置改为宿主机的IP地址， 如果需要在宿主机上部
 
 docker 使用过程中如有问题可以加入我们的QQ群： 859052272 获取帮助。   
 
-### docker 编译镜像
+### 使用 docker 镜像编译源码
 使用 docker 镜像编译源码方法如下：
 1. 拉取镜像： docker pull registry.cn-hangzhou.aliyuncs.com/xrkmonitor/compile:last   
 1. 执行镜像容器：docker run -idt [镜像id] (docker images 获取)   
