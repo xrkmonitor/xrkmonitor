@@ -16,11 +16,11 @@ USE_DLL_COMM_LIB = no
 
 # 编译库 - gcc/g++ 编译通用选项
 # - debug 模式编译库代码选项
-#CFLAGS_LIB = -std=gnu90 -g -fPIC -fno-exceptions -Wall -Wsign-compare -Wno-strict-aliasing
-#CXXFLAGS_LIB = -std=gnu++98 -g -fPIC -fexceptions -Wall -Wno-ctor-dtor-privacy -Wno-init-self -Wno-misleading-indentation
+CFLAGS_LIB = -std=gnu90 -g -fPIC -fno-exceptions -Wall -Wsign-compare -Wno-strict-aliasing
+CXXFLAGS_LIB = -std=gnu++98 -g -fPIC -fexceptions -Wall -Wno-ctor-dtor-privacy -Wno-init-self -Wno-misleading-indentation
 # - release 模式编译库代码选项
-CFLAGS_LIB = -O2 -fPIC -fno-exceptions -Wall -Wsign-compare -Wno-strict-aliasing
-CXXFLAGS_LIB = -O2 -fPIC -fexceptions -Wno-ctor-dtor-privacy
+#CFLAGS_LIB = -O2 -fPIC -fno-exceptions -Wall -Wsign-compare -Wno-strict-aliasing
+#CXXFLAGS_LIB = -O2 -fPIC -fexceptions -Wno-ctor-dtor-privacy
 
 # 编译程序 - gcc/g++ 编译通用选项
 # - debug 模式编译程序选项 

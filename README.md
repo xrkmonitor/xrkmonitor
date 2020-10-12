@@ -40,6 +40,38 @@
    ![](http://xrkmonitor.com/monitor/images/open_warn_git.png)
    <br >
 
+### docker 方式部署
+
+以下以v2.8 版本作为示例说明 docker 部署方法     
+1. 拉取 docker 镜像: docker pull registry.cn-hangzhou.aliyuncs.com/xrkmonitor/release:v2.8   
+1. 通过镜像启动容器：docker images 查看镜像ID，假设为：93297f01d06b    
+   启动容器：docker run -idt -p27000:27000 -p38080:38080 -p28080:28080 -p8080:80 --env xrk_host_ip=192.168.128.210 --env xrk_http_port=8080 93297f01d06b    
+   参数说明：-p27000:27000 -p38080:38080 -p28080:28080 -p8080:80 日志、监控点、接入服务等的端口映射   
+             xrk_host_ip=192.168.128.210 宿主机的ip 地址, 根据实际情传递   
+			 xrk_http_port=8080 web 控制台的映射端口，如何使用宿主机的80 端口可以省略    
+1. docker ps -a 查看运行的容器，docker attach 进入容器，进入目录 /home/mtreport, 执行 ./start_docker.sh 启动监控系统服务   
+1. 只浏览器端使用宿主机IP即可访问控制台： http://192.168.128.210:8080，控制台默认账号密码为：sadmin/sadmin   
+
+
+以上方法数据保存在容器中，容易丢失，正式部署时可以挂接宿主机的目录，挂接方法如下：  
+1. 进入容器停止全部服务： cd /home/mtreport/tools_sh; ./stop_all.sh， 停止 mysql 服务
+1. 进入容器后将 /var/lib/mysql 目录重命名为 /var/lib/mysql_bk   
+1. 假设使用宿主机目录：/data/xrkmonitor/mysql 作为 mysql 数据库目录，/data/xrkmonitor/log 作为日志目录, docker 的启动命令如下：   
+   启动容器：docker run -idt -p27000:27000 -p38080:38080 -p28080:28080 -p8080:80 --env xrk_host_ip=192.168.128.210 --env xrk_http_port=8080 -v /data/xrkmonitor/mysql:/var/lib/mysql -v /data/xrkmonitor/log:/home/mtreport/slog 93297f01d06b     
+   启动容器后进入容器拷贝下数据库文件: cp /var/lib/mysql_bk /var/lib/mysql -r    
+   进入：/home/mtreport/ 目录执行下：./start_docker.sh 即可   
+
+agent 部署说明：  
+容器中 /home/mtreport/slog_mtreport_client.tar.gz 为 agent 部署文件，可以将其拷贝到需要部署的机器上    
+SERVER_MASTER 配置改为宿主机的IP地址， 如果需要在宿主机上部署 agent，需要指定：AGENT_CLIENT_IP 不能与   
+容器启动时传递的xrk_host_ip 相同(xrk_host_ip 已被docker 容器使用了)，IP 可以不存在，主要用于机器识别。  
+关于 agent 的详细说明可以参考文档。   
+
+docker 使用过程中如有问题可以加入我们的QQ群： 859052272 获取帮助。   
+
+### docker 编译镜像
+制作中，敬请期待。   
+
 ### 在线部署
 
 安装脚本: install.sh  
