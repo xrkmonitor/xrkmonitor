@@ -613,7 +613,8 @@ function drlShowRealTimeLog()
 	para.ex_flogin_type = $.cookie("flogin_type");
 	para.ex_flogin_uid = $.cookie("flogin_uid");
 	para.ex_flogin_index = $.cookie("flogin_index");
-	var requrl = 'http://'+drl_app_module_list.applist[appIdx].log_server_ip;
+	var requrl = 'http://'+drl_app_module_list.applist[appIdx].log_server_ip+':';
+	requrl += drl_app_module_list.applist[appIdx].log_server_port;
 	requrl += "<?cs var:config.cgipath?>mt_slog?";
 	
 	$.ajax({
