@@ -485,6 +485,8 @@ static int Init()
 		"AGENT_CLIENT_IP", CFG_STRING, stConfig.szLocalIP, "", MYSIZEOF(stConfig.szLocalIP),
 		"CUST_ATTR_SRV_IP", CFG_STRING, stConfig.szCustAttrSrvIp, "", MYSIZEOF(stConfig.szCustAttrSrvIp),
 		"CUST_ATTR_SRV_PORT", CFG_INT, &stConfig.iCustAttrSrvPort, 0,
+		"CUST_LOG_SRV_IP", CFG_STRING, stConfig.szCustLogSrvIp, "", MYSIZEOF(stConfig.szCustLogSrvIp),
+		"CUST_LOG_SRV_PORT", CFG_INT, &stConfig.iCustLogSrvPort, 0,
 		"ENABLE_ENCRYPT_DATA", CFG_INT, &stConfig.iEnableEncryptData, 0,
 		"CLIENT_LOCAL_LOG_FILE", CFG_STRING, stConfig.szLocalLogFile, 
 			"./slog_mtreport_client.log", MYSIZEOF(stConfig.szLocalLogFile),
@@ -1233,8 +1235,17 @@ int EnvSendAppLogToServer(TAppLogRead &stAppLog)
 
 	struct sockaddr_in addr_server;
 	addr_server.sin_family = PF_INET;
-	addr_server.sin_port = htons(stInfo.wLogSrvPort);
-	addr_server.sin_addr.s_addr = stInfo.dwAppSrvMaster;
+
+	if(stConfig.szCustLogSrvIp[0] != '\0' && stConfig.iCustLogSrvPort != 0)
+	{
+		addr_server.sin_port = htons(stConfig.iCustLogSrvPort);
+		addr_server.sin_addr.s_addr = inet_addr(stConfig.szCustLogSrvIp);
+	}
+	else
+	{
+		addr_server.sin_port = htons(stInfo.wLogSrvPort);
+		addr_server.sin_addr.s_addr = stInfo.dwAppSrvMaster;
+	}
 
 	uint32_t dwKey = 0;
 	if(stConfig.iEnableEncryptData) {
@@ -1603,6 +1614,8 @@ void ShowShm()
 	SHOW_FIELD_VALUE_UINT_TIME(dwLastSyncLogConfigTime);
 	SHOW_FIELD_VALUE_UINT(wLogConfigCount);
 	SHOW_FIELD_VALUE_FUN_COUNT(wLogConfigCount, stLogConfig, ShowSLogConfig);
+	if(stConfig.szCustLogSrvIp[0] != '\0' && stConfig.iCustLogSrvPort != 0)
+		printf("\tcust log server:%s:%d\n", stConfig.szCustLogSrvIp, stConfig.iCustLogSrvPort);
 
 	SHOW_FIELD_VALUE_UINT(bModifyServerFlag);
 
