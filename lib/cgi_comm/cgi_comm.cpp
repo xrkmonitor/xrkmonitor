@@ -1046,8 +1046,7 @@ int InitFastCgiStart(CGIConfig &myConf)
 		"UPLOAD_DIR", CFG_STRING, myConf.szUploadDir, CGI_UPLOAD_PATH, MYSIZEOF(myConf.szUploadDir),
 		"XRKMONITOR_DEBUG", CFG_INT, &myConf.iDebugHtmlJs, 0, 
 		"FLOGIN_SHM_KEY", CFG_INT, &iShmKey, FLOGIN_SESSION_HASH_SHM_KEY,
-		"REDIRECT_URI", CFG_STRING, myConf.szRedirectUri, 
-			"/cgi-bin/slog_flogin?action=redirect_main", MYSIZEOF(myConf.szRedirectUri),
+		"REDIRECT_URI", CFG_STRING, myConf.szRedirectUri, "/", MYSIZEOF(myConf.szRedirectUri),
 		"DISABLE_VMEM_CACHE", CFG_INT, &myConf.iDisableVmemCache, 0,
 		NULL) < 0){
 		ERR_LOG("load fastcgi global config failed, file:%s, msg:%s\n", 

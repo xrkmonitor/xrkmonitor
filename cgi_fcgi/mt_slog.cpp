@@ -62,6 +62,7 @@ CSupperLog slog;
 CGIConfig stConfig;
 CSLogSearch logsearch;
 int32_t g_iNeedDb = 0;
+int32_t g_iLogOutPort = 80;
 char g_sLogPath[256] = {0};
 SLogServer* g_pHttpTestServer = NULL;
 #define CHECK_RESULT_NOT_FIND_APP_LOG 777
@@ -849,7 +850,7 @@ static int GetAppListByIdx(int iAppCount, int iAppInfoIndexStart, Json &js)
 		else
 			app["app_name"] = "unknow";
 		app["log_server_ip"] = ipv4_addr_str(pApp->dwAppSrvMaster);
-		app["log_server_port"] = 80;
+		app["log_server_port"] = g_iLogOutPort;
 		js.Add(app);
 	}
 	DEBUG_LOG("get app info from shm, app count:%d", i);
@@ -880,7 +881,7 @@ static int GetAppModuleListByIdx(int iAppCount, int iAppInfoIndexStart, Json &js
 		else
 			app["app_name"] = "unknow";
 		app["log_server_ip"] = ipv4_addr_str(pApp->dwAppSrvMaster);
-		app["log_server_port"] = 80;
+		app["log_server_port"] = g_iLogOutPort;
 		int iModuleCount = 0;
 		for(int j=0; iModuleCount < pApp->wModuleCount && j < SLOG_MODULE_COUNT_MAX_PER_APP; j++)
 		{
@@ -947,7 +948,7 @@ static int GetAppModuleList(CGI *cgi, Json & js)
 			app["app_name"] = qu.getstr("app_name");
 			app["app_id"] = iAppId;
 			app["log_server_ip"] = ipv4_addr_str(pApp->dwAppSrvMaster);
-			app["log_server_port"] = 80;
+			app["log_server_port"] = g_iLogOutPort;
 
 			sprintf(sSqlBuf, 
 				"select module_id,module_name from mt_module_info where app_id=%u and xrk_status=%d",
@@ -1491,7 +1492,7 @@ static int DealGetLogFilesStart(CGI *cgi)
 				app["app_id"] = qu.getuval("app_id"); 
 				app["app_name"] = qu.getstr("app_name");
 				app["log_server_ip"] = ipv4_addr_str(pApp->dwAppSrvMaster);
-				app["log_server_port"] = 80;
+				app["log_server_port"] = g_iLogOutPort;
 				js.Add(app);
 			}
 		}
@@ -2433,6 +2434,7 @@ static int InitFastCgi_first(CGIConfig &myConf)
 
 	if(LoadConfig(myConf.szConfigFile,
 	   "NEED_DB", CFG_INT, &g_iNeedDb, 1,
+	   "SLOG_LOG_OUT_PORT", &g_iLogOutPort, 80,
 	   "SLOG_SERVER_FILE_PATH", CFG_STRING, g_sLogPath, DEF_SLOG_LOG_FILE_PATH, sizeof(g_sLogPath),
 		NULL) < 0){
 		ERR_LOG("loadconfig failed, from file:%s", myConf.szConfigFile);

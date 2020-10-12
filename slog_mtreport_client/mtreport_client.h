@@ -245,6 +245,9 @@ typedef struct
 
 	char szCustAttrSrvIp[18];
 	int iCustAttrSrvPort;
+	
+	char szCustLogSrvIp[18];
+	int iCustLogSrvPort;
 
 	FILE *fpLogFile;
 	char szLocalLogFile[256];
