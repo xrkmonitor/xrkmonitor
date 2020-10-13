@@ -1013,6 +1013,31 @@ static inline void CheckLastChar(char *pstr, char c)
 	}
 }
 
+const char *GetPluginPreConfigItemDesc(const std::string &strCfgName) {
+    if(strCfgName.find("XRK_LOCAL_LOG_TYPE") != std::string::npos)
+        return "插件本地日志类型, 可选值: info debug warn reqerr error fatal all";
+    if(strCfgName.find("XRK_LOCAL_LOG_FILE") != std::string::npos)
+        return "插件本地日志文件, 注意插件需要有写权限";
+    if(strCfgName.find("XRK_PLUGIN_RE_CHECK") != std::string::npos)
+        return "插件校验错误时，如果设为1，校验失败5分钟后可重启，为0则插件无法启动，因此如果出现插件校验错误，该配置需改为1。";
+    if(strCfgName.find("XRK_PLUGIN_CONFIG_PLAT") != std::string::npos)
+        return "适用的版本，不允许只能是 cloud 或 open";
+    if(strCfgName.find("XRK_PLUGIN_CONFIG_FILE_VER") != std::string::npos)
+        return "配置文件版本";
+    if(strCfgName.find("XRK_PLUGIN_CONFIG_ID") != std::string::npos)
+        return "插件日志配置ID, 为0表示不上报插件日志到监控系统日志中心";
+    if(strCfgName.find("XRK_PLUGIN_HEADER_FILE_VER") != std::string::npos)
+        return "插件可执行文件版本";
+    if(strCfgName.find("plugin_ver") != std::string::npos)
+        return "插件配置文件版本";
+    if(strCfgName.find("logconfig_id") != std::string::npos)
+        return "插件日志配置ID, 为0表示不上报插件日志";
+    if(strCfgName.find("logconfig_type") != std::string::npos)
+        return "插件日志记录类型, 需是 logconfig_id 配置的类型，否则日志不会写入";
+    return NULL;
+}
+
+
 int InitFastCgiStart(CGIConfig &myConf)
 {
 	std::string strGlobalConfgFile;

@@ -300,6 +300,33 @@ static int GetParamVal(char *sLine, char *sParam, char *sVal)
 	return 0;
 }
 
+// 校验插件配置，插件的配置值不能含有 ; 符号 (控制台修改配置逻辑用到了该符号)
+int CheckPluginConfig(const char *pszConfigFilePath)
+{
+    FILE *pstFile;
+    char sLine[MAX_CONFIG_LINE_LEN+1], sParam[MAX_CONFIG_LINE_LEN+1], sVal[MAX_CONFIG_LINE_LEN+1];
+    if ((pstFile = fopen(pszConfigFilePath, "r")) == NULL)
+        return -1;
+
+    int iRet = 0;
+    while (1)
+    {
+        fgets(sLine, sizeof(sLine), pstFile);
+        if (feof(pstFile))
+            break; 
+
+        if (GetParamVal(sLine, sParam, sVal) == 0) {
+            if(strchr(sVal, ';')) {
+                iRet = -1;
+                break;
+            }
+        }
+    }	
+    fclose(pstFile);
+	return iRet;
+}
+
+
 int LoadConfig(const char *pszConfigFilePath, ...)
 {
 	FILE *pstFile;

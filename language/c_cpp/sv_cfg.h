@@ -44,6 +44,7 @@
 extern "C" {
 #endif
 
+int CheckPluginConfig(const char *pszConfigFilePath);
 int IsVersionOk(const char *pbig_eq, const char *psmall);
 int LoadConfig(const char *pszConfigFilePath, ...);
 int GetConfigFile(const char *pAppStr, char **pconfOut);

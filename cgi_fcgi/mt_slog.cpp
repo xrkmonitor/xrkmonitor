@@ -3068,13 +3068,14 @@ static int MakePluginConfFile_def(Json &plug_info, ostringstream &oAbsFile)
     FCGI_fprintf(fp, "#插件本地日志文件, 注意插件需要有写权限\r\n");
     FCGI_fprintf(fp, "XRK_LOCAL_LOG_FILE ./%s.log\r\n", (const char*)(plug_info["plus_name"]));
     FCGI_fprintf(fp, "\r\n");
-	FCGI_fprintf(fp, "#插件校验错误时，如果设为1, 校验失败5分钟后可重新校验\r\n");
+	FCGI_fprintf(fp, "#插件校验错误时，如果设为1，校验失败5分钟后可重启，为0则插件无法启动\r\n");
 	FCGI_fprintf(fp, "XRK_PLUGIN_RE_CHECK 0\r\n");
     FCGI_fprintf(fp, "\r\n");
 
 	Json::json_list_t & jslist_cfg = plug_info["cfgs"].GetArray();
 	Json::json_list_t::iterator it_cfg = jslist_cfg.begin();
     std::ostringstream ss_cfg;
+    ss_cfg << "XRK_LOCAL_LOG_TYPE,XRK_LOCAL_LOG_FILE,XRK_PLUGIN_RE_CHECK";
 	for(; it_cfg != jslist_cfg.end(); it_cfg++) {
 		Json &cfg = *it_cfg;
         if(!(bool)(cfg["enable_modify"]))
@@ -3083,10 +3084,7 @@ static int MakePluginConfFile_def(Json &plug_info, ostringstream &oAbsFile)
         FCGI_fprintf(fp, "%s %s\r\n",
             (const char*)(cfg["item_name"]), (const char*)(cfg["item_value"]));
         FCGI_fprintf(fp, "\r\n");
-        if(ss_cfg.str().size() > 0)
-            ss_cfg << "," << (const char*)(cfg["item_name"]);
-        else
-            ss_cfg << (const char*)(cfg["item_name"]);
+        ss_cfg << "," << (const char*)(cfg["item_name"]);
     }
 
     if(ss_cfg.str().size() > 0) {
@@ -3112,7 +3110,7 @@ static int MakePluginConfFile_def(Json &plug_info, ostringstream &oAbsFile)
 	FCGI_fprintf(fp, "#插件部署名\r\n");
 	FCGI_fprintf(fp, "XRK_PLUGIN_NAME %s\r\n", (const char*)(plug_info["plus_name"]));
     FCGI_fprintf(fp, "\r\n");
-	FCGI_fprintf(fp, "#插件可执行版本\r\n");
+	FCGI_fprintf(fp, "#插件可执行文件版本\r\n");
 	FCGI_fprintf(fp, "XRK_PLUGIN_HEADER_FILE_VER %s\r\n", (const char*)(plug_info["plus_version"]));
 	FCGI_fprintf(fp, "\r\n");
 	FCGI_fclose(fp);
@@ -4235,9 +4233,12 @@ static int DealOprMachinePlugin(std::string &strCsTemplateFile)
                     DEBUG_LOG("get plugin:%d, last mod time:%u, config str:%s", 
                         iPluginId, qu.getuval("cfg_file_time"), pstrCfgsCur);
 
+                    // 加载插件配置中的可修改配置项 
 					Json::json_list_t & jslist_cfg = plug_info["cfgs"].GetArray();
 					Json::json_list_t::iterator it_cfg = jslist_cfg.begin();
-					for(int j=0; it_cfg != jslist_cfg.end(); it_cfg++) {
+                    std::ostringstream ss_loaded;
+					int j=0;
+					for(; it_cfg != jslist_cfg.end(); it_cfg++) {
 						Json &cfg = *it_cfg;
 						if((bool)(cfg["enable_modify"])) {
                             sprintf(hdf_pex, "plug_cfg.list.%d", ++j);
@@ -4259,6 +4260,52 @@ static int DealOprMachinePlugin(std::string &strCsTemplateFile)
                             }
                             else
                                 hdf_set_valuef(stConfig.cgi->hdf, "%s.value=%s", hdf_pex, (const char*)(cfg["item_value"]));
+                            hdf_set_valuef(stConfig.cgi->hdf, "%s.is_cust=0", hdf_pex);
+                            ss_loaded << pcfgname << " ";
+                        }
+                    }
+
+                    // 加载不在插件配置中的自定义配置项
+                    char *pitem_name = NULL, *pitem_val = NULL, *ptmp_e = NULL;
+                    char *ptmp = (char*)pstrCfgsCur;
+                    for(int i=0; *ptmp != '\0' && i >= 0;)
+                    {
+                        if(i == 0) {
+                            // 提取配置项宏名
+                            ptmp_e = strchr(ptmp, ' ');
+                            pitem_name = ptmp;
+                            if(ptmp_e != NULL) {
+                                *ptmp_e = '\0';
+                                ptmp = ptmp_e+1;
+                            }
+                            else {
+                                *ptmp = '\0';
+                            }
+                            i = 1;
+                        }
+                        else {
+                            // 提取配置项值
+                            ptmp_e = strchr(ptmp, ';');
+                            pitem_val = ptmp;
+                            if(ptmp_e != NULL) {
+                                *ptmp_e = '\0';
+                                ptmp = ptmp_e+1;
+                                i = 0;
+                            }
+                            else
+                                i = -1;
+                            if(ss_loaded.str().find(pitem_name) != std::string::npos)
+                                continue;
+
+                            const char *pdesc = GetPluginPreConfigItemDesc(pitem_name);
+                            sprintf(hdf_pex, "plug_cfg.list.%d", ++j);
+                            hdf_set_valuef(stConfig.cgi->hdf, "%s.name=%s", hdf_pex, pitem_name); 
+                            if(!pdesc)
+                                hdf_set_valuef(stConfig.cgi->hdf, "%s.desc=%s", hdf_pex, pitem_name);
+                            else
+                                hdf_set_valuef(stConfig.cgi->hdf, "%s.desc=%s", hdf_pex, pdesc);
+                            hdf_set_valuef(stConfig.cgi->hdf, "%s.value=%s", hdf_pex, pitem_val);
+                            hdf_set_valuef(stConfig.cgi->hdf, "%s.is_cust=1", hdf_pex);
                         }
                     }
                     bLoadCurCfg = true;
@@ -4277,6 +4324,7 @@ static int DealOprMachinePlugin(std::string &strCsTemplateFile)
                     hdf_set_valuef(stConfig.cgi->hdf, "%s.name=%s", hdf_pex, (const char*)(cfg["item_name"]));
                     hdf_set_valuef(stConfig.cgi->hdf, "%s.value=%s", hdf_pex, (const char*)(cfg["item_value"]));
                     hdf_set_valuef(stConfig.cgi->hdf, "%s.desc=%s", hdf_pex, (const char*)(cfg["item_desc"]));
+                    hdf_set_valuef(stConfig.cgi->hdf, "%s.is_cust=0", hdf_pex);
                 }
             }
         }
@@ -4405,6 +4453,12 @@ int DealSaveOprMachinePlugin()
             pchk = hdf_get_valuef(stConfig.cgi->hdf, "Query.chk_%s", pcfgname);
             pval = hdf_get_valuef(stConfig.cgi->hdf, "Query.%s", pcfgname);
             if(pval && strlen(pval) > 0 && IsStrEqual(pchk, "on")) {
+	            if(strchr(pval, ' ') || strchr(pval, ';')) {
+                    REQERR_LOG("invalid config value:%s, name:%s", pval, pcfgname);
+                    stConfig.pErrMsg = "配置值含有非法字符";
+                    return SLOG_ERROR_LINE;
+                }
+     
                 if(ss.str().size() > 0)
                     ss << ";" << pcfgname << " " << pval;
                 else
@@ -4416,6 +4470,30 @@ int DealSaveOprMachinePlugin()
             }
         }
     }
+
+    // 读取自定义或预定义配置
+    const char *pcust = hdf_get_value(stConfig.cgi->hdf, "Query.mod_cust_cfgs", NULL);
+    if(pcust && pcust[0] != '\0') {
+        std::istringstream ss_cust(pcust);
+        std::string strName;
+        while(ss_cust >> strName) {
+            // 删除 chk_
+            strName.erase(0, 4);
+            pval = hdf_get_valuef(stConfig.cgi->hdf, "Query.%s", strName.c_str());
+            if(strchr(pval, ' ') || strchr(pval, ';')) {
+                REQERR_LOG("invalid config value:%s, name:%s", pval, strName.c_str());
+                stConfig.pErrMsg = "配置值含有非法字符";
+                return SLOG_ERROR_LINE;
+            }
+
+            if(ss.str().size() > 0)
+                ss << ";" << strName << " " << pval;
+            else
+                ss << strName << " " << pval;
+            iModCfgItemCount++;
+        }
+    }
+ 
     if(iModCfgItemCount > 0) {
         MyQuery myqu(stConfig.qu, stConfig.db);
         Query & qu = myqu.GetQuery();
