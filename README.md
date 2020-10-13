@@ -114,6 +114,7 @@ docker 编译镜像安装了 vim/gcc/git 等工具，如需更新源码，进入
 3. 进入 tools_sh 目录，执行 make_all.sh 生成部署包   
 4. 在安装目录解压部署包，执行 local_install.sh 完成安装   
   
+(如遇编译环境问题，可以尝试使用docker 镜像编译)   
 监控系统卸载脚本: uninstall_xrkmonitor.sh，移除彻底不留丝毫痕迹    
 
 安装环境变量同在线安装一样, 具体可以查看说明文档: [源码编译-集中部署](http://xrkmonitor.com/monitor/showdoc/showdoc/web/#/4?page_id=38)    
