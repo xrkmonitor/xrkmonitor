@@ -20,12 +20,12 @@ function ddmmpcSubmit(fm)
         }
     });
 
-	var ccheckp = /[|;]/;
+	var ccheckp = /[;；]/;
     var bfailed = false;
     $("#ddmmpc_tbody").find("input[type='text']").each(function() {
         var val = $(this).val();
 	    if(/\s/.test(val) || ccheckp.test(val)) {
-            alertMsg.warn('配置值非法：配置值不能包含 |; 和空白字符, 空白字符包括制表符/空格/回车等');
+            alertMsg.warn('配置值非法：配置值不能包含 ; 和空白字符, 空白字符包括制表符/空格/回车等');
             bfailed = true;
             return false;
         }
