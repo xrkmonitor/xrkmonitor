@@ -10,13 +10,42 @@ function ddmmpcSelCheckBox()
 	});
 }
 
+function ddmmpcSubmit(fm)
+{
+    var selCfgs = '';
+	$("#ddmmpc_tbody").find("input[type='checkbox']").each(function(){
+        if($(this).is(':checked') && $(this).attr('is_cust') == 1) {
+            selCfgs += $(this).prop('name');
+            selCfgs += ' ';
+        }
+    });
+
+	var ccheckp = /[|;]/;
+    var bfailed = false;
+    $("#ddmmpc_tbody").find("input[type='text']").each(function() {
+        var val = $(this).val();
+	    if(/\s/.test(val) || ccheckp.test(val)) {
+            alertMsg.warn('配置值非法：配置值不能包含 |; 和空白字符, 空白字符包括制表符/空格/回车等');
+            bfailed = true;
+            return false;
+        }
+    });
+
+    if(bfailed)
+        return false;
+
+    $('#ddmmpc_mod_cust_cfgs').val(selCfgs);
+    return validateCallback(fm, dialogAjaxDone);
+}
+
 </script>
 
 <div class="pageContent"> 
-    <form method="post" action="<?cs var:config.cgipath?>mt_slog?action=ddap_save_mod_plugin_cfg&navTabId=dp_add_plugin" class="pageForm" onsubmit="return validateCallback(this, dialogAjaxDone);">
+    <form method="post" action="<?cs var:config.cgipath?>mt_slog?action=ddap_save_mod_plugin_cfg&navTabId=dp_add_plugin" class="pageForm" onsubmit="return ddmmpcSubmit(this);">
 	<div class="pageFormContent" layoutH='0'>
         <input type='hidden' name='plugin' value='<?cs var:config.plugin_id ?>' />
         <input type='hidden' name='machines' value='<?cs var:config.machines_id ?>' />
+        <input type='hidden' name='mod_cust_cfgs' id='ddmmpc_mod_cust_cfgs' />
         <div>
             <font class='note-text'>提示：</font>
             <br />
@@ -44,7 +73,7 @@ function ddmmpcSelCheckBox()
                 <tr>
                     <td><?cs var:cfg.desc ?></td>
                     <td><input size='36' name='<?cs var:cfg.name ?>' value='<?cs var:cfg.value ?>' type='text' /></td>
-                    <td><input type='checkbox' name='chk_<?cs var:cfg.name ?>' /></td>
+                    <td><input type='checkbox' name='chk_<?cs var:cfg.name ?>' is_cust='<?cs var:cfg.is_cust ?>' /></td>
                 </tr>
             <?cs /each ?>
         </tbody>
