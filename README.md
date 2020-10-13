@@ -4,8 +4,8 @@
 提供丰富的图表和多种数据类型，满足对数据可视化的需要。   
 在线演示版地址：[http://open.xrkmonitor.com](http://open.xrkmonitor.com)
 
-#### 相比其它开源监控系统优势  
-1.  支持插件功能, 监控插件无需开发，自由选择监控插件，安装即可使用   
+**相比其它开源监控系统优势**  
+1.  支持插件功能, 监控插件无需开发，自由选择监控插件，安装即可使用
 1.	集成告警功能, 支持多种告警方式   
 1.	集成分布式日志系统功能    
 1.  支持多种部署方式    
@@ -69,8 +69,19 @@ SERVER_MASTER 配置改为宿主机的IP地址， 如果需要在宿主机上部
 
 docker 使用过程中如有问题可以加入我们的QQ群： 859052272 获取帮助。   
 
-### docker 编译镜像
-制作中，敬请期待。   
+### 使用 docker 镜像编译源码
+使用 docker 镜像编译源码方法如下：
+1. 拉取镜像： docker pull registry.cn-hangzhou.aliyuncs.com/xrkmonitor/compile:last   
+1. 执行镜像容器：docker run -idt [镜像id] (docker images 获取)   
+1. 进入容器：docker attach [容器id] (docker ps -a 获取)   
+1. 进入容器目录：/home/xrkmonitor/open, 执行 make 即可编译项目全部源码   
+1. 编译成功后生成集中部署包，进入 tools_sh 目录，执行：./make_all.sh 即可生成完整的集中部署包   
+
+关于集中部署请参考文档：[源码编译-集中部署](http://xrkmonitor.com/monitor/showdoc/showdoc/web/#/4?page_id=38)  
+
+docker 编译镜像安装了 vim/gcc/git 等工具，如需更新源码，进入目录:/home/xrkmonitor/open 执行 git pull 即可    
+如您想使用镜像进行二次开发，建议您挂载宿主机目录，将源码下载到挂载的目录进行修改， 不要使用容器中的   
+/home/xrkmonitor/open 目录，以免工作成果丢失。   
 
 ### 在线部署
 
