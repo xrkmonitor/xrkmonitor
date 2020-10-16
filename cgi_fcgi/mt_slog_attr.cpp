@@ -76,6 +76,7 @@ typedef struct
 	int iAttrType;
 	const char *pattrType;
 	int iExcpAttrMasked;
+    int iStaticTime;
 }AttrSearchInfo;
 
 static int GetAttrTotalRecords(AttrSearchInfo *pinfo=NULL)
@@ -95,6 +96,12 @@ static int GetAttrTotalRecords(AttrSearchInfo *pinfo=NULL)
 	if(pinfo != NULL && pinfo->iAttrType != 0 && pinfo->pattrType != NULL)
 	{
 		sprintf(sTmpBuf, " and mt_attr.attr_type=%d", pinfo->iAttrType);
+		strcat(sSqlBuf, sTmpBuf);
+	}
+
+	if(pinfo != NULL && pinfo->iStaticTime != 0)
+	{
+		sprintf(sTmpBuf, " and mt_attr.static_time=%d", pinfo->iStaticTime);
 		strcat(sSqlBuf, sTmpBuf);
 	}
 
@@ -164,6 +171,13 @@ static int GetAttrList(Json &js, AttrSearchInfo *pinfo=NULL)
 		hdf_set_value(stConfig.cgi->hdf, "config.dam_attr_type_name", pinfo->pattrType);
 	}
 
+	if(pinfo != NULL && pinfo->iStaticTime > 0)
+	{
+		sprintf(sTmpBuf, " and mt_attr.static_time=%d", pinfo->iStaticTime);
+		strcat(sSqlBuf, sTmpBuf);
+		hdf_set_int_value(stConfig.cgi->hdf, "config.dam_attr_static_time", pinfo->iStaticTime);
+	}
+
 	if(pinfo != NULL && pinfo->pkey != NULL && pinfo->pkey[0] != '\0' && isnumber(pinfo->pkey))
 	{
 		memset(sTmpBuf, 0, sizeof(sTmpBuf));
@@ -212,6 +226,7 @@ static int GetAttrList(Json &js, AttrSearchInfo *pinfo=NULL)
 		attr["user_add"] = qu.getstr("user_add");
 		attr["add_time"] = qu.getstr("create_time");
 		attr["excep_attr_mask"] = qu.getval("excep_attr_mask");
+        attr["static_time"] = qu.getval("static_time");
 		js["list"].Add(attr);
 	}
 	js["count"] = i; 
@@ -483,7 +498,15 @@ static int SaveAttr(bool bIsMod=false)
 	int32_t iAttrType = hdf_get_int_value(stConfig.cgi->hdf, "Query.dam_attr_type", 0);
 	int32_t iDataType = hdf_get_int_value(stConfig.cgi->hdf, "Query.dam_new_attr_data_type", 0);
 	int32_t iAttrId = hdf_get_int_value(stConfig.cgi->hdf, "Query.dam_attr_id", 0);
+    int32_t iStaticTime = hdf_get_int_value(stConfig.cgi->hdf, "Query.dam_new_attr_static_time", 1);
 
+    if(iStaticTime != 1 && iStaticTime!=5 && iStaticTime!=10 && iStaticTime!=15 && iStaticTime!=30
+        && iStaticTime!=60 && iStaticTime!=1439)
+    {
+        REQERR_LOG("invalid static time:%d", iStaticTime);
+        return SLOG_ERROR_LINE;
+    }
+	
 	int iExcepAttrMask = 0;
 	const char *pmask = hdf_get_value(stConfig.cgi->hdf, "Query.dam_excep_attr_mask", NULL);
 	if(iDataType==EX_REPORT && pmask != NULL && !strcasecmp(pmask, "on"))
@@ -527,6 +550,7 @@ static int SaveAttr(bool bIsMod=false)
 		AddParameter(&ppara, "create_time", uitodate(stConfig.dwCurTime), NULL);
 		AddParameter(&ppara, "user_add", stConfig.stUser.puser, NULL);
 		AddParameter(&ppara, "user_add_id", stConfig.stUser.puser_info->iUserId, "DB_CAL");
+		AddParameter(&ppara, "static_time", iStaticTime, "DB_CAL");
 		JoinParameter_Insert(&strSql, qu.GetMysql(), ppara);
 	}
 	else {
@@ -663,10 +687,11 @@ static int DealModAttr()
 	int iAttrTypeId = hdf_get_int_value(stConfig.cgi->hdf, "Query.attr_type_id", 0);
 	int iExcepAttrMask = hdf_get_int_value(stConfig.cgi->hdf, "Query.excep_attr_mask", 0);
 	int iAttrInner = hdf_get_int_value(stConfig.cgi->hdf, "Query.attr_inner", 0);
-	if(id==0 || iAttrTypeId==0 || iDataType==0 || pname==NULL || ptype_name==NULL)
+    int iStaticTime = hdf_get_int_value(stConfig.cgi->hdf, "Query.static_time", 0);
+	if(id==0 || iAttrTypeId==0 || iDataType==0 || iStaticTime==0 ||  pname==NULL || ptype_name==NULL)
 	{
-		WARN_LOG("invalid parameter(id:%d, atype:%d dtype:%d name:%s, type:%s) from:%s",
-			id, iAttrTypeId, iDataType, pname, ptype_name, stConfig.remote);
+		WARN_LOG("invalid parameter(id:%d, atype:%d dtype:%d name:%s, type:%s, static:%d) from:%s",
+			id, iAttrTypeId, iDataType, pname, ptype_name, iStaticTime, stConfig.remote);
 		hdf_set_value(stConfig.cgi->hdf,"err.msg", CGI_REQERR);
 		return SLOG_ERROR_LINE;
 	}
@@ -685,6 +710,7 @@ static int DealModAttr()
 	hdf_set_int_value(stConfig.cgi->hdf, "config.str_report_d", STR_REPORT_D);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.str_report_d_ip", STR_REPORT_D_IP);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.ex_report", EX_REPORT);
+	hdf_set_int_value(stConfig.cgi->hdf, "config.static_time", iStaticTime);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.excep_attr_mask", iExcepAttrMask);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.inner", iAttrInner);
 	DEBUG_LOG("try update attr for attr(%d:%s) from:%s", id, pname, stConfig.remote);
@@ -883,6 +909,7 @@ static int DealAttrSearch()
 	stInfo.pkey = hdf_get_value(stConfig.cgi->hdf, "Query.da_keyword", NULL);
 	stInfo.iAttrDataType = hdf_get_int_value(stConfig.cgi->hdf, "Query.da_attr_data_type", 0);
 	stInfo.iAttrType = hdf_get_int_value(stConfig.cgi->hdf, "Query.dam_attr_type", 0);
+    stInfo.iStaticTime = hdf_get_int_value(stConfig.cgi->hdf, "Query.dam_attr_static_time", 0);
 	stInfo.pattrType = hdf_get_value(stConfig.cgi->hdf, "Query.dam_attr_type_name", NULL);
 	const char *pmask = hdf_get_value(stConfig.cgi->hdf, "Query.da_excp_mask", NULL);
 	stInfo.iExcpAttrMasked = 0;

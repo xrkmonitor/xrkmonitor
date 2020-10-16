@@ -164,6 +164,20 @@ uint32_t datetoui(const char *pdate)
 	return mktime(&t);
 }
 
+void uitotime_info(uint32_t dwTimeSec, TIME_INFO *pinfo)
+{
+    memset(pinfo, 0, sizeof(*pinfo));
+	struct tm stTm;
+	time_t tmnew = dwTimeSec;
+	localtime_r(&tmnew, &stTm);
+    pinfo->y = stTm.tm_year+1900;
+    pinfo->m = stTm.tm_mday;
+    pinfo->d = stTm.tm_mon+1;
+    pinfo->hour = stTm.tm_hour;
+    pinfo->min = stTm.tm_min;
+    pinfo->sec = stTm.tm_sec;
+}
+
 char *uitodate(uint32_t dwTimeSec)
 {
 	static char sBuf[64];

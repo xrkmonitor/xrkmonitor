@@ -1668,7 +1668,7 @@ int32_t ReadTableAttr(Database &db, uint32_t uid=0)
 	SharedHashTableNoList *pAttrHash = slog.GetAttrHash();
 	AttrTypeInfo *pAttrType = NULL;
 	const char *ptmp = NULL;
-	int iAttrType = 0;
+	int iAttrType = 0, iStaticTime = 0;
 	MtSystemConfig *psysConfig = stConfig.psysConfig;
 	SharedHashTable *pstHash = slog.GetWarnConfigInfoHash();
 
@@ -1680,6 +1680,7 @@ int32_t ReadTableAttr(Database &db, uint32_t uid=0)
 		dwLastModTime = datetoui(qu.getstr("update_time"));
 		iAttrType = qu.getval("attr_type");
 		pAttrType = slog.GetAttrTypeInfo(iAttrType, NULL);
+		iStaticTime = qu.getval("static_time");
 		if(iStatus == RECORD_STATUS_USE && pAttrType == NULL)
 		{
 			WARN_LOG("attr:%d is delete, type:%d", iAttrId, iAttrType);
@@ -1754,6 +1755,7 @@ int32_t ReadTableAttr(Database &db, uint32_t uid=0)
 				pInfo->id = iAttrId;
 				pInfo->iAttrType = iAttrType;
 				pInfo->iDataType = qu.getval("data_type");
+				pInfo->iStaticTime = iStaticTime;
 
 				if(ptmp != NULL && ptmp[0] != '\0')
 					pInfo->iNameVmemIdx = MtReport_SaveToVmem(ptmp, strlen(ptmp)+1);

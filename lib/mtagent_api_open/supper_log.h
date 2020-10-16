@@ -200,12 +200,13 @@ typedef struct _TWarnAttrReportInfo
 	uint32_t dwPreLastVal; // 最近2分钟统计完成的上报
 	uint32_t dwLastVal; // 最近1分钟统计完成的上报
 	uint32_t dwCurVal; // 当前时间上报 [min]
-	int32_t iMinIdx; // 最后一次上报的分钟索引, 一天分钟的 index[0-1439]
+	int32_t iMinIdx; // 最后一次上报的统计周期索引, 在 0-1439之间 
 	uint32_t dwLastReportIp; // 最后一次上报数据的远程IP
 	uint32_t dwLastReportTime;
 	uint8_t bAttrDataType; // 数据类型
+	uint16_t wStaticTime; // attr 的统计周期 在1-1439之间
 
-	uint32_t dwReserved1;
+	uint16_t wReserved1;
 	uint32_t dwReserved2;
 	uint32_t dwReserved3;
 
@@ -221,6 +222,7 @@ typedef struct _TWarnAttrReportInfo
 		SHOW_FIELD_VALUE_UINT_IP(dwLastReportIp);
 		SHOW_FIELD_VALUE_UINT_TIME(dwLastReportTime);
 		SHOW_FIELD_VALUE_INT(bAttrDataType);
+		SHOW_FIELD_VALUE_UINT(wStaticTime);
 	}
 }TWarnAttrReportInfo;
 
@@ -1076,7 +1078,7 @@ typedef struct
 	int32_t iNameVmemIdx;
 	uint32_t dwLastModTime; 
 
-	// 用于 MtSystemConfig 中连接相同用户下的 attr
+	// 用于 MtSystemConfig 中连接所有 attr
 	int32_t iPreIndex;
 	int32_t iNextIndex;
 
@@ -1084,7 +1086,8 @@ typedef struct
 	int32_t iAttrTypePreIndex;
 	int32_t iAttrTypeNextIndex;
 
-	char sReserved[8];
+	int32_t iStaticTime;
+	char sReserved[4];
 	void Show() {
 		SHOW_FIELD_VALUE_INT(id);
 		SHOW_FIELD_VALUE_INT(iAttrType);
@@ -1093,6 +1096,7 @@ typedef struct
 		SHOW_FIELD_VALUE_UINT_TIME(dwLastModTime);
 		if(iNameVmemIdx > 0)
 			printf("\t name:%s\n", MtReport_GetFromVmem_Local(iNameVmemIdx));
+		SHOW_FIELD_VALUE_INT(iStaticTime);
 		SHOW_FIELD_VALUE_INT(iPreIndex);
 		SHOW_FIELD_VALUE_INT(iNextIndex);
 		SHOW_FIELD_VALUE_INT(iAttrTypePreIndex);

@@ -92,10 +92,10 @@ function restart_process()
 		if [ -f ${pdir}/_manual_stop_ ] ; then return ; fi
 	fi
 
-	Count=`pgrep -f "${pname}"|wc -l`
+	Count=`pgrep -f "\./${pname}"|wc -l`
 	if [ $Count -eq $pnum ] ; then return ; fi
 	usleep 50000 > /dev/null 2>&1 || sleep 1
-	Count=`pgrep -f "${pname}"|wc -l`
+	Count=`pgrep -f "\./${pname}"|wc -l`
 	if [ $Count -eq $pnum ] ; then return ; fi
 
 	cd ${pdir}; ./stop.sh ; rm _manual_stop_ > /dev/null 2>&1; ./start.sh > /dev/null; cd - > /dev/null 
@@ -123,10 +123,10 @@ function restart_process_ex()
 		if [ -f ${pdir}/_manual_stop_ ] ; then return ; fi
 	fi
 
-	Count=`pgrep -f "${pname}"|wc -l`
+	Count=`pgrep -f "\./${pname}"|wc -l`
 	if [ $Count -ge $pnum_min -a $Count -le $pnum_max ] ; then return ; fi
 	usleep 50000 > /dev/null 2>&1 || sleep 1
-	Count=`pgrep -f "${pname}"|wc -l`
+	Count=`pgrep -f "\./${pname}"|wc -l`
 	if [ $Count -ge $pnum_min -a $Count -le $pnum_max ] ; then return ; fi
 
 	cd ${pdir}; ./stop.sh ; rm _manual_stop_; ./start.sh > /dev/null; cd - > /dev/null 
