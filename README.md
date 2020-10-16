@@ -88,7 +88,8 @@ docker 编译镜像安装了 vim/gcc/git 等工具，如需更新源码，进入
 
 安装脚本: install.sh   
 从以下链接下载后, 按提示执行即可, 需要系统支持 bash   
-(wget http://xrkmonitor.com/monitor/download/install.sh; chmod +x install.sh; ./install.sh )     
+(wget http://xrkmonitor.com/monitor/download/install.sh; chmod +x install.sh; ./install.sh )   
+示例：![在线安装示例](https://images.gitee.com/uploads/images/2020/1016/154842_d1f6dcda_5075697.gif "show_online_install.gif")  
 
 在线部署说明:   
 安装脚本会先检查当前系统是否支持在线安装, 如不支持您可以下载源码后在系统上编译安装   
