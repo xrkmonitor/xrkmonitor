@@ -84,12 +84,12 @@ function ddapMachOprPlugin(cgip, machs, plugid, optype)
 	var url = cgip + "mt_slog?action=ddap_multi_opr_plugin&machines=" + machs;
     url += "&plugin=" + plugid;
     url += "&opr_type=" + optype;
-	var op = {"mask":true,"maxable":false,"height":440,"width":600, "close":dmapAddPlugin_reload}; 
+	var op = {"mask":true,"maxable":false,"height":460,"width":600, "close":dmapAddPlugin_reload}; 
     var tl = '';
     switch(optype) {
         case 1:
             op.width = 700;
-            op.height = 460;
+            op.height = 520;
             tl = '批量修改插件配置';
             break;
         case 2:
@@ -111,7 +111,7 @@ function dmapMachOprPlugin(cgip, mach, plugs, optype)
 	var url = cgip + "mt_slog?action=dmap_multi_opr_plugin&machine=" + mach;
     url += "&plugins=" + plugs;
     url += "&opr_type=" + optype;
-	var op = {"mask":true,"maxable":false,"height":440,"width":600, "close":dmapAddPlugin_reload}; 
+	var op = {"mask":true,"maxable":false,"height":460,"width":600, "close":dmapAddPlugin_reload}; 
     var tl = '';
     switch(optype) {
         case 2:
@@ -132,7 +132,7 @@ function dmapModMachPlugin(cgip, machine_id, plugid)
 	var url = cgip + "mt_slog?action=ddap_multi_opr_plugin&machines=" + machine_id;
     url += "&plugin=" + plugid;
     url += "&opr_type=1";
-	var op = {"mask":true,"maxable":false,"height":460,"width":700, "close":dmapAddPlugin_reload};
+	var op = {"mask":true,"maxable":false,"height":520,"width":700, "close":dmapAddPlugin_reload};
 	$.pdialog.open(url, "dlg_ddap_mach_opr_plugin", '修改插件配置', op); 
 }
 
