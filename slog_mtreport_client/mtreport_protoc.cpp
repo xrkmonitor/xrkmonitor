@@ -1051,7 +1051,23 @@ static int DownloadPluginPacket(CmdS2cPreInstallContentReq *pct, Json &jsret)
 	else
 		ss_local_name << "xrk_" << (const char*)(jsret["plugin_name"]) << ".conf";
     ss_down << "cd " << sInstallPath.str() << "; wget -a " << sInstallLogFile.str() << " -T 30 -O " << ss_local_name.str();
-    ss_down << " " << pct->sLocalCfgUrl << "; echo 0"; 
+
+	if(stConfig.szLocalUrl[0] != '\0') {
+		std::string strurl(pct->sLocalCfgUrl);
+		size_t s = strurl.find("//");
+		size_t e = strurl.find("/", s+2);
+		if(s != std::string::npos && e != std::string::npos && e > s+2) {
+			strurl.replace(s+2, e-s-2, stConfig.szLocalUrl);
+    		ss_down << " " << strurl << "; echo 0"; 
+		}
+		else {
+			PLUGIN_INST_LOG("change local config url failed(%s), use:%s", stConfig.szLocalUrl, pct->sLocalCfgUrl);
+    		ss_down << " " << pct->sLocalCfgUrl << "; echo 0"; 
+		}
+	}
+	else
+    	ss_down << " " << pct->sLocalCfgUrl << "; echo 0"; 
+
     get_cmd_result(ss_down.str().c_str(), strResult);
     PLUGIN_INST_LOG("download config, execute cmd:%s, result:%s", ss_down.str().c_str(), strResult.c_str());
 

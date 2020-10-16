@@ -495,6 +495,7 @@ static int Init()
 		"DISABLE_PLUGIN", CFG_INT, &stConfig.iDisablePlus, 0,
 		"MAX_RUN_MINS", CFG_INT, &stConfig.iMaxRunMins, 7*24*3600,
 		"XRKMONITOR_CLOUD_URL", CFG_STRING, stConfig.szCloudUrl, "xrkmonitor.com", MYSIZEOF(stConfig.szCloudUrl),
+		"XRKMONITOR_LOCAL_URL", CFG_STRING, stConfig.szLocalUrl, "", MYSIZEOF(stConfig.szLocalUrl),
 		"LOCAL_OS", CFG_STRING, stConfig.szOs, "", MYSIZEOF(stConfig.szOs),
 		"LOCAL_OS_ARC", CFG_STRING, stConfig.szOsArc, "", MYSIZEOF(stConfig.szOsArc),
 		"LOCAL_LIBC_VER", CFG_STRING, stConfig.szLibcVer, "", MYSIZEOF(stConfig.szLibcVer),
