@@ -53,7 +53,6 @@ int Init(const char *pFile = NULL)
 	int32_t iRet = 0;
 	if((iRet=LoadConfig(pConfFile,
 		"LOCAL_LISTEN_IP", CFG_STRING, stConfig.szListenIp, "0.0.0.0", sizeof(stConfig.szListenIp),
-		"LOCAL_IF_NAME", CFG_STRING, stConfig.szLocalIp, "", sizeof(stConfig.szLocalIp),
 		"LOCAL_RECV_PORT", CFG_INT, &stConfig.iRecvPortMonitor, 28080, 
 		"CHECK_EACH_APP_LOG_SIZE_TIME_SEC", CFG_INT, &stConfig.iCheckEachAppLogSpaceTime, 20,
 		"CHECK_LOG_SPACE_TIME_SEC", CFG_INT, &stConfig.iCheckLogSpaceTime, 10,
@@ -66,15 +65,7 @@ int Init(const char *pFile = NULL)
 		return SLOG_ERROR_LINE;
 	} 
 
-	if(stConfig.szLocalIp[0] == '\0' || INADDR_NONE == inet_addr(stConfig.szLocalIp))
-		GetCustLocalIP(stConfig.szLocalIp);
-	if(stConfig.szLocalIp[0] == '\0' || INADDR_NONE == inet_addr(stConfig.szLocalIp))
-	{
-		ERR_LOG("get local ip failed, use LOCAL_IP to set !");
-		return SLOG_ERROR_LINE;
-	}
-
-	if((iRet=slog.InitConfigByFile(pConfFile)) < 0 || (iRet=slog.Init(stConfig.szLocalIp)) < 0)
+	if((iRet=slog.InitConfigByFile(pConfFile)) < 0 || (iRet=slog.Init()) < 0)
 	{ 
 		ERR_LOG("slog init failed file:%s ret:%d\n", pConfFile, iRet);
 		return SLOG_ERROR_LINE;
@@ -100,7 +91,7 @@ int Init(const char *pFile = NULL)
 		stConfig.pLocalMachineInfo = slog.GetMachineInfo(stConfig.iLocalMachineId, NULL);
 	else 
 	{
-		stConfig.pLocalMachineInfo = slog.GetMachineInfoByIp(stConfig.szLocalIp);
+		stConfig.pLocalMachineInfo = slog.GetMachineInfoByIp((char*)(slog.GetLocalIP()));
 		if(stConfig.pLocalMachineInfo != NULL)
 			stConfig.iLocalMachineId = stConfig.pLocalMachineInfo->id;
 	}
@@ -118,7 +109,7 @@ int Init(const char *pFile = NULL)
 		return SLOG_ERROR_LINE;
 	}
 	INFO_LOG("server listen ip:%s, base port:%d, local machine id:%d-ip:%s", 
-		stConfig.szListenIp, stConfig.iRecvPortMonitor, stConfig.iLocalMachineId, stConfig.szLocalIp);
+		stConfig.szListenIp, stConfig.iRecvPortMonitor, stConfig.iLocalMachineId, slog.GetLocalIP());
 	return 0;
 }
 

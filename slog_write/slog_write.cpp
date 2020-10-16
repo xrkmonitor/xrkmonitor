@@ -58,7 +58,6 @@ typedef struct {
 
 typedef struct
 {
-	char szLocalIp[20];
 	char szLogPath[MAX_PATH];
 	time_t tmStart;
 	int iLogSizeOutPerTime;
@@ -91,7 +90,6 @@ int Init(const char *pFile = NULL)
 
 	int32_t iRet = 0;
 	if((iRet=LoadConfig(pConfFile,
-		"LOCAL_IP", CFG_STRING, stConfig.szLocalIp, "", sizeof(stConfig.szLocalIp),
 		"SLOG_SERVER_FILE_PATH", CFG_STRING, stConfig.szLogPath, DEF_SLOG_LOG_FILE_PATH, sizeof(stConfig.szLogPath),
 		"WRITE_SHOW_PER_SECS", CFG_INT, &stConfig.iPerShowTimeSec, 300,
 		"SCAN_LOGFILE_AGAIN", CFG_INT, &stConfig.iScanAgain, 0,
@@ -113,15 +111,7 @@ int Init(const char *pFile = NULL)
 		stConfig.iCheckWriteProcessTime = 300;
 	}
 
-	if(stConfig.szLocalIp[0] == '\0' || INADDR_NONE == inet_addr(stConfig.szLocalIp))
-		GetCustLocalIP(stConfig.szLocalIp);
-	if(stConfig.szLocalIp[0] == '\0' || INADDR_NONE == inet_addr(stConfig.szLocalIp))
-	{
-		ERR_LOG("get local ip failed, use LOCAL_IP to set !");
-		return SLOG_ERROR_LINE;
-	}
-
-	if((iRet=slog.InitConfigByFile(pConfFile)) < 0 || (iRet=slog.Init(stConfig.szLocalIp)) < 0)
+	if((iRet=slog.InitConfigByFile(pConfFile)) < 0 || (iRet=slog.Init()) < 0)
 	{ 
 		ERR_LOG("slog init failed file:%s ret:%d\n", pConfFile, iRet);
 		return SLOG_ERROR_LINE;
@@ -154,7 +144,7 @@ int Init(const char *pFile = NULL)
 		stConfig.pLocalMachineInfo = slog.GetMachineInfo(stConfig.iLocalMachineId, NULL);
 	else	
 	{
-		stConfig.pLocalMachineInfo = slog.GetMachineInfoByIp(stConfig.szLocalIp);
+		stConfig.pLocalMachineInfo = slog.GetMachineInfoByIp((char*)(slog.GetLocalIP()));
 		if(stConfig.pLocalMachineInfo != NULL)
 			stConfig.iLocalMachineId = stConfig.pLocalMachineInfo->id;
 	}
@@ -165,7 +155,7 @@ int Init(const char *pFile = NULL)
 		return SLOG_ERROR_LINE;
 	}
 	INFO_LOG("local:%s, machine id:%d, log file path:%s", 
-		stConfig.szLocalIp, stConfig.iLocalMachineId, stConfig.szLogPath);
+		slog.GetLocalIP(), stConfig.iLocalMachineId, stConfig.szLogPath);
 	return 0;
 }
 

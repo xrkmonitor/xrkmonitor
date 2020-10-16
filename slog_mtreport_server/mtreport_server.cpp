@@ -116,7 +116,6 @@ int Init(const char *pFile = NULL)
 	int32_t iRet = 0;
 	if((iRet=LoadConfig(pConfFile,
 		"SERVER_PORT", CFG_INT, &stConfig.iRecvPort, 27000, 
-		"LOCAL_IF_NAME", CFG_STRING, stConfig.szLocalIp, "eth0", MYSIZEOF(stConfig.szLocalIp),
 		"LISTEN_IP", CFG_STRING, stConfig.szListenIp, "0.0.0.0", MYSIZEOF(stConfig.szListenIp),
 		"TIMER_HASH_SHM_KEY", CFG_INT, &stConfig.iTimerHashKey, 2015031347,
 		"WRITE_REANINFO_TO_DB_PER_TIME", CFG_INT, &stConfig.iRealinfoToDbPerTime, 30,
@@ -126,14 +125,11 @@ int Init(const char *pFile = NULL)
 		return SLOG_ERROR_LINE;
 	} 
 
-	if((iRet=slog.InitConfigByFile(pConfFile)) < 0 || (iRet=slog.Init(stConfig.szLocalIp)) < 0)
+	if((iRet=slog.InitConfigByFile(pConfFile)) < 0 || (iRet=slog.Init()) < 0)
 	{ 
 		FATAL_LOG("slog init failed file:%s ret:%d", pConfFile, iRet);
 		return SLOG_ERROR_LINE;
 	}
-
-	if(stConfig.szListenIp[0] == '\0')
-		strcpy(stConfig.szListenIp, stConfig.szLocalIp);
 
 	stConfig.pShmConfig = slog.GetSlogConfig();
 	if(stConfig.pShmConfig == NULL) {

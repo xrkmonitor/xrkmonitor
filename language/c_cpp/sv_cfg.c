@@ -288,7 +288,7 @@ static void SetVal(va_list ap, char *sP, char *sV)
 
 static int GetParamVal(char *sLine, char *sParam, char *sVal)
 {
-	if (sParam[0] == '#')
+	if (sLine[0] == '#')
 		return 1;
 	
 	get_val(sParam, sLine);

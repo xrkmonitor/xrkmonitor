@@ -314,7 +314,6 @@ int Init(const char *pFile = NULL)
 	if((iRet=LoadConfig(pConfFile,
 		// 插件一键部署校验码，如需设置，请注意使用字母数字组合，某些特殊字符会导致参数解析错误
 		"PLUGIN_INSTALL_CHECKSTR", CFG_STRING, stConfig.szPluginCheckStr, "", MYSIZEOF(stConfig.szPluginCheckStr),
-
 		"MYSQL_SERVER", CFG_STRING, stConfig.szDbHost, "127.0.0.1", MYSIZEOF(stConfig.szDbHost),
 		"MYSQL_USER", CFG_STRING, stConfig.szUserName, "mtreport", MYSIZEOF(stConfig.szUserName),
 		"MYSQL_PASS", CFG_STRING, stConfig.szPass, "mtreport875", MYSIZEOF(stConfig.szPass),
@@ -360,7 +359,7 @@ int Init(const char *pFile = NULL)
 	{
 		if(slog.GetSlogConfig(iConfigId) != NULL)
 		{
-			if(slog.Init(NULL) < 0)
+			if(slog.Init() < 0)
 				return SLOG_ERROR_LINE;
 		}
 		else if(slog.InitForUseLocalLog(pConfFile) < 0)
@@ -3188,7 +3187,7 @@ int main(int argc, char *argv[])
 	stConfig.bUpdateAll = false;
 	system("touch /tmp/_slog_config_read_ok");
 
-	if(false == bInitOk || (iRet=slog.Init(stConfig.szLocalIp)) < 0)
+	if(false == bInitOk || (iRet=slog.Init()) < 0)
 	{ 
 		ERR_LOG("slog init failed ret:%d\n", iRet);
 		return SLOG_ERROR_LINE;

@@ -520,7 +520,7 @@ static int InitFastCgi_first(CGIConfig &myConf)
 	}
 
 	int32_t iRet = 0;
-	if((iRet=slog.InitConfigByFile(myConf.szConfigFile)) < 0 || (iRet=slog.Init(myConf.szLocalIp)) < 0)
+	if((iRet=slog.InitConfigByFile(myConf.szConfigFile)) < 0 || (iRet=slog.Init()) < 0)
 		return SLOG_ERROR_LINE;
 
 	myConf.pAppInfo = slog.GetAppInfo();

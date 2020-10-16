@@ -1061,7 +1061,6 @@ int InitFastCgiStart(CGIConfig &myConf)
 		slog.SetLogToStd(true);
 
 	if(LoadConfig(strGlobalConfgFile.c_str(), 
-		"LOCAL_IP", CFG_STRING, myConf.szLocalIp, "", MYSIZEOF(myConf.szLocalIp),
 		"CGI_PATH", CFG_STRING, myConf.szCgiPath, CGI_PATH, MYSIZEOF(myConf.szCgiPath),
 		"CS_PATH", CFG_STRING, myConf.szCsPath, CS_PATH, MYSIZEOF(myConf.szCsPath),
 		"DOC_PATH", CFG_STRING, myConf.szDocPath, DOC_PATH, MYSIZEOF(myConf.szDocPath), 
@@ -1101,13 +1100,6 @@ int InitFastCgiStart(CGIConfig &myConf)
 	myConf.dwCurTime = myConf.dwStart;
 	myConf.pid = getpid();
 	myConf.dwExitTime = myConf.dwCurTime+myConf.dwExitTime*60*60 + rand()%60;
-	if(myConf.szLocalIp[0] == '\0' || INADDR_NONE == inet_addr(myConf.szLocalIp))
-		GetCustLocalIP(myConf.szLocalIp);
-	if(myConf.szLocalIp[0] == '\0' || INADDR_NONE == inet_addr(myConf.szLocalIp))
-	{
-		ERR_LOG("get local ip failed !");
-		return SLOG_ERROR_LINE;
-	}
 
 	if((iRet=GetShm2((void**)(&myConf.pshmLoginList), iShmKey, MYSIZEOF(FloginList), 0666|IPC_CREAT)) < 0)
 	{
@@ -1117,9 +1109,9 @@ int InitFastCgiStart(CGIConfig &myConf)
 
 	INFO_LOG("attach shm FloginList ok size:%u, key:%d, ret:%d, testlog:%d",
 		MYSIZEOF(FloginList), iShmKey, iRet, myConf.iCfgTestLog);
-	INFO_LOG("fcgi - %s start at:%u pid:%u will exist at:%u(curis:%u) debug js:%d debug:%d local:%s",
+	INFO_LOG("fcgi - %s start at:%u pid:%u will exist at:%u(curis:%u) debug js:%d debug:%d",
 		myConf.pszCgiName, myConf.dwStart, myConf.pid, myConf.dwExitTime, myConf.dwCurTime, 
-		myConf.iDebugHtmlJs, myConf.iEnableCgiDebug, myConf.szLocalIp);
+		myConf.iDebugHtmlJs, myConf.iEnableCgiDebug);
 	char szCurDir[256];
 	if(NULL == getcwd(szCurDir, 256)) 
 		WARN_LOG("getcwd failed, msg:%s", strerror(errno));

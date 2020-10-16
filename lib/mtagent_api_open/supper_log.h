@@ -1807,7 +1807,7 @@ class CSupperLog: public StdLog, public IError
 		void SetLogAppId(int id) { m_iLogAppId = id; }
 		void SetLogModuleId(int id) { m_iLogModuleId = id; }
 		void SetConfigId(uint32_t id) { m_dwConfigId = id; } // 指定使用配置
-		int Init(const char *pszLocalIP);
+		int Init();
 
 		void Daemon(int nochdir, int noclose, int nopreFork=1);
 		void ShowShmLogInfo(int iLogIndex=-1);
@@ -2137,6 +2137,7 @@ class CSupperLog: public StdLog, public IError
 		void EndGetMailShmLock(TCommSendMailInfoShm *pshm) { pshm->bLockGetShm = 0; }
 
 	private:
+		int SetLocalIpInfo(char *szLocalIp);
 		std::string GetProcNameByConfFile();
 		int InitLocalLog();
 		int InitShmLog();
