@@ -24,6 +24,11 @@ function <?cs var:config.plugin_pre ?>OnDownSrc()
         return;
     }
 
+    if(<?cs var:config.plugin_pre ?>_sel_plugin.open_src != 1) {
+        alertMsg.info("该插件未开放源码，请安装agent 后使用一键部署。");
+        return;
+    }
+
     var requrl = "<?cs var:config.xrkmonitor_url ?>/monitor/download/plugin/public/";
 	requrl += <?cs var:config.plugin_pre ?>_sel_plugin.plugin_name+ "/";
 	var filename = <?cs var:config.plugin_pre ?>_sel_plugin.plugin_name+ "_";
@@ -48,6 +53,7 @@ function <?cs var:config.plugin_pre ?>OnDownConf()
 		alertMsg.warn("请先安装插件");
 		return;
 	}
+
     var requrl = "<?cs var:config.cgipath?>mt_slog?action=down_plugin_conf";
     requrl += "&plugin_id=" + <?cs var:config.plugin_pre ?>_sel_plugin.plugin_id; 
 	requrl += "&self_domain=" + window.document.domain;
@@ -102,6 +108,7 @@ function <?cs var:config.plugin_pre ?>_GetInstallPluginShowInfo(idx, plugin, loc
 {
 	var shtml = "<div class='plugin_block' style='margin:10px " + g_PluginMargin + "px;' ";
 		shtml += " id='<?cs var:config.plugin_pre ?>_plugin_" + plugin.plugin_id + "'";
+        shtml += " set_method='" + plugin.set_method + "' ";
 		shtml += " onclick='return <?cs var:config.plugin_pre ?>SetSelplugin(" + idx + ")' >";
 
 	shtml += "<div class='pluginImg'><img src='";
@@ -140,7 +147,7 @@ function <?cs var:config.plugin_pre ?>_GetInstallPluginShowInfo(idx, plugin, loc
 
 	shtml += "<div class='pluginItem'>开发语言: " + plugin.dev_language + "</div>";
 	var mt = plugin.set_method != 0 ? '外置' : '内置';
-	shtml += "<div class='pluginItem-right'>部署方式: " + mt + "</div>";
+	shtml += "<div class='pluginItem-right'>插件类型: " + mt + "</div>";
     if(plugin.dest_os == 'All_os')
     	shtml += "<div class='pluginItem'>运行平台: 跨平台</div>";
     else
@@ -226,19 +233,20 @@ function <?cs var:config.plugin_pre ?>SetpluginList()
 	);
 
 	$("#<?cs var:config.plugin_pre ?>_plugin_list").children().each(function() {
-		$(this).contextMenu('mypluginOpenIns', {
-			callback: function(t, op) {
-				t.trigger('click');
-			},
-			bindings: { 
-				downconf:function(t, m) { 
-					return <?cs var:config.plugin_pre ?>OnDownConf();
+		if($(this).attr('set_method') != 0)
+			$(this).contextMenu('mypluginOpenIns', {
+				callback: function(t, op) {
+					t.trigger('click');
 				},
-				downall:function(t, m) { 
-					return <?cs var:config.plugin_pre ?>OnDownSrc();
-				},
-			}
-		});
+				bindings: { 
+					downconf:function(t, m) { 
+						return <?cs var:config.plugin_pre ?>OnDownConf();
+					},
+					downall:function(t, m) { 
+						return <?cs var:config.plugin_pre ?>OnDownSrc();
+					},
+				}
+			});
 	});
 }
 
@@ -503,6 +511,7 @@ $(document).ready(function(){
 				<select class='xrk_combox' name="dest_os"> 
 					<option value="all">-全部-</option>
 					<option value="Linux">Linux</option>
+					<option value="All_os">跨平台</option>
 					<option value="Windows">Windows</option>
 				</select>
 			</li>
@@ -526,7 +535,7 @@ $(document).ready(function(){
 			</li>
 
 			<li>
-				<label>安装部署情况</label>
+				<label>安装情况</label>
 				<select class='xrk_combox' name="set_status">
 					<option value="999">-全部-</option>
 					<option value="1">已安装</option>
@@ -535,7 +544,7 @@ $(document).ready(function(){
 			</li>
 
 			<li>
-				<label>部署方式:</label>
+				<label>插件类型:</label>
 				<select name="set_method" class='xrk_combox'>
 					<option value="999">-全部-</option>
 					<option value="0">内 置</option>

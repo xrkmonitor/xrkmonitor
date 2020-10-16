@@ -35,6 +35,26 @@
 					<label style="float:right;width:300px;">对一分钟内的上报进行累加统计</label>
 				</font>
 			</p>
+            <p>
+				<label>统计周期：</label>
+                <?cs if:config.action=="save_mod_attr" ?>
+				<select class="xrk_combox" name="dam_new_attr_static_time" id="dam_new_attr_static_time" disabled>
+                <?cs else ?>
+				<select class="combox" name="dam_new_attr_static_time" id="dam_new_attr_static_time">
+                <?cs /if ?>
+					<option value="1" selected>1分钟</option>
+					<option value="5">5分钟</option>
+					<option value="10">10分钟</option>
+					<option value="15">15分钟</option>
+					<option value="30">30分钟</option>
+					<option value="60">1小时</option>
+					<option value="1439">1天</option>
+				</select>
+				<font class="note-text" style='display:block'>
+					<label style="float:right;width:300px;">同周期内的数据，在图表展示时绘制一个点</label>
+				</font>
+			</p>
+	
 			<p>
 				<label>监控点名称：</label>
 				<input type="text" name="dam_new_attr_name" id="dam_new_attr_name" class="required" value="<?cs var:config.attr_name ?>" />
@@ -136,6 +156,14 @@ $(document).ready(function(){
 			$(this).attr("selected", true);
 	});
 	$("#dam_new_attr_data_type").change();
+
+	<?cs if:config.action=="save_mod_attr" ?>
+    $('#dam_new_attr_static_time').children("option").each(function(){
+		if($(this).val() == <?cs var:config.static_time ?>)
+			$(this).attr("selected", true);
+    });
+    $('#dam_new_attr_static_time').change();
+    <?cs /if ?>
 
 	$("#dam_form_submit").submit(function(){
 		$('#dam_show_opr_msg').css('display', 'none');

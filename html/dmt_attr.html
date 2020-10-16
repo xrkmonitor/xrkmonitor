@@ -5,6 +5,7 @@
 		<input type="hidden" name="da_keyword" value="<?cs var:config.da_keyword ?>" />
 		<input type="hidden" name="dam_attr_type" value="<?cs var:config.dam_attr_type ?>">
 		<input type="hidden" name="dam_attr_type_name" value="<?cs var:config.dam_attr_type_name ?>">
+		<input type="hidden" name="dam_attr_static_time" value="<?cs var:config.dam_attr_static_time ?>">
 		<?cs if:config.da_excp_mask == 1 ?>
 		<input type="hidden" name="da_excp_mask" value="on">
 		<?cs /if ?>
@@ -24,6 +25,19 @@
 						<option value="<?cs var:config.str_report_d ?>">字符串型</option>
 						<option value="<?cs var:config.str_report_d_ip ?>">字符串型-IP省级</option>
 					</select>
+				</li>
+                <li>
+					<label>统计周期:</label>
+				    <select class="xrk_combox" name="dam_attr_static_time" id="dam_attr_static_time">
+				        <option value="0" selected>全部</option>
+				    	<option value="1">1分钟</option>
+				    	<option value="5">5分钟</option>
+				    	<option value="10">10分钟</option>
+				    	<option value="15">15分钟</option>
+				    	<option value="30">30分钟</option>
+				    	<option value="60">1小时</option>
+				    	<option value="1439">1天</option>
+				    </select>
 				</li>
 				<li>
 					<label>监控点类型:</label>
@@ -88,6 +102,7 @@
 				<?cs else ?>
 				<th width="180" orderField="attr_type" class="asc">监控点类型</th>
 				<?cs /if ?>
+				<th width="80" orderField="static_time" class="asc">统计周期</th>
 
 				<?cs if:config.order_data_type ?>
 				<th width="80" orderField='data_type' class="<?cs var:config.order_data_type ?>">数据类型</th>
@@ -96,7 +111,6 @@
 				<?cs /if ?>
 
 				<th width="200">监控点描述</th>
-				<th width="100">添加者</th>
 				<?cs if:config.order_create_time ?>
 				<th width="140" orderField="create_time" class="<?cs var:config.order_create_time ?>">添加时间</th>
 				<?cs else ?>
@@ -132,6 +146,13 @@ function daSetAttrList(attrinfo)
 		list += "<td>" + listattr[i].name + "</td>";
 		list += "<td>" + listattr[i].attr_type + "</td>";
 
+        if(listattr[i].static_time == 60)
+    		list += "<td>1小时</td>";
+        else if(listattr[i].static_time == 1439)
+    		list += "<td>1天</td>";
+        else
+    		list += "<td>" + listattr[i].static_time + "分钟</td>";
+
 		if(listattr[i].data_type == <?cs var:config.sum_report_m ?>)
 			list += "<td>累计量</td>";
 		else if(listattr[i].data_type == <?cs var:config.sum_report_his ?>)
@@ -155,7 +176,6 @@ function daSetAttrList(attrinfo)
 			list += "<td>数据类型未知</td>";
 
 		list += "<td>" + listattr[i].attr_desc + "</td>";
-		list += "<td>" + listattr[i].user_add + "</td>";
 		list += "<td>" + listattr[i].add_time + "</td>";
 		list += "</tr>";
 	}
@@ -178,9 +198,10 @@ function daModAttr()
 	url += "&attr_type_name=" + encodeURIComponent(da_sel_attr.attr_type);
 	url += "&attr_inner=" + da_sel_attr.inner;
 	url += "&attr_type_id=" + da_sel_attr.attr_type_id;
+	url += "&static_time=" + da_sel_attr.static_time;
 	url += "&excep_attr_mask=" + da_sel_attr.excep_attr_mask;
 
-	var op = $.parseJSON('{"mask":true,"maxable":false,"height":360,"width":520}'); 
+	var op = $.parseJSON('{"mask":true,"maxable":false,"height":400,"width":520}'); 
 	$.pdialog.open(url, "da_dlg_mod_attr", "修改监控点", op); 
 }
 
@@ -215,15 +236,11 @@ function daDeleteAttr()
 function daClearSearch()
 {
 	$("#da_attr_data_type").val(0);
-	$("select[name=da_attr_data_type] option").each(function(){
-		if(this.value == 0)
-			$(this).attr("selected", true);
-	});
-
 	$('#da_excp_mask_id').css('display', 'none');
 	$("input[name=dam_attr_type]").val(0);
 	$("input[name=dam_attr_type_name]").val("");
 	$("input[name=da_keyword]").val("");
+	$('#dam_attr_static_time').val(0);
 	return false;
 }
 
@@ -237,7 +254,7 @@ function daAddMultiNewAttr()
 function daAddNewAttr()
 {
 	var url = "<?cs var:config.cgipath?>mt_slog_attr?action=add_attr";
-	var op = $.parseJSON('{"mask":true,"maxable":false,"height":360,"width":520}'); 
+	var op = $.parseJSON('{"mask":true,"maxable":false,"height":400,"width":520}'); 
 	$.pdialog.open(url, "da_dlg_add_new_attr", "添加监控点", op); 
 }
 
@@ -249,6 +266,14 @@ $(document).ready(function(){
 	$("select[name=da_attr_data_type] option").each(function(){
 		<?cs if:config.da_attr_data_type ?>
 			if(this.value == <?cs var:config.da_attr_data_type ?>) {
+				$(this).attr("selected", true);
+			}
+		<?cs /if ?>
+	});
+
+	$("select[name=dam_attr_static_time] option").each(function(){
+		<?cs if:config.dam_attr_static_time ?>
+			if(this.value == <?cs var:config.dam_attr_static_time ?>) {
 				$(this).attr("selected", true);
 			}
 		<?cs /if ?>
