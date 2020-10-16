@@ -68,7 +68,6 @@ int Init(const char *pFile = NULL)
 
     int32_t iRet = 0;
     if((iRet=LoadConfig(pConfFile,
-        "LOCAL_IF_NAME", CFG_STRING, stConfig.szLocalIp, "eth0", MYSIZEOF(stConfig.szLocalIp),
 		"VALID_SEND_WARN_TIME_SEC", CFG_INT, &stConfig.iValidSendWarnTimeSec, DEF_WARN_SEND_INFO_VALID_TIME_SEC, 
 		"DEF_SEND_WARN_SHM_KEY", CFG_INT, &stConfig.iSendWarnShmKey, DEF_SEND_WARN_SHM_KEY, 
 		"SKIP_SEND_WARN", CFG_INT, &stConfig.iSkipSendWarn, 0, 
@@ -90,21 +89,13 @@ int Init(const char *pFile = NULL)
         return SLOG_ERROR_LINE;
     }   
 
-	if(stConfig.szLocalIp[0] == '\0' || INADDR_NONE == inet_addr(stConfig.szLocalIp))
-		GetCustLocalIP(stConfig.szLocalIp);
-	if(stConfig.szLocalIp[0] == '\0' || INADDR_NONE == inet_addr(stConfig.szLocalIp))
-    {
-		ERR_LOG("get local ip failed, use LOCAL_IP to set !");
-        return SLOG_ERROR_LINE;
-    }
-
     if((iRet=slog.InitConfigByFile(pConfFile)) < 0)
     {
         ERR_LOG("slog InitConfigByFile failed file:%s ret:%d\n", pConfFile, iRet);
         return SLOG_ERROR_LINE;
     }
 
-    if((iRet=slog.Init(stConfig.szLocalIp)) < 0)
+    if((iRet=slog.Init()) < 0)
     {
         ERR_LOG("slog init failed ret:%d\n", iRet);
         return SLOG_ERROR_LINE;

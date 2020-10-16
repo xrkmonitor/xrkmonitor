@@ -173,7 +173,6 @@ typedef struct _CGIConfig
 	uint32_t dwStart;
 	uint32_t dwEnd;
 	const char *pAction;
-	char szLocalIp[20]; 
 	char szDebugPath[256];
 	char szConfigFile[64];
 	Database *db;

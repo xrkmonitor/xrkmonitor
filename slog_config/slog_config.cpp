@@ -314,7 +314,6 @@ int Init(const char *pFile = NULL)
 	if((iRet=LoadConfig(pConfFile,
 		// 插件一键部署校验码，如需设置，请注意使用字母数字组合，某些特殊字符会导致参数解析错误
 		"PLUGIN_INSTALL_CHECKSTR", CFG_STRING, stConfig.szPluginCheckStr, "", MYSIZEOF(stConfig.szPluginCheckStr),
-
 		"MYSQL_SERVER", CFG_STRING, stConfig.szDbHost, "127.0.0.1", MYSIZEOF(stConfig.szDbHost),
 		"MYSQL_USER", CFG_STRING, stConfig.szUserName, "mtreport", MYSIZEOF(stConfig.szUserName),
 		"MYSQL_PASS", CFG_STRING, stConfig.szPass, "mtreport875", MYSIZEOF(stConfig.szPass),
@@ -360,7 +359,7 @@ int Init(const char *pFile = NULL)
 	{
 		if(slog.GetSlogConfig(iConfigId) != NULL)
 		{
-			if(slog.Init(NULL) < 0)
+			if(slog.Init() < 0)
 				return SLOG_ERROR_LINE;
 		}
 		else if(slog.InitForUseLocalLog(pConfFile) < 0)
@@ -1668,7 +1667,7 @@ int32_t ReadTableAttr(Database &db, uint32_t uid=0)
 	SharedHashTableNoList *pAttrHash = slog.GetAttrHash();
 	AttrTypeInfo *pAttrType = NULL;
 	const char *ptmp = NULL;
-	int iAttrType = 0;
+	int iAttrType = 0, iStaticTime = 0;
 	MtSystemConfig *psysConfig = stConfig.psysConfig;
 	SharedHashTable *pstHash = slog.GetWarnConfigInfoHash();
 
@@ -1680,6 +1679,7 @@ int32_t ReadTableAttr(Database &db, uint32_t uid=0)
 		dwLastModTime = datetoui(qu.getstr("update_time"));
 		iAttrType = qu.getval("attr_type");
 		pAttrType = slog.GetAttrTypeInfo(iAttrType, NULL);
+		iStaticTime = qu.getval("static_time");
 		if(iStatus == RECORD_STATUS_USE && pAttrType == NULL)
 		{
 			WARN_LOG("attr:%d is delete, type:%d", iAttrId, iAttrType);
@@ -1754,6 +1754,7 @@ int32_t ReadTableAttr(Database &db, uint32_t uid=0)
 				pInfo->id = iAttrId;
 				pInfo->iAttrType = iAttrType;
 				pInfo->iDataType = qu.getval("data_type");
+				pInfo->iStaticTime = iStaticTime;
 
 				if(ptmp != NULL && ptmp[0] != '\0')
 					pInfo->iNameVmemIdx = MtReport_SaveToVmem(ptmp, strlen(ptmp)+1);
@@ -3186,7 +3187,7 @@ int main(int argc, char *argv[])
 	stConfig.bUpdateAll = false;
 	system("touch /tmp/_slog_config_read_ok");
 
-	if(false == bInitOk || (iRet=slog.Init(stConfig.szLocalIp)) < 0)
+	if(false == bInitOk || (iRet=slog.Init()) < 0)
 	{ 
 		ERR_LOG("slog init failed ret:%d\n", iRet);
 		return SLOG_ERROR_LINE;

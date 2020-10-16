@@ -50,7 +50,6 @@ typedef struct
 	MtSystemConfig *psysConfig;
 	int iNotSendWarnAfterDealTimeCfg; // 开始处理告警后多少时间内告警不发送
 
-	char szLocalIp[20];
 	Database *db;
 	Query *qu;
 	uint32_t dwCurrentTime;
@@ -67,24 +66,15 @@ int Init(const char *pConfFile)
 		"WARN_DEAL_TIME_SEC", CFG_INT, &stConfig.iNotSendWarnAfterDealTimeCfg, 7200, 
 		"VALID_SEND_WARN_TIME_SEC", CFG_INT, &stConfig.iValidSendWarnTimeSec, DEF_WARN_SEND_INFO_VALID_TIME_SEC, 
 		"DEF_SEND_WARN_SHM_KEY", CFG_INT, &stConfig.iSendWarnShmKey, DEF_SEND_WARN_SHM_KEY, 
-		"LOCAL_IF_NAME", CFG_STRING, stConfig.szLocalIp, "eth0", MYSIZEOF(stConfig.szLocalIp),
 		(void*)NULL)) < 0)
 	{   
 		ERR_LOG("LoadConfig:%s failed ! ret:%d", pConfFile, iRet);
 		return SLOG_ERROR_LINE;
 	} 
 
-	if(stConfig.szLocalIp[0] == '\0' || INADDR_NONE == inet_addr(stConfig.szLocalIp))
-		GetCustLocalIP(stConfig.szLocalIp);
-	if(stConfig.szLocalIp[0] == '\0' || INADDR_NONE == inet_addr(stConfig.szLocalIp))
-	{
-		ERR_LOG("get local ip failed, use LOCAL_IP to set !");
-		return SLOG_ERROR_LINE;
-	}
-
 	if((iRet=slog.InitConfigByFile(pConfFile)) < 0)
 		return SLOG_ERROR_LINE;
-	if((iRet=slog.Init(stConfig.szLocalIp)) < 0)
+	if((iRet=slog.Init()) < 0)
 		return SLOG_ERROR_LINE;
 
 	if(slog.InitWarnAttrList() < 0)

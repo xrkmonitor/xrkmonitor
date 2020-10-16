@@ -1343,10 +1343,8 @@ void CSupperLog::ShowShmLogInfo(int iLogIndex)
 int CSupperLog::InitCommon(const char *pConfFile) 
 {
 	int32_t iRet = 0;
-	char szLocalIp[32] = {0};
 	char szLogTypeStr[200] = {0};
 	if((iRet=LoadConfig(pConfFile,
-		"LOCAL_IP", CFG_STRING, szLocalIp, "", MYSIZEOF(szLocalIp),
 		"SLOG_CONFIG_ID", CFG_INT, &m_dwConfigId, 0,
 		"FAST_CGI_MAX_HITS", CFG_INT, &m_iFastCgiHits, 0,
 		"SLOG_OUT_TYPE", CFG_INT, &m_iLogOutType, 2,
@@ -1362,26 +1360,11 @@ int CSupperLog::InitCommon(const char *pConfFile)
 	}
 
 	m_iLocalLogType = GetLogTypeByStr(szLogTypeStr);
-	if(szLocalIp[0] == '\0' || INADDR_NONE == inet_addr(szLocalIp))
-		GetCustLocalIP(szLocalIp);
-	if(szLocalIp[0] == '\0' || INADDR_NONE == inet_addr(szLocalIp))
-	{
-		ERR_LOG("get local ip failed, use LOCAL_IP to set !");
-	    return SLOG_ERROR_LINE;
-	}
-
-	if(m_strLocalIP.size() > 0 && m_strLocalIP != szLocalIp) 
-		WARN_LOG("check local ip failed ! %s != %s", m_strLocalIP.c_str(), szLocalIp);
-
-	m_strLocalIP = szLocalIp;
-	m_dwIpAddr = inet_addr(szLocalIp);
-
-	if((iRet=InitConfigByFile(pConfFile)) < 0 || (iRet=Init(szLocalIp)) < 0)
+	if((iRet=InitConfigByFile(pConfFile)) < 0 || (iRet=Init()) < 0)
 	{
 	    ERR_LOG("slog init failed file:%s ret:%d\n", pConfFile, iRet);
 		return SLOG_ERROR_LINE;
 	}
-	DEBUG_LOG("local ip:%s", szLocalIp);
 	return 0;
 }
 
@@ -3431,7 +3414,39 @@ int CSupperLog::InitForUseLocalLog(const char *pszConfigFile)
 	return 0;
 }
 
-int CSupperLog::Init(const char *pszLocalIP)
+int CSupperLog::SetLocalIpInfo(char *szLocalIp)
+{
+	if(szLocalIp[0] == '\0' || INADDR_NONE == inet_addr(szLocalIp))  
+	{
+		// 优先从 shm 获取本机IP
+		int iLocalMachineId = m_pShmConfig->stSysCfg.iMachineId;
+		MachineInfo *pLocalMachineInfo = slog.GetMachineInfo(iLocalMachineId, NULL);
+		if(pLocalMachineInfo) {
+			if(pLocalMachineInfo->ip1)
+				strcpy(szLocalIp, ipv4_addr_str(pLocalMachineInfo->ip1));
+			else if(pLocalMachineInfo->ip2)
+				strcpy(szLocalIp, ipv4_addr_str(pLocalMachineInfo->ip2));
+			else if(pLocalMachineInfo->ip3)
+				strcpy(szLocalIp, ipv4_addr_str(pLocalMachineInfo->ip3));
+			else if(pLocalMachineInfo->ip4)
+				strcpy(szLocalIp, ipv4_addr_str(pLocalMachineInfo->ip4));
+		}
+
+		if(szLocalIp[0] == '\0')
+			GetCustLocalIP(szLocalIp);
+	}
+
+	if(szLocalIp[0] == '\0' || INADDR_NONE == inet_addr(szLocalIp))
+	{
+		ERR_LOG("get local ip failed, use LOCAL_IP to set !");
+		return SLOG_ERROR_LINE;
+	}
+	m_strLocalIP = szLocalIp;
+	m_dwIpAddr = inet_addr(szLocalIp);
+	return 0;
+}
+
+int CSupperLog::Init()
 {
 	char szLocalIp[32] = {0};
 	m_bInit = false; // 尝试用数据库配置初始
@@ -3485,22 +3500,8 @@ int CSupperLog::Init(const char *pszLocalIP)
 	if(m_stParam.iIsLogToStd < 0)
 		m_stParam.iIsLogToStd = iIsLogToStd;
 
-	if(pszLocalIP != NULL)
-		m_strLocalIP = pszLocalIP;
-	if(m_strLocalIP.size() <= 0)
-	{
-		if(szLocalIp[0] == '\0' || INADDR_NONE == inet_addr(szLocalIp)) 
-			GetCustLocalIP(szLocalIp);
-		if(szLocalIp[0] == '\0' || INADDR_NONE == inet_addr(szLocalIp))
-		{
-			ERR_LOG("get local ip failed, use LOCAL_IP to set !");
-			return SLOG_ERROR_LINE;
-		}
-		m_strLocalIP = szLocalIp;
-		pszLocalIP = m_strLocalIP.c_str();
-	}
-
-	m_dwIpAddr = inet_addr(pszLocalIP);
+	if(SetLocalIpInfo(szLocalIp) < 0)
+		return SLOG_ERROR_LINE;
 
 	m_iConfigIndex = -1;
 	m_iConfigIndex = GetSlogConfig(m_dwConfigId, NULL);

@@ -36,6 +36,17 @@
 #include <inttypes.h>
 #include <stdarg.h>
 
+typedef struct {
+	int y;
+	int m;
+	int d;
+	int hour;
+	int min;
+	int sec;
+}TIME_INFO;
+
+void uitotime_info(uint32_t dwTimeSec, TIME_INFO *pinfo);
+
 int file_lockw(const char *pfile);
 int file_lock(const char *pfile);
 int file_lockw_fd(int fd);
@@ -49,6 +60,7 @@ uint32_t clear_bit(uint32_t n, int b);
 int check_bit(uint32_t n, int b);
 char *OI_RandStrURandom(char *buffer, int len);
 char *ipv4_addr_str(uint32_t dwAddr);
+
 char *uitodate(uint32_t dwTimeSec);
 uint32_t datetoui(const char *pdate);
 char *strchr_n(char *pstr, char c, int n);

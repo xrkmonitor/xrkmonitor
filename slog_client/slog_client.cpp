@@ -52,25 +52,17 @@ int Init(const char *pFile = NULL)
 
 	int32_t iRet = 0;
 	if((iRet=LoadConfig(pConfFile,
-		"LOCAL_IP", CFG_STRING, stConfig.szLocalIp, "", MYSIZEOF(stConfig.szLocalIp),
 		"LOCAL_HEARTBEAT_TIME_SEC", CFG_INT, &stConfig.iSendHeartTimeSec, 5,
 		"LOCAL_MACHINE_ID", CFG_INT, &stConfig.iLocalMachineId, 0,
 		"LOCAL_CHECK_LOG_CLIENT_TIME_SEC", CFG_INT, &stConfig.iCheckLogClientTimeSec, 10,
         "QUICK_TO_SLOW_IP", CFG_STRING, stConfig.szQuickToSlowIp, "127.0.0.1", sizeof(stConfig.szQuickToSlowIp),
         "QUICK_TO_SLOW_PORT", CFG_INT, &stConfig.iQuickToSlowPort, 38081,
+		"IS_XRKMONITOR_LOG_SERVER", CFG_INT, &stConfig.iSelfIsLogServer, 0,
 		(void*)NULL)) < 0)
 	{   
 		ERR_LOG("LoadConfig:%s failed ! ret:%d", pConfFile, iRet);
 		return SLOG_ERROR_LINE;
 	} 
-
-	if(stConfig.szLocalIp[0] == '\0' || INADDR_NONE == inet_addr(stConfig.szLocalIp))
-		GetCustLocalIP(stConfig.szLocalIp);
-	if(stConfig.szLocalIp[0] == '\0' || INADDR_NONE == inet_addr(stConfig.szLocalIp))
-	{
-		ERR_LOG("get local ip failed, use LOCAL_IP to set !");
-		return SLOG_ERROR_LINE;
-	}
 
 	if((iRet=slog.InitConfigByFile(pConfFile)) < 0)
 	{ 
@@ -78,7 +70,7 @@ int Init(const char *pFile = NULL)
 		return SLOG_ERROR_LINE;
 	}
 
- 	if((iRet=slog.Init(stConfig.szLocalIp)) < 0)
+ 	if((iRet=slog.Init()) < 0)
 	{ 
 		ERR_LOG("slog init failed ret:%d\n", iRet);
 		return SLOG_ERROR_LINE;
@@ -107,12 +99,12 @@ int Init(const char *pFile = NULL)
 	}
 	else	
 	{
-		stConfig.pLocalMachineInfo = slog.GetMachineInfoByIp(stConfig.szLocalIp);
+		stConfig.pLocalMachineInfo = slog.GetMachineInfoByIp((char*)(slog.GetLocalIP()));
 		if(stConfig.pLocalMachineInfo != NULL)
 		{
 			stConfig.iLocalMachineId = stConfig.pLocalMachineInfo->id;
 			DEBUG_LOG("get local machine by ip:%s -- machine:%d, %s", 
-				stConfig.szLocalIp, stConfig.pLocalMachineInfo->id, ipv4_addr_str(stConfig.pLocalMachineInfo->ip1));
+				slog.GetLocalIP(), stConfig.pLocalMachineInfo->id, ipv4_addr_str(stConfig.pLocalMachineInfo->ip1));
 		}
 	}
 
@@ -135,8 +127,6 @@ int Init(const char *pFile = NULL)
 		ERR_LOG("get app shm info list failed");
 		return SLOG_ERROR_LINE;
 	}
-
-	INFO_LOG("local ip:%s", stConfig.szLocalIp);
 	return 0;
 }
 
@@ -488,7 +478,8 @@ int main(int argc, char *argv[])
 			}
 
 			// 与 app slog_server 同机部署的不用发送 slog 日志
-			if(it->second.pAppInfo->dwAppSrvMaster == pLocalMachineInfo->ip1
+			if(stConfig.iSelfIsLogServer
+				|| it->second.pAppInfo->dwAppSrvMaster == pLocalMachineInfo->ip1
 				|| it->second.pAppInfo->dwAppSrvMaster == pLocalMachineInfo->ip2 
 				|| it->second.pAppInfo->dwAppSrvMaster == pLocalMachineInfo->ip3 
 				|| it->second.pAppInfo->dwAppSrvMaster == pLocalMachineInfo->ip4) 

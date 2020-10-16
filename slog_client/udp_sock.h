@@ -76,8 +76,6 @@ typedef std::map<uint32_t, uint32_t>::iterator TMapHeartToServerInfoIt;
 
 typedef struct _CONFIG
 {
-	char szLocalIp[20];
-
 	int iLocalMachineId;
 	MachineInfo *pLocalMachineInfo;
 
@@ -92,16 +90,16 @@ typedef struct _CONFIG
 	int32_t iCheckLogClientTimeSec;
     char szQuickToSlowIp[16];
     int iQuickToSlowPort;
+	int iSelfIsLogServer;
 
 	_CONFIG() {
-		memset(szLocalIp, 0, sizeof(szLocalIp));
-
 		dwSendLogCount = 0;
 		dwCurrentTime = 0;
 		pAppShmInfoList = NULL;
 		pSelfApp = NULL;
 		iSendHeartTimeSec = 0;
 		iCheckLogClientTimeSec = 0;
+		iSelfIsLogServer = 0;
 	}
 }CONFIG;
 

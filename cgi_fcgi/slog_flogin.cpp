@@ -75,7 +75,7 @@ static int InitFastCgi_first(CGIConfig &stConfig)
 	}
 
 	snprintf(g_strRedirectUri, sizeof(g_strRedirectUri), "%s/mt_slog_monitor", stConfig.szCgiPath);
-	if(slog.InitConfigByFile(stConfig.szConfigFile) < 0 || slog.Init(stConfig.szLocalIp) < 0)
+	if(slog.InitConfigByFile(stConfig.szConfigFile) < 0 || slog.Init() < 0)
 		return SLOG_ERROR_LINE;
 	return 0;
 }
@@ -333,7 +333,7 @@ static void AddLoginHistory(FloginInfo *psess)
 	AddParameter(&ppara, "login_time", stConfig.dwCurTime, "DB_CAL");
 	AddParameter(&ppara, "valid_time", stConfig.dwCurTime+psess->iLoginExpireTime, "DB_CAL");
 	AddParameter(&ppara, "login_remote_address", stConfig.remote, NULL);
-	AddParameter(&ppara, "receive_server", stConfig.szLocalIp, NULL);
+	AddParameter(&ppara, "receive_server", slog.GetLocalIP(), NULL);
 	const char *ptmp = hdf_get_value(stConfig.cgi->hdf, "HTTP.Referer", NULL);
 	if(ptmp != NULL)
 		AddParameter(&ppara, "referer", ptmp, NULL);
@@ -445,7 +445,7 @@ static int CheckLogin(HDF *hdf)
 				"update flogin_user set last_login_time=%u,last_login_address=\'%s\',login_index=%d"
 				",login_md5=\'%s\',last_login_server=\'%s\' where user_id=%u",
 				psess->dwLoginTime, stConfig.remote, iFreeIndex, ppass, 
-				stConfig.szLocalIp, psess->iUserId); 
+				slog.GetLocalIP(), psess->iUserId); 
 			stConfig.qu->free_result();
 			stConfig.qu->execute(sBuf);
 			KickOldLoginInfo(psess, iFreeIndex);

@@ -495,6 +495,7 @@ static int Init()
 		"DISABLE_PLUGIN", CFG_INT, &stConfig.iDisablePlus, 0,
 		"MAX_RUN_MINS", CFG_INT, &stConfig.iMaxRunMins, 7*24*3600,
 		"XRKMONITOR_CLOUD_URL", CFG_STRING, stConfig.szCloudUrl, "xrkmonitor.com", MYSIZEOF(stConfig.szCloudUrl),
+		"XRKMONITOR_LOCAL_URL", CFG_STRING, stConfig.szLocalUrl, "", MYSIZEOF(stConfig.szLocalUrl),
 		"LOCAL_OS", CFG_STRING, stConfig.szOs, "", MYSIZEOF(stConfig.szOs),
 		"LOCAL_OS_ARC", CFG_STRING, stConfig.szOsArc, "", MYSIZEOF(stConfig.szOsArc),
 		"LOCAL_LIBC_VER", CFG_STRING, stConfig.szLibcVer, "", MYSIZEOF(stConfig.szLibcVer),
@@ -530,6 +531,7 @@ static int Init()
 	const char *pip = GetLocalIP(stConfig.szSrvIp_master);
 	if(pip != NULL && stConfig.szLocalIP[0] == '\0')
 		strncpy(stConfig.szLocalIP, pip, MYSIZEOF(stConfig.szLocalIP)-1);
+
 	stConfig.dwLocalIp = inet_addr(stConfig.szLocalIP);
 	if(stConfig.dwLocalIp == 0) {
 		FATAL_LOG("get agent client ip failed ! - local:%s master:%s", stConfig.szLocalIP, stConfig.szSrvIp_master);
@@ -544,7 +546,7 @@ static int Init()
 	INFO_LOG("%s shm ok -- size:%u, current path:%s",
 		(iRet==1 ? "create" : "init"), MYSIZEOF(MTREPORT_SHM), stConfig.szCurPath); 
 	INFO_LOG("read config - server:%s:%d ", stConfig.szSrvIp_master, stConfig.iSrvPort);
-	INFO_LOG("local ip:%s, config:%s, cmp time:%s, cloud domain:%s", 
+	INFO_LOG("local ip:%s, config ip:%s, cmp time:%s, cloud domain:%s", 
 		pip, stConfig.szLocalIP, g_strCmpTime.c_str(), stConfig.szCloudUrl);
 
 	// 基础信息，用于一键部署插件

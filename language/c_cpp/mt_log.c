@@ -110,6 +110,11 @@ int MtReport_Plus_Init(const char *pConfigFile, int iPluginId, const char *pName
 		return ERROR_LINE;
 	}
 
+	if((iRet=CheckPluginConfig(pConfigFile)) < 0) {
+		fprintf(stderr, "check plugin config file:%s failed, ret:%d\n", pConfigFile, iRet);
+		return ERROR_LINE;
+	}
+
 	char szCheckVer[16] = {0};
     memset(&stPluginInfo, 0, sizeof(stPluginInfo));
 	if((iRet=LoadConfig(pConfigFile,

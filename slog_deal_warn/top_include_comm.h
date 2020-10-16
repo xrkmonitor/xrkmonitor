@@ -65,8 +65,6 @@ struct TWarnMapKey{
 
 typedef struct
 {
-    char szLocalIp[20];
-
 	int iSendWarnShmKey;
 	int iValidSendWarnTimeSec;
 	int iSkipSendWarn;

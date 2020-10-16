@@ -609,7 +609,7 @@ int Init(const char *pFile = NULL)
 	{
 		if(slog.GetSlogConfig(stConfig.iConfigId) != NULL)
 		{
-			if(slog.Init(NULL) < 0)
+			if(slog.Init() < 0)
 				return SLOG_ERROR_LINE;
 		}
 		else if(slog.InitForUseLocalLog(pConfFile) < 0)

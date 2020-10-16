@@ -140,6 +140,7 @@ int BeforeCgiRequestInit(CGIConfig &stConfig);
 int AfterCgiRequestInit(CGIConfig &stConfig); 
 int AfterCgiLogin(CGIConfig &stConfig); 
 int AfterCgiResponse(CGIConfig &stConfig); 
+const char *GetPluginPreConfigItemDesc(const std::string &strCfgName);
 
 #endif
 

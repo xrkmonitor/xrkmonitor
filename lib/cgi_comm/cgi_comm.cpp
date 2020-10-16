@@ -1013,6 +1013,31 @@ static inline void CheckLastChar(char *pstr, char c)
 	}
 }
 
+const char *GetPluginPreConfigItemDesc(const std::string &strCfgName) {
+    if(strCfgName.find("XRK_LOCAL_LOG_TYPE") != std::string::npos)
+        return "插件本地日志类型, 可选值: info debug warn reqerr error fatal all";
+    if(strCfgName.find("XRK_LOCAL_LOG_FILE") != std::string::npos)
+        return "插件本地日志文件, 注意插件需要有写权限";
+    if(strCfgName.find("XRK_PLUGIN_RE_CHECK") != std::string::npos)
+        return "插件校验错误时，如果设为1，校验失败5分钟后可重启，为0则插件无法启动，因此如果出现插件校验错误，该配置需改为1。";
+    if(strCfgName.find("XRK_PLUGIN_CONFIG_PLAT") != std::string::npos)
+        return "适用的版本，不允许只能是 cloud 或 open";
+    if(strCfgName.find("XRK_PLUGIN_CONFIG_FILE_VER") != std::string::npos)
+        return "配置文件版本";
+    if(strCfgName.find("XRK_PLUGIN_CONFIG_ID") != std::string::npos)
+        return "插件日志配置ID, 为0表示不上报插件日志到监控系统日志中心";
+    if(strCfgName.find("XRK_PLUGIN_HEADER_FILE_VER") != std::string::npos)
+        return "插件可执行文件版本";
+    if(strCfgName.find("plugin_ver") != std::string::npos)
+        return "插件配置文件版本";
+    if(strCfgName.find("logconfig_id") != std::string::npos)
+        return "插件日志配置ID, 为0表示不上报插件日志";
+    if(strCfgName.find("logconfig_type") != std::string::npos)
+        return "插件日志记录类型, 需是 logconfig_id 配置的类型，否则日志不会写入";
+    return NULL;
+}
+
+
 int InitFastCgiStart(CGIConfig &myConf)
 {
 	std::string strGlobalConfgFile;
@@ -1036,7 +1061,6 @@ int InitFastCgiStart(CGIConfig &myConf)
 		slog.SetLogToStd(true);
 
 	if(LoadConfig(strGlobalConfgFile.c_str(), 
-		"LOCAL_IP", CFG_STRING, myConf.szLocalIp, "", MYSIZEOF(myConf.szLocalIp),
 		"CGI_PATH", CFG_STRING, myConf.szCgiPath, CGI_PATH, MYSIZEOF(myConf.szCgiPath),
 		"CS_PATH", CFG_STRING, myConf.szCsPath, CS_PATH, MYSIZEOF(myConf.szCsPath),
 		"DOC_PATH", CFG_STRING, myConf.szDocPath, DOC_PATH, MYSIZEOF(myConf.szDocPath), 
@@ -1076,13 +1100,6 @@ int InitFastCgiStart(CGIConfig &myConf)
 	myConf.dwCurTime = myConf.dwStart;
 	myConf.pid = getpid();
 	myConf.dwExitTime = myConf.dwCurTime+myConf.dwExitTime*60*60 + rand()%60;
-	if(myConf.szLocalIp[0] == '\0' || INADDR_NONE == inet_addr(myConf.szLocalIp))
-		GetCustLocalIP(myConf.szLocalIp);
-	if(myConf.szLocalIp[0] == '\0' || INADDR_NONE == inet_addr(myConf.szLocalIp))
-	{
-		ERR_LOG("get local ip failed !");
-		return SLOG_ERROR_LINE;
-	}
 
 	if((iRet=GetShm2((void**)(&myConf.pshmLoginList), iShmKey, MYSIZEOF(FloginList), 0666|IPC_CREAT)) < 0)
 	{
@@ -1092,9 +1109,9 @@ int InitFastCgiStart(CGIConfig &myConf)
 
 	INFO_LOG("attach shm FloginList ok size:%u, key:%d, ret:%d, testlog:%d",
 		MYSIZEOF(FloginList), iShmKey, iRet, myConf.iCfgTestLog);
-	INFO_LOG("fcgi - %s start at:%u pid:%u will exist at:%u(curis:%u) debug js:%d debug:%d local:%s",
+	INFO_LOG("fcgi - %s start at:%u pid:%u will exist at:%u(curis:%u) debug js:%d debug:%d",
 		myConf.pszCgiName, myConf.dwStart, myConf.pid, myConf.dwExitTime, myConf.dwCurTime, 
-		myConf.iDebugHtmlJs, myConf.iEnableCgiDebug, myConf.szLocalIp);
+		myConf.iDebugHtmlJs, myConf.iEnableCgiDebug);
 	char szCurDir[256];
 	if(NULL == getcwd(szCurDir, 256)) 
 		WARN_LOG("getcwd failed, msg:%s", strerror(errno));

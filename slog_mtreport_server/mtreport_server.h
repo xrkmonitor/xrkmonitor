@@ -42,7 +42,6 @@
 typedef struct
 {
 	char szListenIp[20];
-	char szLocalIp[20];
 	char szLogFile[256];
 	int iRecvPort;
 	int iLocalPbPort;
