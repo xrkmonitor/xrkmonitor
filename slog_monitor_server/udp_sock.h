@@ -69,8 +69,6 @@ typedef struct
 	StrAttrNodeValShmInfo *pstrAttrShm;
 }CONFIG;
 
-#define COUNT_MIN_PER_DAY 1440
-
 class CUdpSock: public UdpSocket, public CBasicPacket
 {
 	public:
@@ -89,10 +87,10 @@ class CUdpSock: public UdpSocket, public CBasicPacket
 		int TryChangeAttrSaveType();
 		int ChangeAttrSaveType(const char *ptable, Query &qu);
 		void GetMonitorAttrMemcache(
-			Query &qu, int attr_id, int machine_id, const char *ptable, comm::MonitorMemcache & memInfo); 
+			Query &qu, int attr_id, int machine_id, const char *ptable, comm::MonitorMemcache & memInfo, int iStaticTime); 
 		void GetMonitorAttrMemcache(
 			Query &qu, int attr_id, int machine_id, const char *ptable, uint32_t & uiMin, uint32_t & uiMax,
-			uint32_t & uiTotal, int32_t & iReportCount, uint32_t *puiValArry, uint32_t *puiLastIp=NULL);
+			uint32_t & uiTotal, int32_t & iReportCount, uint32_t *puiValArry, uint32_t *puiLastIp, int iStaticTime);
 		int CheckTableName();
 		const char *GetTodayTableName();
 		const char *GetBeforeDayTableName();
@@ -101,8 +99,8 @@ class CUdpSock: public UdpSocket, public CBasicPacket
 		int GetMonitorAttrVal(Query &qu, int attr_id, int machine_id, comm::MonitorMemcache &memInfo);
 
 		void CheckAllAttrTotal();
-		void DealUserTotalAttr(int iAttrId, const char *pOldDay, const char *pNewDay);
-		void InitTotalAttrReportShm(int32_t iAttrId, int iMachineId, comm::MonitorMemcache &memInfo, int iMinIdx);
+		void DealUserTotalAttr(int iAttrId, int iStaticTime, const char *pOldDay, const char *pNewDay);
+		void InitTotalAttrReportShm(int32_t iAttrId, int iStaticTime, int iMachineId, comm::MonitorMemcache &memInfo, int iMinIdx);
 
         void DealQuickProcessMsg();
         void ReportQuickToSlowMsg();
@@ -116,10 +114,9 @@ class CUdpSock: public UdpSocket, public CBasicPacket
 		MachineInfo * GetReportMachine(uint32_t ip);
 		int32_t OnRawDataClientAttr(const char *buf, size_t len);
 		int CheckSignature();
-		int GetDayOfMin(const char *ptime=NULL);
 		int CheckClearStrAttrNodeShm(TStrAttrReportInfo* pStrAttrShm);
 		void SetLocalTimeInfo() { localtime_r(&slog.m_stNow.tv_sec, &m_currDateTime); }
-		void DealMachineAttrReport(TStrAttrReportInfo *pAttrShm);
+		void DealMachineAttrReport(TStrAttrReportInfo *pAttrShm, int iStaticTime);
 
 		Database *db;
 		Query *m_qu;
@@ -141,7 +138,7 @@ class CUdpSock: public UdpSocket, public CBasicPacket
 		void ResetRequest();
 		void DealViewAutoBindMachine(TWarnAttrReportInfo *pRepAttrInfo, Query &qu);
 		TWarnAttrReportInfo * AddReportToWarnAttrShm(
-			uint32_t dwAttrId, int32_t iMachineId, uint32_t dwVal, int32_t iMinIdx, int iDataType);
+			uint32_t dwAttrId, int32_t iMachineId, uint32_t dwVal, int32_t iMinIdx, int iDataType, int32_t iStaticTime);
 		TStrAttrReportInfo * AddStrAttrReportToShm(
 			const ::comm::AttrInfo & reportInfo, int32_t iMachineId, uint8_t bStrAttrStrType);
 };

@@ -1769,6 +1769,22 @@ class CLogTimeCur
 };
 
 // 日志记录类 ----- 用于将日志写入本地文件或者共享内存 - 用于日志生产模块写日志 ------------------------
+#define COUNT_STATIC_TIMES_PER_DAY 1440
+inline int GetDayOfMin(TIME_INFO *pinfo, int iStaticTime)
+{
+	if(iStaticTime <= 0)
+		iStaticTime =1 ;
+	int i = pinfo->hour*60+pinfo->min;
+	i /= iStaticTime;
+	if((i%iStaticTime) != 0 || pinfo->sec > 0)
+		i++;
+	i--; // 编号从 0 开始
+	if(i < 0)
+		i = 0;
+	if(i >= COUNT_STATIC_TIMES_PER_DAY)
+		i = COUNT_STATIC_TIMES_PER_DAY-1;
+	return i;
+}
 
 class CMemCacheClient;
 class CSupperLog: public StdLog, public IError
