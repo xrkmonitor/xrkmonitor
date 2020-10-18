@@ -1412,7 +1412,6 @@ int CUdpSock::DealCmdReportPluginInfo()
 
     MyQuery myqu(stConfig.qu, stConfig.db);
     Query & qu = myqu.GetQuery();
-    std::ostringstream ss;
     MonitorPluginCheckResult stCheck;
 	const char *ptmp = NULL;
     for(i=0; wLen > 0 && i < pctinfo->bPluginCount; i++, pInfo += 1+iItemLen, wLen -= 1+iItemLen) {
@@ -1430,7 +1429,7 @@ int CUdpSock::DealCmdReportPluginInfo()
 
 			stCheck.iPluginId = pstInfo->iPluginId;
 
-			ss.str("");
+			std::ostringstream ss;
             ss << "select cfg_file_time from mt_plugin_machine where machine_id=" << m_iRemoteMachineId;
             ss << " and open_plugin_id=" << pstInfo->iPluginId << " and xrk_status=0 ";
 			qu.get_result(ss.str());
@@ -1475,7 +1474,7 @@ int CUdpSock::DealCmdReportPluginInfo()
             stCheck.iPluginId = pstFirst->iPluginId;
 
             //  合法性校验, 是否安装，部署名是否匹配
-			ss.str("");
+			std::ostringstream ss;
 			ss << "select plugin_name from mt_plugin where open_plugin_id=" << pstFirst->iPluginId
 				<< " and xrk_status=0";
 			if(qu.get_result(ss.str().c_str()) && qu.num_rows() > 0) {
