@@ -3,29 +3,44 @@
  	<br />
  	字段依次为：<br />
  	<div style='margin-left:20px'>
- 	<font color='blue'>监控点类型编号 数据类型ID 监控点名称  监控点描述 </font>
+	<font color='blue'>监控点类型 数据类型ID 统计周期 "监控点名称" "监控点描述" </font>
+	<br>注意: 监控点名称和监控点描述要用引号包围</br>
  	</div>
  	导入文件支持utf8或者gbk 编码方式，每次最多导入100个监控点
  	<br />
  	<br />
  	示例： <br />
  	<div style='margin-left:20px'>
- 	76 1 cpu使用率监控 批量导入 <br />
- 	76 2 cpu22使用率 批量导入 <br />
+ 	76 1 1 "cpu 使用率监控" "批量导入" <br />
+ 	76 2 30 "cpu 22使用率" "批量导入" <br />
  	</div>
  	<br />
  	提示：<br />
  	监控点类型编号可在 "监控点管理" 页面查看 <br />
  	<br />
+ 	<div style='margin-left:20px; float:left;'>
  	数据类型ID表示说明：<br />
- 	<div style='margin-left:20px'>
  	1:累计量<br />
  	2:取上报最小值<br />
  	3:异常量<br />
  	4:取上报最大值<br />
  	5:历史累计量<br />
  	6:字符串型<br />
- 	7:字符串型-IP省级
+ 	7:字符串型-IP省级<br />
+ 	8: 百分比数值<br />
  	</div>
+ 	<div style='margin-right:80px; float:right;'>
+ 	统计周期取值：<br />
+ 	1: 1分钟<br />
+ 	5: 5分钟<br />
+ 	10: 10分钟<br />
+ 	30: 30分钟<br />
+ 	60: 1小时<br />
+ 	180: 3小时<br />
+ 	360: 6小时<br />
+ 	1439: 1天<br />
+ 	</div>
+	<br />
+
  </div>
  
