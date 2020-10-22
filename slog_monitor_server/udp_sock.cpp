@@ -97,7 +97,7 @@ int CUdpSock::ChangeAttrSaveType(const char *ptable, Query &qu)
 	MyQuery myqu(m_qu, db);
 	Query & qu_day = myqu.GetQuery();
 
-	uint32_t arrydwValue[COUNT_STATIC_TIMES_PER_DAY];
+	uint32_t arrydwValue[COUNT_STATIC_TIMES_PER_DAY] = {0};
 	uint32_t dwMax=0, dwMin=0, dwTotal=0, dwLastIp=0;
 	int32_t iMaxReportIdx = 0, iMaxDataLen = 0;
 	AttrInfoBin *pAttrInfo = NULL;

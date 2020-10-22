@@ -46,8 +46,10 @@
 以下假设宿主机的IP 地址为：192.168.128.210, 以v2.8_2020-10-16  版本作为示例说明 docker 部署方法     
 1. 拉取 docker 镜像: docker pull registry.cn-hangzhou.aliyuncs.com/xrkmonitor/release:v2.8_2020-10-16
 1. 通过镜像启动容器：docker images 查看镜像ID，假设为：93297f01d06b    
-   启动容器：docker run -idt -p27000:27000 -p38080:38080 -p28080:28080 -p8080:80 --env xrk_host_ip=192.168.128.210 --env xrk_http_port=8080 -v /data/xrkmonitor/docker_mysql:/var/lib/mysql -v /data/xrkmonitor/docker_slog:/home/mtreport/slog 93297f01d06b 
-   参数说明：-p27000:27000 -p38080:38080 -p28080:28080 -p8080:80 日志、监控点、接入服务等的端口映射   
+   启动容器：   
+   docker run -idt -p27000:27000/udp -p38080:38080/udp -p28080:28080/udp -p8080:80 --env xrk_host_ip=192.168.128.210 --env xrk_http_port=8080 -v /data/xrkmonitor/docker_mysql:/var/lib/mysql -v /data/xrkmonitor/docker_slog:/home/mtreport/slog 93297f01d06b 
+   参数说明：   
+   			-p27000:27000/udp -p38080:38080/udp -p28080:28080/udp -p8080:80 日志、监控点、接入服务等的端口映射   
              xrk_host_ip=192.168.128.210 宿主机的ip地址, 根据实际情况传递    
 			 xrk_http_port=8080 web 控制台的映射端口，如使用宿主机的80端口则可以省略     
              -v /data/xrkmonitor/docker_mysql:/var/lib/mysql, 挂载宿主机目录   

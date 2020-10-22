@@ -1452,9 +1452,6 @@ int CUdpSock::DealCmdReportPluginInfo()
             qu.execute(ss.str().c_str());
 			if(qu.affected_rows() < 1) {
 				WARN_LOG("update failed, affected_rows < 1, plugin:%d", pstInfo->iPluginId);
-				stCheck.bCheckResult = 1;
-				stPluginCheck.push_back(stCheck);
-				continue;
 			}
             stCheck.bCheckResult = 0;
             stPluginCheck.push_back(stCheck);
