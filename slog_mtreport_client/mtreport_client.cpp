@@ -1918,6 +1918,19 @@ int MonitorBusiProcess(int subPid, int argc)
 
 int main(int argc, char* argv[])
 {
+	/*
+		std::string strurl("http://192.168.128.210/xrkmonitor/download/xrk_linux_file_monitor.conf");
+		size_t s = strurl.find("//");
+		size_t e = strurl.find("/", s+2);
+		if(s != std::string::npos && e != std::string::npos && e > s+2) {
+			strurl.replace(s+2, e-s-2, "test");
+		}
+		else 
+			printf("failed \n");
+		printf("url:%s\n", strurl.c_str());
+		exit(0);
+	*/
+
 	int iRet = 0;
 
 	// 保存下当前工作目录

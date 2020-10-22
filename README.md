@@ -47,16 +47,16 @@
 1. 拉取 docker 镜像: docker pull registry.cn-hangzhou.aliyuncs.com/xrkmonitor/release:v2.8_2020-10-16
 1. 通过镜像启动容器：docker images 查看镜像ID，假设为：93297f01d06b    
    启动容器：   
-   docker run -idt -p27000:27000/udp -p38080:38080/udp -p28080:28080/udp -p8080:80 --env xrk_host_ip=192.168.128.210 --env xrk_http_port=8080 -v /data/xrkmonitor/docker_mysql:/var/lib/mysql -v /data/xrkmonitor/docker_slog:/home/mtreport/slog 93297f01d06b    
-   参数说明：   
-   	-p27000:27000/udp -p38080:38080/udp -p28080:28080/udp -p8080:80 日志、监控点、接入服务等的端口映射   
-    --env xrk_host_ip=192.168.128.210 宿主机的ip地址, 根据实际情况传递    
-	--env xrk_http_port=8080 web 控制台的映射端口，如使用宿主机的80端口则可以省略     
-    -v /data/xrkmonitor/docker_mysql:/var/lib/mysql, 挂载宿主机目录    
-    -v /data/xrkmonitor/docker_slog:/home/mtreport/slog，挂载日志目录       
+   docker run -idt -p27000:27000/udp -p38080:38080/udp -p28080:28080/udp -p80:80 --env xrk_host_ip=192.168.128.210 --env xrk_http_port=8080 -v /data/xrkmonitor/docker_mysql:/var/lib/mysql -v /data/xrkmonitor/docker_slog:/home/mtreport/slog 93297f01d06b    
+   参数说明：    
+   	-p27000:27000/udp -p38080:38080/udp -p28080:28080/udp -p80:80 日志、监控点、接入服务等的端口映射    
+    --env xrk_host_ip=192.168.128.210 宿主机的ip地址, 根据实际情况传递      
+	--env xrk_http_port=80 web 控制台的映射端口（可以使用非80端口映射容器80端口，相关问题可以查看在线文档的 docker 部署部分）    
+    -v /data/xrkmonitor/docker_mysql:/var/lib/mysql, 挂载宿主机目录     
+    -v /data/xrkmonitor/docker_slog:/home/mtreport/slog，挂载日志目录     
 1. docker ps -a 查看运行的容器，docker attach 进入容器，进入目录 /home/mtreport, 执行 ./start_docker.sh 启动监控系统服务    
-1. 在浏览器端使用宿主机IP即可访问控制台： http://192.168.128.210:8080，控制台默认账号密码为：sadmin/sadmin    
-1. 如需停止服务可执行 : /home/mtreport/stop_docker.sh 脚本    
+1. 在浏览器端使用宿主机IP即可访问控制台： http://192.168.128.210，控制台默认账号密码为：sadmin/sadmin     
+1. 如需停止服务可执行 : /home/mtreport/stop_docker.sh 脚本     
 
 
 **agent 部署说明：**    
