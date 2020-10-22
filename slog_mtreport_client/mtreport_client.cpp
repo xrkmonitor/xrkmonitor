@@ -65,8 +65,9 @@
 
 extern MtReport g_mtReport;
 
-const std::string g_strVersion = "v1.0.0";
+const std::string g_strVersion = "open xrkmonitor - v1.0.0";
 std::string g_strCmpTime = __DATE__ " " __TIME__; 
+const std::string g_strVersionDetail = "version - open xrkmonitor - v1.0.0 cmp@" __DATE__ " " __TIME__;
 CONFIG stConfig;
 
 int InitReportLog();

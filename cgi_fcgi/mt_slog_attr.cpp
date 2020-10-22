@@ -500,8 +500,7 @@ static int SaveAttr(bool bIsMod=false)
 	int32_t iAttrId = hdf_get_int_value(stConfig.cgi->hdf, "Query.dam_attr_id", 0);
     int32_t iStaticTime = hdf_get_int_value(stConfig.cgi->hdf, "Query.dam_new_attr_static_time", 1);
 
-    if(iStaticTime != 1 && iStaticTime!=5 && iStaticTime!=10 && iStaticTime!=15 && iStaticTime!=30
-        && iStaticTime!=60 && iStaticTime!=1439)
+	if(!IsValidStaticTime(iStaticTime))
     {
         REQERR_LOG("invalid static time:%d", iStaticTime);
         return SLOG_ERROR_LINE;
@@ -709,6 +708,7 @@ static int DealModAttr()
 	hdf_set_int_value(stConfig.cgi->hdf, "config.sum_report_his", SUM_REPORT_TOTAL);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.str_report_d", STR_REPORT_D);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.str_report_d_ip", STR_REPORT_D_IP);
+	hdf_set_int_value(stConfig.cgi->hdf, "config.data_percent", DATA_PERCENT);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.ex_report", EX_REPORT);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.static_time", iStaticTime);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.excep_attr_mask", iExcepAttrMask);
@@ -724,6 +724,7 @@ static int DealAddAttr()
 	hdf_set_int_value(stConfig.cgi->hdf, "config.sum_report_min", SUM_REPORT_MIN);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.str_report_d", STR_REPORT_D);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.str_report_d_ip", STR_REPORT_D_IP);
+	hdf_set_int_value(stConfig.cgi->hdf, "config.data_percent", DATA_PERCENT);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.sum_report_his", SUM_REPORT_TOTAL);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.sum_report_max", SUM_REPORT_MAX);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.ex_report", EX_REPORT);
@@ -734,6 +735,7 @@ typedef struct
 {
 	int iAttrType;
 	int iDataType;
+	int iStaticTime;
 	std::string strName;
 	std::string strDesc;
 	std::string strLine;
@@ -798,8 +800,8 @@ static int DealAddMultiAttr()
 			hdf_set_value(stConfig.cgi->hdf, "config.invalid_line", pLineStr);
 			return 4;
 		}
-		if(sscanf(pLineStr, "%d%d%s%s", 
-			&stTmpInfo.iAttrType, &stTmpInfo.iDataType, sAttrName, sAttrDesc) != 4)
+		if(sscanf(pLineStr, "%d %d %d \"%[^\"]\" \"%[^\"]\"", 
+			&stTmpInfo.iAttrType, &stTmpInfo.iDataType, &stTmpInfo.iStaticTime, sAttrName, sAttrDesc) != 5)
 		{
 			REQERR_LOG("invalid line info, line:%s", pLineStr);
 			FCGI_fclose(fp);
@@ -833,6 +835,15 @@ static int DealAddMultiAttr()
 			return 6;
 		}
 
+		if(!IsValidStaticTime(stTmpInfo.iStaticTime))
+        {
+			REQERR_LOG("invalid attr static time:%d, line:%s", stTmpInfo.iStaticTime, pLineStr);
+			FCGI_fclose(fp);
+			hdf_set_int_value(stConfig.cgi->hdf, "config.invalid_attr_static_time", stTmpInfo.iStaticTime);
+			hdf_set_value(stConfig.cgi->hdf, "config.invalid_line", pLineStr);
+			return 10;
+        }
+
 		stTmpInfo.strName = sAttrName;
 		stTmpInfo.strDesc = sAttrDesc;
 		stTmpInfo.strLine = pLineStr;
@@ -864,6 +875,7 @@ static int DealAddMultiAttr()
 
 		AddParameter(&ppara, "attr_type", it->iAttrType, "DB_CAL");
 		AddParameter(&ppara, "data_type", it->iDataType, "DB_CAL");
+		AddParameter(&ppara, "static_time", it->iStaticTime, "DB_CAL");
 		AddParameter(&ppara, "attr_name", it->strName.c_str(), NULL);
 		AddParameter(&ppara, "attr_desc", it->strDesc.c_str(), NULL);
 		AddParameter(&ppara, "user_mod_id", stConfig.stUser.puser_info->iUserId, "DB_CAL");
@@ -946,6 +958,7 @@ static int DealAttrSearch()
 	hdf_set_int_value(stConfig.cgi->hdf, "config.sum_report_min", SUM_REPORT_MIN);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.str_report_d", STR_REPORT_D);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.str_report_d_ip", STR_REPORT_D_IP);
+	hdf_set_int_value(stConfig.cgi->hdf, "config.data_percent", DATA_PERCENT);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.sum_report_his", SUM_REPORT_TOTAL);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.sum_report_max", SUM_REPORT_MAX);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.ex_report", EX_REPORT);

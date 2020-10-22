@@ -2872,6 +2872,7 @@ static int AddPluginAttr(Query &qu, Json &js_attr, Json &js_plugin)
 	AddParameter(&ppara, "user_add", stConfig.stUser.puser, NULL);
 	AddParameter(&ppara, "data_type", (int)(js_attr["attr_data_type"]), "DB_CAL");
 	AddParameter(&ppara, "attr_type", iAttrType, "DB_CAL");
+	AddParameter(&ppara, "static_time", (int)(js_attr["static_time"]), "DB_CAL");
 	AddParameter(&ppara, "user_add_id", pUserInfo->iUserId, "DB_CAL");
 	AddParameter(&ppara, "user_mod_id", pUserInfo->iUserId, "DB_CAL");
 	AddParameter(&ppara, "create_time", pcurTime, NULL);

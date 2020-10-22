@@ -14,10 +14,11 @@
 		2、导入文件编码为 utf8 或者 gbk<br />
 		3、导入文件每行格式为：<br />
 		<div style='margin-left:20px'>
-			监控点类型编号 数据类型ID 监控点名称  监控点描述<br />
+			<br>监控点类型 数据类型ID 统计周期 "监控点名称"  "监控点描述"</br>
+			<br>注意: 监控点名称和监控点描述要用引号包围</br>
 			示例：<br />
-			76 1 cpu使用率监控 批量导入 <br />
-			76 2 cpu22使用率 批量导入 <br />
+			76 1 5 "cpu 使用率监控" "批量导入" <br />
+			76 2 60 "cpu22 使用率" "批量导入" <br />
 		</div><br />
 		非法内容：<?cs var:config.invalid_line ?> <br />
 		<?cs elif:config.result == 5 ?>
@@ -29,6 +30,9 @@
 		<?cs elif:config.result == 7 ?>
 		添加监控点数目超过限制：<?cs var:config.try_add_attr_count ?><br />
 		每次限制最多添加 100 个 <br />
+		<?cs elif:config.result == 10 ?>
+		非法监控点统计周期：<?cs var:config.invalid_attr_static_time ?><br />
+		非法内容：<?cs var:config.invalid_line ?> <br />
 		<?cs else ?>
 		服务器错误，请稍后再试
 		<?cs /if ?>

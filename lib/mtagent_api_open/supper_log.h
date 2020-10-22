@@ -354,7 +354,8 @@ enum {
 	SUM_REPORT_TOTAL = 5, // 按历史上报累计
 	STR_REPORT_D = 6, // 按天累计的字符串型, 一天生成一张饼图表，多个字符串时只显示前几位有上报的字符串
 	STR_REPORT_D_IP = 7, // IP 转地址字符串，地址为省级
-	SUM_REPORT_TYPE_MAX = 7, // 最大不能超过 255
+	DATA_PERCENT = 8, // 百分比(例如cpu/内存使用率等)
+	SUM_REPORT_TYPE_MAX = 8, // 最大不能超过 255
 };
 
 // Ip 地址库管理 
@@ -1769,6 +1770,30 @@ class CLogTimeCur
 };
 
 // 日志记录类 ----- 用于将日志写入本地文件或者共享内存 - 用于日志生产模块写日志 ------------------------
+#define COUNT_STATIC_TIMES_PER_DAY 1440
+inline int GetDayOfMin(TIME_INFO *pinfo, int iStaticTime)
+{
+	if(iStaticTime <= 0)
+		iStaticTime =1 ;
+	int i = pinfo->hour*60+pinfo->min;
+	i /= iStaticTime;
+	if((i%iStaticTime) != 0 || pinfo->sec > 0)
+		i++;
+	i--; // 编号从 0 开始
+	if(i < 0)
+		i = 0;
+	if(i >= COUNT_STATIC_TIMES_PER_DAY)
+		i = COUNT_STATIC_TIMES_PER_DAY-1;
+	return i;
+}
+
+inline bool IsValidStaticTime(int iStaticTime)
+{
+	if(iStaticTime != 1 && iStaticTime!=5 && iStaticTime!=10 && iStaticTime!=15 && iStaticTime!=30
+			&& iStaticTime!=60 && iStaticTime!=180 && iStaticTime!=360 && iStaticTime!=1439)
+		return false;
+	return true;
+}
 
 class CMemCacheClient;
 class CSupperLog: public StdLog, public IError

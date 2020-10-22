@@ -621,6 +621,7 @@ static int DealBindAttrList(int view_id, AttrSearchInfo *pshInfo=NULL)
 	hdf_set_int_value(stConfig.cgi->hdf, "config.sum_report_min", SUM_REPORT_MIN);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.str_report_d", STR_REPORT_D);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.str_report_d_ip", STR_REPORT_D_IP);
+	hdf_set_int_value(stConfig.cgi->hdf, "config.data_percent", DATA_PERCENT);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.sum_report_his", SUM_REPORT_TOTAL);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.sum_report_max", SUM_REPORT_MAX);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.ex_report", EX_REPORT);
@@ -847,6 +848,7 @@ static int GetAttrList(int view_id, Json &js, AttrSearchInfo *pinfo=NULL)
 		attr["name"] = qu.getstr("attr_name");
 		attr["attr_type"] = qu.getstr("attr_type");
 		attr["data_type"] = qu.getval("data_type");
+		attr["static_time"] = qu.getval("static_time");
 		js["list"].Add(attr);
 	}
 	js["count"] = i; 
@@ -874,6 +876,7 @@ static int DealNotBindAttrList(int view_id, AttrSearchInfo *pshInfo=NULL)
 	hdf_set_int_value(stConfig.cgi->hdf, "config.sum_report_min", SUM_REPORT_MIN);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.str_report_d", STR_REPORT_D);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.str_report_d_ip", STR_REPORT_D_IP);
+	hdf_set_int_value(stConfig.cgi->hdf, "config.data_percent", DATA_PERCENT);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.sum_report_his", SUM_REPORT_TOTAL);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.sum_report_max", SUM_REPORT_MAX);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.ex_report", EX_REPORT);

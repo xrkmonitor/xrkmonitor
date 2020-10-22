@@ -295,10 +295,25 @@ void CheckWarnAttrHashNode()
 		pNode = (TWarnAttrReportInfo*)GetFirstNodeRevers(&hash);
 		ERR_LOG("man by bug - has node:%u, bug get first null", pTableHead->dwNodeUseCount);
 	}
+
+	AttrInfoBin *pAttrInfo = NULL;
 	for(; pNode != NULL; )
 	{
+        pAttrInfo = slog.GetAttrInfo(pNode->iAttrId, NULL);
+		if(!pAttrInfo) {
+            INFO_LOG("recycle attr hash node - machine id:%d , attr id:%d", pNode->iMachineId, pNode->iAttrId);
+			pNode->iMachineId = 0;
+			pNode->iAttrId = 0;
+			RemoveHashNode(&hash, pNode);
+			if(bReverse)
+				pNode = (TWarnAttrReportInfo*)GetCurNodeRevers(&hash);
+			else
+				pNode = (TWarnAttrReportInfo*)GetCurNode(&hash);
+            continue;
+		}
+
 		// fix bug @ 2020-04-13 历史累计监控点不能回收
-		if(pNode->bAttrDataType != SUM_REPORT_TOTAL && pNode->dwLastReportTime+60*10 <= now)
+		if(pNode->bAttrDataType != SUM_REPORT_TOTAL && pNode->dwLastReportTime+pAttrInfo->iStaticTime*60*10 <= now)
 		{
 			INFO_LOG("recycle warn attr hash node - machine id:%d , attr id:%d , last report time:%s",
 				pNode->iMachineId, pNode->iAttrId, uitodate(pNode->dwLastReportTime));
