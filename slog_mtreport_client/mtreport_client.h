@@ -278,6 +278,7 @@ typedef struct
 	bool bCheckHelloStart;
 
     uint64_t qwServerPacketSessId; // 来自服务器端的可靠udp 包 session id 
+	int iPLuginInstallTimeoutSec;
 
 	FILE *fpPluginInstallLogFile;
 }CONFIG;

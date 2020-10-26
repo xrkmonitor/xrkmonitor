@@ -1503,7 +1503,7 @@ int DealPreInstallNotify(CBasicPacket &pkg)
     SendPreInstallStatusToServer(pct, EV_PREINSTALL_TO_CLIENT_OK);
 
     std::ostringstream ss;
-	ss << "resp=`wget -t 3 -O - --dns-timeout=3 --connect-timeout=3 --read-timeout=5 -a " << sInstallLogFile.str() 
+	ss << "resp=`wget -t 3 -O - -T " << stConfig.iPLuginInstallTimeoutSec << " -a " << sInstallLogFile.str() 
 		<< " \"http://" << stConfig.szCloudUrl << "/" << "cgi-bin/mt_slog_open?action=open_preinstall_plugin";
     if(pct->sCheckStr[0] != '\0')
         ss << "&checkstr=" << pct->sCheckStr;
