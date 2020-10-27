@@ -70,13 +70,14 @@ typedef struct {
 static int InitFastCgi_first(CGIConfig &stConfig)
 {
 	if(InitFastCgiStart(stConfig) < 0) {
-		ERR_LOG("InitFastCgiStart failed !");
+		CGI_START_LOG("InitFastCgiStart failed !");
 		return SLOG_ERROR_LINE;
 	}
 
 	snprintf(g_strRedirectUri, sizeof(g_strRedirectUri), "%s/mt_slog_monitor", stConfig.szCgiPath);
 	if(slog.InitConfigByFile(stConfig.szConfigFile) < 0 || slog.Init() < 0)
 		return SLOG_ERROR_LINE;
+
 	return 0;
 }
 
@@ -530,12 +531,11 @@ int main(int argc, char **argv, char **envp)
 	stConfig.argv = argv;
 	if((iRet=InitFastCgi_first(stConfig)) < 0)
 	{
-		printf("InitCgi failed ! ret:%d, argc:%d\n", iRet, argc);
+		CGI_START_LOG("InitCgi failed ! ret:%d, argc:%d\n", iRet, argc);
 		MtReport_Attr_Add(108, 1);
 		return -1;
 	}
 	INFO_LOG("fcgi:%s argc:%d start pid:%u", stConfig.pszCgiName, argc, stConfig.pid);
-
 	if(AfterCgiInit(stConfig) <= 0)
 		return SLOG_ERROR_LINE;
 
