@@ -33,12 +33,17 @@ function GetDestOs()
     else
         OS_INFO_SRC=`cat /etc/issue`
     fi  
-    OS_LIST=('CentOS' 'Slackware' 'Mint' 'Mageia' 'Arch' 'PCLinuxOS' 'FreeBSD' 'Red Hat' 'Aliyun' 'Fedora' 'Debian' 'openSUSE' 'Ubunt
-u')
+    OS_LIST=('CentOS' 'Slackware' 'Mint' 'Mageia' 'Arch' 
+		'PCLinuxOS' 'FreeBSD' 'Red Hat' 'Aliyun' 'Fedora' 'Debian' 'openSUSE' 'Ubuntu')
+
+	IFSBAK=$IFS
+	IFS=':'
     for os in ${OS_LIST[@]}; do
         echo $OS_INFO_SRC |grep "$os" >/dev/null 2>&1
         [ $? -eq 0 ] && echo "$os" && return
     done
+	IFS=$IFSBAK
+
     echo "unknow"
     exit 0
 }

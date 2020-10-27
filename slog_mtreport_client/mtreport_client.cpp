@@ -558,7 +558,13 @@ static int Init()
 		std::string str;
 		get_cmd_result("./run_tool.sh getos", str);
 		memset(stConfig.szOs, 0, sizeof(stConfig.szOs));
-		strncpy(stConfig.szOs, str.c_str(), sizeof(stConfig.szOs)-1);
+		if(str.find("failed") != std::string::npos || str == "") {
+			strncpy(stConfig.szOs, str.c_str(), sizeof(stConfig.szOs)-1);
+			WARN_LOG("get os type failed, set to comm linux");
+			strncpy(stConfig.szOs, "CommLinux", sizeof(stConfig.szOs)-1);
+		}
+		else
+			strncpy(stConfig.szOs, str.c_str(), sizeof(stConfig.szOs)-1);
 	}
 
 	if(stConfig.szOsArc[0] == '\0') {
