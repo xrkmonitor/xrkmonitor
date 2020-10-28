@@ -108,6 +108,7 @@ function <?cs var:config.plugin_pre ?>_GetInstallPluginShowInfo(idx, plugin, loc
 {
 	var shtml = "<div class='plugin_block' style='margin:10px " + g_PluginMargin + "px;' ";
 		shtml += " id='<?cs var:config.plugin_pre ?>_plugin_" + plugin.plugin_id + "'";
+        shtml += " open_src='" + plugin.open_src + "' ";
         shtml += " set_method='" + plugin.set_method + "' ";
 		shtml += " onclick='return <?cs var:config.plugin_pre ?>SetSelplugin(" + idx + ")' >";
 
@@ -233,7 +234,13 @@ function <?cs var:config.plugin_pre ?>SetpluginList()
 	);
 
 	$("#<?cs var:config.plugin_pre ?>_plugin_list").children().each(function() {
-		$(this).contextMenu('mypluginOpenIns', {
+		if($(this).attr('set_method') == 0)
+			return;
+
+		var menu = 'mypluginOpenIns';
+		if($(this).attr('open_src') == 0)
+			menu = 'mypluginOpenInsClose';
+		$(this).contextMenu(menu, {
 			callback: function(t, op) {
 				t.trigger('click');
 			},
