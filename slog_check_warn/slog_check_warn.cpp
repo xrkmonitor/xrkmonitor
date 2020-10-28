@@ -341,7 +341,7 @@ void CheckMachineWarn(MachineInfo *pMachineInfo, TWarnConfig *pWarnConfig,
 			wInfo.iAttrId, wInfo.iWarnConfigValue, wInfo.dwWarnValue, wInfo.iWarnId);
 	}
 
-	if(pWarnConfig->iWarnConfigFlag & ATTR_WARN_FLAG_WAVE)
+	if((pWarnConfig->iWarnConfigFlag & ATTR_WARN_FLAG_WAVE) && dwPreLastVal > 0)
 	{
 		int w = (abs((int)(dwLastVal-dwPreLastVal))*100) / dwPreLastVal;
 		if(w > pWarnConfig->iWarnWave) {
@@ -564,9 +564,9 @@ void CheckAttrWarn(uint32_t now)
 	MachineInfo *pMachineInfo = NULL;
 	while(pNode != NULL)
 	{
-		pMachineInfo = slog.GetMachineInfo(pWarnConfig->iWarnId, NULL);
+		pMachineInfo = slog.GetMachineInfo(pNode->iMachineId, NULL);
 		if(pMachineInfo == NULL) {
-			ERR_LOG("not find machine:%d", pWarnConfig->iWarnId);
+			ERR_LOG("not find machine:%d", pNode->iMachineId);
 			if(bReverse)
 				pNode = (TWarnAttrReportInfo*)GetNextNodeRevers(&hash);
 			else
