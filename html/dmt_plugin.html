@@ -233,20 +233,19 @@ function <?cs var:config.plugin_pre ?>SetpluginList()
 	);
 
 	$("#<?cs var:config.plugin_pre ?>_plugin_list").children().each(function() {
-		if($(this).attr('set_method') != 0)
-			$(this).contextMenu('mypluginOpenIns', {
-				callback: function(t, op) {
-					t.trigger('click');
+		$(this).contextMenu('mypluginOpenIns', {
+			callback: function(t, op) {
+				t.trigger('click');
+			},
+			bindings: { 
+				downconf:function(t, m) { 
+					return <?cs var:config.plugin_pre ?>OnDownConf();
 				},
-				bindings: { 
-					downconf:function(t, m) { 
-						return <?cs var:config.plugin_pre ?>OnDownConf();
-					},
-					downall:function(t, m) { 
-						return <?cs var:config.plugin_pre ?>OnDownSrc();
-					},
-				}
-			});
+				downall:function(t, m) { 
+					return <?cs var:config.plugin_pre ?>OnDownSrc();
+				},
+			}
+		});
 	});
 }
 
