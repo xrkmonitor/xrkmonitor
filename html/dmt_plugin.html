@@ -38,6 +38,7 @@ function <?cs var:config.plugin_pre ?>OnDownSrc()
 
 	var rep_download_url = "<?cs var:config.xrkmonitor_url?>/cgi-bin/mt_slog_open?action=rep_open_download";
 	rep_download_url += "&plugin_id=" + <?cs var:config.plugin_pre ?>_sel_plugin.plugin_id;
+	rep_download_url += "&bind_user=" + <?cs var:config.xrkmonitor_account ?>;
 	$.ajax({ type: "get", url: rep_download_url, dataType: 'json', global: false });
 }
 
@@ -297,6 +298,7 @@ function <?cs var:config.plugin_pre ?>UpdatePlugin(idx)
     <?cs var:config.plugin_pre ?>SetSelplugin(idx);
     var requrl = "<?cs var:config.xrkmonitor_url?>/cgi-bin/mt_slog_open?action=open_get_plugin_pb_info";
     requrl += "&plugin_id=" + <?cs var:config.plugin_pre ?>_sel_plugin.plugin_id; 
+	requrl += "&bind_user=" + <?cs var:config.xrkmonitor_account ?>;
     $.ajax({
         type: "get",
         url: requrl,
@@ -322,6 +324,7 @@ function <?cs var:config.plugin_pre ?>InstallPlugin(idx)
 	<?cs var:config.plugin_pre ?>SetSelplugin(idx);
 	var requrl = "<?cs var:config.xrkmonitor_url?>/cgi-bin/mt_slog_open?action=open_get_plugin_pb_info";
 	requrl += "&plugin_id=" + <?cs var:config.plugin_pre ?>_sel_plugin.plugin_id; 
+	requrl += "&bind_user=" + <?cs var:config.xrkmonitor_account ?>;
 	$.ajax({
 		type: "get",
 		url: requrl,
@@ -365,6 +368,7 @@ function <?cs var:config.plugin_pre ?>InstallPluginPb(pbJs)
 				alertMsg.correct("插件安装成功, 接下来您需要部署插件");
 				var rep_install_url = "<?cs var:config.xrkmonitor_url?>/cgi-bin/mt_slog_open?action=rep_open_install";
 				rep_install_url += "&plugin_id=" + js.plugin_id;
+				rep_install_url += "&bind_user=" + <?cs var:config.xrkmonitor_account ?>;
 				$.ajax({ type: "get", url: rep_install_url, dataType: 'json', global: false });
 
 				<?cs var:config.plugin_pre ?>SaveSearch();
@@ -429,6 +433,7 @@ function <?cs var:config.plugin_pre ?>Search()
 	reqdata.price = $('#<?cs var:config.plugin_pre ?>_SearchBar select[name=price]').val();
 	reqdata.set_status = $('#<?cs var:config.plugin_pre ?>_SearchBar select[name=set_status]').val();
 	reqdata.local_plugins = g_LocalOpenPluginListIds;
+	reqdata.bind_user = <?cs var:config.xrkmonitor_account ?>;
 
 	$.ajax({
 		type:'post',
