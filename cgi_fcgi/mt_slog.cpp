@@ -2526,6 +2526,9 @@ int DealInitLogReportTest(CGI *cgi)
 
 static int DealListPlugin(CGI *cgi, const char *ptype="open")
 {
+	user::UserSessionInfo & user = stConfig.stUser.pbSess;
+	hdf_set_int_value(stConfig.cgi->hdf, "config.xrkmonitor_account", user.bind_xrkmonitor_uid());
+
 	hdf_set_value(stConfig.cgi->hdf, "config.plugin_pre", "dpopen");
 	hdf_set_valuef(stConfig.cgi->hdf, "config.navTabId=dmt_plugin_%s", ptype);
 
