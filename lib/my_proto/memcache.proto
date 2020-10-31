@@ -15,6 +15,7 @@ message MtMemcacheMachineAttrDayVal
 message MonitorMemcache
 {
 	optional MtMemcacheMachineAttrDayVal machine_attr_day_val = 1;
+	optional uint32 now_static_val = 2;
 }
 
 message MemcTimeInfo

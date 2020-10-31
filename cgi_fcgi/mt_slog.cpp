@@ -4533,7 +4533,7 @@ int DealSaveOprMachinePlugin()
     }
     else {
         REQERR_LOG("have no config item to update, plugin:%d, machine:%d", iPluginId, iMachineId);
-        hdf_set_value(stConfig.cgi->hdf, "err.msg", "插件配置项提取失败");
+		stConfig.pErrMsg = "当前无修改配置项，修改前请勾选要修改的配置项";
         return SLOG_ERROR_LINE;
     }
 

@@ -97,9 +97,12 @@ int CUdpSock::ChangeAttrSaveType(const char *ptable, Query &qu)
 	MyQuery myqu(m_qu, db);
 	Query & qu_day = myqu.GetQuery();
 
+    static char szBinDataBuf[5+(sizeof(uint16_t)+sizeof(uint32_t))*COUNT_STATIC_TIMES_PER_DAY];
+    uint16_t arrywIdx[COUNT_STATIC_TIMES_PER_DAY] = {0};
 	uint32_t arrydwValue[COUNT_STATIC_TIMES_PER_DAY] = {0};
+
 	uint32_t dwMax=0, dwMin=0, dwTotal=0, dwLastIp=0;
-	int32_t iMaxReportIdx = 0, iMaxDataLen = 0;
+	int32_t iMaxReportIdx = 0, iMaxDataLen = 0, iStaticTime = 0, iBinaryDataLen = 0, iCountIdx = 0;
 	AttrInfoBin *pAttrInfo = NULL;
 	for(int i=0; i < qu.num_rows() && qu.fetch_row() != NULL; i++)
 	{
@@ -112,27 +115,64 @@ int CUdpSock::ChangeAttrSaveType(const char *ptable, Query &qu)
             continue;
         }
 
+        int iMaxAttrCountIdx = GetStaticTimeMaxIdxOfDay(pAttrInfo->iStaticTime);
 		GetMonitorAttrMemcache(qu_day, iAttrId, iMachineId, ptable, 
 			dwMin, dwMax, dwTotal, iMaxReportIdx, (uint32_t*)arrydwValue, &dwLastIp, pAttrInfo->iStaticTime);
-		if(iMaxReportIdx < 0 || iMaxReportIdx >= COUNT_STATIC_TIMES_PER_DAY)
+		if(dwMax <= 0 || iMaxReportIdx < 0 || iMaxReportIdx >= COUNT_STATIC_TIMES_PER_DAY || iMaxReportIdx >= iMaxAttrCountIdx)
 		{
-			WARN_LOG("attr no report - attr:%d machine:%d , table:%s", iAttrId, iMachineId, ptable);
+			WARN_LOG("attr no report - attr:%d machine:%d , table:%s, static time:%d, max idx:%d(%d)",
+                iAttrId, iMachineId, ptable, pAttrInfo->iStaticTime, iMaxAttrCountIdx, iMaxReportIdx);
 			continue;
 		}
 
-		if(dwMax <= 0)
-			continue;
+		iCountIdx = 0;
+        for(int k=0; k <= iMaxReportIdx; k++) {
+            if(arrydwValue[k] != 0)
+                iCountIdx++;
+        }
 
-		DEBUG_LOG("change attr:%d machine:%d save type , max count report idx:%d, min:%u, max:%u, total:%u",
-			iAttrId, iMachineId, iMaxReportIdx, dwMin, dwMax, dwTotal);
+        if(iCountIdx*2 > iMaxAttrCountIdx) {
+            // 使用直接数组存储, 存储全部统计周期
+            for(int k=0; k < iMaxAttrCountIdx; k++) {
+                arrydwValue[k] = htonl(arrydwValue[k]);
+            }
+            iCountIdx = -1;
+        }
+        else {
+            // 压缩存储，只存有上报的统计周期的数据
+            iCountIdx = 0;
+            for(int k=0; k <= iMaxReportIdx; k++) {
+                if(arrydwValue[k] != 0) {
+                    arrywIdx[iCountIdx] = htons(k);
+                    arrydwValue[iCountIdx] = htonl(arrydwValue[k]);
+                    iCountIdx++;
+                }
+            }
+        }
 
 		/*  binary 方式存储 */
 		snprintf(stConfig.szBinSql, sizeof(stConfig.szBinSql),
 			"insert into %s_day set attr_id=%d,machine_id=%d,min=%u,max=%u,total=%u,last_ip=%u,value=",
 			ptable, iAttrId, iMachineId, dwMin, dwMax, dwTotal, dwLastIp);
 	
+        char *pbin = (char*)szBinDataBuf;
+        if(iCountIdx > 0) {
+            *pbin = (char)ATTR_DAY_BIN_TYPE_PRESS_V2; // ctype
+            *(uint16_t*)(pbin+1) = htons(iStaticTime); // wStaticTime
+            *(uint16_t*)(pbin+3) = htons(iCountIdx); // wCount
+            memcpy(pbin+5, arrywIdx, iCountIdx*sizeof(arrywIdx[0])); // arrIdx(uint16_t[wCount])
+            memcpy(pbin+5+iCountIdx*sizeof(arrywIdx[0]), arrydwValue, iCountIdx*sizeof(arrydwValue[0])); // arrVal(uint32_t[wCount])
+            iBinaryDataLen = 5+iCountIdx*(sizeof(arrywIdx[0])+sizeof(arrydwValue[0]));
+        }
+        else {
+            *pbin = (char)ATTR_DAY_BIN_TYPE_ARRAY_V2; // ctype
+            *(uint16_t*)(pbin+1) = htons(iStaticTime); // wStaticTime
+            memcpy(pbin+3, arrydwValue, iMaxAttrCountIdx*sizeof(arrydwValue[0])); // arrVal(uint32_t[iMaxAttrCountIdx])
+            iBinaryDataLen = 3+iMaxAttrCountIdx*sizeof(arrydwValue[0]);
+        }
+
 		char *pbuf = (char*)stConfig.szBinSql+strlen(stConfig.szBinSql);
-		int32_t iBinaryDataLen = qu_day.SetBinaryData(pbuf, (const char*)arrydwValue, sizeof(uint32_t)*(1+iMaxReportIdx));
+		iBinaryDataLen = qu_day.SetBinaryData(pbuf, (const char*)pbin, iBinaryDataLen);
 		if(iBinaryDataLen < 0)
 		{
 			qu.free_result();
@@ -147,8 +187,8 @@ int CUdpSock::ChangeAttrSaveType(const char *ptable, Query &qu)
 			return SLOG_ERROR_LINE;
 		}
 
-		INFO_LOG("change attr save type to day ok - attr_id:%d,machine_id:%d, max report count idx:%d",
-			iAttrId, iMachineId, iMaxReportIdx);
+		INFO_LOG("change attr save type to day ok - attr_id:%d,machine_id:%d, max report count idx:%d, count idx:%d",
+			iAttrId, iMachineId, iMaxReportIdx, iCountIdx);
 	}
 	INFO_LOG("get attr day type from:%s record count:%d, max length:%d", ptable, qu.num_rows(), iMaxDataLen);
 	qu.free_result();
@@ -266,9 +306,13 @@ int CUdpSock::CreateAttrDayTable(const char *pszTbName)
 
 	qu.fetch_row();
 	int iCount = qu.getval(0);
-	if(iCount > m_iKeepDay)
+
+    if(iCount <= m_iKeepDay)
+		INFO_LOG("attr day table count:%d", iCount);
+	qu.free_result();
+
+	while(iCount > m_iKeepDay)
 	{
-		qu.free_result();
 		strcpy(stConfig.szBinSql, "select id,table_name from table_info_day order by table_name asc limit 1");
 		if(qu.get_result(stConfig.szBinSql) == NULL || qu.num_rows() <= 0)
 		{
@@ -295,12 +339,8 @@ int CUdpSock::CreateAttrDayTable(const char *pszTbName)
 			snprintf(stConfig.szBinSql, sizeof(stConfig.szBinSql), "delete from table_info_day where id=%d", id);
 			qu.execute(stConfig.szBinSql);
 			INFO_LOG("delete table:%s success", strTb.c_str());
+            iCount--;
 		}
-	}
-	else
-	{
-		qu.free_result();
-		INFO_LOG("attr day table count:%d", iCount);
 	}
 	return 0;
 }
@@ -347,9 +387,12 @@ int CUdpSock::CreateAttrTable(const char *pszTbName)
 
 	qu.fetch_row();
 	int iCount = qu.getval(0);
-	if(iCount > m_iKeep)
+	if(iCount <= m_iKeep)
+		INFO_LOG("attr table count:%d", iCount);
+	qu.free_result();
+
+	while(iCount > m_iKeep)
 	{
-		qu.free_result();
 		strcpy(stConfig.szBinSql, "select id,table_name from table_info order by id asc limit 1");
 		if(qu.get_result(stConfig.szBinSql) == NULL || qu.num_rows() <= 0)
 		{
@@ -376,12 +419,8 @@ int CUdpSock::CreateAttrTable(const char *pszTbName)
 			snprintf(stConfig.szBinSql, sizeof(stConfig.szBinSql), "delete from table_info where id=%d", id);
 			qu.execute(stConfig.szBinSql);
 			INFO_LOG("delete table:%s success", strTb.c_str());
+            iCount--;
 		}
-	}
-	else
-	{
-		qu.free_result();
-		INFO_LOG("attr table count:%d", iCount);
 	}
 	return 0;
 }
@@ -576,12 +615,14 @@ void CUdpSock::GetMonitorAttrMemcache(
 		dwRepTime = qu.getuval("report_time");
         uitotime_info(dwRepTime, &stCurTimeInfo);
 		iDayOfMinTmp = GetDayOfMin(&stCurTimeInfo, iStaticTime);
+
 		puiValArry[iDayOfMinTmp] += qu.getuval("value");
+    	uiTotal += puiValArry[iDayOfMinTmp];
+
 		if(uiMax < puiValArry[iDayOfMinTmp])
 			uiMax = puiValArry[iDayOfMinTmp];
 		if(uiMin > puiValArry[iDayOfMinTmp])
 			uiMin = puiValArry[iDayOfMinTmp];
-		uiTotal += puiValArry[iDayOfMinTmp];
 		if(iDayOfMinTmp > iMaxReportIdx)
             iMaxReportIdx = iDayOfMinTmp;
 
@@ -669,7 +710,7 @@ TWarnAttrReportInfo * CUdpSock::AddReportToWarnAttrShm(
 		}
 
 		// 跨天无上报
-		if(slog.m_stNow.tv_sec >= pAttrShm->dwLastReportTime+1440*60)
+		if(slog.m_stNow.tv_sec > pAttrShm->dwLastReportTime+iStaticTime*60*2)
 		{
 			if(iDataType == SUM_REPORT_TOTAL) {
 				// 历史累计数据类型
@@ -692,7 +733,7 @@ TWarnAttrReportInfo * CUdpSock::AddReportToWarnAttrShm(
 				if(dwVal < pAttrShm->dwCurVal)
 					pAttrShm->dwCurVal = dwVal;
 			}
-			else if(SUM_REPORT_MAX == iDataType) {
+			else if(SUM_REPORT_MAX == iDataType || DATA_PERCENT == iDataType) {
 				// 取最大
 				if(dwVal > pAttrShm->dwCurVal)
 					pAttrShm->dwCurVal = dwVal;
@@ -723,9 +764,7 @@ TWarnAttrReportInfo * CUdpSock::AddReportToWarnAttrShm(
 		}
 		else
 		{
-			// 中间至少有2分钟无上报数据或者上报丢失
 			if(iDataType == SUM_REPORT_TOTAL) {
-				// 历史累计数据类型
 				pAttrShm->dwPreLastVal = pAttrShm->dwCurVal;
 				pAttrShm->dwLastVal = pAttrShm->dwCurVal;
 				pAttrShm->dwCurVal += dwVal;
@@ -735,8 +774,14 @@ TWarnAttrReportInfo * CUdpSock::AddReportToWarnAttrShm(
 				pAttrShm->dwLastVal = 0;
 				pAttrShm->dwCurVal = dwVal;
 			}
-			INFO_LOG("attrid:%d, machineid:%d, report value may lost", pAttrShm->iAttrId, pAttrShm->iMachineId);
+            WARN_LOG("check static idx failed, attr:%d, idx:%d|%d, static:%d|%d", 
+                pAttrShm->iAttrId, pAttrShm->iMinIdx, iMinIdx, pAttrShm->wStaticTime, iStaticTime);
 		}
+
+        if(pAttrShm->wStaticTime != iStaticTime) {
+            INFO_LOG("change static time, attr:%d, time from:%d to %d", pAttrShm->iAttrId, pAttrShm->wStaticTime, iStaticTime);
+            pAttrShm->wStaticTime = iStaticTime;
+        }
 
 		DEBUG_LOG("after add warn attr val, attrid:%d, machineid:%d, PreLastVal:%u, LastVal:%u, val:%u, minIdx:%d",
 			pAttrShm->iAttrId, pAttrShm->iMachineId, pAttrShm->dwPreLastVal, pAttrShm->dwLastVal,
@@ -757,20 +802,18 @@ TWarnAttrReportInfo * CUdpSock::AddReportToWarnAttrShm(
 void CUdpSock::WriteAttrDataToMemcache()
 {
 	static int s_ReportAttrs[MAX_REPORT_ATTR_COUNT_PER_MACHINE*10];
-	static int s_LastSaveAttrToMemcacheIdx = -1;
-
 	if(!stConfig.iEnableMemcache)
 		return;
 
-	TIME_INFO stCurTimeInfo;
-    uitotime_info(slog.m_stNow.tv_sec, &stCurTimeInfo);
-	int idx = GetDayOfMin(&stCurTimeInfo, 1);
-	if(idx == s_LastSaveAttrToMemcacheIdx)
-		return;
-	s_LastSaveAttrToMemcacheIdx = idx;
-
-	uint32_t dwLastVal  = 0;
+	static uint32_t s_dwLastTrySaveMemTime = 0;
 	uint32_t dwTimeCur = slog.m_stNow.tv_sec;
+	if(s_dwLastTrySaveMemTime+10+slog.m_iRand%30 > dwTimeCur) 
+		return;
+    s_dwLastTrySaveMemTime = dwTimeCur;
+
+	TIME_INFO stCurTimeInfo;
+    uitotime_info(dwTimeCur, &stCurTimeInfo);
+	uint32_t dwLastVal  = 0, dwCurVal = 0;
 	if(m_szLastTableName[0] == '\0' && CheckTableName() < 0)
 	{
 		ERR_LOG("CheckTableName failed!");
@@ -797,20 +840,26 @@ void CUdpSock::WriteAttrDataToMemcache()
 		bReverse ? (pReportShm = (TWarnAttrReportInfo*)GetNextNodeRevers(&hash)) :
 			(pReportShm = (TWarnAttrReportInfo*)GetNextNode(&hash)))
 	{
-	    idx = GetDayOfMin(&stCurTimeInfo, pReportShm->wStaticTime);
+	    int idx = GetDayOfMin(&stCurTimeInfo, pReportShm->wStaticTime);
 
 		// 找到归属于当前时间的上报数值
 		dwLastVal = pReportShm->dwLastVal;
-		if(dwTimeCur >= pReportShm->dwLastReportTime+1440*60)
+        dwCurVal = pReportShm->dwCurVal;
+    
+		if(dwTimeCur >= pReportShm->dwLastReportTime+1440*pReportShm->wStaticTime){
 			dwLastVal = 0;
+            dwCurVal = 0;
+        }
 		else if(idx != pReportShm->iMinIdx)
 		{
+            dwCurVal = 0;
+
 			if((pReportShm->iMinIdx+1) == idx)
 				dwLastVal = pReportShm->dwCurVal;
 			else
 				dwLastVal = 0;
 		}
-		if(dwLastVal <= 0
+		if(dwLastVal <= 0 && dwCurVal <= 0
 			&& pReportShm->bAttrDataType != STR_REPORT_D && pReportShm->bAttrDataType != STR_REPORT_D_IP)
 			continue;
 
@@ -982,23 +1031,29 @@ void CUdpSock::WriteAttrDataToMemcache()
 		if(pmemcache->GetMonitorMemcache(memInfo) >= 0 && memInfo.machine_attr_day_val().attr_val_size() > 0)
 		{
 			int i = memInfo.machine_attr_day_val().attr_val_size() - 1;
-			if(memInfo.machine_attr_day_val().attr_val(i).idx() == (uint32_t)idx
-				&& memInfo.machine_attr_day_val().attr_val(i).val() != dwLastVal)
+			if(memInfo.machine_attr_day_val().attr_val(i).idx() == (uint32_t)idx)
 			{
-				memInfo.mutable_machine_attr_day_val()->mutable_attr_val(i)->set_val(dwLastVal);
-				if((iRet=pmemcache->SetMonitorMemcache(memInfo, NULL, MEMCACHE_MACHINE_ATTR_VAL_EXPIRE_TIME)) != 0)
-				{
-					WARN_LOG("SetMonitorMemcache failed, count:%d, max:%d, val:%u", 
-						memInfo.machine_attr_day_val().attr_val_size(), memInfo.machine_attr_day_val().max_idx(), dwLastVal);
-				}
-				else {
-					DEBUG_LOG("SetMonitorMemcache ok, machine:%d, attr:%d, count:%d, max:%d, val:%u", 
-						pReportShm->iMachineId, pReportShm->iAttrId,
-						memInfo.machine_attr_day_val().attr_val_size(), memInfo.machine_attr_day_val().max_idx(), dwLastVal);
-				}
+                if(memInfo.now_static_val() != dwCurVal || memInfo.machine_attr_day_val().attr_val(i).val() != dwLastVal)
+                {
+                    memInfo.set_now_static_val(dwCurVal);
+                    memInfo.mutable_machine_attr_day_val()->mutable_attr_val(i)->set_val(dwLastVal);
+                    if((iRet=pmemcache->SetMonitorMemcache(memInfo, NULL, MEMCACHE_MACHINE_ATTR_VAL_EXPIRE_TIME)) != 0)
+                    {
+                        WARN_LOG("SetMonitorMemcache failed, count:%d, max:%d, val:%u", 
+                            memInfo.machine_attr_day_val().attr_val_size(), memInfo.machine_attr_day_val().max_idx(), dwLastVal);
+                    }
+                    else {
+                        DEBUG_LOG("SetMonitorMemcache ok, machine:%d, attr:%d, count:%d, max:%d, val:%u", 
+                            pReportShm->iMachineId, pReportShm->iAttrId, memInfo.machine_attr_day_val().attr_val_size(),
+                            memInfo.machine_attr_day_val().max_idx(), dwLastVal);
+				    }
+                }
 			}
-			else if(memInfo.machine_attr_day_val().attr_val(i).idx() != (uint32_t)idx)
+			else 
 			{
+				if(memInfo.now_static_val() != dwCurVal)
+                    memInfo.set_now_static_val(dwCurVal);
+
 				pAttrVal = memInfo.mutable_machine_attr_day_val()->add_attr_val();
 				pAttrVal->set_idx(idx);
 				pAttrVal->set_val(dwLastVal);
@@ -1024,6 +1079,7 @@ void CUdpSock::WriteAttrDataToMemcache()
 			pAttrVal = memInfo.mutable_machine_attr_day_val()->add_attr_val();
 			pAttrVal->set_idx(idx);
 			pAttrVal->set_val(dwLastVal);
+            memInfo.set_now_static_val(dwCurVal);
 			memInfo.mutable_machine_attr_day_val()->set_max_idx(idx);
 			if((iRet=pmemcache->SetMonitorMemcache(memInfo, NULL, MEMCACHE_MACHINE_ATTR_VAL_EXPIRE_TIME)) != 0)
 			{
@@ -1110,6 +1166,8 @@ void CUdpSock::InitTotalAttrReportShm(
 		pAttrShm->dwLastVal = dwMemcacheVal;
 		pAttrShm->dwCurVal = dwMemcacheVal;
 	}
+	else if(pAttrShm->wStaticTime != iStaticTime)
+		pAttrShm->wStaticTime = iStaticTime;
 
 	if(dwMemcacheVal > pAttrShm->dwCurVal) {
 		pAttrShm->dwLastVal = dwMemcacheVal;
@@ -1118,7 +1176,7 @@ void CUdpSock::InitTotalAttrReportShm(
 	pAttrShm->iMinIdx = iMinIdx;
 	pAttrShm->dwLastReportTime = slog.m_stNow.tv_sec;
 	INFO_LOG("set total history attr report shm info, attrid:%d, machineid:%d, val:%u(%u), minidx:%d",
-		iAttrId, iMachineId, pAttrShm->dwCurVal, dwMemcacheVal, iMinIdx);
+		iAttrId, iMachineId, pAttrShm->dwCurVal, dwMemcacheVal, pAttrShm->iMinIdx);
 }
 
 
@@ -1326,10 +1384,15 @@ int CUdpSock::ReadStrAttrInfoFromDbToShm()
 			continue;
 		}
 
-		DEBUG_LOG("read str attr id:%d, info:%s, from db", iAttrId, stAttrInfoPb.ShortDebugString().c_str());
+		DEBUG_LOG("read str attr id:%d, info:%s, from db, static:%d",
+			iAttrId, stAttrInfoPb.ShortDebugString().c_str(), pAttrInfo->iStaticTime);
 		for(int j=0; j < stAttrInfoPb.msg_attr_info().size(); j++)
 		{
 			stAttrInfoPb.mutable_msg_attr_info(j)->set_uint32_attr_id(iAttrId);
+
+			if(slog.GetMachineInfo(stAttrInfoPb.report_host_id(), NULL)) {
+				continue;
+			}
 
 			// 字符串类型已经转换过了, 这里不用处理
 			pStrAttrShm = AddStrAttrReportToShm(stAttrInfoPb.msg_attr_info(j), stAttrInfoPb.report_host_id(), 0);
@@ -1478,12 +1541,11 @@ void CUdpSock::WriteStrAttrToDb()
 
 void CUdpSock::WriteAttrDataToDb()
 {
-    TIME_INFO stCurTimeInfo;
-    uitotime_info(slog.m_stNow.tv_sec, &stCurTimeInfo);
-	int idx = GetDayOfMin(&stCurTimeInfo, 1);
-	if(idx == stConfig.pShmConfig->stSysCfg.iLastSaveAttrToDbIdx)
+    static uint32_t s_dwLastTrySaveDbTime = 0;
+	uint32_t now = slog.m_stNow.tv_sec;
+	if(s_dwLastTrySaveDbTime+10+slog.m_iRand%30 > now) 
 		return;
-	stConfig.pShmConfig->stSysCfg.iLastSaveAttrToDbIdx = idx;
+    s_dwLastTrySaveDbTime = now;
 
 	if(CheckTableName() < 0)
 	{
@@ -1497,7 +1559,6 @@ void CUdpSock::WriteAttrDataToDb()
 	Query & qu_info = myqu_if.GetQuery();
 
 	uint32_t dwLastVal  = 0; 
-	uint32_t now = slog.m_stNow.tv_sec;
 	SharedHashTable & hash = slog.GetWarnAttrHash();
 	bool bReverse = false;
 	_HashTableHead *pTableHead = (_HashTableHead*)hash.pHash;
@@ -1508,7 +1569,9 @@ void CUdpSock::WriteAttrDataToDb()
 		ERR_LOG("man by bug - has node:%u, bug get first null", pTableHead->dwNodeUseCount);
 	}
 
-	int i = 0;
+    TIME_INFO stCurTimeInfo;
+    uitotime_info(slog.m_stNow.tv_sec, &stCurTimeInfo);
+	int i = 0, idx = 0;
 	for(i=0; pReportShm != NULL; 
 		bReverse ? (pReportShm = (TWarnAttrReportInfo*)GetNextNodeRevers(&hash)) :
 			(pReportShm = (TWarnAttrReportInfo*)GetNextNode(&hash)), i++)
@@ -1517,7 +1580,7 @@ void CUdpSock::WriteAttrDataToDb()
 	    idx = GetDayOfMin(&stCurTimeInfo, pReportShm->wStaticTime);
 
 		dwLastVal = pReportShm->dwLastVal;
-		if(now >= pReportShm->dwLastReportTime+1440*60)
+		if(now >= pReportShm->dwLastReportTime+pReportShm->wStaticTime*60)
 			dwLastVal = 0;
 		else if(idx != pReportShm->iMinIdx)
 		{
@@ -1527,7 +1590,8 @@ void CUdpSock::WriteAttrDataToDb()
 				dwLastVal = 0;
 		}
 
-		if(dwLastVal <= 0)
+		if(dwLastVal <= 0 
+            || (pReportShm->wLastToDbIdx == idx && pReportShm->dwLastToDbTime+pReportShm->wStaticTime*60 >= now))
 			continue;
 
 		snprintf(stConfig.szBinSql, sizeof(stConfig.szBinSql), 
@@ -1540,6 +1604,9 @@ void CUdpSock::WriteAttrDataToDb()
 				pReportShm->iAttrId, pReportShm->iMachineId, dwLastVal, pReportShm->dwLastVal);
 			break;
 		}
+
+        pReportShm->wLastToDbIdx = idx;
+        pReportShm->dwLastToDbTime = now;
 
 		// 视图自动绑定上报机器实现
 		DealViewAutoBindMachine(pReportShm, qu_info);
@@ -1751,6 +1818,9 @@ void CUdpSock::DealMachineAttrReport(TStrAttrReportInfo *pAttrShm, int iStaticTi
 		pAttrShmRep->bAttrDataType = pAttrShm->bAttrDataType;
 		DEBUG_LOG("change str attr info in TWarnAttrReportInfo, attrid:%d, machineid:%d, bAttrDataType:%d",
 			pAttrShmRep->iAttrId, pAttrShmRep->iMachineId, pAttrShmRep->bAttrDataType);
+	}
+	else if(pAttrShmRep->wStaticTime != iStaticTime) {
+		pAttrShmRep->wStaticTime = iStaticTime;
 	}
 }
 
