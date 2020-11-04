@@ -1294,7 +1294,7 @@ static int GetAttrDayVal(Json &js, Json &attr, const char *pattrTab, const Json 
                     iDbStaticTime = ntohs(*(uint16_t*)(pval+1));
                     if(IsValidStaticTime(iDbStaticTime)) {
                         iMaxAttrCountIdx = GetStaticTimeMaxIdxOfDay(iDbStaticTime);
-                        if(ulValLen == 3+iMaxAttrCountIdx*(sizeof(uint16_t)+sizeof(uint32_t))) {
+                        if(ulValLen == 3+iMaxAttrCountIdx*(sizeof(uint32_t))) {
                             pattrVal = (uint32_t*)(pval+3);
                             iCoundIdx = iMaxAttrCountIdx;
                         }

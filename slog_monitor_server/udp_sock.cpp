@@ -102,7 +102,7 @@ int CUdpSock::ChangeAttrSaveType(const char *ptable, Query &qu)
 	uint32_t arrydwValue[COUNT_STATIC_TIMES_PER_DAY] = {0};
 
 	uint32_t dwMax=0, dwMin=0, dwTotal=0, dwLastIp=0;
-	int32_t iMaxReportIdx = 0, iMaxDataLen = 0, iStaticTime = 0, iBinaryDataLen = 0, iCountIdx = 0;
+	int32_t iMaxReportIdx = 0, iMaxDataLen = 0, iBinaryDataLen = 0, iCountIdx = 0;
 	AttrInfoBin *pAttrInfo = NULL;
 	for(int i=0; i < qu.num_rows() && qu.fetch_row() != NULL; i++)
 	{
@@ -134,7 +134,8 @@ int CUdpSock::ChangeAttrSaveType(const char *ptable, Query &qu)
         if(iCountIdx*2 > iMaxAttrCountIdx) {
             // 使用直接数组存储, 存储全部统计周期
             for(int k=0; k < iMaxAttrCountIdx; k++) {
-                arrydwValue[k] = htonl(arrydwValue[k]);
+				if(arrydwValue[k] > 0)
+	                arrydwValue[k] = htonl(arrydwValue[k]);
             }
             iCountIdx = -1;
         }
@@ -158,7 +159,7 @@ int CUdpSock::ChangeAttrSaveType(const char *ptable, Query &qu)
         char *pbin = (char*)szBinDataBuf;
         if(iCountIdx > 0) {
             *pbin = (char)ATTR_DAY_BIN_TYPE_PRESS_V2; // ctype
-            *(uint16_t*)(pbin+1) = htons(iStaticTime); // wStaticTime
+            *(uint16_t*)(pbin+1) = htons(pAttrInfo->iStaticTime); // wStaticTime
             *(uint16_t*)(pbin+3) = htons(iCountIdx); // wCount
             memcpy(pbin+5, arrywIdx, iCountIdx*sizeof(arrywIdx[0])); // arrIdx(uint16_t[wCount])
             memcpy(pbin+5+iCountIdx*sizeof(arrywIdx[0]), arrydwValue, iCountIdx*sizeof(arrydwValue[0])); // arrVal(uint32_t[wCount])
@@ -166,7 +167,7 @@ int CUdpSock::ChangeAttrSaveType(const char *ptable, Query &qu)
         }
         else {
             *pbin = (char)ATTR_DAY_BIN_TYPE_ARRAY_V2; // ctype
-            *(uint16_t*)(pbin+1) = htons(iStaticTime); // wStaticTime
+            *(uint16_t*)(pbin+1) = htons(pAttrInfo->iStaticTime); // wStaticTime
             memcpy(pbin+3, arrydwValue, iMaxAttrCountIdx*sizeof(arrydwValue[0])); // arrVal(uint32_t[iMaxAttrCountIdx])
             iBinaryDataLen = 3+iMaxAttrCountIdx*sizeof(arrydwValue[0]);
         }
