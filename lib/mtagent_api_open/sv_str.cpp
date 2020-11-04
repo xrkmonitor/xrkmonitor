@@ -405,6 +405,47 @@ int check_bit(uint32_t n, int b)
 	return (n & b);
 }
 
+char *Str_Trim_Char(char *s, char c)
+{
+	char *pb;
+	char *pe;
+	char *ps;
+	char *pd;
+
+	if (strcmp(s, "") == 0) 
+		return s;
+	
+	pb = s;
+		 
+	while (*pb == c)
+	{
+		pb ++;
+	}
+	
+	pe = s;
+	while (*pe != 0)
+	{
+		pe ++;
+	}
+	pe --;
+	while ((pe >= s) && (*pe == c))
+	{
+		pe --;
+	}
+	
+	ps = pb;
+	pd = s;
+	while (ps <= pe)
+	{
+		*pd = *ps;
+		ps ++;
+		pd ++;
+	}
+	*pd = 0;
+	
+	return s;
+}
+
 char *Str_Trim_Local(char *s)
 {
 	static char s_str[1024] = {0};
@@ -463,3 +504,5 @@ void ReplaceAllChar(char *pstr, char src, char dst)
         pstr++;
     }
 }
+
+

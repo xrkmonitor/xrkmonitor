@@ -100,7 +100,7 @@ void UpdateConfigFile(const char *pfile, TConfigItemList & list)
             if(*rit == '\n')
                 fprintf(pstFile, "%s %s", pitem_cfg->strConfigName.c_str(), pitem_cfg->strConfigValue.c_str());
             else
-                fprintf(pstFile, "%s %s\r\n", pitem_cfg->strConfigName.c_str(), pitem_cfg->strConfigValue.c_str());
+                fprintf(pstFile, "%s %s\n", pitem_cfg->strConfigName.c_str(), pitem_cfg->strConfigValue.c_str());
         }
 	}
 	fclose(pstFile);

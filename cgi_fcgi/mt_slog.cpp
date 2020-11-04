@@ -3044,37 +3044,37 @@ static int MakePluginConfFile_def(Json &plug_info, ostringstream &oAbsFile)
         stConfig.pErrMsg = "文件创建失败";
         return SLOG_ERROR_LINE;
     }    
-    FCGI_fprintf(fp, "###########################################################################\r\n");
-    FCGI_fprintf(fp, "#该文件为字符云监控系统插件部署配置文件, 在部署插件时需要该文件\r\n");
-    FCGI_fprintf(fp, "#如您修改了该文件, 插件升级重新部署时注意合并修改到新配置文件\r\n");
-    FCGI_fprintf(fp, "#\r\n");
-	FCGI_fprintf(fp, "#适用版本: 开源版\r\n");
-	FCGI_fprintf(fp, "#插件显示名: %s\r\n", (const char*)(plug_info["show_name"]));
-    FCGI_fprintf(fp, "#插件名: %s\r\n", (const char*)(plug_info["plus_name"]));
-    FCGI_fprintf(fp, "#插件ID: %u\r\n", (int)(plug_info["plugin_id"]));
-    FCGI_fprintf(fp, "#文件版本: %s\r\n", (const char*)(plug_info["plus_version"]));
-    FCGI_fprintf(fp, "#\r\n");
-    FCGI_fprintf(fp, "###########################################################################\r\n");
-    FCGI_fprintf(fp, "\r\n");
-    FCGI_fprintf(fp, "\r\n");
-	FCGI_fprintf(fp, "#用于版本check, 当前适用开源版\r\n");
-	FCGI_fprintf(fp, "XRK_PLUGIN_CONFIG_PLAT open\r\n");
-    FCGI_fprintf(fp, "\r\n");
-    FCGI_fprintf(fp, "#配置文件版本 \r\n");
-    FCGI_fprintf(fp, "XRK_PLUGIN_CONFIG_FILE_VER %s\r\n", (const char*)(plug_info["plus_version"]));
-    FCGI_fprintf(fp, "\r\n");
-    FCGI_fprintf(fp, "#插件日志配置ID, 为0表示不上报插件日志到监控系统日志中心 \r\n");
-    FCGI_fprintf(fp, "XRK_PLUGIN_CONFIG_ID %u\r\n", (int)(plug_info["log_config_id"]));
-    FCGI_fprintf(fp, "\r\n");
-    FCGI_fprintf(fp, "#插件本地日志类型, 可选值: info debug warn reqerr error fatal all \"\"\r\n");
-    FCGI_fprintf(fp, "XRK_LOCAL_LOG_TYPE error|fatal\r\n");
-    FCGI_fprintf(fp, "\r\n");
-    FCGI_fprintf(fp, "#插件本地日志文件, 注意插件需要有写权限\r\n");
-    FCGI_fprintf(fp, "XRK_LOCAL_LOG_FILE ./%s.log\r\n", (const char*)(plug_info["plus_name"]));
-    FCGI_fprintf(fp, "\r\n");
-	FCGI_fprintf(fp, "#插件校验错误时，如果设为1，校验失败5分钟后可重启，为0则插件无法启动\r\n");
-	FCGI_fprintf(fp, "XRK_PLUGIN_RE_CHECK 0\r\n");
-    FCGI_fprintf(fp, "\r\n");
+    FCGI_fprintf(fp, "###########################################################################\n");
+    FCGI_fprintf(fp, "#该文件为字符云监控系统插件部署配置文件, 在部署插件时需要该文件\n");
+    FCGI_fprintf(fp, "#如您修改了该文件, 插件升级重新部署时注意合并修改到新配置文件\n");
+    FCGI_fprintf(fp, "#\n");
+	FCGI_fprintf(fp, "#适用版本: 开源版\n");
+	FCGI_fprintf(fp, "#插件显示名: %s\n", (const char*)(plug_info["show_name"]));
+    FCGI_fprintf(fp, "#插件名: %s\n", (const char*)(plug_info["plus_name"]));
+    FCGI_fprintf(fp, "#插件ID: %u\n", (int)(plug_info["plugin_id"]));
+    FCGI_fprintf(fp, "#文件版本: %s\n", (const char*)(plug_info["plus_version"]));
+    FCGI_fprintf(fp, "#\n");
+    FCGI_fprintf(fp, "###########################################################################\n");
+    FCGI_fprintf(fp, "\n");
+    FCGI_fprintf(fp, "\n");
+	FCGI_fprintf(fp, "#用于版本check, 当前适用开源版\n");
+	FCGI_fprintf(fp, "XRK_PLUGIN_CONFIG_PLAT open\n");
+    FCGI_fprintf(fp, "\n");
+    FCGI_fprintf(fp, "#配置文件版本 \n");
+    FCGI_fprintf(fp, "XRK_PLUGIN_CONFIG_FILE_VER %s\n", (const char*)(plug_info["plus_version"]));
+    FCGI_fprintf(fp, "\n");
+    FCGI_fprintf(fp, "#插件日志配置ID, 为0表示不上报插件日志到监控系统日志中心 \n");
+    FCGI_fprintf(fp, "XRK_PLUGIN_CONFIG_ID %u\n", (int)(plug_info["log_config_id"]));
+    FCGI_fprintf(fp, "\n");
+    FCGI_fprintf(fp, "#插件本地日志类型, 可选值: info debug warn reqerr error fatal all \"\"\n");
+    FCGI_fprintf(fp, "XRK_LOCAL_LOG_TYPE error|fatal\n");
+    FCGI_fprintf(fp, "\n");
+    FCGI_fprintf(fp, "#插件本地日志文件, 注意插件需要有写权限\n");
+    FCGI_fprintf(fp, "XRK_LOCAL_LOG_FILE ./%s.log\n", (const char*)(plug_info["plus_name"]));
+    FCGI_fprintf(fp, "\n");
+	FCGI_fprintf(fp, "#插件校验错误时，如果设为1，校验失败5分钟后可重启，为0则插件无法启动\n");
+	FCGI_fprintf(fp, "XRK_PLUGIN_RE_CHECK 0\n");
+    FCGI_fprintf(fp, "\n");
 
 	Json::json_list_t & jslist_cfg = plug_info["cfgs"].GetArray();
 	Json::json_list_t::iterator it_cfg = jslist_cfg.begin();
@@ -3084,39 +3084,39 @@ static int MakePluginConfFile_def(Json &plug_info, ostringstream &oAbsFile)
 		Json &cfg = *it_cfg;
         if(!(bool)(cfg["enable_modify"]))
             continue;
-        FCGI_fprintf(fp, "#%s\r\n", (const char*)(cfg["item_desc"]));
-        FCGI_fprintf(fp, "%s %s\r\n",
+        FCGI_fprintf(fp, "#%s\n", (const char*)(cfg["item_desc"]));
+        FCGI_fprintf(fp, "%s %s\n",
             (const char*)(cfg["item_name"]), (const char*)(cfg["item_value"]));
-        FCGI_fprintf(fp, "\r\n");
+        FCGI_fprintf(fp, "\n");
         ss_cfg << "," << (const char*)(cfg["item_name"]);
     }
 
     if(ss_cfg.str().size() > 0) {
-        FCGI_fprintf(fp, "#控制台可配置的配置项\r\n");
-        FCGI_fprintf(fp, "XRK_ENABLE_MOD_CFGS %s,xrk_end\r\n", ss_cfg.str().c_str());
-        FCGI_fprintf(fp, "\r\n");
+        FCGI_fprintf(fp, "#控制台可配置的配置项\n");
+        FCGI_fprintf(fp, "XRK_ENABLE_MOD_CFGS %s,xrk_end\n", ss_cfg.str().c_str());
+        FCGI_fprintf(fp, "\n");
     }
 
-    FCGI_fprintf(fp, "\r\n");
-    FCGI_fprintf(fp, "#以下监控点配置项不能修改\r\n");
+    FCGI_fprintf(fp, "\n");
+    FCGI_fprintf(fp, "#以下监控点配置项不能修改\n");
 	Json::json_list_t & jslist_attr = plug_info["attrs"].GetArray();
 	Json::json_list_t::iterator it_attr = jslist_attr.begin();
 	for(; it_attr != jslist_attr.end(); it_attr++) {
 		Json & attr = *it_attr;
-        FCGI_fprintf(fp, "#监控点: %s\r\n", (const char*)(attr["attr_name"]));
-        FCGI_fprintf(fp, "%s %d\r\n", (const char*)(attr["attr_id_macro"]), (int)(attr["attr_id"]));
-        FCGI_fprintf(fp, "\r\n");
+        FCGI_fprintf(fp, "#监控点: %s\n", (const char*)(attr["attr_name"]));
+        FCGI_fprintf(fp, "%s %d\n", (const char*)(attr["attr_id_macro"]), (int)(attr["attr_id"]));
+        FCGI_fprintf(fp, "\n");
     }
 
-	FCGI_fprintf(fp, "#插件ID\r\n");
-	FCGI_fprintf(fp, "XRK_PLUGIN_ID %d\r\n", (int)(plug_info["plugin_id"]));
-    FCGI_fprintf(fp, "\r\n");
-	FCGI_fprintf(fp, "#插件部署名\r\n");
-	FCGI_fprintf(fp, "XRK_PLUGIN_NAME %s\r\n", (const char*)(plug_info["plus_name"]));
-    FCGI_fprintf(fp, "\r\n");
-	FCGI_fprintf(fp, "#插件可执行文件版本\r\n");
-	FCGI_fprintf(fp, "XRK_PLUGIN_HEADER_FILE_VER %s\r\n", (const char*)(plug_info["plus_version"]));
-	FCGI_fprintf(fp, "\r\n");
+	FCGI_fprintf(fp, "#插件ID\n");
+	FCGI_fprintf(fp, "XRK_PLUGIN_ID %d\n", (int)(plug_info["plugin_id"]));
+    FCGI_fprintf(fp, "\n");
+	FCGI_fprintf(fp, "#插件部署名\n");
+	FCGI_fprintf(fp, "XRK_PLUGIN_NAME %s\n", (const char*)(plug_info["plus_name"]));
+    FCGI_fprintf(fp, "\n");
+	FCGI_fprintf(fp, "#插件可执行文件版本\n");
+	FCGI_fprintf(fp, "XRK_PLUGIN_HEADER_FILE_VER %s\n", (const char*)(plug_info["plus_version"]));
+	FCGI_fprintf(fp, "\n");
 	FCGI_fclose(fp);
     DEBUG_LOG("create config file:%s ok", oAbsFile.str().c_str());
     return 0;
@@ -3159,26 +3159,26 @@ static int MakePluginConfFile_js(Json & plug_info, ostringstream &oAbsFile)
 		return SLOG_ERROR_LINE;
 	}
 
-	FCGI_fprintf(fp, "///////////////////////////////////////////////////////////////////////////\r\n");
-	FCGI_fprintf(fp, "//该文件为字符云监控系统 js 插件部署配置文件, 在部署插件时需要该文件\r\n");
-	FCGI_fprintf(fp, "//如您修改了该文件, 插件升级重新部署时注意合并修改到新配置文件\r\n");
-	FCGI_fprintf(fp, "//\r\n");
-	FCGI_fprintf(fp, "//适用版本: 开源版\r\n");
-	FCGI_fprintf(fp, "//插件名: %s\r\n", (const char*)(plug_info["plus_name"]));
-	FCGI_fprintf(fp, "//插件ID: %u\r\n", (int)(plug_info["plugin_id"]));
-	FCGI_fprintf(fp, "//文件版本: %s\r\n", (const char*)(plug_info["plus_version"]));
-	FCGI_fprintf(fp, "//\r\n");
-	FCGI_fprintf(fp, "///////////////////////////////////////////////////////////////////////////\r\n");
-	FCGI_fprintf(fp, "\r\n");
-	FCGI_fprintf(fp, "\r\n");
-	FCGI_fprintf(fp, "var xrk_config_%s = { \r\n", (const char*)(plug_info["plus_name"]));
-	FCGI_fprintf(fp, "    plugin_id:%d, // 插件id\r\n", (int)(plug_info["plugin_id"]));
-	FCGI_fprintf(fp, "    report_url:\'http://%s%s/mt_slog_reportinfo\', // 上报地址\r\n", 
+	FCGI_fprintf(fp, "///////////////////////////////////////////////////////////////////////////\n");
+	FCGI_fprintf(fp, "//该文件为字符云监控系统 js 插件部署配置文件, 在部署插件时需要该文件\n");
+	FCGI_fprintf(fp, "//如您修改了该文件, 插件升级重新部署时注意合并修改到新配置文件\n");
+	FCGI_fprintf(fp, "//\n");
+	FCGI_fprintf(fp, "//适用版本: 开源版\n");
+	FCGI_fprintf(fp, "//插件名: %s\n", (const char*)(plug_info["plus_name"]));
+	FCGI_fprintf(fp, "//插件ID: %u\n", (int)(plug_info["plugin_id"]));
+	FCGI_fprintf(fp, "//文件版本: %s\n", (const char*)(plug_info["plus_version"]));
+	FCGI_fprintf(fp, "//\n");
+	FCGI_fprintf(fp, "///////////////////////////////////////////////////////////////////////////\n");
+	FCGI_fprintf(fp, "\n");
+	FCGI_fprintf(fp, "\n");
+	FCGI_fprintf(fp, "var xrk_config_%s = { \n", (const char*)(plug_info["plus_name"]));
+	FCGI_fprintf(fp, "    plugin_id:%d, // 插件id\n", (int)(plug_info["plugin_id"]));
+	FCGI_fprintf(fp, "    report_url:\'http://%s%s/mt_slog_reportinfo\', // 上报地址\n", 
 		(const char*)(plug_info["self_domain"]), stConfig.szCgiPath);
-	FCGI_fprintf(fp, "    plugin_name:\'%s\', // 插件名\r\n", (const char*)(plug_info["plus_name"]));
-	FCGI_fprintf(fp, "    plugin_ver:\'%s\', // 配置文件版本\r\n", (const char*)(plug_info["plus_version"]));
-	FCGI_fprintf(fp, "    logconfig_id:%u, // 插件日志配置ID, 为0表示不上报插件日志\r\n", (int)(plug_info["log_config_id"]));
-	FCGI_fprintf(fp, "    logconfig_type:\'%s\', // 插件日志记录类型\r\n", GetLogTypeStr((int)(plug_info["log_config_id"])));
+	FCGI_fprintf(fp, "    plugin_name:\'%s\', // 插件名\n", (const char*)(plug_info["plus_name"]));
+	FCGI_fprintf(fp, "    plugin_ver:\'%s\', // 配置文件版本\n", (const char*)(plug_info["plus_version"]));
+	FCGI_fprintf(fp, "    logconfig_id:%u, // 插件日志配置ID, 为0表示不上报插件日志\n", (int)(plug_info["log_config_id"]));
+	FCGI_fprintf(fp, "    logconfig_type:\'%s\', // 插件日志记录类型\n", GetLogTypeStr((int)(plug_info["log_config_id"])));
 
 	// 配置
     std::ostringstream ss_cfg;
@@ -3187,11 +3187,11 @@ static int MakePluginConfFile_js(Json & plug_info, ostringstream &oAbsFile)
 	for(; it_cfg != jslist_cfg.end(); it_cfg++) {
 		Json &cfg = *it_cfg;
         if(!(bool)(cfg["enable_modify"]))
-			FCGI_fprintf(fp, "    %s: \'%s\', // [不可修改] %s\r\n", 
+			FCGI_fprintf(fp, "    %s: \'%s\', // [不可修改] %s\n", 
 				(const char*)(cfg["item_name"]), (const char*)(cfg["item_value"]),
 				(const char*)(cfg["item_desc"]));
 		else {
-			FCGI_fprintf(fp, "    %s: \'%s\', // %s\r\n", 
+			FCGI_fprintf(fp, "    %s: \'%s\', // %s\n", 
 				(const char*)(cfg["item_name"]), (const char*)(cfg["item_value"]),
 				(const char*)(cfg["item_desc"]));
             if(ss_cfg.str().size() > 0)
@@ -3202,7 +3202,7 @@ static int MakePluginConfFile_js(Json & plug_info, ostringstream &oAbsFile)
 	}
 
     if(ss_cfg.str().size() > 0) {
-        FCGI_fprintf(fp, "    xrk_enable_mod_cfgs: \'%s\', // [控制台可修改的配置项] \r\n", ss_cfg.str().c_str());
+        FCGI_fprintf(fp, "    xrk_enable_mod_cfgs: \'%s\', // [控制台可修改的配置项] \n", ss_cfg.str().c_str());
     }
 
 	// 监控点
@@ -3210,14 +3210,14 @@ static int MakePluginConfFile_js(Json & plug_info, ostringstream &oAbsFile)
 	Json::json_list_t::iterator it_attr = jslist_attr.begin();
 	for(; it_attr != jslist_attr.end(); it_attr++) {
 		Json & attr = *it_attr;
-		FCGI_fprintf(fp, "    %s: %d, // 监控点: %s\r\n", 
+		FCGI_fprintf(fp, "    %s: %d, // 监控点: %s\n", 
 			(const char*)(attr["attr_id_macro"]), (int)(attr["attr_id"]),
 			(const char*)(attr["attr_name"]));
 	}
 
-	FCGI_fprintf(fp, "    xrk_end:0 \r\n");
-	FCGI_fprintf(fp, "}; \r\n");
-	FCGI_fprintf(fp, "\r\n");
+	FCGI_fprintf(fp, "    xrk_end:0 \n");
+	FCGI_fprintf(fp, "}; \n");
+	FCGI_fprintf(fp, "\n");
 	FCGI_fclose(fp);
 	DEBUG_LOG("create config file:%s ok", oAbsFile.str().c_str());
 	return 0;
@@ -4300,6 +4300,15 @@ static int DealOprMachinePlugin(std::string &strCsTemplateFile)
                                 i = -1;
                             if(ss_loaded.str().find(pitem_name) != std::string::npos)
                                 continue;
+
+                            pitem_name = Str_Trim(pitem_name);
+							pitem_name = Str_Trim_Char(pitem_name, ';');
+                            pitem_val = Str_Trim(pitem_val);
+                            pitem_val = Str_Trim_Char(pitem_val, ';');
+                            if(IsStrEqual(pitem_name, "") || IsStrEqual(pitem_val, ""))
+                                continue;
+                            ReplaceAllChar(pitem_name, ';', '%');
+                            ReplaceAllChar(pitem_val, ';', '%');
 
                             const char *pdesc = GetPluginPreConfigItemDesc(pitem_name);
                             sprintf(hdf_pex, "plug_cfg.list.%d", ++j);

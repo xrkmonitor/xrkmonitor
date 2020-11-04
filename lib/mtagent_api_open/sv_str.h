@@ -77,6 +77,7 @@ char *OI_randstr_number(char* buffer, int len);
 int isnumber(const char *pstr);
 char *uitodate2(uint32_t dwTimeSec);
 char *Str_Trim(char *s);
+char *Str_Trim_Char(char *s, char c);
 char *Str_Trim_Local(char *s);
 void ReplaceAllChar(char *pstr, char src, char dst);
 

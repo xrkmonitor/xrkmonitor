@@ -1203,6 +1203,11 @@ static int GetAttrDayVal(Json &js, Json &attr, const char *pattrTab, const Json 
 	attr["max"] = 0U;
 	attr["id"] = attr_id;
 
+	// 图表是否显示上报为0的数据点
+	bool bShowZero = true;
+	if(!hdf_get_int_value(stConfig.cgi->hdf, "Query.show_zero", 1))
+	    bShowZero = false;
+
 	char sSqlBuf[256] = {0};
 	uint32_t iReport[COUNT_STATIC_TIMES_PER_DAY] = {0};
 	const Json::json_list_t & jslist = js["list"].GetArray();
@@ -1382,6 +1387,7 @@ static int GetAttrDayVal(Json &js, Json &attr, const char *pattrTab, const Json 
 		bIsHisTotalAttr = true;
 
 	int iAvgVal = 0, iRepCount = 0;
+	uint32_t dwTotal = 0;
 	for(int i=0; i < iCurMin; i++)
 	{
 		// 历史累积数据，最新的永远是大于等于老的上报值
@@ -1391,7 +1397,10 @@ static int GetAttrDayVal(Json &js, Json &attr, const char *pattrTab, const Json 
 				dwHisVal = iReport[i];
 			else
 				iReport[i] = dwHisVal;
+			dwTotal = dwHisVal;
 		}
+		else 
+			dwTotal += iReport[i];
 
 		if(iReport[i] > iValueMax)
 			iValueMax = iReport[i];
@@ -1399,7 +1408,10 @@ static int GetAttrDayVal(Json &js, Json &attr, const char *pattrTab, const Json 
 		if(iReport[i] < iValueMin)
 			iValueMin = iReport[i];
 
-		strVal << iReport[i];
+		if(!bShowZero && iReport[i] == 0)
+			strVal << "-";
+		else
+			strVal << iReport[i];
 		if(i+1 < iCurMin)
 			strVal << ",";
 	}
@@ -1422,6 +1434,7 @@ static int GetAttrDayVal(Json &js, Json &attr, const char *pattrTab, const Json 
 			attr["cur"] = iReport[iCurMin];
 	}
 
+	attr["total"] = dwTotal;
 	attr["max_x"] = iCurMin;
 	DEBUG_LOG("attr:%d max value:%d, cur:%d, curmin:%d", attr_id, iValueMax, (int)attr["cur"], iCurMin);
 	return 0;
@@ -1436,6 +1449,11 @@ static int GetAttrDayVal(Json &js, Json &attr,
 	Json::json_list_t & jslistEach = JsEachMach["list"].GetArray();
 	Json::json_list_t::iterator itEach = jslistEach.begin();
 	int iMax = iCurMin;
+
+	// 图表是否显示上报为0的数据点
+	bool bShowZero = true;
+	if(!hdf_get_int_value(stConfig.cgi->hdf, "Query.show_zero", 1))
+	    bShowZero = false;
 
 	uint32_t arydwValDay[1440] = {0};
     uint32_t dwCurStaticVal = 0;
@@ -1458,6 +1476,7 @@ static int GetAttrDayVal(Json &js, Json &attr,
             strVal += ",";
             (*itEach)["value_list_str"] = strVal.c_str();
             (*itEach)["cur"] = (int)(attr_tmp["cur"]);
+			(*itEach)["total"] = (int)(attr_tmp["total"]);
         }
 
 		// 视图的 max, value_list_str --- 计算预处理
@@ -1486,6 +1505,7 @@ static int GetAttrDayVal(Json &js, Json &attr,
 	if((int)js_attr_info["data_type"] == SUM_REPORT_TOTAL)
 		bIsHisTotalAttr = true;
 
+	uint32_t dwTotal = 0;
 	for(int i=0; i < iMax; i++)
 	{
 		// 历史累积数据，最新的永远是大于等于老的上报值
@@ -1495,14 +1515,21 @@ static int GetAttrDayVal(Json &js, Json &attr,
 				dwHisVal = arydwValDay[i];
 			else
 				arydwValDay[i] = dwHisVal;
+			dwTotal = dwHisVal;
 		}
+		else
+			dwTotal += arydwValDay[i];
 
 		if(arydwValDay[i] > iValueMax)
 			iValueMax = arydwValDay[i];
 
 		if(arydwValDay[i] < iValueMin)
 			iValueMin = arydwValDay[i];
-		strVal << arydwValDay[i];
+
+		if(!bShowZero && arydwValDay[i] == 0)
+			strVal << "-";
+		else
+			strVal << arydwValDay[i];
 		if(i+1 < iMax)
 			strVal << ",";
 	}
@@ -1528,6 +1555,7 @@ static int GetAttrDayVal(Json &js, Json &attr,
 			attr["cur"] = 0;
 	}
 
+	attr["total"] = dwTotal;
 	attr["max_x"] = iMax;
 	return 0;	
 }
@@ -2051,7 +2079,9 @@ static int GetMachineInfoForPluginAttr(Json &js, int32_t iPluginId, uint32_t dwS
                     i = -1;
 
                 pitem_name = Str_Trim(pitem_name);
+				pitem_name = Str_Trim_Char(pitem_name, ';');
                 pitem_val = Str_Trim(pitem_val);
+                pitem_val = Str_Trim_Char(pitem_val, ';');
                 if(IsStrEqual(pitem_name, "") || IsStrEqual(pitem_val, ""))
                     continue;
                 ReplaceAllChar(pitem_name, ';', '%');
@@ -2428,7 +2458,6 @@ static int ShowPluginAttrMulti()
 	string_clear(&str);
 	return 0;
 }
-
 
 
 static int ShowAttrMulti(int iShowAttrType)
