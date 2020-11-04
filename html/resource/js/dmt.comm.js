@@ -548,20 +548,42 @@ function dmtSetCustToolBox(op, showtype, attr_val_list, attr_val, attr_info, war
 	};
 }
 
+function dmtShowHumanStaticTime(t)
+{
+    switch(t)
+    {
+        case 1: return '1分钟';
+        case 5: return '1分钟';
+        case 10: return '5分钟';
+        case 15: return '15分钟';
+        case 30: return '30分钟';
+        case 60: return '1小时';
+        case 120: return '2小时';
+        case 180: return '3小时';
+    }
+    return 'unknow';
+}
+
 function dmtGetViewSubTitle(showtype, attr_val_list, attr_val, attr_info)
 {
 	var subtitle = '';
+	var subtitle = '';
 	if(attr_val.max > 0) {
-		subtitle = " 上报信息【"; 
-		subtitle += "最大值：" + dmtShowChangeValue(attr_val.max); 
-		subtitle += " 当前时间：" + attr_val_list.date_time + ' 上报值：';
-		subtitle += dmtShowChangeValue(attr_val.cur) + "】\n ";
+		subtitle = " 【";
+		subtitle += "最大值：" + dmtShowChangeValue(attr_val.max);
+		subtitle += ", 图表累计上报：" + dmtShowChangeValue(attr_val.total) + ', 当前统计周期：';
+		subtitle += dmtShowChangeValue(attr_val.cur) + "/" + dmtShowHumanStaticTime(attr_info.static_time) + "】\n "
+	}
+	else if(attr_val.cur > 0) {
+		subtitle = " 当前时间：" + attr_val_list.date_time + ', ';
+		subtitle += " 当前统计周期：" + dmtShowChangeValue(attr_val.cur) + '/';
+		subtitle += dmtShowHumanStaticTime(attr_info.static_time) + "\n\n";
 	}
 	else {
 		subtitle = '暂无数据上报\n\n';
 	}
-	subtitle += "告警配置【 最大值：";
 
+	subtitle += "告警配置【 最大值：";
 	var showclass = "";
 	if(attr_info.show_class == 'percent')
 		showclass = "%";
@@ -990,12 +1012,13 @@ function dmtSetStrAttrInfoChart(ct_id, attr_info, js, attr_val_list, showtype)
 	g_all_charts[ct_id].setwidth = g_dmtChartWidth;
 }
 
-function dmtGetXAxisTimeInfo(dateStart, count_day)
+
+function dmtGetXAxisTimeInfo(dateStart, count_day, attr_info)
 {
 	var time_info = [];
-	for(var i=0; i < 1440*count_day; i++) {
-		time_info.push(dateStart+i*60*1000);
-	}
+	for(var i=0; i < attr_info.static_idx_max*count_day; i++) {
+		time_info.push(dateStart+i*attr_info.static_time*60*1000);
+	}    
 	return time_info;
 }
 
@@ -1005,12 +1028,8 @@ function dmtGetYAxisData(time_info, dstr)
 	var attr_data = dstr.split(",");
 	for(var j=0; j < attr_data.length; j++) {
 		var objd = new Object;
-		if(attr_data[j] != "null") {
+		if(attr_data[j] != "-") {
 			objd.value = new Array(time_info[j], attr_data[j]);
-			e_data_y.push(objd);
-		}
-		else {
-			objd.value = [time_info[j], 0];
 			e_data_y.push(objd);
 		}
 	}
@@ -1193,7 +1212,16 @@ function dmtShowAttrInfo(attr_list, attr_val_list, ct_div, showtype)
 		},
 	    xAxis: {
 			show:true,
-			type: 'time'
+			type: 'time',
+			axisPointer: {
+			    label: {
+			        formatter: function (params) {
+			            if(attr_val_list.type != 1)
+			                return dmtGetDateStr(params.value);
+			            return  dmtGetDateStr(params.value, true);
+			        }
+			    }
+			}
 	    },
 		yAxis: {
 			splitArea: {
@@ -1223,11 +1251,26 @@ function dmtShowAttrInfo(attr_list, attr_val_list, ct_div, showtype)
 			show:true,
 			type: 'value'
 		},
+		tooltip: {
+			trigger: 'none',
+			axisPointer: {
+				type: 'cross',
+				snap: true
+			}
+		},
+		dataZoom: [
+			{
+				type:'inside',
+	 			xAxisIndex: 0
+		  	}
+		],
 		series: [
 			{
 				name:'',
 				showSymbol:false,
 				cursor:'pointer',
+				smooth: true,
+				smoothMonotone:'x',
 				type:'line',
 				data:[]
 			},
@@ -1235,6 +1278,8 @@ function dmtShowAttrInfo(attr_list, attr_val_list, ct_div, showtype)
 				name:'',
 				showSymbol:false,
 				cursor:'pointer',
+				smooth: true,
+				smoothMonotone:'x',
 				type:'line',
 				data:[]
 			},
@@ -1242,6 +1287,8 @@ function dmtShowAttrInfo(attr_list, attr_val_list, ct_div, showtype)
 				name:'',
 				showSymbol:false,
 				cursor:'pointer',
+				smooth: true,
+				smoothMonotone:'x',
 				type:'line',
 				data:[]
 			}
@@ -1262,7 +1309,6 @@ function dmtShowAttrInfo(attr_list, attr_val_list, ct_div, showtype)
 	var count_day = 1;
 	if(typeof attr_val_list.date_time_monday != 'undefined')
 		count_day = 7;
-	var time_info = dmtGetXAxisTimeInfo(dateStart, count_day);
 
 	if(attr_val_list.type == 1)
 	{
@@ -1295,6 +1341,7 @@ function dmtShowAttrInfo(attr_list, attr_val_list, ct_div, showtype)
 		if(attr_info.id != attr_vals[i].id)
 			attr_info = dmtGetAttrInfo(attr_list, attr_vals[i].id);
 
+		var time_info = dmtGetXAxisTimeInfo(dateStart, count_day, attr_info);
 		if(typeof(g_all_charts[attr_show_id]) != "undefined") 
 			g_all_charts[attr_show_id].dispose();
 

@@ -24,7 +24,10 @@
 				<input type="checkbox" id="ds_check_show_<?cs var:config.view_id ?>" onclick="return dsCheckShow_<?cs var:config.view_id ?>();"/>
 				<label class='for' for='ds_check_show_<?cs var:config.view_id ?>'>仅绘制有上报的图表</label>
 			</li>
-
+            <li style='line-height:34px'>
+                <input type="checkbox" id="ds_not_show_zero_<?cs var:config.view_id ?>" onclick="return dsCheckShowZero_<?cs var:config.view_id ?>();"/>
+                <label class='for' for='ds_not_show_zero_<?cs var:config.view_id ?>'>图表不显示数据为0的点</label>
+            </li>
 			<li style="display:none"><a id="ds_href_<?cs var:config.view_id ?>" href="#" target="navTab" rel="showview_<?cs var:config.view_id ?>" fresh="false"></a></li>
 		</ul>
 	</div>
@@ -138,6 +141,10 @@ function dsAttrShow_<?cs var:config.view_id ?>(type)
 	else
 		param += '&show_rep=0';
 	
+	var notShowZero = window.localStorage.getItem("local_ds_not_show_zero_<?cs var:config.view_id ?>");
+	if(notShowZero == 1)
+	    param += '&show_zero=0'
+
 	param += '&_r=' + Math.random();
 	param += '&view_id=' + '<?cs var:config.view_id ?>';
 	param += '&type=' + type;
@@ -180,6 +187,10 @@ function dsAttrShowDate2_<?cs var:config.view_id ?>(idx)
 		reqpara.show_rep = 1;
 	else
 		reqpara.show_rep = 0;
+	var notShowZero = window.localStorage.getItem("local_ds_not_show_zero_<?cs var:config.view_id ?>");
+	if(notShowZero == 1)
+		reqpara.show_zero = 0;
+	
 	reqpara.view_id = <?cs var:config.view_id ?>;
 	reqpara.attr_list = reqAttr.toString();
 	reqpara.action = 'show_view_attr_cust';
@@ -238,6 +249,12 @@ function dsAttrShowDate2_<?cs var:config.view_id ?>(idx)
 }
 
 $(document).ready(function(){
+	var notShowZero = window.localStorage.getItem("local_ds_not_show_zero_<?cs var:config.view_id ?>");
+	if(notShowZero == 1)
+		$("#ds_not_show_zero_<?cs var:config.view_id ?>").prop('checked', true);
+	else
+		$("#ds_not_show_zero_<?cs var:config.view_id ?>").prop('checked', false);
+
 	dmtSetRedrawChartsInfo('<?cs var:config.view_id ?>', 'view', true);
 	dmtSetChartSize();
 	var attr_list = $.parseJSON('<?cs var:config.view_attr_list ?>');
@@ -260,6 +277,17 @@ $(document).ready(function(){
 	$('#ds_ct_attr_show_list_<?cs var:config.view_id ?>').html('');
 	dsAttrShowDate2_<?cs var:config.view_id ?>(0);
 });
+
+function dsCheckShowZero_<?cs var:config.view_id ?>()
+{
+    var ckName = "local_ds_not_show_zero_<?cs var:config.view_id ?>";
+    var ck = $("#ds_not_show_zero_<?cs var:config.view_id ?>").is(":checked");
+    if(ck)
+        window.localStorage.setItem(ckName, '1');
+    else
+        window.localStorage.setItem(ckName, '0');
+    return dsAttrShow_<?cs var:config.view_id ?>(ds_attr_show_type_<?cs var:config.view_id ?>);
+}
 
 function dsCheckShow_<?cs var:config.view_id ?>()
 {

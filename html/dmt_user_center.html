@@ -28,7 +28,7 @@
 		<font color='blue' style='font-size:16px'>已发送测试告警测试请求</font>
 		<br />
 		<br />
-		云版本告警通道使用异常ID:&nbsp;<font color='red'>261-测试云版本告警通道</font>&nbsp;测试
+		云版本告警通道使用异常ID:&nbsp;<font color='red'><?cs var:config.test_warn_info ?></font>&nbsp;测试
 		<br />
         <br />
 		<font color='blue'>测试效果</font>（测试效果在一分钟左右出现）：<br />
@@ -154,7 +154,7 @@
 function ducTestXrkmonitorWarn()
 {
 	var rurl = '<?cs var:config.cgipath?>mt_slog_user?action=test_xrkmonitor_sendwarn';
-	var op = { mask:true, maxable:false, height:280, width:410, resizable:false, drawable:true };
+	var op = { mask:true, maxable:false, height:360, width:410, resizable:false, drawable:true };
 	$.ajax({
 		url:rurl,
 		global:false,
