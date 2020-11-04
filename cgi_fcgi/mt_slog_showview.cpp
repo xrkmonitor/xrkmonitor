@@ -1294,7 +1294,7 @@ static int GetAttrDayVal(Json &js, Json &attr, const char *pattrTab, const Json 
                     iDbStaticTime = ntohs(*(uint16_t*)(pval+1));
                     if(IsValidStaticTime(iDbStaticTime)) {
                         iMaxAttrCountIdx = GetStaticTimeMaxIdxOfDay(iDbStaticTime);
-                        if(ulValLen == 3+iCoundIdx*(sizeof(uint16_t)+sizeof(uint32_t))) {
+                        if(ulValLen == 3+iMaxAttrCountIdx*(sizeof(uint16_t)+sizeof(uint32_t))) {
                             pattrVal = (uint32_t*)(pval+3);
                             iCoundIdx = iMaxAttrCountIdx;
                         }
@@ -1310,7 +1310,7 @@ static int GetAttrDayVal(Json &js, Json &attr, const char *pattrTab, const Json 
                         if(ulValLen == 5+iCoundIdx*(sizeof(uint16_t)+sizeof(uint32_t))) {
                             pattrIdx = (uint16_t*)(pval+5);
                             pattrVal = (uint32_t*)(pval+5+sizeof(uint16_t)*iCoundIdx);
-                        }
+                       }
                         else
                             iCoundIdx = -1;
                     }
@@ -1328,7 +1328,8 @@ static int GetAttrDayVal(Json &js, Json &attr, const char *pattrTab, const Json 
                 }
 
                 if(iCoundIdx < 0) {
-                    ERR_LOG("read attr data failed, id:%d", attr_id);
+                    ERR_LOG("read attr data failed, id:%d, idx:%d, maxidx:%d, static time:%d, type:%d",
+						attr_id, iCoundIdx, iMaxAttrCountIdx, iStaticTime, cSaveBinType);
                 }
                 else
                 {
@@ -1803,7 +1804,7 @@ static int SetMachineAttr()
 	{
 		int y,m,d;
 		sscanf(pdate, "%d-%d-%d", &y, &m, &d);
-		sprintf(szTableName, "attr_%04d%02d%02d", y, m, d);
+		sprintf(szTableName, "attr_%04d%02d%02d_day", y, m, d);
 		DEBUG_LOG("reqinfo date:%s y:%d m:%d d:%d", szTableName, y, m, d);
 	}
 	hdf_set_value(stConfig.cgi->hdf, "config.cust_date", pdate);
@@ -1969,8 +1970,10 @@ static int GetStrAttrDayVal(Json &js_mach, std::map<std::string, int> & stMapStr
 					pszDayTableName, (int)js_attr_info["id"], (int)((*it)["id"]));
 			}
 
-			if(!qu.get_result(szSql) || qu.num_rows() <= 0) 
+			if(!qu.get_result(szSql) || qu.num_rows() <= 0)  {
+				qu.free_result();
 				continue;
+			}
 
 			qu.fetch_row();
 			qu.fetch_lengths();
@@ -1980,6 +1983,7 @@ static int GetStrAttrDayVal(Json &js_mach, std::map<std::string, int> & stMapStr
 			if(ulValLen > 0 && !stAttrInfoPb.ParseFromArray(pval, ulValLen))
 			{
 				ERR_LOG("ParseFromArray failed-%p-%lu", pval, ulValLen);
+				qu.free_result();
 				return SLOG_ERROR_LINE;
 			}
 			DEBUG_LOG("read str attr:%d, machine:%d, from db:%s", 
@@ -2015,6 +2019,7 @@ static int GetStrAttrDayVal(Json &js_mach, std::map<std::string, int> & stMapStr
                         it_str->second += stAttrInfoPb.msg_attr_info(j).uint32_attr_value();
                 }
 			}
+			qu.free_result();
 		}
 	}
 	return 0;
