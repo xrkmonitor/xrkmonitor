@@ -67,6 +67,27 @@ function dmtGetHumanTime(val)
     return h;
 }
 
+var g_pluginShowWidth = 0;
+var g_pluginShowHeight = 0;
+function dmtSetPluginShowWH()
+{
+    var iSub = DWZ.ui.sbar ? $("#sidebar").width() : 35;
+    var iContentW = $(window).width() - iSub;
+    var bChanged = false;
+    if(iContentW != g_pluginShowWidth) {
+        g_pluginShowWidth = iContentW;
+        bChanged = true;
+    }
+
+	var iContentH = $(window).height() - $('header').outerHeight(true) 
+        - $('footer').outerHeight(true) - $('.tabsPageHeader').outerHeight(true);
+    if(g_pluginShowHeight != iContentH) {
+        g_pluginShowHeight = iContentH;
+        bChanged = true;
+    }
+    return bChanged;
+}
+
 function dmtSetPluginMarginInfo(tab)
 {
 	var iSub = DWZ.ui.sbar ? $("#sidebar").width() + 10 : 24;
@@ -207,6 +228,15 @@ function dmtRedrawCharts(type_id, type, isLeftShow)
 	}
 	if(type_id == null) 
 		return;
+
+    if(type == 'plugin') {
+        if(dmtSetPluginShowWH()) {
+            var js = "if(typeof dmtPluginShowOnChane_" + type_id + " == 'function') ";
+            js += "dmtPluginShowOnChane_" + type_id + "();";
+            eval(js);
+        }
+        return;
+    }
 
 	dmtSetChartSize();
 	if(typeof g_all_charts != 'undefined')
