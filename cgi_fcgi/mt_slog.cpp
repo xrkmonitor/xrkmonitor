@@ -2539,7 +2539,7 @@ static int DealListPlugin(CGI *cgi, const char *ptype="open")
 	// 本地已安装的公共插件信息
 	if(!strcmp(ptype, "open")) {
 		Json js;
-		std::ostringstream ss;
+		std::ostringstream ss, ss_show;
 		sprintf(sSqlBuf, "select pb_info from mt_plugin where xrk_status=%d", RECORD_STATUS_USE);
 		if(qu.get_result(sSqlBuf) && qu.num_rows() > 0) 
 		{
@@ -2557,6 +2557,13 @@ static int DealListPlugin(CGI *cgi, const char *ptype="open")
 					WARN_LOG("parse json content, size:%u!=%u", (uint32_t)iParseIdx, (uint32_t)iReadLen);
 					continue;
 				}
+
+				ss_show.str("");
+				ss_show << stConfig.szCsPath << "plugin_show/" << (const char*)(plugin["plus_name"])<< "_show/index_tp.html";
+				if(IsFileExist(ss_show.str().c_str()))
+					plugin["has_show_view"] = 1;
+				else
+					plugin["has_show_view"] = 0;
 				js["list"].Add(plugin);
 				iCount++;
 				ss << "plugin_" << (int)(plugin["plugin_id"]) << "_" << (const char*)(plugin["plus_version"]) << ",";
