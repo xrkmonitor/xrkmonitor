@@ -7,5 +7,19 @@
 			<li><a href="<?cs var:config.cgipath?>mt_slog?action=open_plugin" target="navTab" rel="dmt_plugin_open"><i class='icon-download-alt'></i>插件市场</a></li>
 		</ul>
 	</div>
+
+    <?cs if:ShowPlugin.count >= 1 ?>
+	<div class="accordionHeader">
+		<h2><i class="icon-plug icon-large"></i>插件看板<i class="icon icon-chevron-up"></i></h2>
+	</div>
+	<div class="accordionContent">
+		<ul class="tree">
+            <?cs each:show=ShowPlugin.lists ?> 
+			<li><a href="<?cs var:config.cgipath?>mt_slog?action=show_plugin_monitor&plugin_id=<?cs var:show.plugin_id ?>" target="navTab" fresh="true" rel="showplugin_<?cs var:show.plugin_id ?>" title='插件:<?cs var:show.name ?> 看板'><i class="icon-plug"></i><?cs var:show.name ?></a></li>
+            <?cs /each ?>
+		</ul>
+	</div>
+    <?cs /if ?>
+
 </div>
 
