@@ -1062,7 +1062,6 @@ function dmtGetXAxisDayTimeInfo(dateStart, count_day)
 }
 
 // 根据每天的统计周期数据，计算每天的监控点数据增长
-// 计算方法为：每天的最后一个统计周期数据与每天的第一个统计周期数据的差值作为增长
 // dstr - 为每天的统计周期数据
 // attr_info - 监控点
 // day_time_info - 为每天的日期
@@ -1070,35 +1069,77 @@ function dmtGetYAxisDayAddData(day_time_info, attr_info, dstr)
 {
 	var e_data_y = [];
 	var attr_data = dstr.split(",");
-    var last_pre_val = 0;
-	for(var j=0, iDays = 0; iDays < day_time_info.length; iDays++) 
-    {
-        var first_idx_val = last_pre_val;
-        j = iDays*attr_info.static_idx_max;
-        var t = 0;
-        for(; t < attr_info.static_idx_max && j < attr_data.length; t++, j++) {
-            if(attr_data[j] != "-" && !isNaN(attr_data[j])) {
-                first_idx_val = Number(attr_data[j]);
-                break;
-            }
-        }
+    if(day_time_info.length <= 0 || attr_data.length <= 0)
+        return e_data_y;
 
-        var last_idx_val = first_idx_val;
+    // 计算第一天的增长
+    // 获取第一个统计周期数据
+    var first_idx_val = 0;
+    var t = 0;
+    for(; t < attr_info.static_idx_max && t < attr_data.length; t++) {
+        if(attr_data[t] != "-" && !isNaN(attr_data[t])) {
+            first_idx_val = Number(attr_data[t]);
+            break;
+        }
+    }
+
+    // 获取最后一个统计周期数据
+    var last_idx_val = first_idx_val;
+    for(var k=attr_info.static_idx_max-1; k > t && k < attr_data.length; k--) {
+        if(attr_data[k] != "-" && !isNaN(attr_data[k])) {
+            last_idx_val = Number(attr_data[k]);
+            break;
+        }
+    }
+
+    var objd = new Object;
+	objd.value = new Array(day_time_info[0], last_idx_val-first_idx_val);
+	e_data_y.push(objd);
+    if(day_time_info.length <= 1)
+        return e_data_y;
+ 
+    // 计算非第一天非最后一天的增长(前一天的最后一个统计周期, 用第一天的初始化)
+    var last_pre_val = last_idx_val;
+	for(var j=0, iDays = 1; iDays < day_time_info.length-1; iDays++) 
+    {
+        // 获取当天最后一个统计周期数据(先用前一天的最后统计初始化，规避无上报的问题)
+        last_idx_val = last_pre_val;
         var j = (iDays+1)*attr_info.static_idx_max-1;
-        for(var k=attr_info.static_idx_max; k > t && j >= 0; k--, j--) {
+        for(var k=attr_info.static_idx_max; k > 0 && j >= 0 && j < attr_data.length; k--, j--) {
             if(attr_data[j] != "-" && !isNaN(attr_data[j])) {
                 last_idx_val = Number(attr_data[j]);
                 break;
             }
         }
 
-        if(last_idx_val != 0 && last_idx_val != last_pre_val)
+        // 计算增长
+        var iAdd = 0;
+        if(last_idx_val != 0 && last_idx_val != last_pre_val) {
+            iAdd = last_idx_val - last_pre_val;
             last_pre_val = last_idx_val;
+        }
 
 	    var objd = new Object;
-		objd.value = new Array(day_time_info[iDays], last_idx_val-first_idx_val);
+		objd.value = new Array(day_time_info[iDays], iAdd);
 		e_data_y.push(objd);
 	}
+
+    // 计算最后一天的增长
+    var iAdd = 0;
+    var last_day_idx_start = (day_time_info.length-1)*attr_info.static_idx_max;
+    if(attr_data.length >= last_day_idx_start) {
+        for(var j=attr_data.length-1; j >= last_day_idx_start; j--) {
+            if(attr_data[j] != "-" && !isNaN(attr_data[j])) {
+                last_idx_val = Number(attr_data[j]);
+                break;
+            }
+        }
+        if(last_idx_val != 0 && last_idx_val != last_pre_val)
+            iAdd = last_idx_val - last_pre_val;
+    }
+    var objd = new Object;
+    objd.value = new Array(day_time_info[iDays], iAdd);
+    e_data_y.push(objd);
 	return e_data_y;
 }
 
