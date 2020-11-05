@@ -179,25 +179,33 @@ function <?cs var:config.plugin_pre ?>_GetInstallPluginShowInfo(idx, plugin, loc
 	if(typeof local_plugin == 'undefined') {
 		shtml += "<ul class='nav'><li><a href='#' onclick='";
 		shtml += "<?cs var:config.plugin_pre ?>InstallPlugin(" + idx + ");' ";
-		shtml += "'title='一键安装插件'><i class='icon-wrench icon-large'></i>一键安装</a></li></ul>";
+		shtml += "'title='一键安装插件'><i class='icon-wrench'></i>一键安装</a></li>";
 	}
 	else if(plugin.install_tp_file != '' && plugin.install_tp_file != 'no') {
 		if(plugin.ver != local_plugin.plus_version) {
 			shtml += "<ul class='nav'><li><a href='#' onclick='";
 			shtml += "<?cs var:config.plugin_pre ?>UpdatePlugin(" + idx + ");' ";
-			shtml += "'title='一键更新插件'><i class='icon-wrench icon-large'></i>一键更新</a></li></ul>";
+			shtml += "'title='一键更新插件'><i class='icon-wrench'></i>一键更新</a></li>";
 		}
 		else {
 			shtml += "<ul class='nav'><li><a href='#' onclick='";
 			shtml += "<?cs var:config.plugin_pre ?>AddPlugin(" + plugin.plugin_id + ");' ";
-			shtml += "'title='一键部署插件'><i class='icon-wrench icon-large'></i>一键部署</a></li></ul>";
+			shtml += "'title='一键部署插件'><i class='icon-wrench'></i>一键部署</a></li>";
 		}
 	}
 	else if(plugin.ver != local_plugin.plus_version) {
 		shtml += "<ul class='nav'><li><a href='#' onclick='";
 		shtml += "<?cs var:config.plugin_pre ?>UpdatePlugin(" + idx + ");' ";
-		shtml += "'title='一键更新插件'><i class='icon-wrench icon-large'></i>一键更新</a></li></ul>";
+		shtml += "'title='一键更新插件'><i class='icon-wrench'></i>一键更新</a></li>";
 	}
+
+	if(local_plugin.has_show_view) {
+		shtml += "<li><a href='#' onclick='";
+		shtml += "<?cs var:config.plugin_pre ?>PluginShowView(" + plugin.plugin_id + ", \"" + plugin.plugin_name + "\");' ";
+		shtml += " title='插件:" + plugin.plugin_name + " 看板'><i class='icon-bar-chart'></i>看板</a></li>"
+	}
+	shtml += "</ul>";
+
 	shtml += "</div>";
 
     shtml += "</div>";
@@ -264,7 +272,7 @@ function <?cs var:config.plugin_pre ?>AddPlugin(plugin_id)
 {
 	navTab.openTab('dp_plugin_install_'+plugin_id, 
 		'<?cs var:config.cgipath?>mt_slog?action=dp_add_plugin&id='+plugin_id, 
-		{title:'一键部署插件', titleHtml:"<i class='icon-wrench icon-large'></i>一键部署插件", fresh:true});
+		{title:'一键部署插件', titleHtml:"<i class='icon-wrench'></i>一键部署插件", fresh:true});
 }
 
 function <?cs var:config.plugin_pre ?>UpdatePluginPb(pbJs)
@@ -294,6 +302,14 @@ function <?cs var:config.plugin_pre ?>UpdatePluginPb(pbJs)
 			}
 		}
 	});
+}
+
+function <?cs var:config.plugin_pre ?>PluginShowView(id, name)
+{
+	var t = '插件:' + name + ' 看板';
+	navTab.openTab('showplugin_'+id, 
+		"<?cs var:config.cgipath?>mt_slog?action=show_plugin_monitor&plugin_id="+id,
+		{title:t, titleHtml:t, fresh:true});
 }
 
 function <?cs var:config.plugin_pre ?>UpdatePlugin(idx)
