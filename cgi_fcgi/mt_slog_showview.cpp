@@ -2029,7 +2029,7 @@ static int GetMachineInfoForPluginAttr(Json &js, int32_t iPluginId, uint32_t dwS
 {
 	Query & qu = *stConfig.qu;
 	char sSqlBuf[512] = {0};
-    sprintf(sSqlBuf, "select machine_id,xrk_cfgs_list from mt_plugin_machine where plugin_id=%d and "
+    sprintf(sSqlBuf, "select machine_id,xrk_cfgs_list from mt_plugin_machine where open_plugin_id=%d and "
         " xrk_status=0 and install_proc=0 and last_attr_time > %u", iPluginId, dwStartUtcTime);
 	if(qu.get_result(sSqlBuf) == NULL || qu.num_rows() <= 0) {
         qu.free_result();
@@ -2281,6 +2281,7 @@ static int ShowPluginAttrMulti()
 	std::string strCustDays;
     iGetDays = GetAttrTableNameForCust(dwStartUtcTime, s_aryTableCustDay, iGetDays, strCustDays);
     js_attr_val["date_cust_days"] = strCustDays.c_str();
+	js_attr_val["count_days"] = iGetDays;
 
 	SLogServer *psrv = slog.GetValidServerByType(SRV_TYPE_ATTR_DB, NULL);
 	if(NULL == psrv) {

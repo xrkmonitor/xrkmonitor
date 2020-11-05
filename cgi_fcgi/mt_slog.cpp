@@ -4557,6 +4557,60 @@ int DealSaveOprMachinePlugin()
     return 0;
 }
 
+static void SetPluginConfigInfo(Json &js)
+{
+	ostringstream oAbsFile;
+	ostringstream ostrFile;
+	if(!strcmp((const char*)(js["dev_language"]), "javascript")) 
+		ostrFile << (const char*)(js["plus_name"]) << "_conf.js"; 
+	else
+		ostrFile << "xrk_" << (const char*)(js["plus_name"]) << ".conf"; 
+	oAbsFile << stConfig.szCsPath << "download/" << ostrFile.str();
+	if(!IsFileExist(oAbsFile.str().c_str()) && MakePluginConfFile(js, oAbsFile) < 0)
+		return ;
+
+    std::map<std::string, std::string> stcfgs;
+    LoalAllConfig(oAbsFile.str().c_str(), stcfgs);
+
+    Json js_cfgs;
+    std::map<std::string, std::string>::iterator it = stcfgs.begin();
+    for(; it != stcfgs.end(); it++) {
+        if(it->first == "" || it->second == ""
+            || it->first == "XRK_ENABLE_MOD_CFGS"
+            || it->first == "XRK_LOCAL_LOG_TYPE"
+            || it->first == "XRK_LOCAL_LOG_FILE"
+            || it->first == "XRK_PLUGIN_RE_CHECK"
+            || it->first == "XRK_PLUGIN_CONFIG_PLAT")
+        {
+            continue;
+        }
+        js_cfgs[it->first] = it->second;
+    }
+    hdf_set_value(stConfig.cgi->hdf, "plugin.cfgs", js_cfgs.ToString(false).c_str());
+    DEBUG_LOG("read plugin:%u , config:%s",  (int)(js["plugin_id"]), oAbsFile.str().c_str());
+}
+
+static int DealShowPluginMonitor(std::string &strCsTemplateFile)
+{
+    int iPluginId = hdf_get_int_value(stConfig.cgi->hdf, "Query.plugin_id", 0);
+	Json js;
+	if(GetLocalPlugin(js, iPluginId) < 0)
+		return SLOG_ERROR_LINE;
+
+    // 设置插件一般信息
+    hdf_set_value(stConfig.cgi->hdf, "plugin.name", (const char*)(js["plus_name"]));
+    hdf_set_value(stConfig.cgi->hdf, "plugin.show_name", (const char*)(js["show_name"]));
+    hdf_set_valuef(stConfig.cgi->hdf, "plugin.doc_path=%s/plugin_show/%s_show/",
+        stConfig.szDocPath, (const char*)(js["plus_name"]));
+    hdf_set_int_value(stConfig.cgi->hdf, "plugin.id", iPluginId);
+    SetPluginConfigInfo(js);
+
+    strCsTemplateFile = "plugin_show/";
+    strCsTemplateFile += (const char*)(js["plus_name"]);
+    strCsTemplateFile += "_show/index_tp.html";
+    return 0;
+}
+
 int main(int argc, char **argv, char **envp)
 {
 	int32_t iRet = 0;
@@ -4736,6 +4790,8 @@ int main(int argc, char **argv, char **envp)
             iRet = DealRefreshOprMachinePlugin(strCsTemplateFile);
 		else if(!strcmp(pAction, "ddap_save_mod_plugin_cfg")) 
             iRet = DealSaveOprMachinePlugin();
+		else if(!strcmp(pAction, "show_plugin_monitor")) 
+            iRet = DealShowPluginMonitor(strCsTemplateFile);
 	
 		else {
 			ERR_LOG("unknow action:%s", pAction);
