@@ -1072,6 +1072,9 @@ function dmtGetYAxisDayAddData(day_time_info, attr_info, dstr)
     if(day_time_info.length <= 0 || attr_data.length <= 0)
         return e_data_y;
 
+	// 跳过统计周期开始的 0 数据
+	var data_start = 0;
+
     // 计算第一天的增长
     // 获取第一个统计周期数据
     var first_idx_val = 0;
@@ -1115,7 +1118,10 @@ function dmtGetYAxisDayAddData(day_time_info, attr_info, dstr)
         // 计算增长
         var iAdd = 0;
         if(last_idx_val != 0 && last_idx_val != last_pre_val) {
-            iAdd = last_idx_val - last_pre_val;
+			if(data_start == 0 && last_pre_val == 0) 
+				data_start = 1;
+			else 
+            	iAdd = last_idx_val - last_pre_val;
             last_pre_val = last_idx_val;
         }
 
@@ -1134,8 +1140,10 @@ function dmtGetYAxisDayAddData(day_time_info, attr_info, dstr)
                 break;
             }
         }
-        if(last_idx_val != 0 && last_idx_val != last_pre_val)
-            iAdd = last_idx_val - last_pre_val;
+        if(last_idx_val != 0 && last_idx_val != last_pre_val) {
+			if(data_start != 0 || last_pre_val != 0)
+	            iAdd = last_idx_val - last_pre_val;
+		}
     }
     var objd = new Object;
     objd.value = new Array(day_time_info[iDays], iAdd);
