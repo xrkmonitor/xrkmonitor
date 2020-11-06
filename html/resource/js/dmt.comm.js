@@ -1774,13 +1774,10 @@ function redrawChartsOnSwitchTab()
 			else
 				isLeftShow = true;
 		}
-		else if(nid.match('innersite_')) {
-			type = 'site';
+		else if(nid.match('showplugin_')) {
+			type = 'plugin';
 			type_id = nid.split('_')[1];
-			if($('#dsLeftMenu_'+type_id).css('display') == 'none')
-				isLeftShow = false;
-			else
-				isLeftShow = true;
+			isLeftShow = false;
 		}
 		else if(nid.match('showview_')) {
 			type = 'view';
@@ -1813,7 +1810,7 @@ function redrawCharts()
 {
 	var nid = navTab.getCurrentTabId();
 	if(nid != null) {
-		if(nid.match('showmachine_') || nid.match('showview_') || nid.match('innersite_')) {
+		if(nid.match('showmachine_') || nid.match('showview_') || nid.match('showplugin_')) {
 			dmtRedrawCharts();
 		}
 		if(nid.match("dmt_plugin_")) {
