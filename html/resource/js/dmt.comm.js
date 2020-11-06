@@ -1065,7 +1065,7 @@ function dmtGetXAxisDayTimeInfo(dateStart, count_day)
 // dstr - 为每天的统计周期数据
 // attr_info - 监控点
 // day_time_info - 为每天的日期
-function dmtGetYAxisDayAddData(day_time_info, attr_info, dstr)
+function dmtGetYAxisDayAddData(day_time_info, attr_info, dstr, cur)
 {
 	var e_data_y = [];
 	var attr_data = dstr.split(",");
@@ -1130,21 +1130,31 @@ function dmtGetYAxisDayAddData(day_time_info, attr_info, dstr)
 		e_data_y.push(objd);
 	}
 
-    // 计算最后一天的增长
-    var iAdd = 0;
-    var last_day_idx_start = (day_time_info.length-1)*attr_info.static_idx_max;
-    if(attr_data.length >= last_day_idx_start) {
-        for(var j=attr_data.length-1; j >= last_day_idx_start; j--) {
-            if(attr_data[j] != "-" && !isNaN(attr_data[j])) {
-                last_idx_val = Number(attr_data[j]);
-                break;
-            }
-        }
-        if(last_idx_val != 0 && last_idx_val != last_pre_val) {
-			if(data_start != 0 || last_pre_val != 0)
+	// 计算最后一天的增长
+	var iAdd = 0;
+	var last_day_idx_start = (day_time_info.length-1)*attr_info.static_idx_max;
+	
+	// 2,4,5,8 这几种类型的数据不需要统计周期结束即可使用，因此可以用 cur 做来做差值计算
+	if((attr_info.data_type == 2 || attr_info.data_type == 4 || attr_info.data_type == 5
+	    || attr_info.data_type == 8) && cur != 0 && attr_info.length > last_day_idx_start)
+	{
+	    if(last_pre_val != cur)
+	        iAdd = cur - last_pre_val;
+	}
+	else if(attr_data.length >= last_day_idx_start)
+	{
+	    for(var j=attr_data.length-1; j >= last_day_idx_start; j--) {
+	        if(attr_data[j] != "-" && !isNaN(attr_data[j])) {
+	            last_idx_val = Number(attr_data[j]);
+	            break;
+	        }
+	    }
+	    if(last_idx_val != 0 && last_idx_val != last_pre_val) {
+	        if(data_start != 0 || last_pre_val != 0)
 	            iAdd = last_idx_val - last_pre_val;
-		}
-    }
+	    }
+	}
+
     var objd = new Object;
     objd.value = new Array(day_time_info[iDays], iAdd);
     e_data_y.push(objd);
