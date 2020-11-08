@@ -24,7 +24,7 @@
 						<option value="<?cs var:config.ex_report ?>">异常量</option>
 						<option value="<?cs var:config.str_report_d ?>">字符串型</option>
 						<option value="<?cs var:config.str_report_d_ip ?>">字符串型-IP省级</option>
-						<option value="<?cs var:config.data_percent ?>">百分比数值(0-100)</option>
+						<option value="<?cs var:config.data_use_last ?>">取最新上报值</option>
 					</select>
 				</li>
                 <li>
@@ -172,8 +172,8 @@ function daSetAttrList(attrinfo)
 			list += "<td>字符串型</td>";
 		else if(listattr[i].data_type == <?cs var:config.str_report_d_ip ?>)
 			list += "<td>字符串型-IP省级</td>";
-		else if(listattr[i].data_type == <?cs var:config.data_percent ?>)
-			list += "<td>百分比数值(0-100)</td>";
+		else if(listattr[i].data_type == <?cs var:config.data_use_last ?>)
+			list += "<td>取最新上报值</td>";
 		else if(listattr[i].data_type == <?cs var:config.ex_report ?>)
 		{
 			if(listattr[i].excep_attr_mask == 1)

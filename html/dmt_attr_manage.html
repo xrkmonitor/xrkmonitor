@@ -30,7 +30,7 @@
 					<option value="<?cs var:config.ex_report ?>">异常量</option>
 					<option value="<?cs var:config.str_report_d ?>">字符串型</option>
 					<option value="<?cs var:config.str_report_d_ip ?>">字符串型-IP省级</option>
-					<option value="<?cs var:config.data_percent ?>">百分比数值(0-100)</option>
+					<option value="<?cs var:config.data_use_last ?>">取最新上报值</option>
 				</select>
 				<font class="note-text" id='dam_attr_type_note_txt' style='display:block'>
 					<label style="float:right;width:300px;">对一分钟内的上报进行累加统计</label>
@@ -148,9 +148,9 @@ $(document).ready(function(){
 				$('#dam_show_opr_msg').css('display', 'none').css('margin-top', '2px');
 				break;
 
-			case '<?cs var:config.data_percent ?>':
+			case '<?cs var:config.data_use_last ?>':
 				$('#dam_data_type').css('height', '21px');
-				$('#dam_attr_type_note_txt label').css('width', '240px').text('百分比数值(比如：CPU使用率)');
+				$('#dam_attr_type_note_txt label').css('width', '250px').text('取最新上报值');
 				$('#dam_excep').css('display', 'none');
 				$('#dam_show_opr_msg').css('display', 'none').css('margin-top', '2px');
                 break;

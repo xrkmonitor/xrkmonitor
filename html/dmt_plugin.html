@@ -199,7 +199,8 @@ function <?cs var:config.plugin_pre ?>_GetInstallPluginShowInfo(idx, plugin, loc
 		shtml += "'title='一键更新插件'><i class='icon-wrench'></i>一键更新</a></li>";
 	}
 
-	if(local_plugin.has_show_view) {
+	if(typeof local_plugin != 'undefined'
+		&& typeof local_plugin.has_show_view != 'undefined' && local_plugin.has_show_view) {
 		shtml += "<li><a href='#' onclick='";
 		shtml += "<?cs var:config.plugin_pre ?>PluginShowView(" + plugin.plugin_id + ", \"" + plugin.plugin_name + "\");' ";
 		shtml += " title='插件:" + plugin.plugin_name + " 看板'><i class='icon-bar-chart'></i>看板</a></li>"
@@ -210,6 +211,54 @@ function <?cs var:config.plugin_pre ?>_GetInstallPluginShowInfo(idx, plugin, loc
 
     shtml += "</div>";
 	return shtml;
+}
+
+// 插件看板询问是否是否下载到开源版控制台
+function <?cs var:config.plugin_pre ?>CheckPluginShow(js, sel_plugin, af_fun)
+{
+	if(typeof js.plugin_show_ver == 'undefined')
+		return;
+
+	var local_p = null;
+	if(typeof sel_plugin.local_plugin_index != 'undefined')
+		local_p = g_LocalOpenPluginList.list[ sel_plugin.local_plugin_index ];
+	if(local_p == null || typeof local_p.plugin_show_ver == 'undefined' 
+		|| local_p.plugin_show_ver != js.plugin_show_ver)
+	{
+		// 更新到本地控制台，询问用户是否下载
+		var msg = '发现插件：' + js.plus_name + ' 有新版本看板, 是否下载或更新到本地控制台?';
+		alertMsg.confirm(msg, {
+			okCall: function() {
+				var requrl = "<?cs var:config.xrkmonitor_url?>/cgi-bin/mt_slog_open?action=open_get_plugin_show";
+				requrl += "&plugin_id=" + sel_plugin.plugin_id;
+				requrl += "&bind_user=" + <?cs var:config.xrkmonitor_account ?>;
+				$.ajax({
+					type: 'get',
+					url : requrl,
+					dataType: 'json',
+					global: true,
+					timeout : function() { 
+						alertMsg.warn("ajax 请求超时！");
+					},
+					success: function(resp_js) {
+						if(resp_js.ret == 0 && typeof resp_js.plugin_show_content != 'undefined') {
+							js.plugin_show_content = resp_js.plugin_show_content;
+							af_fun(js);
+						}
+						else {
+							alertMsg.warn("下载插件看板失败！");
+						}
+					}
+				});
+			},
+			cancelCall: function() {
+				af_fun(js);
+			}
+		});
+	}
+	else {
+		af_fun(js);
+	}
 }
 
 function <?cs var:config.plugin_pre ?>SetpluginList()
@@ -296,7 +345,6 @@ function <?cs var:config.plugin_pre ?>UpdatePluginPb(pbJs)
 			}
 			else {
 				alertMsg.correct("插件更新成功");
-
 				<?cs var:config.plugin_pre ?>SaveSearch();
 				return navTab.reload();
 			}
@@ -333,7 +381,8 @@ function <?cs var:config.plugin_pre ?>UpdatePlugin(idx)
                 alertMsg.info("插件更新信息获取失败 !");
                 return;
             }
-            <?cs var:config.plugin_pre ?>UpdatePluginPb(js);
+			<?cs var:config.plugin_pre ?>CheckPluginShow(js, <?cs var:config.plugin_pre ?>_sel_plugin, 
+				<?cs var:config.plugin_pre ?>UpdatePluginPb);
         }
     });
 }
@@ -359,7 +408,8 @@ function <?cs var:config.plugin_pre ?>InstallPlugin(idx)
 				alertMsg.info("插件安装信息获取失败 !");
 				return;
 			}
-			<?cs var:config.plugin_pre ?>InstallPluginPb(js);
+			<?cs var:config.plugin_pre ?>CheckPluginShow(js, <?cs var:config.plugin_pre ?>_sel_plugin,
+				<?cs var:config.plugin_pre ?>InstallPluginPb);
 		}
 	});
 }
