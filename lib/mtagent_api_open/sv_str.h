@@ -35,6 +35,7 @@
 
 #include <inttypes.h>
 #include <stdarg.h>
+#include <iostream>
 
 typedef struct {
 	int y;
@@ -46,6 +47,7 @@ typedef struct {
 }TIME_INFO;
 
 void uitotime_info(uint32_t dwTimeSec, TIME_INFO *pinfo);
+int get_cmd_result(const char *cmd, std::string &strResult);
 
 int file_lockw(const char *pfile);
 int file_lock(const char *pfile);

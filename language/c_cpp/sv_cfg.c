@@ -110,6 +110,11 @@ int GetConfigFile(const char *pAppStr, char **pconfOut)
 	return 0;
 }
 
+void get_config_val(char* desc, char* src)
+{
+	get_val(desc, src);
+}
+
 char * get_val(char* desc, char* src)
 {
 	char *descp=desc, *srcp=src;

@@ -734,10 +734,14 @@ TWarnAttrReportInfo * CUdpSock::AddReportToWarnAttrShm(
 				if(dwVal < pAttrShm->dwCurVal)
 					pAttrShm->dwCurVal = dwVal;
 			}
-			else if(SUM_REPORT_MAX == iDataType || DATA_PERCENT == iDataType) {
+			else if(SUM_REPORT_MAX == iDataType) {
 				// 取最大
 				if(dwVal > pAttrShm->dwCurVal)
 					pAttrShm->dwCurVal = dwVal;
+			}
+			else if(DATA_USE_LAST == iDataType) {
+				// 取最新上报值
+				pAttrShm->dwCurVal = dwVal;
 			}
 			else
 				pAttrShm->dwCurVal += dwVal;

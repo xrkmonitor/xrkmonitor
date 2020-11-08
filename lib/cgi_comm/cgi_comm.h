@@ -145,6 +145,8 @@ const char *GetPluginPreConfigItemDesc(const std::string &strCfgName);
 extern FILE *g_fpStartLog;
 void cgi_start_errlog(const char *pszFmt, ...);
 
+int SavePluginShowFile(Json &js, const std::string &strPath);
+
 #define CGI_START_LOG(fmt, ...) do { cgi_start_errlog("cgi start failed:(%s|%s|%d)" fmt "\n", __FILE__, __FUNCTION__, __LINE__, ##__VA_ARGS__); }while(0)
 
 #endif

@@ -2539,7 +2539,7 @@ static int DealListPlugin(CGI *cgi, const char *ptype="open")
 	// 本地已安装的公共插件信息
 	if(!strcmp(ptype, "open")) {
 		Json js;
-		std::ostringstream ss, ss_show;
+		std::ostringstream ss;
 		sprintf(sSqlBuf, "select pb_info from mt_plugin where xrk_status=%d", RECORD_STATUS_USE);
 		if(qu.get_result(sSqlBuf) && qu.num_rows() > 0) 
 		{
@@ -2558,12 +2558,21 @@ static int DealListPlugin(CGI *cgi, const char *ptype="open")
 					continue;
 				}
 
-				ss_show.str("");
-				ss_show << stConfig.szCsPath << "plugin_show/" << (const char*)(plugin["plus_name"])<< "_show/index_tp.html";
-				if(IsFileExist(ss_show.str().c_str()))
+
+				std::ostringstream ss_version;
+				ss_version << stConfig.szCsPath << "plugin_show/" << (const char*)(plugin["plus_name"]) << "_show/version.txt";
+				FCGI_FILE *fp = FCGI_fopen(ss_version.str().c_str(), "r");
+				if(fp != NULL) {
+					char sShowVer[32] = {0};
+					FCGI_fread(sShowVer, 1, 32, fp);
+					FCGI_fclose(fp);
+					plugin["plugin_show_ver"] = Str_Trim(sShowVer);
 					plugin["has_show_view"] = 1;
+					DEBUG_LOG("read plugin:%s show version:%s", (const char*)(plugin["plus_name"]), sShowVer);
+				}
 				else
 					plugin["has_show_view"] = 0;
+
 				js["list"].Add(plugin);
 				iCount++;
 				ss << "plugin_" << (int)(plugin["plugin_id"]) << "_" << (const char*)(plugin["plus_version"]) << ",";
@@ -3609,6 +3618,17 @@ static int DealUpdatePlugin(CGI *cgi)
 		WARN_LOG("parse json content, size:%u!=%u", (uint32_t)iParseIdx, (uint32_t)iReadLen);
 		stConfig.pErrMsg = "插件数据解析错误！";
 		return SLOG_ERROR_LINE;
+	}
+
+	if(js_plugin.HasValue("plugin_show_content")) {
+		std::ostringstream ss_path;
+		ss_path << stConfig.szCsPath << "plugin_show/";
+		if(SavePluginShowFile(js_plugin, ss_path.str()) < 0) {
+			WARN_LOG("SavePluginShowFile failed !");
+			stConfig.pErrMsg = "生成插件看板失败，请升级版本或联系管理员";
+			return SLOG_ERROR_LINE;
+		}
+		DEBUG_LOG("make plugin:%s show html ok", (const char*)(js_plugin["plus_name"]));
 	}
 
 	Json js_local;

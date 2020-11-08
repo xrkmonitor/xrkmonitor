@@ -61,6 +61,32 @@
 static char s_sLogBuf[4096 * 4];
 char s_szCommApiLastError[1024] = {0};
 
+int get_cmd_result(const char *cmd, std::string &strResult)
+{
+    static char s_buf[4096] = {0};
+
+    strResult = "";
+    FILE *fp = popen(cmd, "r");
+    if(!fp) {
+        return ERROR_LINE;
+    }
+
+    if(fgets(s_buf, sizeof(s_buf), fp)) {
+        strResult = s_buf;
+        size_t pos = strResult.find("\n");
+        if(pos != std::string::npos)
+            strResult.replace(pos, 1, "");
+        pos = strResult.find("\r");
+        if(pos != std::string::npos)
+            strResult.replace(pos, 1, "");
+        pos = strResult.find("\r\n");
+        if(pos != std::string::npos)
+            strResult.replace(pos, 2, "");
+    }
+    pclose(fp);
+    return 0;
+}
+
 int file_lockw(const char *pfile)
 {
 	int oldmask = 0;

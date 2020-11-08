@@ -367,7 +367,7 @@ enum {
 	SUM_REPORT_TOTAL = 5, // 按历史上报累计
 	STR_REPORT_D = 6, // 按天累计的字符串型, 一天生成一张饼图表，多个字符串时只显示前几位有上报的字符串
 	STR_REPORT_D_IP = 7, // IP 转地址字符串，地址为省级
-	DATA_PERCENT = 8, // 百分比(例如cpu/内存使用率等)
+	DATA_USE_LAST = 8, // 取最新上报值
 	SUM_REPORT_TYPE_MAX = 8, // 最大不能超过 255
 };
 
@@ -389,8 +389,8 @@ inline uint32_t GetAttrIdxData(uint32_t dwCur, uint32_t dwNew, int iAttrDataType
         case SUM_REPORT_MAX:
             return dwCur > dwNew ? dwCur : dwNew;
 
-        case DATA_PERCENT:
-            return dwCur > dwNew ? dwCur : dwNew;
+        case DATA_USE_LAST:
+            return dwNew;
     }    
     return dwCur+dwNew;
 }

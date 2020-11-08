@@ -1582,3 +1582,37 @@ int GetMachineRepStatus(MachineInfo *pInfo, CGIConfig &stConfig)
         stConfig);
 }
 
+int SavePluginShowFile(Json &js, const std::string &strPath)
+{
+	std::string strCt;
+	const std::string & strEnc = js["plugin_show_content"].GetString();
+	Base64 b64;
+	b64.decode(strEnc, strCt);
+
+	std::ostringstream ssfile;
+	ssfile << strPath << (const char*)(js["plus_name"]) << "_show.tar.gz";
+	FILE *fp = fopen(ssfile.str().c_str(), "w+");
+	if(!fp) {
+		ERR_LOG("create plugin show file:%s failed, msg:%s", ssfile.str().c_str(), strerror(errno));
+		return SLOG_ERROR_LINE;
+	}
+	if(fwrite(strCt.c_str(), 1, strCt.size(), fp) != strCt.size()) {
+		ERR_LOG("write file:%s length:%lu failed, msg:%s", ssfile.str().c_str(), strCt.size(), strerror(errno));
+		fclose(fp);
+		return SLOG_ERROR_LINE;
+	}
+	fclose(fp);
+	std::ostringstream sscmd;
+	sscmd << "cd " << strPath << "; tar -zxf " << (const char*)(js["plus_name"]) << "_show.tar.gz;"
+		<< " [ -f " << (const char*)(js["plus_name"]) << "_show/index_tp.html ] && echo 0 || echo 1;";
+
+	std::string strRet;
+	get_cmd_result(sscmd.str().c_str(), strRet);
+	if(strRet != "0") {
+		ERR_LOG("execute cmd:%s failed", sscmd.str().c_str());
+		return SLOG_ERROR_LINE;
+	}
+
+	return 0;
+}
+

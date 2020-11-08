@@ -51,9 +51,7 @@ int GetConfigFile(const char *pAppStr, char **pconfOut);
 int GetLogTypeByStr(const char *pstrType);
 
 char * get_val(char* desc, char* src);
-inline void get_config_val(char* desc, char* src) {       
-	get_val(desc, src);
-}  
+void get_config_val(char* desc, char* src); 
 
 #ifdef __cplusplus
 }

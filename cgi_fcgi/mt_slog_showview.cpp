@@ -614,7 +614,7 @@ static int DealBindAttrList(int view_id, AttrSearchInfo *pshInfo=NULL)
 	hdf_set_int_value(stConfig.cgi->hdf, "config.sum_report_min", SUM_REPORT_MIN);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.str_report_d", STR_REPORT_D);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.str_report_d_ip", STR_REPORT_D_IP);
-	hdf_set_int_value(stConfig.cgi->hdf, "config.data_percent", DATA_PERCENT);
+	hdf_set_int_value(stConfig.cgi->hdf, "config.data_use_last", DATA_USE_LAST);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.sum_report_his", SUM_REPORT_TOTAL);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.sum_report_max", SUM_REPORT_MAX);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.ex_report", EX_REPORT);
@@ -869,7 +869,7 @@ static int DealNotBindAttrList(int view_id, AttrSearchInfo *pshInfo=NULL)
 	hdf_set_int_value(stConfig.cgi->hdf, "config.sum_report_min", SUM_REPORT_MIN);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.str_report_d", STR_REPORT_D);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.str_report_d_ip", STR_REPORT_D_IP);
-	hdf_set_int_value(stConfig.cgi->hdf, "config.data_percent", DATA_PERCENT);
+	hdf_set_int_value(stConfig.cgi->hdf, "config.data_use_last", DATA_USE_LAST);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.sum_report_his", SUM_REPORT_TOTAL);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.sum_report_max", SUM_REPORT_MAX);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.ex_report", EX_REPORT);
@@ -1586,11 +1586,7 @@ static int GetAttrInfoFromShm(int iAttrId, Json & attr)
 		attr["name"] = "unknow";
 		WARN_LOG("get attr:%d name failed, nameidx:%d", iAttrId, iNameIdx);
 	}
-
-	if((int)(attr["data_type"]) == DATA_PERCENT)
-		attr["show_class"] = "percent";
-	else
-		attr["show_class"] = "comm";
+	attr["show_class"] = "comm";
 	attr["static_idx_max"] = GetStaticTimeMaxIdxOfDay((int)(attr["static_time"]));
 	DEBUG_LOG("get attr:%d, info from memcache/vmem", iAttrId);
 	return 0;
@@ -1687,10 +1683,7 @@ static int GetMachineAttrList(int machine_id, Json &js, const char *pszTableName
 		attr["name"] = qu_taobao.getstr("attr_name");
 		attr["attr_type"] = qu_taobao.getstr("attr_type");
 		attr["data_type"] = qu_taobao.getval("data_type");
-		if((int)(attr["data_type"]) == DATA_PERCENT)
-			attr["show_class"] = "percent";
-		else
-			attr["show_class"] = "comm";
+		attr["show_class"] = "comm";
 		js["list"].Add(attr);
 	}
 	js["count"] = i+iTotalAttrCount; 
@@ -1746,11 +1739,7 @@ static int GetAttrInfoByIdList(const char *pattr_id_list, Json & js)
 		attr["attr_type"] = qu_taobao.getstr("attr_type");
 		attr["data_type"] = qu_taobao.getval("data_type");
         attr["static_time"] = qu_taobao.getval("static_time");
-
-		if((int)(attr["data_type"]) == DATA_PERCENT)
-			attr["show_class"] = "percent";
-		else
-			attr["show_class"] = "comm";
+		attr["show_class"] = "comm";
 	
 		js["list"].Add(attr);
 		qu_taobao.free_result();

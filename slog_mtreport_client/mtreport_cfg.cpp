@@ -107,35 +107,6 @@ void UpdateConfigFile(const char *pfile, TConfigItemList & list)
 	ReleaseConfigList(list_cfg);
 }
 
-
-static char * get_val(char* desc, char* src)
-{
-	char *descp=desc, *srcp=src;
-	int mtime=0, space=0;
-
-	while ( mtime!=2 && *srcp != '\0' ) {
-		switch(*srcp) {
-			case ' ':
-			case '\t':
-			case '\0':
-			case '\n':
-				space=1;
-				srcp++;
-				break;
-			default:
-				if (space||srcp==src) mtime++;
-				space=0;
-				if ( mtime==2 ) break;
-				*descp=*srcp;
-				descp++;
-				srcp++;
-		}
-	}
-	*descp='\0';
-	strcpy(src, srcp);
-	return desc;
-}
-
 static int GetParamVal(char *sLine, char *sParam, char *sVal)
 {
 	if (sLine[0] == '#')
