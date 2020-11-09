@@ -216,8 +216,10 @@ function <?cs var:config.plugin_pre ?>_GetInstallPluginShowInfo(idx, plugin, loc
 // 插件看板询问是否是否下载到开源版控制台
 function <?cs var:config.plugin_pre ?>CheckPluginShow(js, sel_plugin, af_fun)
 {
-	if(typeof js.plugin_show_ver == 'undefined')
+	if(typeof js.plugin_show_ver == 'undefined') {
+		af_fun(js);
 		return;
+	}
 
 	var local_p = null;
 	if(typeof sel_plugin.local_plugin_index != 'undefined')
