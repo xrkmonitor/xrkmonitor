@@ -264,7 +264,7 @@ typedef struct
 	int iMaxRunMins;
 	int iDisablePlus;
 
-	char szLocalUrl[256];
+	char szLocalDomain[256];
 
 	// 云端地址，用于一键部署插件等功能
 	char szCloudUrl[256];

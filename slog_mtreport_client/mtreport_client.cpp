@@ -497,7 +497,7 @@ static int Init()
 		"MAX_RUN_MINS", CFG_INT, &stConfig.iMaxRunMins, 7*24*3600,
 		"XRKMONITOR_CLOUD_URL", CFG_STRING, stConfig.szCloudUrl, "xrkmonitor.com", MYSIZEOF(stConfig.szCloudUrl),
 		"INSTALL_PLUGIN_TIMEOUT_SEC", CFG_INT, &stConfig.iPLuginInstallTimeoutSec, 30,
-		"XRKMONITOR_LOCAL_URL", CFG_STRING, stConfig.szLocalUrl, "", MYSIZEOF(stConfig.szLocalUrl),
+		"XRKMONITOR_LOCAL_DOMAIN", CFG_STRING, stConfig.szLocalDomain, "", MYSIZEOF(stConfig.szLocalDomain),
 		"LOCAL_OS", CFG_STRING, stConfig.szOs, "", MYSIZEOF(stConfig.szOs),
 		"LOCAL_OS_ARC", CFG_STRING, stConfig.szOsArc, "", MYSIZEOF(stConfig.szOsArc),
 		"LOCAL_LIBC_VER", CFG_STRING, stConfig.szLibcVer, "", MYSIZEOF(stConfig.szLibcVer),
@@ -1093,7 +1093,7 @@ int ReadAppLogToBuf(MTLog *plog)
 		iLogContentLen = MYSIZEOF(plog->sLogContent)-4;
 		int iTmpLen = MYSIZEOF(sLogBuf)-iUseBufLen-iLogContentLen-1;
 		if((iRet=MtReport_GetFromVmem(plog->iVarmemIndex, pbuf, &iTmpLen)) >= 0) {
-			uint32_t dwCheck = *(uint32_t*)(plog->sLogContent+MYSIZEOF(plog->sLogContent)-4);
+			uint32_t dwCheck = *((uint32_t*)(plog->sLogContent+MYSIZEOF(plog->sLogContent)-4));
 			if(dwCheck != *(uint32_t*)pbuf)
 				ERROR_LOG("vmem shm log check failed (%u != %u)", dwCheck, *(uint32_t*)pbuf);
 			iLogContentLen += iTmpLen+1; 

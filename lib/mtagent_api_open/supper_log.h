@@ -1827,7 +1827,7 @@ inline int GetDayOfMin(TIME_INFO *pinfo, int iStaticTime)
 inline bool IsValidStaticTime(int iStaticTime)
 {
 	if(iStaticTime != 1 && iStaticTime!=5 && iStaticTime!=10 && iStaticTime!=15 && iStaticTime!=30
-			&& iStaticTime!=60 && iStaticTime!=180 && iStaticTime!=360 && iStaticTime!=1439)
+			&& iStaticTime!=60 && iStaticTime!=120 && iStaticTime!=180) 
 		return false;
 	return true;
 }

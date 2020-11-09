@@ -1318,7 +1318,7 @@ static int InitFastCgi_first(CGIConfig &myConf)
 
 	int32_t iRet = 0;
 	if((iRet=LoadConfig(myConf.szConfigFile,
-	   "TEST_WARN_ATTR_ID", CFG_INT, &g_iTestWarnAttrId, 0,
+	   "TEST_WARN_ATTR_ID", CFG_INT, &g_iTestWarnAttrId, 357,
 		NULL)) < 0){
 		ERR_LOG("loadconfig failed, from file:%s", myConf.szConfigFile);
 		return SLOG_ERROR_LINE;
