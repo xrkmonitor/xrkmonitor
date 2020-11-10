@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <sv_cfg.h>
 
 #include "sv_struct.h"
 
@@ -179,4 +180,33 @@ int CheckPkgBody(TPkgBody *pstBody, uint16_t wBodyLen)
 	}
 	return 0;
 }
+
+#define MAX_CONFIG_LINE_LEN (4*1024 - 1)
+int LoalAllConfig(const char *pcfgFile, std::map<std::string, std::string> &mpCfg)
+{
+	char sLine[MAX_CONFIG_LINE_LEN+1], sTmp[MAX_CONFIG_LINE_LEN+1];
+	FILE *pstFile;
+	if ((pstFile = fopen(pcfgFile, "r")) == NULL)
+		return -1;
+
+    std::string name, value;
+	while (1)
+	{
+		fgets(sLine, sizeof(sLine), pstFile);
+		if (feof(pstFile))
+			break; 
+        if(sLine[0] == '#' || sLine[0] == '\0')
+            continue;
+        get_config_val(sTmp, sLine);
+        name = sTmp;
+        if(name.size() <= 0)
+            continue;
+        get_config_val(sTmp, sLine);
+        value = sTmp;
+        mpCfg.insert(std::pair<std::string, std::string>(name, value));
+	}	
+	fclose(pstFile);
+    return 0;
+}
+
 

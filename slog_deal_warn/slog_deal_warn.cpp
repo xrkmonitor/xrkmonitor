@@ -40,6 +40,7 @@
 #include <Json.h>
 #include <iostream>  
 #include <aes.h>
+#include <sstream>
 
 #include "comm.pb.h"
 #include "top_include_comm.h"
@@ -121,6 +122,10 @@ int Init(const char *pFile = NULL)
 		ERR_LOG("GetSystemCfg failed");
 		return SLOG_ERROR_LINE;
 	}
+
+	if(NULL == getcwd(stConfig.szCurDir, 256))
+	    WARN_LOG("getcwd failed, msg:%s", strerror(errno));
+
     return 0;
 }   
 
@@ -185,7 +190,6 @@ int SendEmail(const string & strToAddr, const string & strSubject, const string 
 		return SendEmailByXrkmonitor(strToAddr, strSubject, strTxtBody);
 
 	// 用户自行实现发送邮件接口
-
 	return 0;
 }
 
@@ -366,6 +370,56 @@ void SendWarnByXrkmonitor(TWarnSendInfo *pSendNode, int32_t iTimePeriod, uint32_
 	}
 }
 
+void OnWarn(TWarnSendInfo *pSendNode) 
+{
+	std::ostringstream ss;
+	ss << stConfig.szCurDir << "/deal_warn.sh";
+
+	// 告警回调脚本
+	if(!IsFileExist(ss.str().c_str())) 
+		return;
+
+	ss.str("");
+	ss << "cd " << stConfig.szCurDir << ";";
+	ss << "export warn_db_id=" << pSendNode->dwWarnId << ";";
+
+	ss << "export warn_start_time='" << uitodate(pSendNode->dwWarnAddTime) << "';";
+
+	if(pSendNode->stWarn.iWarnFlag & ATTR_WARN_FLAG_TYPE_VIEW)
+		ss << "export warn_obj_type=view;"; 
+	else if(pSendNode->stWarn.iWarnFlag & ATTR_WARN_FLAG_TYPE_MACHINE)
+		ss << "export warn_obj_type=machine;"; 
+	else
+		ss << "export warn_obj_type=exception;"; 
+	ss << "export warn_obj_id=" << pSendNode->stWarn.iWarnId << ";";
+	if(pSendNode->stWarn.iWarnFlag & ATTR_WARN_FLAG_TYPE_VIEW)
+		ss << "export warn_obj_name='" << slog.GetViewName(pSendNode->stWarn.iWarnId) << "';";
+	else
+		ss << "export warn_obj_name='" << slog.GetMachineName(pSendNode->stWarn.iWarnId) << "';";
+
+	if(pSendNode->stWarn.iWarnFlag & 1)
+		ss << "export warn_type=max;";
+	else if(pSendNode->stWarn.iWarnFlag & 2)
+		ss << "export warn_type=min;";
+	else if(pSendNode->stWarn.iWarnFlag & 4)
+		ss << "export warn_type=wave;";
+	else
+		ss << "export warn_type=exception;";
+
+	ss << "export warn_attr_id=" << pSendNode->stWarn.iAttrId << ";";
+	ss << "export warn_attr_name=" << slog.GetAttrNameFromShm(pSendNode->stWarn.iAttrId) << ";";
+	ss << "export warn_report_val=" << pSendNode->stWarn.dwWarnValue << ";";
+	ss << "export warn_config_val=" << pSendNode->stWarn.iWarnConfigValue << ";";
+
+	string strWarnTxt;
+	GetSendWarnTxt(pSendNode, strWarnTxt);
+	ss << "export warn_desc='" << strWarnTxt << "';";
+	ss << "./deal_warn.sh"; 
+	system(ss.str().c_str());
+	DEBUG_LOG("add warning info execute:%s", ss.str().c_str());
+}
+
+
 // 本地告警，以邮件通知作为示例
 void SendWarn(TWarnSendInfo *pSendNode, int32_t iTimePeriod, uint32_t dwTimeNow)
 {
@@ -437,8 +491,10 @@ void ScanSendWarnShm()
 		pSendNode = stConfig.pSendWarnShm+j;
 		if(0 == pSendNode->dwWarnId || pSendNode->dwWarnAddTime+stConfig.iValidSendWarnTimeSec <= dwTimeNow)
 		{
-			if(pSendNode->dwWarnId != 0 && pSendNode->dwWarnAddTime+stConfig.iValidSendWarnTimeSec <= dwTimeNow)
+			if(pSendNode->dwWarnId != 0 && pSendNode->dwWarnAddTime+stConfig.iValidSendWarnTimeSec <= dwTimeNow) {
+				pSendNode->dwWarnId = 0;
 				WARN_LOG("warn :%d send timeout", pSendNode->dwWarnId);
+			}
 			continue;
 		}
 		 
@@ -447,6 +503,8 @@ void ScanSendWarnShm()
 
 		if(!stConfig.iSkipSendWarn)
 		{
+			OnWarn(pSendNode);
+
 			if(stConfig.iXrkmonitorUid != 0 && stConfig.szXrkmonitorKey[0] != '\0')
 			{
 				// 云版本告警发送，接收方为云账号相关的邮箱、手机、微信号等

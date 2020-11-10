@@ -35,6 +35,7 @@
 
 #include <inttypes.h>
 #include <stdarg.h>
+#include <iostream>
 
 typedef struct {
 	int y;
@@ -46,6 +47,7 @@ typedef struct {
 }TIME_INFO;
 
 void uitotime_info(uint32_t dwTimeSec, TIME_INFO *pinfo);
+int get_cmd_result(const char *cmd, std::string &strResult);
 
 int file_lockw(const char *pfile);
 int file_lock(const char *pfile);
@@ -61,6 +63,7 @@ int check_bit(uint32_t n, int b);
 char *OI_RandStrURandom(char *buffer, int len);
 char *ipv4_addr_str(uint32_t dwAddr);
 
+
 char *uitodate(uint32_t dwTimeSec);
 uint32_t datetoui(const char *pdate);
 char *strchr_n(char *pstr, char c, int n);
@@ -75,6 +78,10 @@ char *OI_randstr(char* buffer, int len);
 char *OI_randstr_number(char* buffer, int len);
 int isnumber(const char *pstr);
 char *uitodate2(uint32_t dwTimeSec);
+char *Str_Trim(char *s);
+char *Str_Trim_Char(char *s, char c);
+char *Str_Trim_Local(char *s);
+void ReplaceAllChar(char *pstr, char src, char dst);
 
 #define MY_STRLEN(pstr) (pstr==NULL ? 0 : strlen(pstr))
 

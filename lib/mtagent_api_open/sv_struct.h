@@ -37,6 +37,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <map>
+#include <iostream>
 
 #define MAX_APP_LOG_PKG_LENGTH 1400
 
@@ -412,6 +414,7 @@ void TlvLogInfoNtoH(TlvLogInfo *pLog);
 void MonitorPkgLogInfoHtoN(MonitorPkgLogInfo *pinfo);
 void MonitorPkgLogInfoNtoH(MonitorPkgLogInfo *pinfo);
 void LogInfoNtoH(LogInfo *pLog);
+int LoalAllConfig(const char *pcfgFile, std::map<std::string, std::string> &mpCfg);
 
 #endif
 

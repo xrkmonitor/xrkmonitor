@@ -536,6 +536,7 @@ static int SaveAttr(bool bIsMod=false)
 	AddParameter(&ppara, "attr_desc", pdesc, NULL);
 	AddParameter(&ppara, "user_mod_id", stConfig.stUser.puser_info->iUserId, "DB_CAL");
 	AddParameter(&ppara, "excep_attr_mask", iExcepAttrMask, "DB_CAL");
+	AddParameter(&ppara, "static_time", iStaticTime, "DB_CAL");
 
 	std::string strSql;
 	Query & qu = *stConfig.qu;
@@ -549,7 +550,6 @@ static int SaveAttr(bool bIsMod=false)
 		AddParameter(&ppara, "create_time", uitodate(stConfig.dwCurTime), NULL);
 		AddParameter(&ppara, "user_add", stConfig.stUser.puser, NULL);
 		AddParameter(&ppara, "user_add_id", stConfig.stUser.puser_info->iUserId, "DB_CAL");
-		AddParameter(&ppara, "static_time", iStaticTime, "DB_CAL");
 		JoinParameter_Insert(&strSql, qu.GetMysql(), ppara);
 	}
 	else {
@@ -587,8 +587,8 @@ static int SaveAttr(bool bIsMod=false)
 		return SLOG_ERROR_LINE;
 	}
 	string_clear(&str);
-	DEBUG_LOG("%s mt_attr name:%s(attr id:%u, attr type:%d) success, sql:%s, response string :%s to remote:%s ",
-		(bIsMod ? "update" : "insert"), pname, iAttrId, iAttrType, strSql.c_str(), js.ToString().c_str(), stConfig.remote);
+	DEBUG_LOG("%s attr name:%s(attr id:%u, attr type:%d, static time:%d)",
+		(bIsMod ? "update" : "insert"), pname, iAttrId, iAttrType, iStaticTime);
 	return 0;
 }
 
@@ -708,7 +708,7 @@ static int DealModAttr()
 	hdf_set_int_value(stConfig.cgi->hdf, "config.sum_report_his", SUM_REPORT_TOTAL);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.str_report_d", STR_REPORT_D);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.str_report_d_ip", STR_REPORT_D_IP);
-	hdf_set_int_value(stConfig.cgi->hdf, "config.data_percent", DATA_PERCENT);
+	hdf_set_int_value(stConfig.cgi->hdf, "config.data_use_last", DATA_USE_LAST);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.ex_report", EX_REPORT);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.static_time", iStaticTime);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.excep_attr_mask", iExcepAttrMask);
@@ -724,7 +724,7 @@ static int DealAddAttr()
 	hdf_set_int_value(stConfig.cgi->hdf, "config.sum_report_min", SUM_REPORT_MIN);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.str_report_d", STR_REPORT_D);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.str_report_d_ip", STR_REPORT_D_IP);
-	hdf_set_int_value(stConfig.cgi->hdf, "config.data_percent", DATA_PERCENT);
+	hdf_set_int_value(stConfig.cgi->hdf, "config.data_use_last", DATA_USE_LAST);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.sum_report_his", SUM_REPORT_TOTAL);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.sum_report_max", SUM_REPORT_MAX);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.ex_report", EX_REPORT);
@@ -958,7 +958,7 @@ static int DealAttrSearch()
 	hdf_set_int_value(stConfig.cgi->hdf, "config.sum_report_min", SUM_REPORT_MIN);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.str_report_d", STR_REPORT_D);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.str_report_d_ip", STR_REPORT_D_IP);
-	hdf_set_int_value(stConfig.cgi->hdf, "config.data_percent", DATA_PERCENT);
+	hdf_set_int_value(stConfig.cgi->hdf, "config.data_use_last", DATA_USE_LAST);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.sum_report_his", SUM_REPORT_TOTAL);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.sum_report_max", SUM_REPORT_MAX);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.ex_report", EX_REPORT);

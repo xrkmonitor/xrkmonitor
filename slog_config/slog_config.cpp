@@ -1830,9 +1830,10 @@ int32_t ReadTableAttr(Database &db, uint32_t uid=0)
 			}
 
 			if(pInfo->iDataType != (uint8_t)qu.getval("data_type"))
-			{
 				pInfo->iDataType = qu.getval("data_type");
-			}
+
+			if(pInfo->iStaticTime != iStaticTime)
+				pInfo->iStaticTime = iStaticTime;
 
 			const char *pvname = NULL;
 			if(pInfo->iNameVmemIdx > 0)

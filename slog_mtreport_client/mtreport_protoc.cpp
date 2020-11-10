@@ -1052,16 +1052,17 @@ static int DownloadPluginPacket(CmdS2cPreInstallContentReq *pct, Json &jsret)
 		ss_local_name << "xrk_" << (const char*)(jsret["plugin_name"]) << ".conf";
     ss_down << "cd " << sInstallPath.str() << "; wget -a " << sInstallLogFile.str() << " -T 30 -O " << ss_local_name.str();
 
-	if(stConfig.szLocalUrl[0] != '\0') {
+	if(stConfig.szLocalDomain[0] != '\0') {
 		std::string strurl(pct->sLocalCfgUrl);
 		size_t s = strurl.find("//");
 		size_t e = strurl.find("/", s+2);
 		if(s != std::string::npos && e != std::string::npos && e > s+2) {
-			strurl.replace(s+2, e-s-2, stConfig.szLocalUrl);
+			strurl.replace(s+2, e-s-2, stConfig.szLocalDomain);
     		ss_down << " " << strurl << "; echo 0"; 
 		}
 		else {
-			PLUGIN_INST_LOG("change local config url failed(%s), use:%s", stConfig.szLocalUrl, pct->sLocalCfgUrl);
+			// url 校验不符合预期，不进行域替换
+			PLUGIN_INST_LOG("change local config url failed(%s)", pct->sLocalCfgUrl);
     		ss_down << " " << pct->sLocalCfgUrl << "; echo 0"; 
 		}
 	}
@@ -1503,7 +1504,7 @@ int DealPreInstallNotify(CBasicPacket &pkg)
     SendPreInstallStatusToServer(pct, EV_PREINSTALL_TO_CLIENT_OK);
 
     std::ostringstream ss;
-	ss << "resp=`wget -t 3 -O - --dns-timeout=3 --connect-timeout=3 --read-timeout=5 -a " << sInstallLogFile.str() 
+	ss << "resp=`wget -t 3 -O - -T " << stConfig.iPLuginInstallTimeoutSec << " -a " << sInstallLogFile.str() 
 		<< " \"http://" << stConfig.szCloudUrl << "/" << "cgi-bin/mt_slog_open?action=open_preinstall_plugin";
     if(pct->sCheckStr[0] != '\0')
         ss << "&checkstr=" << pct->sCheckStr;

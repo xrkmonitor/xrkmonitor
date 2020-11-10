@@ -7,6 +7,6 @@ AGENT=slog_mtreport_client
 rm -f ${TARGET}
 mv ${AGENT}.conf _${AGENT}.conf
 cp fabu_mtreport_client.conf ${AGENT}.conf
-tar -czf ${TARGET} restart.sh start.sh stop.sh add_crontab.sh remove_crontab.sh run_tool.sh check_xrkmonitor_agent_client.sh ${AGENT}.conf ${AGENT} rmshm.sh start_plugin.sh stop_plugin.sh uninstall_plugin.sh
+tar -czf ${TARGET} restart.sh start.sh stop.sh add_crontab.sh remove_crontab.sh run_tool.sh check_xrkmonitor_agent_client.sh ${AGENT}.conf ${AGENT} rmshm.sh start_plugin.sh stop_plugin.sh uninstall_plugin.sh fabu_mtreport_client.conf
 mv _${AGENT}.conf ${AGENT}.conf
 

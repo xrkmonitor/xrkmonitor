@@ -89,6 +89,7 @@ typedef struct
 
 	// 用于告警 udp 包重发逻辑
 	std::map<TWarnMapKey, std::string> sWarnUdpPackList;
+	char szCurDir[256];
 }CONFIG;
 
 #endif

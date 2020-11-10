@@ -69,8 +69,8 @@ int IsStrEqual(const char *str1, const char *str2)
 
 void GetOsType(const char *pos, std::string &osType)
 {
-	static const char *pLinuxOs[] = { "CentOS","Slackware","Mint","Mageia","Arch",
-		"PCLinuxOS","FreeBSD","Red,Hat","Aliyun","Fedora","Debian","openSUSE","Ubuntu", NULL };
+	static const char *pLinuxOs[] = { "CentOS","Slackware","Mint","Mageia", "Arch", "CommLinux",
+		"PCLinuxOS","FreeBSD","Red Hat", "Red", "Aliyun","Fedora","Debian","openSUSE","Ubuntu", NULL };
 
 	osType = "unknow";
 	if(IsStrEqual(pos, "Windows"))

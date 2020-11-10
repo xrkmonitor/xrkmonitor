@@ -52,7 +52,8 @@
 .pluginDesc { line-height:16px; margin-top:5px; margin-left:10px; margin-right:10px; margin-bottom:10px; font-size:13px; height:50px; width:420px; overflow:hidden; text-overflow:ellipsis; float:left; text-align:left !important;}
 .pluginAuth { width:100px; float:left; margin-left:20px; cursor:default;}
 .pluginAuth .nav { float:left; font-size:14px; color:#448af3;}
-.pluginOp { width:120px; float:right; margin-left:10px; height:30px; cursor:pointer; margin-right:20px;}
+.pluginOp { width:160px; float:right; margin-left:10px; height:30px; cursor:pointer; margin-right:20px;}
 .pluginOp .nav { float:right; font-size:14px; color:#448af3;}
+.pluginOp .nav li { margin-left:10px; float:right; font-size:14px; color:#448af3;}
 
 

@@ -10,6 +10,10 @@
 			<li class="line">line</li>
 			<li><a class="add" href="#" onclick="return dsmAttrShow_<?cs var:config.machine_id ?>(3);"><i class='icon-area-chart icon-large'></i>周图</a></li>
 			<li class="line">line</li>
+			<li style='line-height:34px'>
+    			<input type="checkbox" id="dsm_not_show_zero_<?cs var:config.machine_id ?>" onclick="return dsmCheckShowZero_<?cs var:config.machine_id ?>();"/>
+	    		<label class='for' for='dsm_not_show_zero_<?cs var:config.machine_id ?>'>图表不显示数据为0的点</label>
+			</li>
 			<li style="display:none"><a id="dsm_href_<?cs var:config.machine_id ?>" href="#" target="navTab" rel="showmachine_<?cs var:config.machine_id ?>" fresh="false"></a></li>
 			&nbsp;&nbsp;&nbsp;<li><span id="dsm_show_proc_<?cs var:config.machine_id ?>"></span></li>
 		</ul>
@@ -36,6 +40,17 @@ var dsm_attr_show_type_<?cs var:config.machine_id ?> = <?cs var:config.show_type
 var dsm_attr_show_reqstart_timestamp_<?cs var:config.machine_id ?> = 0;
 var dsm_cust_date_save_<?cs var:config.machine_id ?> = '<?cs var:config.cust_date ?>';
 
+function dsmCheckShowZero_<?cs var:config.machine_id ?>()
+{
+    var ckName = "local_dsm_not_show_zero_<?cs var:config.machine_id ?>";
+    var ck = $("#dsm_not_show_zero_<?cs var:config.machine_id ?>").is(":checked");
+    if(ck)
+        window.localStorage.setItem(ckName, '1');
+    else
+        window.localStorage.setItem(ckName, '0');
+    return dsmAttrShow_<?cs var:config.machine_id ?>(dsm_attr_show_type_<?cs var:config.machine_id ?>);
+}
+
 function dsmAttrShow_<?cs var:config.machine_id ?>(type)
 {
 	var dt = $("#dsm_date_<?cs var:config.machine_id ?>").val();
@@ -44,6 +59,9 @@ function dsmAttrShow_<?cs var:config.machine_id ?>(type)
 	else
 		param = "&date=today" 
 
+    var notShowZero = window.localStorage.getItem("local_dsm_not_show_zero_<?cs var:config.machine_id ?>");
+    if(notShowZero == 1)
+        param += '&show_zero=0';
 	param += '&_r=' + Math.random();
 	param += '&machine_id=' + '<?cs var:config.machine_id ?>';
 	param += '&type=' + type;
@@ -98,6 +116,10 @@ function dsmAttrShowDate2_<?cs var:config.machine_id ?>(idx)
 
 	var requrl = "<?cs var:config.cgipath?>mt_slog_showview";
 	var reqpara = {};
+
+    var notShowZero = window.localStorage.getItem("local_dsm_not_show_zero_<?cs var:config.machine_id ?>");
+    if(notShowZero == 1)
+        reqpara.show_zero = 0;
 	reqpara.machine_id = <?cs var:config.machine_id ?>;
 	reqpara.attr_list = reqAttr.toString();
 	reqpara.action = 'show_machine_attr_cust';
@@ -183,6 +205,11 @@ function dsmLeftMenuShow_<?cs var:config.machine_id ?>()
 }
 
 $(document).ready(function(){
+    var notShowZero = window.localStorage.getItem("local_dsm_not_show_zero_<?cs var:config.machine_id ?>");
+    if(notShowZero == 1)
+        $("#dsm_not_show_zero_<?cs var:config.machine_id ?>").prop('checked', true);
+    else
+        $("#dsm_not_show_zero_<?cs var:config.machine_id ?>").prop('checked', false);
 	dmtSetRedrawChartsInfo('<?cs var:config.machine_id ?>', 'machine', true);
 	dmtSetChartSize();
 	var attr_list = $.parseJSON('<?cs var:config.attr_list ?>');

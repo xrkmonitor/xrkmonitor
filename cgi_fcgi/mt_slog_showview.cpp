@@ -65,6 +65,8 @@ static const char *s_JsonRequest [] = {
 	"deal_multi_warns",
 	"get_attr_type_attrs",
 	"send_test_attr",
+    "show_plugin_attr_cust",
+    "show_plugin_get_machines",
 	NULL
 };
 
@@ -181,15 +183,6 @@ static int cs_read(void *ctx, char *s, int n)
 	return FCGI_fread(s, 1, n, FCGI_stdin);
 }
 // fast cgi 必须要重载这些基础函数接口 --- end ---------------
-
-static bool IsPercentAttr(int id)
-{
-	if(id >= 163 && id <= 179)
-		return true;
-	if(id == 184 || id == 183 || id == 189)
-		return true;
-	return false;
-}
 
 static int GetWarnList(Json & js, WarnListSearchInfo *pinfo=NULL, int iTotal=0);
 static int AddWarnInfoSearch(char *psql, int ibufLen, WarnListSearchInfo *pinfo)
@@ -621,7 +614,7 @@ static int DealBindAttrList(int view_id, AttrSearchInfo *pshInfo=NULL)
 	hdf_set_int_value(stConfig.cgi->hdf, "config.sum_report_min", SUM_REPORT_MIN);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.str_report_d", STR_REPORT_D);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.str_report_d_ip", STR_REPORT_D_IP);
-	hdf_set_int_value(stConfig.cgi->hdf, "config.data_percent", DATA_PERCENT);
+	hdf_set_int_value(stConfig.cgi->hdf, "config.data_use_last", DATA_USE_LAST);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.sum_report_his", SUM_REPORT_TOTAL);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.sum_report_max", SUM_REPORT_MAX);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.ex_report", EX_REPORT);
@@ -876,7 +869,7 @@ static int DealNotBindAttrList(int view_id, AttrSearchInfo *pshInfo=NULL)
 	hdf_set_int_value(stConfig.cgi->hdf, "config.sum_report_min", SUM_REPORT_MIN);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.str_report_d", STR_REPORT_D);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.str_report_d_ip", STR_REPORT_D_IP);
-	hdf_set_int_value(stConfig.cgi->hdf, "config.data_percent", DATA_PERCENT);
+	hdf_set_int_value(stConfig.cgi->hdf, "config.data_use_last", DATA_USE_LAST);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.sum_report_his", SUM_REPORT_TOTAL);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.sum_report_max", SUM_REPORT_MAX);
 	hdf_set_int_value(stConfig.cgi->hdf, "config.ex_report", EX_REPORT);
@@ -1178,36 +1171,6 @@ static const char * GetAttrTableName(time_t tm)
 	return szTableName;
 }
 
-// 将日期格式：2014-01-30 20:43:21 转为 0-1439 分钟数
-static int GetDayOfMin(const char *ptime=NULL)
-{
-	static char s_sLocalBuf[64];
-
-	char *ptime_str = (char*)s_sLocalBuf;
-	if(NULL == ptime) {
-		ptime_str = uitodate(stConfig.dwCurTime);
-	}
-	else {
-		ptime_str = (char*)s_sLocalBuf;
-		strncpy(ptime_str, ptime, sizeof(s_sLocalBuf));
-	}
-
-	char *phour = strchr(ptime_str, ':');
-	char *pmin = phour+1;
-	if(phour == NULL)
-		return 0;
-	*phour = '\0';
-	phour -= 2;
-	pmin[2] = '\0';
-
-	int i = atoi(phour)*60+atoi(pmin);
-	if(i >= 1440)
-		return 1439;
-	if(i <= 0)
-		return 0;
-	return i;
-}
-
 static void InitGetEachMachAttrInfo(Json &js, Json & JsEachMach)
 {
 	Json::json_list_t & jslist = js["list"].GetArray();
@@ -1234,20 +1197,30 @@ static void EndGetEachMachAttrInfo(Json & js)
 static int GetAttrDayVal(Json &js, Json &attr, const char *pattrTab, const Json &js_attr_info, int iCurMin, Query & qu)
 {
 	int attr_id = js_attr_info["id"];
+    int iStaticTime = js_attr_info["static_time"];
+    int iAttrDataType = (int)js_attr_info["data_type"];
+
 	attr["max"] = 0U;
 	attr["id"] = attr_id;
 
+	// 图表是否显示上报为0的数据点
+	bool bShowZero = true;
+	if(!hdf_get_int_value(stConfig.cgi->hdf, "Query.show_zero", 1))
+	    bShowZero = false;
+
 	char sSqlBuf[256] = {0};
-	uint32_t iReport[1440] = {0};
+	uint32_t iReport[COUNT_STATIC_TIMES_PER_DAY] = {0};
 	const Json::json_list_t & jslist = js["list"].GetArray();
 	Json::json_list_t::const_iterator it = jslist.begin();
-	uint32_t arydwValDay[1440] = {0};
 	const char *pAttrTableToday = GetAttrTableName(stConfig.dwCurTime);
 
 	bool bIsToday = false;
 	if(!strcmp(pattrTab, pAttrTableToday))
 		bIsToday = true;
+	else 
+        iCurMin = GetStaticTimeMaxIdxOfDay(iStaticTime);
 
+    int32_t iCurStaticVal = -1;
 	for(; it != jslist.end(); it++)
 	{
 		comm::MonitorMemcache memInfo;
@@ -1259,31 +1232,37 @@ static int GetAttrDayVal(Json &js, Json &attr, const char *pattrTab, const Json 
 		{
 			for(int i=0; i < memInfo.machine_attr_day_val().attr_val_size(); i++)
 			{
-				if(memInfo.machine_attr_day_val().attr_val(i).idx() >= 1440)
+				if(memInfo.machine_attr_day_val().attr_val(i).idx() >= COUNT_STATIC_TIMES_PER_DAY)
 				{
 					ERR_LOG("invalid attr val idx:%d, key:%s", 
 						memInfo.machine_attr_day_val().attr_val(i).idx(), slog.memcache.GetKey());
 					continue;
 				}
-				iReport[memInfo.machine_attr_day_val().attr_val(i).idx()] +=
-					memInfo.machine_attr_day_val().attr_val(i).val();
+				iReport[memInfo.machine_attr_day_val().attr_val(i).idx()] =
+                    GetAttrIdxData(iReport[memInfo.machine_attr_day_val().attr_val(i).idx()],
+    					memInfo.machine_attr_day_val().attr_val(i).val(), iAttrDataType);
 			}
+            if(memInfo.now_static_val() > 0)
+                iCurStaticVal = (int)(memInfo.now_static_val());
 			DEBUG_LOG("get attr:%d machine:%d value count:%d from memcache",
 				attr_id, (int)((*it)["id"]), memInfo.machine_attr_day_val().attr_val_size());
 		}
 		// 查询的是当天的数据
 		else if(bIsToday)
 		{
-			sprintf(sSqlBuf, "select value,report_time from %s where attr_id=%d and machine_id=%d",
+			sprintf(sSqlBuf, "select value,unix_timestamp(report_time) as report_time from %s where attr_id=%d and machine_id=%d",
 				pattrTab, attr_id, (int)((*it)["id"]));
 
 			qu.get_result(sSqlBuf);
-			int i=0;
+			int i=0, iDayOfMinTmp = 0;
+            TIME_INFO stCurTimeInfo;
+            uint32_t dwRepTime = 0;
 			for(i=0; qu.fetch_row() != NULL; i++)
 			{
-				const char *prepTime = qu.getstr("report_time");
-				int iDayOfMinTmp = GetDayOfMin(prepTime);
-				iReport[iDayOfMinTmp] += qu.getval("value");
+				dwRepTime = qu.getuval("report_time");
+                uitotime_info(dwRepTime, &stCurTimeInfo);
+				iDayOfMinTmp = GetDayOfMin(&stCurTimeInfo, iStaticTime);
+				iReport[iDayOfMinTmp] = GetAttrIdxData(iReport[iDayOfMinTmp], qu.getval("value"), iAttrDataType);
 			}
 			DEBUG_LOG("get attr:%d machine:%d value count:%d", attr_id, (int)((*it)["id"]), i);
 			qu.free_result();
@@ -1297,28 +1276,98 @@ static int GetAttrDayVal(Json &js, Json &attr, const char *pattrTab, const Json 
 			if(res && qu.num_rows() > 0)
 			{
 				qu.fetch_row();
+                qu.fetch_lengths();
+    
+                unsigned long ulValLen = qu.getlength("value");
 				const char *pval = qu.getstr("value");
-				memcpy((char*)arydwValDay, pval, sizeof(arydwValDay));
-				uint32_t  uiMin=UINT_MAX, uiMax =0, uiTotal = 0;
-				for(int i=0; i < 1440; i++)
-				{
-					uiTotal += arydwValDay[i];
-					if(arydwValDay[i] > uiMax)
-						uiMax = arydwValDay[i];
-					if(arydwValDay[i] < uiMin && arydwValDay[i] != 0)
-						uiMin = arydwValDay[i];
-					iReport[i] += arydwValDay[i];
-				}
 
-				if(uiMin != qu.getuval("min") || uiMax != qu.getuval("max") || uiTotal != qu.getuval("total"))
-				{
-					WARN_LOG("check failed- min:%u|%u, max:%u|%u, total:%u|%u info|%d|%d|%s_day",
-						uiMin, qu.getuval("min"), uiMax, qu.getuval("max"), uiTotal, qu.getuval("total"),
-						attr_id, (int)((*it)["id"]), pattrTab);
-				}
+				// pval 目前可能有3种格式(见 supper_log.h)
+                char cSaveBinType = *pval;
+                int iMaxAttrCountIdx = 0;
+                int iCoundIdx = -1;
+                int iDbStaticTime = 0;
+                uint16_t *pattrIdx = NULL;
+                uint32_t *pattrVal = NULL;
 
-				DEBUG_LOG("get attr from day record -info attr:%d machine:%d min:%u, max:%u, total:%u",
-					attr_id, (int)((*it)["id"]), uiMin, uiMax, uiTotal);
+                // pval : cType+wStaticTime+arrVal(uint32_t[iMaxAttrCountIdx])
+                if(iCoundIdx < 0 && ATTR_DAY_BIN_TYPE_ARRAY_V2 == cSaveBinType) {
+                    iDbStaticTime = ntohs(*(uint16_t*)(pval+1));
+                    if(IsValidStaticTime(iDbStaticTime)) {
+                        iMaxAttrCountIdx = GetStaticTimeMaxIdxOfDay(iDbStaticTime);
+                        if(ulValLen == 3+iMaxAttrCountIdx*(sizeof(uint32_t))) {
+                            pattrVal = (uint32_t*)(pval+3);
+                            iCoundIdx = iMaxAttrCountIdx;
+                        }
+                    }
+                }
+
+                // pval : cType+wStaticTime+wCount+arrIdx(uint16_t[wCount]) + arrVal(uint32_t[wCount]
+                if(iCoundIdx < 0 && ATTR_DAY_BIN_TYPE_PRESS_V2 == cSaveBinType) {
+                    iDbStaticTime = ntohs(*(uint16_t*)(pval+1));
+                    if(IsValidStaticTime(iDbStaticTime)) {
+                        iMaxAttrCountIdx = GetStaticTimeMaxIdxOfDay(iDbStaticTime);
+                        iCoundIdx = ntohs(*(uint16_t*)(pval+3));
+                        if(ulValLen == 5+iCoundIdx*(sizeof(uint16_t)+sizeof(uint32_t))) {
+                            pattrIdx = (uint16_t*)(pval+5);
+                            pattrVal = (uint32_t*)(pval+5+sizeof(uint16_t)*iCoundIdx);
+                       }
+                        else
+                            iCoundIdx = -1;
+                    }
+                }
+
+                // 尝试最老的一种数据格式 1440*uint32_t 
+                if(iCoundIdx < 0 && ulValLen == sizeof(uint32_t)*1440) {
+                    WARN_LOG("unsupport binary data type:%d, try oldest version", cSaveBinType);
+                    if(ulValLen == sizeof(uint32_t)*1440) {
+                        pattrVal = (uint32_t*)(pval);
+                        cSaveBinType = ATTR_DAY_BIN_TYPE_NONE;
+                        iMaxAttrCountIdx = 1440;
+                        iCoundIdx = 1440;
+                    }
+                }
+
+                if(iCoundIdx < 0) {
+                    ERR_LOG("read attr data failed, id:%d, idx:%d, maxidx:%d, static time:%d, type:%d",
+						attr_id, iCoundIdx, iMaxAttrCountIdx, iStaticTime, cSaveBinType);
+                }
+                else
+                {
+				    uint32_t  uiMin=UINT_MAX, uiMax =0, uiTotal = 0;
+                    int attr_db_idx = 0;
+				    for(int i=0; i < iCoundIdx; i++)
+				    {
+                        if(pattrIdx) {
+                            attr_db_idx = ntohs(pattrIdx[i]);
+                            if(attr_db_idx < 0 || attr_db_idx > iMaxAttrCountIdx) {
+                                ERR_LOG("invalid attr min idx:%d, attr:%d, table:%s, max:%d, static time:%d|%d",
+                                    attr_db_idx, attr_id, pattrTab, iMaxAttrCountIdx, iDbStaticTime, iStaticTime);
+                                continue;
+                            }
+                        }
+                        else  
+                            attr_db_idx = i;
+                        if(ATTR_DAY_BIN_TYPE_NONE == cSaveBinType)
+                            iReport[attr_db_idx] += pattrVal[i];
+                        else 
+				            iReport[attr_db_idx] = GetAttrIdxData(iReport[attr_db_idx], ntohl(pattrVal[i]), iAttrDataType);
+				    	uiTotal += iReport[attr_db_idx];
+				    	if(iReport[attr_db_idx] > uiMax)
+				    		uiMax = iReport[attr_db_idx];
+				    	if(iReport[attr_db_idx] < uiMin && iReport[attr_db_idx] != 0) 
+				    		uiMin = iReport[attr_db_idx];
+				    }
+
+				    if(uiMin != qu.getuval("min") || uiMax != qu.getuval("max") || uiTotal != qu.getuval("total"))
+				    {
+				    	WARN_LOG("check failed- min:%u|%u, max:%u|%u, total:%u|%u info|%d|%d|%s_day, count idx:%d",
+				    		uiMin, qu.getuval("min"), uiMax, qu.getuval("max"), uiTotal, qu.getuval("total"),
+				    		attr_id, (int)((*it)["id"]), pattrTab, iCoundIdx);
+				    }
+                    else
+                        DEBUG_LOG("get attr from day record -info attr:%d machine:%d min:%u, max:%u, total:%u",
+				        	attr_id, (int)((*it)["id"]), uiMin, uiMax, uiTotal);
+                }
 			}
 			else
 			{
@@ -1330,19 +1379,16 @@ static int GetAttrDayVal(Json &js, Json &attr, const char *pattrTab, const Json 
 
 	uint32_t iValueMax = 0;
 	uint32_t iValueMin = UINT_MAX;
-
-	if(iCurMin < 0 || iCurMin >= 1440)
-		iCurMin = 1440;
-	
 	stringstream strVal;
 
 	// 历史累积监控点类型，中间无上报需要用历史数据填补
 	uint32_t dwHisVal = 0;
 	bool bIsHisTotalAttr = false;
-	if((int)js_attr_info["data_type"] == SUM_REPORT_TOTAL)
+	if(iAttrDataType == SUM_REPORT_TOTAL)
 		bIsHisTotalAttr = true;
 
 	int iAvgVal = 0, iRepCount = 0;
+	uint32_t dwTotal = 0;
 	for(int i=0; i < iCurMin; i++)
 	{
 		// 历史累积数据，最新的永远是大于等于老的上报值
@@ -1352,7 +1398,10 @@ static int GetAttrDayVal(Json &js, Json &attr, const char *pattrTab, const Json 
 				dwHisVal = iReport[i];
 			else
 				iReport[i] = dwHisVal;
+			dwTotal = dwHisVal;
 		}
+		else 
+			dwTotal += iReport[i];
 
 		if(iReport[i] > iValueMax)
 			iValueMax = iReport[i];
@@ -1360,7 +1409,10 @@ static int GetAttrDayVal(Json &js, Json &attr, const char *pattrTab, const Json 
 		if(iReport[i] < iValueMin)
 			iValueMin = iReport[i];
 
-		strVal << iReport[i];
+		if(!bShowZero && iReport[i] == 0)
+			strVal << "-";
+		else
+			strVal << iReport[i];
 		if(i+1 < iCurMin)
 			strVal << ",";
 	}
@@ -1374,12 +1426,16 @@ static int GetAttrDayVal(Json &js, Json &attr, const char *pattrTab, const Json 
 	attr["max"] = iValueMax;
 	attr["min"] = iValueMin;
 
-	// 当前时间分钟，显示上一分钟的数据上报，因为当前这一分钟可能有数据没收集完(图表按分钟级别显示)
-	if(iCurMin >= 1)
-		attr["cur"] = iReport[iCurMin-1];
-	else
-		attr["cur"] = iReport[iCurMin];
+	if(iCurStaticVal > 0)
+        attr["cur"] = iCurStaticVal;
+    else {
+		if(iCurMin >= 1)
+			attr["cur"] = iReport[iCurMin-1];
+		else
+			attr["cur"] = iReport[iCurMin];
+	}
 
+	attr["total"] = dwTotal;
 	attr["max_x"] = iCurMin;
 	DEBUG_LOG("attr:%d max value:%d, cur:%d, curmin:%d", attr_id, iValueMax, (int)attr["cur"], iCurMin);
 	return 0;
@@ -1393,10 +1449,15 @@ static int GetAttrDayVal(Json &js, Json &attr,
 
 	Json::json_list_t & jslistEach = JsEachMach["list"].GetArray();
 	Json::json_list_t::iterator itEach = jslistEach.begin();
+	int iMax = iCurMin;
 
-	int iMax = (iCurMin < 0 ? 1439 : iCurMin);
+	// 图表是否显示上报为0的数据点
+	bool bShowZero = true;
+	if(!hdf_get_int_value(stConfig.cgi->hdf, "Query.show_zero", 1))
+	    bShowZero = false;
 
 	uint32_t arydwValDay[1440] = {0};
+    uint32_t dwCurStaticVal = 0;
 	for(; it != jslist.end(); it++, itEach++)
 	{
 		Json jsTmp, attr_tmp;
@@ -1405,14 +1466,19 @@ static int GetAttrDayVal(Json &js, Json &attr,
 
 		if(GetAttrDayVal(jsTmp, attr_tmp, pattrTab, js_attr_info, iCurMin, qu) < 0)
 			return SLOG_ERROR_LINE;
+        dwCurStaticVal += (int)(attr_tmp["cur"]);
 
-		// 单机的 max, value_list_str
-		if((uint32_t)(*itEach)["max"] < (uint32_t)attr_tmp["max"])
-			(*itEach)["max"] = (uint32_t)attr_tmp["max"];
-		std::string strVal((const char*)(*itEach)["value_list_str"]);
-		strVal += (const char*)attr_tmp["value_list_str"];
-		strVal += ",";
-		(*itEach)["value_list_str"] = strVal.c_str();
+        // 单机的 max, value_list_str
+        if((int)(JsEachMach["count"]) > 1) {
+            if((uint32_t)(*itEach)["max"] < (uint32_t)attr_tmp["max"])
+                (*itEach)["max"] = (uint32_t)attr_tmp["max"];
+            std::string strVal((const char*)(*itEach)["value_list_str"]);
+            strVal += (const char*)attr_tmp["value_list_str"];
+            strVal += ",";
+            (*itEach)["value_list_str"] = strVal.c_str();
+            (*itEach)["cur"] = (int)(attr_tmp["cur"]);
+			(*itEach)["total"] = (int)(attr_tmp["total"]);
+        }
 
 		// 视图的 max, value_list_str --- 计算预处理
 		char *pattr_val_list = strdup((const char*)attr_tmp["value_list_str"]);
@@ -1440,6 +1506,7 @@ static int GetAttrDayVal(Json &js, Json &attr,
 	if((int)js_attr_info["data_type"] == SUM_REPORT_TOTAL)
 		bIsHisTotalAttr = true;
 
+	uint32_t dwTotal = 0;
 	for(int i=0; i < iMax; i++)
 	{
 		// 历史累积数据，最新的永远是大于等于老的上报值
@@ -1449,31 +1516,47 @@ static int GetAttrDayVal(Json &js, Json &attr,
 				dwHisVal = arydwValDay[i];
 			else
 				arydwValDay[i] = dwHisVal;
+			dwTotal = dwHisVal;
 		}
+		else
+			dwTotal += arydwValDay[i];
 
 		if(arydwValDay[i] > iValueMax)
 			iValueMax = arydwValDay[i];
 
 		if(arydwValDay[i] < iValueMin)
 			iValueMin = arydwValDay[i];
-		strVal << arydwValDay[i];
+
+		if(!bShowZero && arydwValDay[i] == 0)
+			strVal << "-";
+		else
+			strVal << arydwValDay[i];
 		if(i+1 < iMax)
 			strVal << ",";
 	}
 	attr["value_list_str"] = strVal.str().c_str();
+	if(iValueMin == UINT_MAX)
+		attr["min"] = 0;
+	else
+		attr["min"] = iValueMin;
 	attr["max"] = iValueMax;
-	attr["min"] = iValueMin;
 	if(iRepCount > 0)
 		attr["avg"] = (int)(iAvgVal/iRepCount);
 	else
 		attr["avg"] = 0;
 
 	// 当前时间分钟，显示上一分钟的数据上报，因为当前这一分钟可能有数据没收集完(图表按分钟级别显示)
-	if(iMax >= 1)
-		attr["cur"] = arydwValDay[iMax-1];
-	else
-		attr["cur"] = 0;
+    if(dwCurStaticVal > 0) {
+        attr["cur"] = dwCurStaticVal;
+    }
+	else {
+		if(iMax >= 1)
+			attr["cur"] = arydwValDay[iMax-1];
+		else
+			attr["cur"] = 0;
+	}
 
+	attr["total"] = dwTotal;
 	attr["max_x"] = iMax;
 	return 0;	
 }
@@ -1486,6 +1569,7 @@ static int GetAttrInfoFromShm(int iAttrId, Json & attr)
 		attr["id"] = iAttrId;
 		attr["attr_type"] = pInfo->iAttrType;
 		attr["data_type"] = pInfo->iDataType;
+		attr["static_time"] = pInfo->iStaticTime;
 		iNameIdx = pInfo->iNameVmemIdx;
 	}
 	else {
@@ -1502,11 +1586,8 @@ static int GetAttrInfoFromShm(int iAttrId, Json & attr)
 		attr["name"] = "unknow";
 		WARN_LOG("get attr:%d name failed, nameidx:%d", iAttrId, iNameIdx);
 	}
-
-	if(IsPercentAttr(iAttrId))
-		attr["show_class"] = "percent";
-	else
-		attr["show_class"] = "comm";
+	attr["show_class"] = "comm";
+	attr["static_idx_max"] = GetStaticTimeMaxIdxOfDay((int)(attr["static_time"]));
 	DEBUG_LOG("get attr:%d, info from memcache/vmem", iAttrId);
 	return 0;
 }
@@ -1602,10 +1683,7 @@ static int GetMachineAttrList(int machine_id, Json &js, const char *pszTableName
 		attr["name"] = qu_taobao.getstr("attr_name");
 		attr["attr_type"] = qu_taobao.getstr("attr_type");
 		attr["data_type"] = qu_taobao.getval("data_type");
-		if(IsPercentAttr(qu_taobao.getval("xrk_id")))
-			attr["show_class"] = "percent";
-		else
-			attr["show_class"] = "comm";
+		attr["show_class"] = "comm";
 		js["list"].Add(attr);
 	}
 	js["count"] = i+iTotalAttrCount; 
@@ -1617,7 +1695,8 @@ static int GetMachineAttrList(int machine_id, Json &js, const char *pszTableName
 static int GetAttrInfoByIdList(const char *pattr_id_list, Json & js)
 {
 	char *pattr_list = strdup(pattr_id_list);
-	char *pfree_attr = pattr_list;
+    CAutoFree cf(pattr_list);
+
 	char *pattr_id = NULL;
 	char *psave = NULL;
 
@@ -1641,7 +1720,7 @@ static int GetAttrInfoByIdList(const char *pattr_id_list, Json & js)
 			continue;
 		}
 
-		string strSql("select xrk_id,attr_name,attr_type,data_type from mt_attr where ");
+		string strSql("select xrk_id,attr_name,attr_type,data_type,static_time from mt_attr where ");
 		strSql += " and xrk_id=";
 		strSql += pattr_id;
 		DEBUG_LOG("get attr info - sql:%s", strSql.c_str());
@@ -1659,11 +1738,8 @@ static int GetAttrInfoByIdList(const char *pattr_id_list, Json & js)
 		attr["name"] = pattr_name;
 		attr["attr_type"] = qu_taobao.getstr("attr_type");
 		attr["data_type"] = qu_taobao.getval("data_type");
-
-		if(IsPercentAttr(iattr_id))
-			attr["show_class"] = "percent";
-		else
-			attr["show_class"] = "comm";
+        attr["static_time"] = qu_taobao.getval("static_time");
+		attr["show_class"] = "comm";
 	
 		js["list"].Add(attr);
 		qu_taobao.free_result();
@@ -1675,7 +1751,6 @@ static int GetAttrInfoByIdList(const char *pattr_id_list, Json & js)
 	}
 	js["count"] = iGetCount; 
 	DEBUG_LOG("get attr info - result count:%d", iGetCount);
-	free(pfree_attr);
 	return 0;
 }
 
@@ -1718,7 +1793,7 @@ static int SetMachineAttr()
 	{
 		int y,m,d;
 		sscanf(pdate, "%d-%d-%d", &y, &m, &d);
-		sprintf(szTableName, "attr_%04d%02d%02d", y, m, d);
+		sprintf(szTableName, "attr_%04d%02d%02d_day", y, m, d);
 		DEBUG_LOG("reqinfo date:%s y:%d m:%d d:%d", szTableName, y, m, d);
 	}
 	hdf_set_value(stConfig.cgi->hdf, "config.cust_date", pdate);
@@ -1791,8 +1866,8 @@ static int SetViewAttr(int view_id)
 	return 0;
 }
 
-void ReadStrAttrInfoFromShm(
-	TStrAttrReportInfo *pstrAttrShm, std::map<std::string, int> & stMapStrRepInfo)
+void ReadStrAttrInfoFromShm(TStrAttrReportInfo *pstrAttrShm, 
+    std::map<std::string, int> & stMapStrRepInfo, std::map<std::string, int> * pstEachMachStrRepInfo=NULL)
 {
 	static StrAttrNodeValShmInfo *pstrAttrArryShm = slog.GetStrAttrNodeValShm(false);
 	if(pstrAttrArryShm == NULL)
@@ -1818,12 +1893,23 @@ void ReadStrAttrInfoFromShm(
 			stMapStrRepInfo[pNodeShm->szStrInfo] = pNodeShm->iStrVal;
 		else
 			it->second += pNodeShm->iStrVal;
+
+		// 各机器字符串上报信息
+        if(pstEachMachStrRepInfo) {
+            it = pstEachMachStrRepInfo->find(pNodeShm->szStrInfo);
+            if(it == pstEachMachStrRepInfo->end())
+                (*pstEachMachStrRepInfo)[pNodeShm->szStrInfo] = pNodeShm->iStrVal;
+            else
+                it->second += pNodeShm->iStrVal;
+        }
+
 		idx = pNodeShm->iNextStrAttr;
 	}
 }
 
-static int GetStrAttrDayVal(Json &js_mach, std::map<std::string, int> & stMapStrRepInfo,
-	const Json &js_attr_info, Query &qu, const char *pszDayTableName, bool bIsLocalAttrSrv)		
+typedef std::map<int, std::map<std::string, int> > TEachMachStrRep;
+static int GetStrAttrDayVal(Json &js_mach, std::map<std::string, int> & stMapStrRepInfo, const Json &js_attr_info, 
+    Query &qu, const char *pszDayTableName, bool bIsLocalAttrSrv, TEachMachStrRep *pEachMachStr=NULL)
 {
 	const char *pAttrTableToday = GetAttrTableName(stConfig.dwCurTime);
 	const Json::json_list_t & jslist = js_mach["list"].GetArray();
@@ -1836,8 +1922,21 @@ static int GetStrAttrDayVal(Json &js_mach, std::map<std::string, int> & stMapStr
 		for(; it != jslist.end(); it++)
 		{
 			pStrAttrShm = slog.GetStrAttrShmInfo((int)js_attr_info["id"], (int)((*it)["id"]), NULL); 
-			if(pStrAttrShm != NULL) {
-				ReadStrAttrInfoFromShm(pStrAttrShm, stMapStrRepInfo);
+			if(pStrAttrShm != NULL) 
+			{
+                // mod by rockdeng - 字符串型监控点或者各机器上报数据 @ 2020-10-27
+                if(pEachMachStr) {
+                    TEachMachStrRep::iterator it_each_mach = pEachMachStr->find((int)((*it)["id"]));
+                    if(it_each_mach == pEachMachStr->end()) {
+                        std::map<std::string, int> it_init;
+                        pEachMachStr->insert(std::pair<int, std::map<std::string, int> >((int)((*it)["id"]), it_init));
+                        it_each_mach = pEachMachStr->find((int)((*it)["id"]));
+                    }
+                    ReadStrAttrInfoFromShm(pStrAttrShm, stMapStrRepInfo, &(it_each_mach->second));
+                }
+                else {
+                    ReadStrAttrInfoFromShm(pStrAttrShm, stMapStrRepInfo);
+                }
 			}
 			else {
 				DEBUG_LOG("not find str attr:%d, machine:%d, in shm", (int)js_attr_info["id"], (int)((*it)["id"]));
@@ -1860,8 +1959,10 @@ static int GetStrAttrDayVal(Json &js_mach, std::map<std::string, int> & stMapStr
 					pszDayTableName, (int)js_attr_info["id"], (int)((*it)["id"]));
 			}
 
-			if(!qu.get_result(szSql) || qu.num_rows() <= 0) 
+			if(!qu.get_result(szSql) || qu.num_rows() <= 0)  {
+				qu.free_result();
 				continue;
+			}
 
 			qu.fetch_row();
 			qu.fetch_lengths();
@@ -1871,25 +1972,488 @@ static int GetStrAttrDayVal(Json &js_mach, std::map<std::string, int> & stMapStr
 			if(ulValLen > 0 && !stAttrInfoPb.ParseFromArray(pval, ulValLen))
 			{
 				ERR_LOG("ParseFromArray failed-%p-%lu", pval, ulValLen);
+				qu.free_result();
 				return SLOG_ERROR_LINE;
 			}
 			DEBUG_LOG("read str attr:%d, machine:%d, from db:%s", 
 				(int)js_attr_info["id"], (int)((*it)["id"]), stAttrInfoPb.ShortDebugString().c_str());
+
+            std::map<std::string, int> *pstEachMachStrRepInfo = NULL;
+            if(pEachMachStr) {
+                TEachMachStrRep::iterator it_each_mach = pEachMachStr->find((int)((*it)["id"]));
+                if(it_each_mach == pEachMachStr->end()) {
+                    std::map<std::string, int> it_init;
+                    pEachMachStr->insert(std::pair<int, std::map<std::string, int> >((int)((*it)["id"]), it_init));
+                    it_each_mach = pEachMachStr->find((int)((*it)["id"]));
+                }
+                pstEachMachStrRepInfo = &(it_each_mach->second);
+			}
 
 			std::map<std::string, int>::iterator it_str;
 			for(int j=0; j < stAttrInfoPb.msg_attr_info_size(); j++)
 			{
 				it_str = stMapStrRepInfo.find(stAttrInfoPb.msg_attr_info(j).str());
 				if(it_str == stMapStrRepInfo.end())
-					stMapStrRepInfo[stAttrInfoPb.msg_attr_info(j).str()] 
-						= stAttrInfoPb.msg_attr_info(j).uint32_attr_value();
+					stMapStrRepInfo[stAttrInfoPb.msg_attr_info(j).str()] = stAttrInfoPb.msg_attr_info(j).uint32_attr_value();
 				else
 					it_str->second += stAttrInfoPb.msg_attr_info(j).uint32_attr_value();
+
+                // 各机器的字符串上报信息
+                if(pstEachMachStrRepInfo) {
+                    it_str = pstEachMachStrRepInfo->find(stAttrInfoPb.msg_attr_info(j).str());
+                    if(it_str == pstEachMachStrRepInfo->end())
+                        (*pstEachMachStrRepInfo)[stAttrInfoPb.msg_attr_info(j).str()]
+                            = stAttrInfoPb.msg_attr_info(j).uint32_attr_value();
+                    else
+                        it_str->second += stAttrInfoPb.msg_attr_info(j).uint32_attr_value();
+                }
 			}
+			qu.free_result();
 		}
 	}
 	return 0;
 }
+
+static int GetMachineInfoForPluginAttr(Json &js, int32_t iPluginId, uint32_t dwStartUtcTime)
+{
+	Query & qu = *stConfig.qu;
+	char sSqlBuf[512] = {0};
+    sprintf(sSqlBuf, "select machine_id,xrk_cfgs_list from mt_plugin_machine where open_plugin_id=%d and "
+        " xrk_status=0 and install_proc=0 and last_attr_time > %u", iPluginId, dwStartUtcTime);
+	if(qu.get_result(sSqlBuf) == NULL || qu.num_rows() <= 0) {
+        qu.free_result();
+        return 0;
+    }
+
+	MachineInfo *pmach = NULL;
+	const char *pname = NULL;
+    int iCount = 0;
+    while(qu.fetch_row()) 
+    {
+        // 校验
+        int iMachineId = qu.getval("machine_id");
+		pmach = slog.GetMachineInfo(iMachineId, NULL);
+        if(!pmach) {
+			WARN_LOG("get machine failed, id:%d", iMachineId);
+			continue;
+        }
+
+        // 获取机器私有的插件相关配置
+        // pstrCfgsCur : cfg_name val; cfg_name val; ...
+        char *pitem_name = NULL, *pitem_val = NULL, *ptmp_e = NULL;
+        const char *pstrCfgsCur = qu.getstr("xrk_cfgs_list");
+        char *ptmp = (char*)pstrCfgsCur;
+        int iMachCfgCount = 0;
+        Json jscfgs;
+        for(int i=0; *ptmp != '\0' && i >= 0;)
+        {
+            if(i == 0) {
+                // 提取配置项宏名
+                ptmp_e = strchr(ptmp, ' ');
+                pitem_name = ptmp;
+                if(ptmp_e != NULL) {
+                    *ptmp_e = '\0';
+                    ptmp = ptmp_e+1;
+                }
+                else {
+                    *ptmp = '\0';
+                }
+                i = 1;
+            }
+            else {
+                // 提取配置项值
+                ptmp_e = strchr(ptmp, ';');
+                pitem_val = ptmp;
+                if(ptmp_e != NULL) {
+                    *ptmp_e = '\0';
+                    ptmp = ptmp_e+1;
+                    i = 0;
+                }
+                else
+                    i = -1;
+
+                pitem_name = Str_Trim(pitem_name);
+				pitem_name = Str_Trim_Char(pitem_name, ';');
+                pitem_val = Str_Trim(pitem_val);
+                pitem_val = Str_Trim_Char(pitem_val, ';');
+                if(IsStrEqual(pitem_name, "") || IsStrEqual(pitem_val, ""))
+                    continue;
+                ReplaceAllChar(pitem_name, ';', '%');
+                ReplaceAllChar(pitem_val, ';', '%');
+
+                jscfgs[(const char*)pitem_name] = pitem_val;
+                iMachCfgCount++;
+            }
+        }
+
+		Json mach;
+        mach["cfgs_count"] = iMachCfgCount;
+        mach["cfgs"] = jscfgs;
+		mach["id"] = iMachineId;
+		pname = MtReport_GetFromVmem_Local(pmach->iNameVmemIdx);
+		if(pname == NULL)
+			mach["name"] = "unknow";
+		else 
+			mach["name"] = pname;
+		mach["ip1"] = ipv4_addr_str(pmach->ip1);
+		js["list"].Add(mach);
+        iCount++;
+    }
+	js["count"] = iCount; 
+    qu.free_result();
+
+    DEBUG_LOG("get plugin report attr machine count:%d, plugin:%d", iCount, iPluginId);
+    return iCount;
+}
+
+static inline bool IsValidPluginShowReqDays(int iReqDays)
+{
+    return (1==iReqDays || 7==iReqDays 
+        || 14==iReqDays || 30==iReqDays || 90==iReqDays || 180==iReqDays || 365==iReqDays);
+}
+
+static int ShowPluginGetMachines()
+{
+    int iPluginId = hdf_get_int_value(stConfig.cgi->hdf, "Query.plugin_id", 0);
+    int iReqDays = hdf_get_int_value(stConfig.cgi->hdf, "Query.req_day", 0);
+	if(!IsValidPluginShowReqDays(iReqDays))
+	{
+		REQERR_LOG("invalid request, plugin_id:%d", iPluginId);
+        hdf_set_value(stConfig.cgi->hdf, "err.msg", CGI_REQERR);
+		return SLOG_ERROR_LINE;
+	}
+
+    Json js_mach;
+	std::string strTmp(uitodate2(stConfig.dwCurTime));
+    strTmp += " 0:0:0";
+	uint32_t dwStartUtcTime = datetoui(strTmp.c_str()) - (iReqDays-1)*24*60*60;
+    if(GetMachineInfoForPluginAttr(js_mach, iPluginId, dwStartUtcTime) < 0)
+        return SLOG_ERROR_LINE;
+	js_mach["statusCode"] = 0;
+
+	std::string strWebOut = js_mach.ToString();
+	STRING str;
+	string_init(&str);
+	if((stConfig.err=string_set(&str, strWebOut.c_str())) != STATUS_OK
+		|| (stConfig.err=cgi_output(stConfig.cgi, &str)) != STATUS_OK)
+	{
+		string_clear(&str);
+		return SLOG_ERROR_LINE;
+	}
+	string_clear(&str);
+    DEBUG_LOG("plugin show, plugin:%d get machine count:%d", iPluginId, (int)(js_mach["count"]));
+    return 0;
+}
+
+// 从 dwStartUtcTime 时间开始获取之后的 iDays 天
+static int GetAttrTableNameForCust(time_t tm, char s_aryTableCustDay[400][32], int iDays, std::string & strDays)
+{
+	struct tm curr; 
+	time_t tmTmp = tm;
+    int i = 0;
+	for(i=0; i < iDays; i++)
+	{
+		curr = *localtime(&tmTmp);
+		if(curr.tm_year > 50)
+		{
+			snprintf(s_aryTableCustDay[i], sizeof(s_aryTableCustDay[0]), "attr_%04d%02d%02d",
+				curr.tm_year+1900, curr.tm_mon+1, curr.tm_mday);
+		}
+		else
+		{
+			snprintf(s_aryTableCustDay[i], sizeof(s_aryTableCustDay[0]), "attr_%04d%02d%02d",
+				curr.tm_year+2000, curr.tm_mon+1, curr.tm_mday);
+		}
+
+        strDays += s_aryTableCustDay[i];
+        strDays += ",";
+        tmTmp += 24*60*60;
+    }
+    return i;
+}
+
+static inline int GetDaysByPluginDateType(const char *pdate_type)
+{
+    if(IsStrEqual(pdate_type, "today"))
+        return 1;
+    if(IsStrEqual(pdate_type, "week"))
+        return 7;
+    if(IsStrEqual(pdate_type, "2week"))
+        return 14;
+    if(IsStrEqual(pdate_type, "month"))
+        return 30;
+    if(IsStrEqual(pdate_type, "3month"))
+        return 90;
+    if(IsStrEqual(pdate_type, "6month"))
+        return 180;
+    if(IsStrEqual(pdate_type, "year"))
+        return 365;
+    return -1;
+}
+
+static int GetMachineInfoByIdList(Json &js, const char *pmachines)
+{
+	char *pmach_list = strdup(pmachines);
+    CAutoFree cf(pmach_list);
+
+	char *pmach_id = NULL;
+	char *psave = NULL;
+    int iCount = 0, iMachineId = 0;
+	MachineInfo *pmach = NULL;
+
+	for(; 1; pmach_list=NULL)
+	{
+		pmach_id = strtok_r(pmach_list, ",", &psave);
+		if(pmach_id == NULL)
+			break;
+		iMachineId = atoi(pmach_id);
+		pmach = slog.GetMachineInfo(iMachineId, NULL);
+        if(!pmach) {
+            WARN_LOG("not find machine:%d", iMachineId);
+            continue;
+        }
+
+        Json mach;
+        mach["id"] = iMachineId;
+        js["list"].Add(mach);
+        iCount++;
+    }
+    if(iCount <= 0) {
+        WARN_LOG("not find valid machine from:%s", pmachines);
+        return SLOG_ERROR_LINE;
+    }
+    js["count"] = iCount;
+    return 0;
+}
+
+static int ShowPluginAttrMulti()
+{
+	const char *pattr_list = hdf_get_value(stConfig.cgi->hdf, "Query.attr_list", NULL);
+	const char *pdate_type = hdf_get_value(stConfig.cgi->hdf, "Query.type", NULL);
+    const char *pmachines = hdf_get_value(stConfig.cgi->hdf, "Query.machines", NULL);
+    int iPluginId = hdf_get_int_value(stConfig.cgi->hdf, "Query.plugin_id", 0);
+	int iShowRep = hdf_get_int_value(stConfig.cgi->hdf, "Query.show_rep", -1);
+    int iGetDays = GetDaysByPluginDateType(pdate_type);
+	if(!pmachines || NULL == pattr_list || NULL == pdate_type || 0 == iPluginId || iGetDays < 0)
+	{
+		REQERR_LOG("invalid request, machines:%p, attr_list:%p, pdate_type:%p, plugin_id:%d", 
+			pmachines, pattr_list, pdate_type, iPluginId);
+		return SLOG_ERROR_LINE;
+	}
+
+	// check & get attr info
+	Json js_attr_list;
+	if(GetAttrInfoByIdList(pattr_list, js_attr_list) < 0)
+	{
+		REQERR_LOG("GetAttrInfoByIdList failed, attr info:%s", pattr_list);
+		return SLOG_ERROR_LINE;
+	}
+
+    // check & get要拉取的上报的机器
+	Json js_mach;
+	js_mach["show_type"] = "plugin_show";
+    if(GetMachineInfoByIdList(js_mach, pmachines) < 0)
+    {
+		REQERR_LOG("GetMachineInfoByIdList failed, machines info:%s, plugin:%d", pmachines, iPluginId);
+		return SLOG_ERROR_LINE;
+    }
+
+	Json js_attr_val;
+
+    // 设置要拉取的日期信息 (-1 是指当天的要包含进去)
+	std::string strTmp(uitodate2(stConfig.dwCurTime));
+	strTmp += " 0:0:0";
+	uint32_t dwStartUtcTime = datetoui(strTmp.c_str()) - (iGetDays-1)*24*60*60;
+	js_attr_val["date_time_cur"] = uitodate2(dwStartUtcTime);
+	js_attr_val["date_time_start_utc"] = dwStartUtcTime;
+	char s_aryTableCustDay[400][32] = {0};
+	std::string strCustDays;
+    iGetDays = GetAttrTableNameForCust(dwStartUtcTime, s_aryTableCustDay, iGetDays, strCustDays);
+    js_attr_val["date_cust_days"] = strCustDays.c_str();
+	js_attr_val["count_days"] = iGetDays;
+
+	SLogServer *psrv = slog.GetValidServerByType(SRV_TYPE_ATTR_DB, NULL);
+	if(NULL == psrv) {
+		ERR_LOG("Get config server failed");
+		return SLOG_ERROR_LINE;
+	}
+
+	// db 连接池使用
+	const char *pserver_ip = psrv->szIpV4;
+	bool bIsAttrServerLocal = false;
+	if(slog.IsIpMatchLocalMachine(psrv->dwIp))
+    {
+		pserver_ip = "127.0.0.1";
+		bIsAttrServerLocal = true;
+    }
+
+	CDbConnect db(pserver_ip);
+	Query *pqu = db.GetQuery();
+	if(NULL == pqu)
+		return SLOG_ERROR_LINE;
+	Query & qu = *pqu;
+
+    TIME_INFO stCurTimeInfo;
+    uitotime_info(stConfig.dwCurTime, &stCurTimeInfo);
+	const char *pAttrTable = GetAttrTableName(stConfig.dwCurTime);
+	char szTableNameToday[32];
+	strcpy(szTableNameToday, pAttrTable);
+	
+	const Json::json_list_t & jslist = js_attr_list["list"].GetArray();
+	Json::json_list_t::const_iterator it = jslist.begin();
+	for(int i=0; it != jslist.end(); i++, it++)
+	{
+        const Json & js_attr_info = *it;
+
+        // 统计周期编号，从1开始
+        int iMaxMinIdx = (int)(js_attr_info["static_idx_max"]);
+        int iCurMinIdx = GetDayOfMin(&stCurTimeInfo, (int)(js_attr_info["static_time"]))+1;
+
+		Json cust_attr_val;
+        cust_attr_val["max"] = 0;
+		cust_attr_val["id"] = (*it)["id"];
+
+		// 字符型监控点 --- start ---
+		if((int)(*it)["data_type"] == STR_REPORT_D || (int)(*it)["data_type"] == STR_REPORT_D_IP)
+		{
+            TEachMachStrRep stEachMachStrRepInfo;
+			std::map<std::string, int> stMapStrRepInfo;
+            for(int k=0; k < iGetDays; k++) 
+            {
+                if(s_aryTableCustDay[k][0] == '\0')
+                    break;
+                if(GetStrAttrDayVal(
+                    js_mach, stMapStrRepInfo, *it, qu, s_aryTableCustDay[k], bIsAttrServerLocal, &stEachMachStrRepInfo) < 0)
+                {
+                    break;
+                }
+			}
+
+			// 全部机器统计期间字符串上报合并后数据，按上报值降序排列 
+			std::multimap<int, std::string> stMapStrReqOrder;
+			std::map<std::string, int>::iterator it_str_attr = stMapStrRepInfo.begin();
+			for(; it_str_attr != stMapStrRepInfo.end(); it_str_attr++) {
+				stMapStrReqOrder.insert(
+					std::make_pair<int, std::string>(it_str_attr->second, it_str_attr->first));
+			}
+			int ik = 0;
+			std::multimap<int, std::string>::reverse_iterator it_str_order = stMapStrReqOrder.rbegin();
+			for(ik=0; ik < 20 && it_str_order != stMapStrReqOrder.rend(); ik++, it_str_order++)
+			{
+				Json js_str_attr;
+				js_str_attr["name"] = it_str_order->second;
+				js_str_attr["value"] = it_str_order->first;
+				cust_attr_val["str_list"].Add(js_str_attr);
+			}
+			DEBUG_LOG("str attr:%d, str count:%d, info:%s", (int)((*it)["id"]), ik, cust_attr_val.ToString().c_str());
+			if(ik <= 0 && iShowRep == 1)
+				continue;
+			cust_attr_val["str_count"] = ik;
+
+            // 每台机器统计期间字符串上报合并信息，按上报值降序排列 
+            Json JsEachMach;
+            TEachMachStrRep::iterator it_mach_str = stEachMachStrRepInfo.begin();
+            for(; it_mach_str != stEachMachStrRepInfo.end(); it_mach_str++) 
+            {
+                std::map<std::string, int> & stMapStrRepInfo = it_mach_str->second;
+			    std::map<std::string, int>::iterator it_str_attr = stMapStrRepInfo.begin();
+			    std::multimap<int, std::string> stMapStrReqOrder;
+			    for(; it_str_attr != stMapStrRepInfo.end(); it_str_attr++) {
+			    	stMapStrReqOrder.insert(
+			    		std::make_pair<int, std::string>(it_str_attr->second, it_str_attr->first));
+			    }
+			    std::multimap<int, std::string>::reverse_iterator it_str_order = stMapStrReqOrder.rbegin();
+
+                Json jsMachStr;
+			    int ik = 0;
+			    for(ik=0; ik < 20 && it_str_order != stMapStrReqOrder.rend(); ik++, it_str_order++)
+			    {
+			    	Json js_str_attr;
+			    	js_str_attr["name"] = it_str_order->second;
+			    	js_str_attr["value"] = it_str_order->first;
+			    	jsMachStr["str_list"].Add(js_str_attr);
+			    }
+			    DEBUG_LOG("get  machine:%d, str attr:%d, str count:%d", it_mach_str->first, (int)((*it)["id"]), ik);
+			    if(ik <= 0 && iShowRep == 1)
+			    	continue;
+
+                MachineInfo *pAttrMach = slog.GetMachineInfo(it_mach_str->first, NULL);
+                if(!pAttrMach) {
+                    WARN_LOG("not find machine:%d", it_mach_str->first);
+                    continue;
+                }
+                jsMachStr["mach_name"] = MtReport_GetFromVmem_Local(pAttrMach->iNameVmemIdx);
+                jsMachStr["mach_ip1"] = ipv4_addr_str(pAttrMach->ip1);
+			    jsMachStr["str_count"] = ik;
+                JsEachMach["list"].Add(jsMachStr);
+            }
+
+            cust_attr_val["each_mach"] = JsEachMach;
+			js_attr_val["list"].Add(cust_attr_val);
+			continue;
+		}
+		// 字符型监控点 --- end ---
+
+    
+        // 当前监控点全部上报机器整个统计期间上报数据总和
+		std::string strVal;
+        Json JsEachMach;
+        InitGetEachMachAttrInfo(js_mach, JsEachMach);
+		for(int k=0; k < iGetDays; k++) 
+        {
+			if(s_aryTableCustDay[k][0] == '\0')
+				break;
+
+            int iGetMin = iMaxMinIdx;
+            if(!strcmp(szTableNameToday, s_aryTableCustDay[k]))
+                iGetMin = iCurMinIdx;
+
+			Json attr_tmp;
+            if(GetAttrDayVal(js_mach, attr_tmp, s_aryTableCustDay[k], js_attr_info, iGetMin, qu, JsEachMach) < 0)
+				break;
+
+			strVal += (const char*)attr_tmp["value_list_str"];
+            if(k+1 < iGetDays)
+    			strVal += ",";
+			DEBUG_LOG("req plugin(%d) show attr - attr table name:-%d-%s, size:%u", 
+				iPluginId, k, s_aryTableCustDay[k], (uint32_t)strVal.size());
+			if((unsigned int)cust_attr_val["max"] < (unsigned int)attr_tmp["max"])
+				cust_attr_val["max"] = (unsigned int)attr_tmp["max"];
+            cust_attr_val["cur"] = (int)(attr_tmp["cur"]);
+        }
+
+		if((unsigned int)cust_attr_val["max"] <= 0)
+			cust_attr_val["value_list_str"] = "0";
+		else
+			cust_attr_val["value_list_str"] = strVal.c_str();
+		if(iShowRep == 1 && (int)(cust_attr_val["max"]) == 0)
+			continue;
+
+    	EndGetEachMachAttrInfo(JsEachMach);
+
+        // 如果只有一台机器则无需发送每台机器的统计数据
+        if((int)(js_mach["count"]) > 1)
+        	cust_attr_val["each_mach"] = JsEachMach;
+		js_attr_val["val_list"].Add(cust_attr_val);
+	}
+
+	js_attr_val["cgi_path"] = stConfig.szCgiPath;
+	js_attr_val["statusCode"] = 0;
+    js_attr_val["attr_list"] = js_attr_list;
+
+	std::string strWebOut = js_attr_val.ToString();
+	STRING str;
+	string_init(&str);
+	if((stConfig.err=string_set(&str, strWebOut.c_str())) != STATUS_OK
+		|| (stConfig.err=cgi_output(stConfig.cgi, &str)) != STATUS_OK)
+	{
+		string_clear(&str);
+		return SLOG_ERROR_LINE;
+	}
+	string_clear(&str);
+	return 0;
+}
+
 
 static int ShowAttrMulti(int iShowAttrType)
 {
@@ -1924,7 +2488,6 @@ static int ShowAttrMulti(int iShowAttrType)
 
 	// 指定期上周同一日
 	char szTableNameLastWkday[32] = {0}; 
-	int iCurMin = -1;
 	uint32_t dwUtcTime = 0;
 	std::string strToday(uitodate2(stConfig.dwCurTime));
 	const char *puiToday = strToday.c_str();
@@ -1932,9 +2495,8 @@ static int ShowAttrMulti(int iShowAttrType)
 	{
 		const char *pAttrTable = GetAttrTableName(stConfig.dwCurTime);
 		strcpy(szTableName, pAttrTable);
-		iCurMin = GetDayOfMin();
-		DEBUG_LOG("reqinfo today :%s", szTableName);
 		dwUtcTime = stConfig.dwCurTime;
+		DEBUG_LOG("reqinfo today :%s", szTableName);
 	}
 	else
 	{
@@ -2123,6 +2685,11 @@ static int ShowAttrMulti(int iShowAttrType)
 		}
 		// 告警配置 -- end 
 
+        TIME_INFO stCurTimeInfo;
+        uitotime_info(stConfig.dwCurTime, &stCurTimeInfo);
+        int iCurMin = GetDayOfMin(&stCurTimeInfo, (int)((*it)["static_time"]))+1;
+        int iMaxMinIdx = (int)((*it)["static_idx_max"]);
+
 		// 周图
 		if(3 == type)
 		{
@@ -2135,7 +2702,7 @@ static int ShowAttrMulti(int iShowAttrType)
 				if(s_aryTableWeekDay[k][0] == '\0')
 					break;
 				Json attr_tmp;
-				int iGetMin = -1;
+                int iGetMin = iMaxMinIdx;
 				if(!strcmp(szTableName, s_aryTableWeekDay[k]))
 					iGetMin = iCurMin;
 	
@@ -2166,13 +2733,13 @@ static int ShowAttrMulti(int iShowAttrType)
 			if(1 == type)
 			{
 				Json attr_yst;
-				if(GetAttrDayVal(js_mach, attr_yst, szTableNameYstday, *it, iCurMin, qu) < 0)
+				if(GetAttrDayVal(js_mach, attr_yst, szTableNameYstday, *it, iMaxMinIdx, qu) < 0)
 					break;
 				attr["value_list_yst_str"] = attr_yst["value_list_str"];
 				iMaxYst = (unsigned int)attr_yst["max"];
 
 				Json attr_lastwk;
-				if(GetAttrDayVal(js_mach, attr_lastwk, szTableNameLastWkday, *it, iCurMin, qu) < 0)
+				if(GetAttrDayVal(js_mach, attr_lastwk, szTableNameLastWkday, *it, iMaxMinIdx, qu) < 0)
 					break;
 				attr["value_list_lwk_str"] = attr_lastwk["value_list_str"];
 				iMaxLastWk = (unsigned int)attr_lastwk["max"];
@@ -2301,7 +2868,6 @@ static int ShowAttrSingle()
 
 	// 指定日期上周同一日
 	char szTableNameLastWkday[32] = {0}; 
-	int iCurMin = -1;
 	uint32_t dwUtcTime = 0;
 
 	std::string strToday(uitodate2(stConfig.dwCurTime));
@@ -2310,7 +2876,6 @@ static int ShowAttrSingle()
 	{
 		const char *pAttrTable = GetAttrTableName(stConfig.dwCurTime);
 		strcpy(szTableName, pAttrTable);
-		iCurMin = GetDayOfMin();
 		DEBUG_LOG("reqinfo today :%s", szTableName);
 		dwUtcTime = stConfig.dwCurTime;
 	}
@@ -2416,6 +2981,11 @@ static int ShowAttrSingle()
 	Json JsEachMach;
 	InitGetEachMachAttrInfo(js_mach, JsEachMach);
 
+    TIME_INFO stCurTimeInfo;
+    uitotime_info(stConfig.dwCurTime, &stCurTimeInfo);
+    int iCurMin = GetDayOfMin(&stCurTimeInfo, (int)(js_attr_info["static_time"]))+1;
+    int iMaxMinIdx = (int)(js_attr_info["static_idx_max"]);
+
 	// 周图
 	if(3 == type)
 	{
@@ -2427,7 +2997,7 @@ static int ShowAttrSingle()
 			if(s_aryTableWeekDay[k][0] == '\0')
 				break;
 			Json attr_tmp;
-			int iGetMin = -1;
+			int iGetMin = iMaxMinIdx;
 			if(!strcmp(szTableName, s_aryTableWeekDay[k]))
 				iGetMin = iCurMin;
 			if(GetAttrDayVal(js_mach, attr_tmp, s_aryTableWeekDay[k], js_attr_info, iGetMin, qu, JsEachMach) < 0)
@@ -2455,7 +3025,7 @@ static int ShowAttrSingle()
 			if(s_aryTableMonthDay[k][0] == '\0')
 				break;
 			Json attr_tmp;
-			int iGetMin = -1;
+			int iGetMin = iMaxMinIdx;
 			if(!strcmp(szTableName, s_aryTableMonthDay[k]))
 				iGetMin = iCurMin;
 			if(GetAttrDayVal(js_mach, attr_tmp, s_aryTableMonthDay[k], js_attr_info, iGetMin, qu, JsEachMach) < 0)
@@ -2484,8 +3054,7 @@ static int ShowAttrSingle()
 				Json attr_yst;
 				Json jsEachMachYst;
 				InitGetEachMachAttrInfo(js_mach, jsEachMachYst);
-
-				if(GetAttrDayVal(js_mach, attr_yst, szTableNameYstday, js_attr_info, iCurMin, qu, jsEachMachYst) >= 0)
+				if(GetAttrDayVal(js_mach, attr_yst, szTableNameYstday, js_attr_info, iMaxMinIdx, qu, jsEachMachYst) >= 0)
 				{
 					js_attr_val["value_list_yst_str"] = attr_yst["value_list_str"];
 					iMaxYst = (unsigned int)attr_yst["max"];
@@ -2497,7 +3066,7 @@ static int ShowAttrSingle()
 				Json jsEachMachLwk;
 				InitGetEachMachAttrInfo(js_mach, jsEachMachLwk);
 				if(GetAttrDayVal(
-					js_mach, attr_lastwk, szTableNameLastWkday, js_attr_info, iCurMin, qu, jsEachMachLwk) >= 0)
+					js_mach, attr_lastwk, szTableNameLastWkday, js_attr_info, iMaxMinIdx, qu, jsEachMachLwk) >= 0)
 				{
 					js_attr_val["value_list_lwk_str"] = attr_lastwk["value_list_str"];
 					iMaxLastWk = (unsigned int)attr_lastwk["max"];
@@ -3225,6 +3794,12 @@ int main(int argc, char **argv, char **envp)
 			hdf_get_value (stConfig.cgi->hdf, "cgiout.ContentType", "text/html");
 			iRet = ShowAttrMulti(ATTR_SHOW_TYPE_MACHINE); 
 		}
+
+        // 插件监控点数据获取
+		else if(!strcmp(pAction, "show_plugin_get_machines"))
+            iRet = ShowPluginGetMachines();
+		else if(!strcmp(pAction, "show_plugin_attr_cust"))
+			iRet = ShowPluginAttrMulti(); 
 
 		// 视图监控图表相关接口
 		else if(!strcmp(pAction, "show_view_attr_cust"))

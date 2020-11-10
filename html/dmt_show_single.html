@@ -204,7 +204,7 @@ function dssShowAttrInfo(attr_val)
 		count_day = 7;
 	else if(attr_val.type == 4)
 		count_day = 30;
-	var time_info = dmtGetXAxisTimeInfo(dateStart, count_day);
+	var time_info = dmtGetXAxisTimeInfo(dateStart, count_day, attr_val.attr_list.list[0]);
 	var val_idx = 0;
 	if(attr_val.max != 0)
 	{

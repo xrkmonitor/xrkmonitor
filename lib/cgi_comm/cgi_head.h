@@ -220,6 +220,7 @@ typedef struct _CGIConfig
 	char szUploadDir[128];
 	int iUnLinkUpload;
 
+	FILE *fpStartLog;
 }CGIConfig;
 
 #endif

@@ -42,8 +42,8 @@
 
 ### docker 方式部署
 
-以下假设宿主机的IP 地址为：192.168.128.210, 以v2.8_2020-10-16  版本作为示例说明 docker 部署方法     
-1. 拉取 docker 镜像: docker pull registry.cn-hangzhou.aliyuncs.com/xrkmonitor/release:v2.8_2020-10-16
+以下假设宿主机的IP 地址为：192.168.128.210, 以v3.0  版本作为示例说明 docker 部署方法     
+1. 拉取 docker 镜像: docker pull registry.cn-hangzhou.aliyuncs.com/xrkmonitor/release:v3.0
 1. 通过镜像启动容器：docker images 查看镜像ID，假设为：93297f01d06b    
    启动容器：   
    docker run -idt -p27000:27000/udp -p38080:38080/udp -p28080:28080/udp -p80:80 --env xrk_host_ip=192.168.128.210 --env xrk_http_port=8080 -v /data/xrkmonitor/docker_mysql:/var/lib/mysql -v /data/xrkmonitor/docker_slog:/home/mtreport/slog 93297f01d06b    
@@ -57,6 +57,7 @@
 1. 在浏览器端使用宿主机IP即可访问控制台： http://192.168.128.210，控制台默认账号密码为：sadmin/sadmin     
 1. 如需停止服务可执行 : /home/mtreport/stop_docker.sh 脚本     
 
+可以使用 ps -elf |grep slog 命令查看运行的进程，使用 ps -elf |grep xrk_ 查看运行的内置插件   
 
 **agent 部署说明：**    
 容器中 /home/mtreport/slog_mtreport_client.tar.gz 为 agent 部署文件，可以将其拷贝到需要部署的机器上    

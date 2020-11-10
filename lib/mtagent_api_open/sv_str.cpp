@@ -61,6 +61,32 @@
 static char s_sLogBuf[4096 * 4];
 char s_szCommApiLastError[1024] = {0};
 
+int get_cmd_result(const char *cmd, std::string &strResult)
+{
+    static char s_buf[4096] = {0};
+
+    strResult = "";
+    FILE *fp = popen(cmd, "r");
+    if(!fp) {
+        return ERROR_LINE;
+    }
+
+    if(fgets(s_buf, sizeof(s_buf), fp)) {
+        strResult = s_buf;
+        size_t pos = strResult.find("\n");
+        if(pos != std::string::npos)
+            strResult.replace(pos, 1, "");
+        pos = strResult.find("\r");
+        if(pos != std::string::npos)
+            strResult.replace(pos, 1, "");
+        pos = strResult.find("\r\n");
+        if(pos != std::string::npos)
+            strResult.replace(pos, 2, "");
+    }
+    pclose(fp);
+    return 0;
+}
+
 int file_lockw(const char *pfile)
 {
 	int oldmask = 0;
@@ -404,4 +430,105 @@ int check_bit(uint32_t n, int b)
 {
 	return (n & b);
 }
+
+char *Str_Trim_Char(char *s, char c)
+{
+	char *pb;
+	char *pe;
+	char *ps;
+	char *pd;
+
+	if (strcmp(s, "") == 0) 
+		return s;
+	
+	pb = s;
+		 
+	while (*pb == c)
+	{
+		pb ++;
+	}
+	
+	pe = s;
+	while (*pe != 0)
+	{
+		pe ++;
+	}
+	pe --;
+	while ((pe >= s) && (*pe == c))
+	{
+		pe --;
+	}
+	
+	ps = pb;
+	pd = s;
+	while (ps <= pe)
+	{
+		*pd = *ps;
+		ps ++;
+		pd ++;
+	}
+	*pd = 0;
+	
+	return s;
+}
+
+char *Str_Trim_Local(char *s)
+{
+	static char s_str[1024] = {0};
+	if(strlen(s) >= sizeof(s_str))
+		return s;
+	strcpy(s_str, s);
+	return Str_Trim(s_str);
+}
+
+char *Str_Trim(char *s)
+{
+	char *pb;
+	char *pe;
+	char *ps;
+	char *pd;
+
+	if (strcmp(s, "") == 0) 
+		return s;
+	
+	pb = s;
+		 
+	while ((*pb == ' ') || (*pb == '\t') || (*pb == '\n') || (*pb == '\r'))
+	{
+		pb ++;
+	}
+	
+	pe = s;
+	while (*pe != 0)
+	{
+		pe ++;
+	}
+	pe --;
+	while ((pe >= s) && ((*pe == ' ') || (*pe == '\t') || (*pe == '\n') || (*pe == '\r')))
+	{
+		pe --;
+	}
+	
+	ps = pb;
+	pd = s;
+	while (ps <= pe)
+	{
+		*pd = *ps;
+		ps ++;
+		pd ++;
+	}
+	*pd = 0;
+	
+	return s;
+}
+
+void ReplaceAllChar(char *pstr, char src, char dst)
+{
+    while(pstr && *pstr != '\0') {
+        if(*pstr == src)
+            *pstr = dst;
+        pstr++;
+    }
+}
+
 

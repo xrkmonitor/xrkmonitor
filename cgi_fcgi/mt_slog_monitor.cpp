@@ -45,6 +45,7 @@
 #include <cgi_head.h>
 #include <cgi_comm.h>
 #include <supper_log.h>
+#include <sv_file.h>
 
 CSupperLog slog;
 CGIConfig stConfig;
@@ -203,6 +204,50 @@ static int InitFastCgi_first(CGIConfig &myConf)
 	return 0;
 }
 
+int DealPluginManager()
+{
+	char sSqlBuf[128] = {0};
+	Query qu(*stConfig.db);
+
+	Json js;
+	std::ostringstream ss;
+	sprintf(sSqlBuf, "select pb_info from mt_plugin where xrk_status=%d", RECORD_STATUS_USE);
+
+	char hdf_pex[32];
+    int iCount = 0;
+	if(qu.get_result(sSqlBuf) && qu.num_rows() > 0) 
+	{
+		const char *pinfo = NULL;
+		size_t iParseIdx = 0;
+		size_t iReadLen = 0;
+		while(qu.fetch_row() != NULL)
+		{
+			Json plugin;
+			pinfo = qu.getstr("pb_info");
+			iParseIdx = 0;
+			iReadLen = strlen(pinfo);
+			plugin.Parse(pinfo, iParseIdx);
+			if(iParseIdx != iReadLen) {
+				WARN_LOG("parse json content, size:%u!=%u", (uint32_t)iParseIdx, (uint32_t)iReadLen);
+				continue;
+			}
+
+			ss.str("");
+			ss << stConfig.szCsPath << "plugin_show/" << (const char*)(plugin["plus_name"])<< "_show/index_tp.html";
+			if(IsFileExist(ss.str().c_str())) {
+				sprintf(hdf_pex, "ShowPlugin.lists.%d", iCount);
+				hdf_set_valuef(stConfig.cgi->hdf, "%s.plugin_id=%u", hdf_pex, (int)(plugin["plugin_id"]));
+				hdf_set_valuef(stConfig.cgi->hdf, "%s.name=%s", hdf_pex, (const char*)(plugin["plus_name"]));
+				iCount++;
+			}
+		}
+	}
+    hdf_set_int_value(stConfig.cgi->hdf, "ShowPlugin.count", iCount);
+	qu.free_result();
+	return 0;
+}
+
+
 int main(int argc, char **argv, char **envp)
 {
 	int32_t iRet = 0;
@@ -300,12 +345,12 @@ int main(int argc, char **argv, char **envp)
 			pcsTemplate = "dwz_left_m.html";
 		else if(!strcmp(pAction, "left_log"))
 			pcsTemplate = "dwz_left_log.html";
-		else if(!strcmp(pAction, "left_plus"))
+		else if(!strcmp(pAction, "left_plus")) {
+			iRet = DealPluginManager();
 			pcsTemplate = "dwz_left_plus.html";
+		}
 		else if(!strcmp(pAction, "left_user"))
 			pcsTemplate = "dwz_left_user.html";
-		else if(!strcmp(pAction, "left_plugin"))
-			pcsTemplate = "dwz_left_plugin.html";
 		else if(!strcmp(pAction, "left_syssrv"))
 			pcsTemplate = "dwz_left_syssrv.html";
 		else if(!strcmp(pAction, "left_main"))

@@ -59,6 +59,24 @@ typedef struct {
 	CgiReqUserInfo *preq_info;
 }TCheckCgiLogTest;
 
+FILE *g_fpStartLog = NULL;
+
+void cgi_start_errlog(const char *pszFmt, ...)
+{
+	if(g_fpStartLog == NULL) {
+		g_fpStartLog=fopen("/xrkmonitor/cgi_start_error", "a+");
+	}
+	if(g_fpStartLog != NULL) {
+		va_list ap;
+		va_start(ap, pszFmt);
+		vfprintf(g_fpStartLog, pszFmt, ap);
+		va_end(ap);
+		fflush(g_fpStartLog);
+		fclose(g_fpStartLog);
+		g_fpStartLog = NULL;
+	}
+}
+
 // fast cgi 染色配置检查, 多个关键字设置时，关系为 与
 // 注意：该函数在登录验证通过后调用
 int CheckFastCgi_test(int iTestCfgCount, SLogTestKey *pstTestCfg, const void *pdata)
@@ -1050,7 +1068,7 @@ int InitFastCgiStart(CGIConfig &myConf)
 		strcpy(myConf.pszCgiName, ptmp+1);
 	}
 	else {
-		ERR_LOG("invalid argument:%s, count:%d\n", myConf.argv[0], myConf.argc);
+		CGI_START_LOG("invalid argument:%s, count:%d\n", myConf.argv[0], myConf.argc);
 		return SLOG_ERROR_LINE;
 	}
 	snprintf(myConf.szConfigFile, MYSIZEOF(myConf.szConfigFile)-1, "%s.conf", myConf.pszCgiName);
@@ -1059,7 +1077,6 @@ int InitFastCgiStart(CGIConfig &myConf)
 		slog.SetLogToStd(false);
 	else
 		slog.SetLogToStd(true);
-
 	if(LoadConfig(strGlobalConfgFile.c_str(), 
 		"CGI_PATH", CFG_STRING, myConf.szCgiPath, CGI_PATH, MYSIZEOF(myConf.szCgiPath),
 		"CS_PATH", CFG_STRING, myConf.szCsPath, CS_PATH, MYSIZEOF(myConf.szCsPath),
@@ -1072,8 +1089,9 @@ int InitFastCgiStart(CGIConfig &myConf)
 		"FLOGIN_SHM_KEY", CFG_INT, &iShmKey, FLOGIN_SESSION_HASH_SHM_KEY,
 		"REDIRECT_URI", CFG_STRING, myConf.szRedirectUri, "/", MYSIZEOF(myConf.szRedirectUri),
 		"DISABLE_VMEM_CACHE", CFG_INT, &myConf.iDisableVmemCache, 0,
-		NULL) < 0){
-		ERR_LOG("load fastcgi global config failed, file:%s, msg:%s\n", 
+		NULL) < 0)
+	{
+		CGI_START_LOG("load fastcgi global config failed, file:%s, msg:%s\n", 
 			strGlobalConfgFile.c_str(), strerror(errno));
 		return SLOG_ERROR_LINE;
 	}
@@ -1091,8 +1109,9 @@ int InitFastCgiStart(CGIConfig &myConf)
 	   "ENABLE_CGI_DEBUG", CFG_INT, &myConf.iEnableCgiDebug, 0,
 		"UPLOAD_UNLINK", CFG_INT, &myConf.iUnLinkUpload, 0,
 	   "ENABLE_CGI_PAUSE", CFG_INT, &myConf.iEnableCgiPause, 0,
-		NULL)) < 0){
-		ERR_LOG("loadconfig failed, from file:%s, ret:%d", myConf.szConfigFile, iRet);
+		NULL)) < 0)
+	{
+		CGI_START_LOG("loadconfig failed, from file:%s, ret:%d", myConf.szConfigFile, iRet);
 		return SLOG_ERROR_LINE;
 	}
 
@@ -1103,21 +1122,17 @@ int InitFastCgiStart(CGIConfig &myConf)
 
 	if((iRet=GetShm2((void**)(&myConf.pshmLoginList), iShmKey, MYSIZEOF(FloginList), 0666|IPC_CREAT)) < 0)
 	{
-		ERR_LOG("attach shm FloginList failed, size:%u, key:%d", MYSIZEOF(FloginList), iShmKey);
+		CGI_START_LOG("attach shm FloginList failed, size:%u, key:%d", MYSIZEOF(FloginList), iShmKey);
 		return SLOG_ERROR_LINE;
 	}
 
-	INFO_LOG("attach shm FloginList ok size:%u, key:%d, ret:%d, testlog:%d",
-		MYSIZEOF(FloginList), iShmKey, iRet, myConf.iCfgTestLog);
-	INFO_LOG("fcgi - %s start at:%u pid:%u will exist at:%u(curis:%u) debug js:%d debug:%d",
-		myConf.pszCgiName, myConf.dwStart, myConf.pid, myConf.dwExitTime, myConf.dwCurTime, 
-		myConf.iDebugHtmlJs, myConf.iEnableCgiDebug);
 	char szCurDir[256];
-	if(NULL == getcwd(szCurDir, 256)) 
-		WARN_LOG("getcwd failed, msg:%s", strerror(errno));
+	if(NULL == getcwd(szCurDir, 256)) {
+		CGI_START_LOG("getcwd failed, msg:%s", strerror(errno));
+		return SLOG_ERROR_LINE;
+	}
 	else
 		strncpy(myConf.szCurPath, szCurDir, sizeof(myConf.szCurPath));
-
 	return 0;
 }
 
@@ -1421,6 +1436,9 @@ int AfterCgiInit(CGIConfig &stConfig)
 		return SLOG_ERROR_LINE;
 	}
 
+	INFO_LOG("fcgi - %s start at:%u pid:%u will exist at:%u(curis:%u) debug js:%d debug:%d",
+		stConfig.pszCgiName, stConfig.dwStart, stConfig.pid, stConfig.dwExitTime, stConfig.dwCurTime, 
+		stConfig.iDebugHtmlJs, stConfig.iEnableCgiDebug);
 	return 1;
 }
 
@@ -1562,5 +1580,39 @@ int GetMachineRepStatus(MachineInfo *pInfo, CGIConfig &stConfig)
 {
     return ReportStatus(pInfo->dwLastReportAttrTime, pInfo->dwLastReportLogTime, pInfo->dwLastHelloTime,
         stConfig);
+}
+
+int SavePluginShowFile(Json &js, const std::string &strPath)
+{
+	std::string strCt;
+	const std::string & strEnc = js["plugin_show_content"].GetString();
+	Base64 b64;
+	b64.decode(strEnc, strCt);
+
+	std::ostringstream ssfile;
+	ssfile << strPath << (const char*)(js["plus_name"]) << "_show.tar.gz";
+	FILE *fp = fopen(ssfile.str().c_str(), "w+");
+	if(!fp) {
+		ERR_LOG("create plugin show file:%s failed, msg:%s", ssfile.str().c_str(), strerror(errno));
+		return SLOG_ERROR_LINE;
+	}
+	if(fwrite(strCt.c_str(), 1, strCt.size(), fp) != strCt.size()) {
+		ERR_LOG("write file:%s length:%lu failed, msg:%s", ssfile.str().c_str(), strCt.size(), strerror(errno));
+		fclose(fp);
+		return SLOG_ERROR_LINE;
+	}
+	fclose(fp);
+	std::ostringstream sscmd;
+	sscmd << "cd " << strPath << "; tar -zxf " << (const char*)(js["plus_name"]) << "_show.tar.gz;"
+		<< " [ -f " << (const char*)(js["plus_name"]) << "_show/index_tp.html ] && echo 0 || echo 1;";
+
+	std::string strRet;
+	get_cmd_result(sscmd.str().c_str(), strRet);
+	if(strRet != "0") {
+		ERR_LOG("execute cmd:%s failed", sscmd.str().c_str());
+		return SLOG_ERROR_LINE;
+	}
+
+	return 0;
 }
 

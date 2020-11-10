@@ -134,6 +134,18 @@ typedef struct
 
 // 属性告警相关结构 ----------- start
 
+// 可能是最老的存储方式，未划分统计周期数据为(1440*uint32)
+#define ATTR_DAY_BIN_TYPE_NONE 0
+// 数组带统计周期 (cType+wStaticTime+arrVal(uint32_t[iMaxAttrCountIdx])) 
+#define ATTR_DAY_BIN_TYPE_ARRAY_V2 1 
+// 压缩带统计周期 (cType+wStaticTime+wCount+arrIdx(uint16_t[wCount]) + arrVal(uint32_t[wCount]))
+#define ATTR_DAY_BIN_TYPE_PRESS_V2 2 
+
+inline int GetStaticTimeMaxIdxOfDay(int iStaticTime)
+{
+	return 1440/iStaticTime + ((1440%iStaticTime) ? 1 : 0);
+}
+
 enum {
 	MACHINE_WARN_FLAG_MIN=1,
 	MACH_WARN_ALLOW_ALL=1,
@@ -205,9 +217,8 @@ typedef struct _TWarnAttrReportInfo
 	uint32_t dwLastReportTime;
 	uint8_t bAttrDataType; // 数据类型
 	uint16_t wStaticTime; // attr 的统计周期 在1-1439之间
-
-	uint16_t wReserved1;
-	uint32_t dwReserved2;
+	uint32_t dwLastToDbTime; // 最近一次写入 db 的时间(数据写db时一个统计周期只能写一次db)
+	uint16_t wLastToDbIdx; // 最近一次写入 db 的统计周期索引
 	uint32_t dwReserved3;
 
 	char sReserved[16];
@@ -223,6 +234,8 @@ typedef struct _TWarnAttrReportInfo
 		SHOW_FIELD_VALUE_UINT_TIME(dwLastReportTime);
 		SHOW_FIELD_VALUE_INT(bAttrDataType);
 		SHOW_FIELD_VALUE_UINT(wStaticTime);
+		SHOW_FIELD_VALUE_UINT_TIME(dwLastToDbTime);
+		SHOW_FIELD_VALUE_UINT(wLastToDbIdx);
 	}
 }TWarnAttrReportInfo;
 
@@ -354,9 +367,34 @@ enum {
 	SUM_REPORT_TOTAL = 5, // 按历史上报累计
 	STR_REPORT_D = 6, // 按天累计的字符串型, 一天生成一张饼图表，多个字符串时只显示前几位有上报的字符串
 	STR_REPORT_D_IP = 7, // IP 转地址字符串，地址为省级
-	DATA_PERCENT = 8, // 百分比(例如cpu/内存使用率等)
+	DATA_USE_LAST = 8, // 取最新上报值
 	SUM_REPORT_TYPE_MAX = 8, // 最大不能超过 255
 };
+
+inline uint32_t GetAttrIdxData(uint32_t dwCur, uint32_t dwNew, int iAttrDataType)
+{
+    if(!dwCur)
+        return dwNew;
+    switch(iAttrDataType) {
+        case SUM_REPORT_M:
+        case EX_REPORT:
+        case STR_REPORT_D:
+        case STR_REPORT_D_IP:
+            return dwCur+dwNew;
+
+        case SUM_REPORT_MIN:
+            return dwCur < dwNew ? dwCur : dwNew;
+
+        case SUM_REPORT_TOTAL:
+        case SUM_REPORT_MAX:
+            return dwCur > dwNew ? dwCur : dwNew;
+
+        case DATA_USE_LAST:
+            return dwNew;
+    }    
+    return dwCur+dwNew;
+}
+
 
 // Ip 地址库管理 
 #define IPINFO_FLAG_PROV_VMEM 1
@@ -898,7 +936,7 @@ typedef struct
 
 	// 以下动态设置
 	int32_t iMachineId; // 本机的机器id
-	int32_t iLastSaveAttrToDbIdx; // 本机最后一次存储 attr 到db 的分钟索引
+	int32_t iReserved; 
 	uint32_t dwMonitorRecordsId; // 表更新本机当前读取到的 id 值
 
 	uint32_t dwReserved1;
@@ -972,7 +1010,6 @@ typedef struct
 		SHOW_FIELD_VALUE_UINT(dwConfigSeq);
 		SHOW_FIELD_VALUE_INT(iMachineId);
 		SHOW_FIELD_VALUE_UINT(dwMonitorRecordsId);
-		SHOW_FIELD_VALUE_INT(iLastSaveAttrToDbIdx);
 		SHOW_FIELD_VALUE_UINT(dwSystemFlag);
 
 		printf("\nevent info as followed: \n");
@@ -1790,7 +1827,7 @@ inline int GetDayOfMin(TIME_INFO *pinfo, int iStaticTime)
 inline bool IsValidStaticTime(int iStaticTime)
 {
 	if(iStaticTime != 1 && iStaticTime!=5 && iStaticTime!=10 && iStaticTime!=15 && iStaticTime!=30
-			&& iStaticTime!=60 && iStaticTime!=180 && iStaticTime!=360 && iStaticTime!=1439)
+			&& iStaticTime!=60 && iStaticTime!=120 && iStaticTime!=180) 
 		return false;
 	return true;
 }
@@ -2489,6 +2526,17 @@ class CSLogServer
 		TSLogShm *m_pShmLog;
 
 		bool m_bInit;
+};
+
+class CAutoFree {
+    public:
+        CAutoFree(char *pf): m_pf(pf) {}
+        ~CAutoFree() {
+            if(m_pf)
+                free(m_pf);
+        }
+    private:
+        char *m_pf;
 };
 
 extern CSupperLog slog;

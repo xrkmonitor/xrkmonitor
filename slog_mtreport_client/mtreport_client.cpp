@@ -496,7 +496,8 @@ static int Init()
 		"DISABLE_PLUGIN", CFG_INT, &stConfig.iDisablePlus, 0,
 		"MAX_RUN_MINS", CFG_INT, &stConfig.iMaxRunMins, 7*24*3600,
 		"XRKMONITOR_CLOUD_URL", CFG_STRING, stConfig.szCloudUrl, "xrkmonitor.com", MYSIZEOF(stConfig.szCloudUrl),
-		"XRKMONITOR_LOCAL_URL", CFG_STRING, stConfig.szLocalUrl, "", MYSIZEOF(stConfig.szLocalUrl),
+		"INSTALL_PLUGIN_TIMEOUT_SEC", CFG_INT, &stConfig.iPLuginInstallTimeoutSec, 30,
+		"XRKMONITOR_LOCAL_DOMAIN", CFG_STRING, stConfig.szLocalDomain, "", MYSIZEOF(stConfig.szLocalDomain),
 		"LOCAL_OS", CFG_STRING, stConfig.szOs, "", MYSIZEOF(stConfig.szOs),
 		"LOCAL_OS_ARC", CFG_STRING, stConfig.szOsArc, "", MYSIZEOF(stConfig.szOsArc),
 		"LOCAL_LIBC_VER", CFG_STRING, stConfig.szLibcVer, "", MYSIZEOF(stConfig.szLibcVer),
@@ -516,8 +517,10 @@ static int Init()
 	stConfig.fpLogFile = NULL;
 	TryReOpenLocalLogFile();
 
-	INFO_LOG("write log limit per sec:%d, type:%d, type str:%s, max run time mins:%d", 
-		stConfig.iLogLimitPerSec, stConfig.iLocalLogType, szTypeString, stConfig.iMaxRunMins);
+	if(stConfig.iPLuginInstallTimeoutSec < 5)
+		stConfig.iPLuginInstallTimeoutSec = 5;
+	INFO_LOG("write log limit per sec:%d, type:%d, type str:%s, max run time mins:%d, plugin install time:%d", 
+		stConfig.iLogLimitPerSec, stConfig.iLocalLogType, szTypeString, stConfig.iMaxRunMins, stConfig.iPLuginInstallTimeoutSec);
 
 	gettimeofday(&stConfig.stTimeCur, NULL);
 	stConfig.dwCurTime = stConfig.stTimeCur.tv_sec;
@@ -555,7 +558,13 @@ static int Init()
 		std::string str;
 		get_cmd_result("./run_tool.sh getos", str);
 		memset(stConfig.szOs, 0, sizeof(stConfig.szOs));
-		strncpy(stConfig.szOs, str.c_str(), sizeof(stConfig.szOs)-1);
+		if(str.find("failed") != std::string::npos || str == "") {
+			strncpy(stConfig.szOs, str.c_str(), sizeof(stConfig.szOs)-1);
+			WARN_LOG("get os type failed, set to comm linux");
+			strncpy(stConfig.szOs, "CommLinux", sizeof(stConfig.szOs)-1);
+		}
+		else
+			strncpy(stConfig.szOs, str.c_str(), sizeof(stConfig.szOs)-1);
 	}
 
 	if(stConfig.szOsArc[0] == '\0') {
@@ -1084,7 +1093,7 @@ int ReadAppLogToBuf(MTLog *plog)
 		iLogContentLen = MYSIZEOF(plog->sLogContent)-4;
 		int iTmpLen = MYSIZEOF(sLogBuf)-iUseBufLen-iLogContentLen-1;
 		if((iRet=MtReport_GetFromVmem(plog->iVarmemIndex, pbuf, &iTmpLen)) >= 0) {
-			uint32_t dwCheck = *(uint32_t*)(plog->sLogContent+MYSIZEOF(plog->sLogContent)-4);
+			uint32_t dwCheck = *((uint32_t*)(plog->sLogContent+MYSIZEOF(plog->sLogContent)-4));
 			if(dwCheck != *(uint32_t*)pbuf)
 				ERROR_LOG("vmem shm log check failed (%u != %u)", dwCheck, *(uint32_t*)pbuf);
 			iLogContentLen += iTmpLen+1; 

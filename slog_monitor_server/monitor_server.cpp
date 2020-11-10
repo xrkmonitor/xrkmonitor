@@ -364,15 +364,14 @@ int main(int argc, char* argv[])
 	SocketHandler h(&slog);
 	CUdpSock stSock(h);
 	stSock.SetLocalTimeInfo();
+	stSock.m_iKeep = stConfig.iKeep;
+	stSock.m_iKeepDay = stConfig.iKeepDay;
 
 	stConfig.pShmConfig = slog.GetSlogConfig();
 
 	// 该进程负责将上报数据写入 db 
 	if(1 == slog.m_iProcessId) 
 	{
-		stSock.db = NULL;
-		stSock.m_iKeep = stConfig.iKeep;
-		stSock.m_iKeepDay = stConfig.iKeepDay;
 		if(CheckDbConnect(stSock) < 0)
 			return SLOG_ERROR_LINE;
 		stSock.TryChangeAttrSaveType();

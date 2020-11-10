@@ -67,6 +67,27 @@ function dmtGetHumanTime(val)
     return h;
 }
 
+var g_pluginShowWidth = 0;
+var g_pluginShowHeight = 0;
+function dmtSetPluginShowWH()
+{
+    var iSub = DWZ.ui.sbar ? $("#sidebar").width() : 35;
+    var iContentW = $(window).width() - iSub;
+    var bChanged = false;
+    if(iContentW != g_pluginShowWidth) {
+        g_pluginShowWidth = iContentW;
+        bChanged = true;
+    }
+
+	var iContentH = $(window).height() - $('header').outerHeight(true) 
+        - $('footer').outerHeight(true) - $('.tabsPageHeader').outerHeight(true);
+    if(g_pluginShowHeight != iContentH) {
+        g_pluginShowHeight = iContentH;
+        bChanged = true;
+    }
+    return bChanged;
+}
+
 function dmtSetPluginMarginInfo(tab)
 {
 	var iSub = DWZ.ui.sbar ? $("#sidebar").width() + 10 : 24;
@@ -207,6 +228,15 @@ function dmtRedrawCharts(type_id, type, isLeftShow)
 	}
 	if(type_id == null) 
 		return;
+
+    if(type == 'plugin') {
+        if(dmtSetPluginShowWH()) {
+            var js = "if(typeof dmtPluginShowOnChane_" + type_id + " == 'function') ";
+            js += "dmtPluginShowOnChane_" + type_id + "();";
+            eval(js);
+        }
+        return;
+    }
 
 	dmtSetChartSize();
 	if(typeof g_all_charts != 'undefined')
@@ -548,20 +578,42 @@ function dmtSetCustToolBox(op, showtype, attr_val_list, attr_val, attr_info, war
 	};
 }
 
+function dmtShowHumanStaticTime(t)
+{
+    switch(t)
+    {
+        case 1: return '1分钟';
+        case 5: return '1分钟';
+        case 10: return '5分钟';
+        case 15: return '15分钟';
+        case 30: return '30分钟';
+        case 60: return '1小时';
+        case 120: return '2小时';
+        case 180: return '3小时';
+    }
+    return 'unknow';
+}
+
 function dmtGetViewSubTitle(showtype, attr_val_list, attr_val, attr_info)
 {
 	var subtitle = '';
+	var subtitle = '';
 	if(attr_val.max > 0) {
-		subtitle = " 上报信息【"; 
-		subtitle += "最大值：" + dmtShowChangeValue(attr_val.max); 
-		subtitle += " 当前时间：" + attr_val_list.date_time + ' 上报值：';
-		subtitle += dmtShowChangeValue(attr_val.cur) + "】\n ";
+		subtitle = " 【";
+		subtitle += "最大值：" + dmtShowChangeValue(attr_val.max);
+		subtitle += ", 图表累计上报：" + dmtShowChangeValue(attr_val.total) + ', 当前统计周期：';
+		subtitle += dmtShowChangeValue(attr_val.cur) + "/" + dmtShowHumanStaticTime(attr_info.static_time) + "】\n "
+	}
+	else if(attr_val.cur > 0) {
+		subtitle = " 当前时间：" + attr_val_list.date_time + ', ';
+		subtitle += " 当前统计周期：" + dmtShowChangeValue(attr_val.cur) + '/';
+		subtitle += dmtShowHumanStaticTime(attr_info.static_time) + "\n\n";
 	}
 	else {
 		subtitle = '暂无数据上报\n\n';
 	}
-	subtitle += "告警配置【 最大值：";
 
+	subtitle += "告警配置【 最大值：";
 	var showclass = "";
 	if(attr_info.show_class == 'percent')
 		showclass = "%";
@@ -990,13 +1042,123 @@ function dmtSetStrAttrInfoChart(ct_id, attr_info, js, attr_val_list, showtype)
 	g_all_charts[ct_id].setwidth = g_dmtChartWidth;
 }
 
-function dmtGetXAxisTimeInfo(dateStart, count_day)
+
+function dmtGetXAxisTimeInfo(dateStart, count_day, attr_info)
 {
 	var time_info = [];
-	for(var i=0; i < 1440*count_day; i++) {
-		time_info.push(dateStart+i*60*1000);
+	for(var i=0; i < attr_info.static_idx_max*count_day; i++) {
+		time_info.push(dateStart+i*attr_info.static_time*60*1000);
+	}    
+	return time_info;
+}
+
+function dmtGetXAxisDayTimeInfo(dateStart, count_day)
+{
+	var time_info = [];
+	for(var i=0; i < count_day; i++) {
+		time_info.push(dateStart+i*24*60*60*1000);
 	}
 	return time_info;
+}
+
+// 根据每天的统计周期数据，计算每天的监控点数据增长
+// dstr - 为每天的统计周期数据
+// attr_info - 监控点
+// day_time_info - 为每天的日期
+function dmtGetYAxisDayAddData(day_time_info, attr_info, dstr, cur)
+{
+	var e_data_y = [];
+	var attr_data = dstr.split(",");
+    if(day_time_info.length <= 0 || attr_data.length <= 0)
+        return e_data_y;
+
+	// 跳过统计周期开始的 0 数据
+	var data_start = 0;
+
+    // 计算第一天的增长
+    // 获取第一个统计周期数据
+    var first_idx_val = 0;
+    var t = 0;
+    for(; t < attr_info.static_idx_max && t < attr_data.length; t++) {
+        if(attr_data[t] != "-" && !isNaN(attr_data[t])) {
+            first_idx_val = Number(attr_data[t]);
+            break;
+        }
+    }
+
+    // 获取最后一个统计周期数据
+    var last_idx_val = first_idx_val;
+    for(var k=attr_info.static_idx_max-1; k > t && k < attr_data.length; k--) {
+        if(attr_data[k] != "-" && !isNaN(attr_data[k])) {
+            last_idx_val = Number(attr_data[k]);
+            break;
+        }
+    }
+
+    var objd = new Object;
+	objd.value = new Array(day_time_info[0], last_idx_val-first_idx_val);
+	e_data_y.push(objd);
+    if(day_time_info.length <= 1)
+        return e_data_y;
+ 
+    // 计算非第一天非最后一天的增长(前一天的最后一个统计周期, 用第一天的初始化)
+    var last_pre_val = last_idx_val;
+	for(var j=0, iDays = 1; iDays < day_time_info.length-1; iDays++) 
+    {
+        // 获取当天最后一个统计周期数据(先用前一天的最后统计初始化，规避无上报的问题)
+        last_idx_val = last_pre_val;
+        var j = (iDays+1)*attr_info.static_idx_max-1;
+        for(var k=attr_info.static_idx_max; k > 0 && j >= 0 && j < attr_data.length; k--, j--) {
+            if(attr_data[j] != "-" && !isNaN(attr_data[j])) {
+                last_idx_val = Number(attr_data[j]);
+                break;
+            }
+        }
+
+        // 计算增长
+        var iAdd = 0;
+        if(last_idx_val != 0 && last_idx_val != last_pre_val) {
+			if(data_start == 0 && last_pre_val == 0) 
+				data_start = 1;
+			else 
+            	iAdd = last_idx_val - last_pre_val;
+            last_pre_val = last_idx_val;
+        }
+
+	    var objd = new Object;
+		objd.value = new Array(day_time_info[iDays], iAdd);
+		e_data_y.push(objd);
+	}
+
+	// 计算最后一天的增长
+	var iAdd = 0;
+	var last_day_idx_start = (day_time_info.length-1)*attr_info.static_idx_max;
+	
+	// 2,4,5,8 这几种类型的数据不需要统计周期结束即可使用，因此可以用 cur 做来做差值计算
+	if((attr_info.data_type == 2 || attr_info.data_type == 4 || attr_info.data_type == 5
+	    || attr_info.data_type == 8) && cur != 0 && attr_info.length > last_day_idx_start)
+	{
+	    if(last_pre_val != cur)
+	        iAdd = cur - last_pre_val;
+	}
+	else if(attr_data.length >= last_day_idx_start)
+	{
+	    for(var j=attr_data.length-1; j >= last_day_idx_start; j--) {
+	        if(attr_data[j] != "-" && !isNaN(attr_data[j])) {
+	            last_idx_val = Number(attr_data[j]);
+	            break;
+	        }
+	    }
+	    if(last_idx_val != 0 && last_idx_val != last_pre_val) {
+	        if(data_start != 0 || last_pre_val != 0)
+	            iAdd = last_idx_val - last_pre_val;
+	    }
+	}
+
+    var objd = new Object;
+    objd.value = new Array(day_time_info[iDays], iAdd);
+    e_data_y.push(objd);
+	return e_data_y;
 }
 
 function dmtGetYAxisData(time_info, dstr)
@@ -1004,13 +1166,9 @@ function dmtGetYAxisData(time_info, dstr)
 	var e_data_y = [];
 	var attr_data = dstr.split(",");
 	for(var j=0; j < attr_data.length; j++) {
-		var objd = new Object;
-		if(attr_data[j] != "null") {
+		if(attr_data[j] != "-" && !isNaN(attr_data[j])) {
+			var objd = new Object;
 			objd.value = new Array(time_info[j], attr_data[j]);
-			e_data_y.push(objd);
-		}
-		else {
-			objd.value = [time_info[j], 0];
 			e_data_y.push(objd);
 		}
 	}
@@ -1193,7 +1351,16 @@ function dmtShowAttrInfo(attr_list, attr_val_list, ct_div, showtype)
 		},
 	    xAxis: {
 			show:true,
-			type: 'time'
+			type: 'time',
+			axisPointer: {
+			    label: {
+			        formatter: function (params) {
+			            if(attr_val_list.type != 1)
+			                return dmtGetDateStr(params.value);
+			            return  dmtGetDateStr(params.value, true);
+			        }
+			    }
+			}
 	    },
 		yAxis: {
 			splitArea: {
@@ -1223,11 +1390,26 @@ function dmtShowAttrInfo(attr_list, attr_val_list, ct_div, showtype)
 			show:true,
 			type: 'value'
 		},
+		tooltip: {
+			trigger: 'none',
+			axisPointer: {
+				type: 'cross',
+				snap: true
+			}
+		},
+		dataZoom: [
+			{
+				type:'inside',
+	 			xAxisIndex: 0
+		  	}
+		],
 		series: [
 			{
 				name:'',
 				showSymbol:false,
 				cursor:'pointer',
+				smooth: true,
+				smoothMonotone:'x',
 				type:'line',
 				data:[]
 			},
@@ -1235,6 +1417,8 @@ function dmtShowAttrInfo(attr_list, attr_val_list, ct_div, showtype)
 				name:'',
 				showSymbol:false,
 				cursor:'pointer',
+				smooth: true,
+				smoothMonotone:'x',
 				type:'line',
 				data:[]
 			},
@@ -1242,6 +1426,8 @@ function dmtShowAttrInfo(attr_list, attr_val_list, ct_div, showtype)
 				name:'',
 				showSymbol:false,
 				cursor:'pointer',
+				smooth: true,
+				smoothMonotone:'x',
 				type:'line',
 				data:[]
 			}
@@ -1262,7 +1448,6 @@ function dmtShowAttrInfo(attr_list, attr_val_list, ct_div, showtype)
 	var count_day = 1;
 	if(typeof attr_val_list.date_time_monday != 'undefined')
 		count_day = 7;
-	var time_info = dmtGetXAxisTimeInfo(dateStart, count_day);
 
 	if(attr_val_list.type == 1)
 	{
@@ -1295,6 +1480,7 @@ function dmtShowAttrInfo(attr_list, attr_val_list, ct_div, showtype)
 		if(attr_info.id != attr_vals[i].id)
 			attr_info = dmtGetAttrInfo(attr_list, attr_vals[i].id);
 
+		var time_info = dmtGetXAxisTimeInfo(dateStart, count_day, attr_info);
 		if(typeof(g_all_charts[attr_show_id]) != "undefined") 
 			g_all_charts[attr_show_id].dispose();
 
@@ -1598,13 +1784,10 @@ function redrawChartsOnSwitchTab()
 			else
 				isLeftShow = true;
 		}
-		else if(nid.match('innersite_')) {
-			type = 'site';
+		else if(nid.match('showplugin_')) {
+			type = 'plugin';
 			type_id = nid.split('_')[1];
-			if($('#dsLeftMenu_'+type_id).css('display') == 'none')
-				isLeftShow = false;
-			else
-				isLeftShow = true;
+			isLeftShow = false;
 		}
 		else if(nid.match('showview_')) {
 			type = 'view';
@@ -1637,7 +1820,7 @@ function redrawCharts()
 {
 	var nid = navTab.getCurrentTabId();
 	if(nid != null) {
-		if(nid.match('showmachine_') || nid.match('showview_') || nid.match('innersite_')) {
+		if(nid.match('showmachine_') || nid.match('showview_') || nid.match('showplugin_')) {
 			dmtRedrawCharts();
 		}
 		if(nid.match("dmt_plugin_")) {

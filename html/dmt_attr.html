@@ -24,7 +24,7 @@
 						<option value="<?cs var:config.ex_report ?>">异常量</option>
 						<option value="<?cs var:config.str_report_d ?>">字符串型</option>
 						<option value="<?cs var:config.str_report_d_ip ?>">字符串型-IP省级</option>
-						<option value="<?cs var:config.data_percent ?>">百分比数值(0-100)</option>
+						<option value="<?cs var:config.data_use_last ?>">取最新上报值</option>
 					</select>
 				</li>
                 <li>
@@ -37,9 +37,8 @@
 				    	<option value="15">15分钟</option>
 				    	<option value="30">30分钟</option>
 				    	<option value="60">1小时</option>
+				    	<option value="120">2小时</option>
 				    	<option value="180">3小时</option>
-				    	<option value="360">6小时</option>
-				    	<option value="1439">1天</option>
 				    </select>
 				</li>
 				<li>
@@ -151,12 +150,10 @@ function daSetAttrList(attrinfo)
 
         if(listattr[i].static_time == 60)
     		list += "<td>1小时</td>";
+        else if(listattr[i].static_time == 120)
+    		list += "<td>2小时</td>";
         else if(listattr[i].static_time == 180)
     		list += "<td>3小时</td>";
-        else if(listattr[i].static_time == 360)
-    		list += "<td>6小时</td>";
-        else if(listattr[i].static_time == 1439)
-    		list += "<td>1天</td>";
         else
     		list += "<td>" + listattr[i].static_time + "分钟</td>";
 
@@ -172,8 +169,8 @@ function daSetAttrList(attrinfo)
 			list += "<td>字符串型</td>";
 		else if(listattr[i].data_type == <?cs var:config.str_report_d_ip ?>)
 			list += "<td>字符串型-IP省级</td>";
-		else if(listattr[i].data_type == <?cs var:config.data_percent ?>)
-			list += "<td>百分比数值(0-100)</td>";
+		else if(listattr[i].data_type == <?cs var:config.data_use_last ?>)
+			list += "<td>取最新上报值</td>";
 		else if(listattr[i].data_type == <?cs var:config.ex_report ?>)
 		{
 			if(listattr[i].excep_attr_mask == 1)

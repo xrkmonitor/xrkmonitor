@@ -57,6 +57,7 @@ using namespace std;
 
 CSupperLog slog;
 CGIConfig stConfig;
+int g_iTestWarnAttrId = 0;
 
 // ajax json 响应方式
 static const char *s_JsonRequest [] = { 
@@ -673,6 +674,13 @@ static int DealUserCenter()
 	}
 	js["count"] = iCount;
 	hdf_set_value(stConfig.cgi->hdf, "config.history_list", js.ToString().c_str());
+
+	AttrInfoBin *pInfo = slog.GetAttrInfo(g_iTestWarnAttrId, NULL);
+	if(pInfo) 
+		hdf_set_valuef(stConfig.cgi->hdf, "config.test_warn_info=%d-%s", g_iTestWarnAttrId, 
+			MtReport_GetFromVmem_Local(pInfo->iNameVmemIdx));
+	else
+		hdf_set_valuef(stConfig.cgi->hdf, "config.test_warn_info=%d-%s", g_iTestWarnAttrId, "error");
 	qu.free_result();
 	DEBUG_LOG("login history count:%d", iCount);
 	return 0;
@@ -937,14 +945,13 @@ static int DealTestXrkmonitorWarn()
 
 	Json js;
 
-	// 261 为预置的异常监控点，用于测试告警通道
-	AttrInfoBin *pInfo = slog.GetAttrInfo(261, NULL);
+	AttrInfoBin *pInfo = slog.GetAttrInfo(g_iTestWarnAttrId, NULL);
 	if(pInfo == NULL) {
 		js["ec"] = 1;
-		WARN_LOG("not find attr:261");
+		WARN_LOG("not find attr:%d", g_iTestWarnAttrId);
 	}
 	else {
-		if(MtReport_Attr_Add(261, 1) < 0)
+		if(MtReport_Attr_Add(g_iTestWarnAttrId, 1) < 0)
 			js["ec"] = 2;
 		else
 			js["ec"] = 0;
@@ -1310,6 +1317,13 @@ static int InitFastCgi_first(CGIConfig &myConf)
 	}
 
 	int32_t iRet = 0;
+	if((iRet=LoadConfig(myConf.szConfigFile,
+	   "TEST_WARN_ATTR_ID", CFG_INT, &g_iTestWarnAttrId, 357,
+		NULL)) < 0){
+		ERR_LOG("loadconfig failed, from file:%s", myConf.szConfigFile);
+		return SLOG_ERROR_LINE;
+	}
+
 	if((iRet=slog.InitConfigByFile(myConf.szConfigFile)) < 0 || (iRet=slog.Init()) < 0)
 		return SLOG_ERROR_LINE;
 

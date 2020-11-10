@@ -264,7 +264,7 @@ typedef struct
 	int iMaxRunMins;
 	int iDisablePlus;
 
-	char szLocalUrl[256];
+	char szLocalDomain[256];
 
 	// 云端地址，用于一键部署插件等功能
 	char szCloudUrl[256];
@@ -278,6 +278,7 @@ typedef struct
 	bool bCheckHelloStart;
 
     uint64_t qwServerPacketSessId; // 来自服务器端的可靠udp 包 session id 
+	int iPLuginInstallTimeoutSec;
 
 	FILE *fpPluginInstallLogFile;
 }CONFIG;
