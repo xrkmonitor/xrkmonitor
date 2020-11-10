@@ -3628,6 +3628,7 @@ static int DealUpdatePlugin(CGI *cgi)
 			stConfig.pErrMsg = "生成插件看板失败，请升级版本或联系管理员";
 			return SLOG_ERROR_LINE;
 		}
+		js_plugin.RemoveValue("plugin_show_content");
 		DEBUG_LOG("make plugin:%s show html ok", (const char*)(js_plugin["plus_name"]));
 	}
 
@@ -3862,6 +3863,18 @@ static int DealInstallPlugin(CGI *cgi)
 		WARN_LOG("parse json content, size:%u!=%u", (uint32_t)iParseIdx, (uint32_t)iReadLen);
 		stConfig.pErrMsg = "插件数据解析错误！";
 		return SLOG_ERROR_LINE;
+	}
+
+	if(js_plugin.HasValue("plugin_show_content")) {
+		std::ostringstream ss_path;
+		ss_path << stConfig.szCsPath << "plugin_show/";
+		if(SavePluginShowFile(js_plugin, ss_path.str()) < 0) {
+			WARN_LOG("SavePluginShowFile failed !");
+			stConfig.pErrMsg = "生成插件看板失败，请升级版本或联系管理员";
+			return SLOG_ERROR_LINE;
+		}
+		js_plugin.RemoveValue("plugin_show_content");
+		DEBUG_LOG("make plugin:%s show html ok", (const char*)(js_plugin["plus_name"]));
 	}
 
 	Query & qu = *(stConfig.qu);
