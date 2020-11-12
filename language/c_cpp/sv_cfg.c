@@ -141,7 +141,16 @@ char * get_val(char* desc, char* src)
 		}
 	}
 	*descp='\0';
-	strcpy(src, srcp);
+
+	// fix bug by rockdeng
+	//strcpy(src, srcp);
+	while(*srcp != '\0') {
+		*src = *srcp;
+		src++;
+		srcp++; 
+	}           
+	*src = '\0';
+
 	return desc;
 }
 

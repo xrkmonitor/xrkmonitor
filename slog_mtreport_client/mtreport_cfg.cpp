@@ -64,6 +64,7 @@ void UpdateConfigFile(const char *pfile, TConfigItemList & list)
 			pitem_cfg = *it_cfg;
 			if(pitem->strConfigName == pitem_cfg->strConfigName){
 				pitem_cfg->strConfigValue = pitem->strConfigValue;
+				pitem_cfg->strConfigValue += "\r\n";
 				break;
 			}
 		}
@@ -93,14 +94,14 @@ void UpdateConfigFile(const char *pfile, TConfigItemList & list)
 	{
 		pitem_cfg = *it_cfg;
         if(pitem_cfg->strComment.size() > 0) {
-            fprintf(pstFile, "%s", pitem_cfg->strComment.c_str());
+			std::string::reverse_iterator rit = pitem_cfg->strComment.rbegin();
+            if(*rit == '\n')
+            	fprintf(pstFile, "%s", pitem_cfg->strComment.c_str());
+			else
+            	fprintf(pstFile, "%s\r\n", pitem_cfg->strComment.c_str());
         }
         else {
-            std::string::reverse_iterator rit = pitem_cfg->strConfigValue.rbegin();
-            if(*rit == '\n')
-                fprintf(pstFile, "%s %s", pitem_cfg->strConfigName.c_str(), pitem_cfg->strConfigValue.c_str());
-            else
-                fprintf(pstFile, "%s %s\n", pitem_cfg->strConfigName.c_str(), pitem_cfg->strConfigValue.c_str());
+        	fprintf(pstFile, "%s %s", pitem_cfg->strConfigName.c_str(), pitem_cfg->strConfigValue.c_str());
         }
 	}
 	fclose(pstFile);
