@@ -4,6 +4,8 @@
 提供丰富的图表和多种数据类型，满足对数据可视化的需要。   
 在线演示版地址：[http://open.xrkmonitor.com](http://open.xrkmonitor.com)
 
+国内gitee 地址：https://gitee.com/xrkmonitorcom/open （由于两个地方维护比较麻烦，更新会优先在 gitee 上更新）
+
 **相比其它开源监控系统优势**  
 1.  支持插件功能, 监控插件无需开发，自由选择监控插件，控制台安装即可使用   
 1.	集成告警功能, 支持多种告警方式    
